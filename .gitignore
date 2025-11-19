@@ -1,0 +1,102 @@
+# ===========================================
+# Node / Vite / React
+# ===========================================
+node_modules/
+dist/
+build/
+.cache/
+.vite/
+vite.svg
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+debug.log*
+logs/
+*.log
+
+# Dependency directories
+jspm_packages/
+
+# ===========================================
+# OS Files
+# ===========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# ===========================================
+# IDEs / Editors
+# ===========================================
+# VSCode
+.vscode/
+.history/
+
+# IntelliJ / WebStorm
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Sublime
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+
+# JetBrains
+cmake-build-*/
+
+# ===========================================
+# Optional tools & caches
+# ===========================================
+.eslintcache
+.stylelintcache
+.cache/
+.tmp/
+.temp/
+
+# Testing
+coverage/
+*.lcov
+
+# ===========================================
+# Storybook / Other tools (optional)
+# ===========================================
+storybook-static/
+
+# ===========================================
+# Berry Admin Template extra
+# ===========================================
+src/assets/images/users/avatar*.png
+src/assets/images/auth/*.png
+
+# ===========================================
+# Yarn / PNPM
+# ===========================================
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnpm-store/
+
