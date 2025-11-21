@@ -1,7 +1,5 @@
 import { createContext, useState, useEffect } from 'react';
-// Usa el axios del template Berry. Si no lo tienes, puedes usar `import axios from 'axios';`
 import { authApi } from '../utils/api';
-
 
 export const AuthContext = createContext(null);
 
@@ -13,27 +11,39 @@ export default function AuthProvider({ children }) {
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
-  // Cuando cambia el token, podrías en el futuro validar o decodificar el JWT
   useEffect(() => {
     if (!accessToken) {
       setUser(null);
       return;
     }
-    // Aquí podrías llamar a /v1/auth/me si quieres validar el token en backend
+    // Aquí podrías llamar /auth/me para validar token si quisieras
   }, [accessToken]);
 
-  // Login normal (lo dejamos de momento como TODO)
-  const login = async (email, password) => {
-    console.log('TODO: login normal', email, password);
-    // Ejemplo futuro:
-    // const res = await axios.post('/v1/auth/login', { email, password });
-    // const { accessToken, user } = res.data.data;
-    // setSession(accessToken, user);
-  };
+  // ======================
+  // LOGIN NORMAL (luego lo haremos)
+  // ======================
+  
+const login = async (email, password) => {
+  const res = await authApi.post('/auth/v1/login', { email, password });
 
+  const { accessToken, user } = res.data.data;
+
+  localStorage.setItem('token', accessToken);
+  localStorage.setItem('user', JSON.stringify(user));
+
+  setAccessToken(accessToken);
+  setUser(user);
+
+  return res;
+};
+
+  // ======================
+  // LOGIN CON GOOGLE
+  // ======================
   const loginWithGoogle = async (credential) => {
+    // ⚠️ IMPORTANTE: tu endpoint correcto sería /v1/auth/google
     const res = await authApi.post('/auth/v1/google', { credential });
-    console.log(res);
+
     const { accessToken, user } = res.data.data;
 
     localStorage.setItem('token', accessToken);
@@ -42,11 +52,31 @@ export default function AuthProvider({ children }) {
     setAccessToken(accessToken);
     setUser(user);
 
+    return res; // 🔥 necesario para validación en el callback
+  };
+
+  // ======================
+  // SIGN UP (REGISTRO)
+  // ======================
+  const register = async ({ name, email, serialCode, password }) => {
+
+    const res = await authApi.post('/auth/v1/register', { name, email, serialCode, password });
+
+    // El backend devuelve más o menos: data: { accessToken, user }
+    // const { accessToken, user } = res.data.data;
+
+    // localStorage.setItem('token', accessToken);
+    // localStorage.setItem('user', JSON.stringify(user));
+
+    // setAccessToken(accessToken);
+    // setUser(user);
+
     return res;
   };
 
-  
-
+  // ======================
+  // LOGOUT
+  // ======================
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -55,7 +85,7 @@ export default function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, accessToken, login, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, accessToken, login, loginWithGoogle, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

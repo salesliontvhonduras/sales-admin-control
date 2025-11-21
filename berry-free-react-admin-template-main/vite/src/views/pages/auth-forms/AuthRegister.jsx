@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 // material-ui
 import Button from '@mui/material/Button';
@@ -24,14 +24,31 @@ import { strengthColor, strengthIndicator } from 'utils/password-strength';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
+// hooks
+import useAuth from 'hooks/useAuth';
+import { useSnackbar } from 'notistack';
+
+
 // ===========================|| JWT - REGISTER ||=========================== //
 
 export default function AuthRegister() {
+  const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
+  const { register } = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
   const [checked, setChecked] = useState(true);
 
   const [strength, setStrength] = useState(0);
   const [level, setLevel] = useState();
+
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    serialCode: '',
+    password: ''
+  });
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
@@ -47,33 +64,119 @@ export default function AuthRegister() {
     setLevel(strengthColor(temp));
   };
 
+  // Inicializa la barra de password
   useEffect(() => {
-    changePassword('123456');
+    changePassword('');
   }, []);
 
+  const handleChange = (e) => {
+    const { name, value, type, checked: checkedValue } = e.target;
+
+    if (name === 'checked') {
+      setChecked(checkedValue);
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+
+    if (name === 'password') {
+      changePassword(value);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!checked) {
+      enqueueSnackbar('You must agree with Terms & Conditions.', { variant: 'error' });
+      return;
+    }
+
+    const name = `${form.firstName} ${form.lastName}`.trim();
+
+    try {
+      const res = await register({
+        name,
+        email: form.email,
+        serialCode: form.serialCode,
+        password: form.password
+      });
+
+      if (res.status === 201 && res.data.success) {
+        enqueueSnackbar('User registered successfuly.', { variant: 'success' });
+        navigate('/pages/login');
+      } else {
+        const backendMessage = res?.data?.message || 'Registration failed.';
+        enqueueSnackbar(backendMessage, { variant: 'error' });
+      }
+      
+    } catch (error) {
+      console.error('Register error:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Unexpected error while registering.';
+      enqueueSnackbar(errorMessage, { variant: 'error' });
+    }
+  };
+
   return (
-    <>
+    <form onSubmit={handleSubmit}>
       <Stack sx={{ mb: 2, alignItems: 'center' }}>
         <Typography variant="subtitle1">Sign up with Email address </Typography>
       </Stack>
 
       <Grid container spacing={{ xs: 0, sm: 2 }}>
-        <Grid size={{ xs: 12, sm: 6 }}>
+        <Grid item xs={12} sm={6}>
           <CustomFormControl fullWidth>
             <InputLabel htmlFor="outlined-adornment-first-register">First Name</InputLabel>
-            <OutlinedInput id="outlined-adornment-first-register" type="text" name="firstName" value="Jhones" />
+            <OutlinedInput
+              id="outlined-adornment-first-register"
+              type="text"
+              name="firstName"
+              value={form.firstName}
+              onChange={handleChange}
+              label="First Name"
+            />
           </CustomFormControl>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
+        <Grid item xs={12} sm={6}>
           <CustomFormControl fullWidth>
             <InputLabel htmlFor="outlined-adornment-last-register">Last Name</InputLabel>
-            <OutlinedInput id="outlined-adornment-last-register" type="text" name="lastName" value="Doe" />
+            <OutlinedInput
+              id="outlined-adornment-last-register"
+              type="text"
+              name="lastName"
+              value={form.lastName}
+              onChange={handleChange}
+              label="Last Name"
+            />
           </CustomFormControl>
         </Grid>
       </Grid>
+
       <CustomFormControl fullWidth>
         <InputLabel htmlFor="outlined-adornment-email-register">Email Address / Username</InputLabel>
-        <OutlinedInput id="outlined-adornment-email-register" type="email" value="jones@doe.com" name="email" />
+        <OutlinedInput
+          id="outlined-adornment-email-register"
+          type="email"
+          name="email"
+          value={form.email}
+          onChange={handleChange}
+          label="Email Address / Username"
+        />
+      </CustomFormControl>
+
+      <CustomFormControl fullWidth>
+        <InputLabel htmlFor="outlined-adornment-serial-register">Serial Code</InputLabel>
+        <OutlinedInput
+          id="outlined-adornment-serial-register"
+          type="text"
+          name="serialCode"
+          value={form.serialCode}
+          onChange={handleChange}
+          label="Serial Code"
+        />
       </CustomFormControl>
 
       <CustomFormControl fullWidth>
@@ -81,8 +184,9 @@ export default function AuthRegister() {
         <OutlinedInput
           id="outlined-adornment-password-register"
           type={showPassword ? 'text' : 'password'}
-          value="Jhones@123"
           name="password"
+          value={form.password}
+          onChange={handleChange}
           label="Password"
           endAdornment={
             <InputAdornment position="end">
@@ -114,7 +218,14 @@ export default function AuthRegister() {
       )}
 
       <FormControlLabel
-        control={<Checkbox checked={checked} onChange={(event) => setChecked(event.target.checked)} name="checked" color="primary" />}
+        control={
+          <Checkbox
+            checked={checked}
+            onChange={handleChange}
+            name="checked"
+            color="primary"
+          />
+        }
         label={
           <Typography variant="subtitle1">
             Agree with &nbsp;
@@ -132,6 +243,6 @@ export default function AuthRegister() {
           </Button>
         </AnimateButton>
       </Box>
-    </>
+    </form>
   );
 }

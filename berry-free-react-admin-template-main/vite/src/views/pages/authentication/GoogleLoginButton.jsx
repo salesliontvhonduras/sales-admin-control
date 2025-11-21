@@ -1,8 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useAuth from '../../../hooks/useAuth'; // ajusta ruta si es distinta
+import useAuth from '../../../hooks/useAuth';
+import { useSnackbar } from 'notistack';
 
 export default function GoogleLoginButton() {
+
+  const { enqueueSnackbar } = useSnackbar();
   const { loginWithGoogle } = useAuth();
   const buttonRef = useRef(null);
   const navigate = useNavigate();
@@ -15,15 +18,20 @@ export default function GoogleLoginButton() {
       callback: async (response) => {
         const credential = response.credential;
 
-        try {
-          const responseBackend = await loginWithGoogle(credential); 
-          if (responseBackend.status === 201 && responseBackend.data.success) {
-              navigate('/dashboard/default');
+         try {
+          const responseBackend = await loginWithGoogle(credential);
+          const { status, data } = responseBackend;
+
+          if (status === 201 && data?.success) {
+            enqueueSnackbar('Welcome back! 👋', { variant: 'success' });
+            navigate('/dashboard/default');
           } else {
-              console.warn("Login con Google falló:", responseBackend);
+            enqueueSnackbar(data?.message || 'No se pudo iniciar sesión con Google.', { variant: 'error' });
           }
-        } catch (e) {
-          console.error('Google login error', e);
+        } catch (err) {
+          const errorMessage = err?.response?.data?.message || err?.message || 'Error inesperado al iniciar sesión con Google.';
+          enqueueSnackbar(errorMessage, { variant: 'error' });
+          console.error(err);
         }
       }
     });
