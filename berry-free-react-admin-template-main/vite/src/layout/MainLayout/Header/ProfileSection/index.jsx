@@ -21,11 +21,15 @@ import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
+import { useNavigate } from 'react-router-dom';
+
 // project imports
 import UpgradePlanCard from './UpgradePlanCard';
 import MainCard from 'ui-component/cards/MainCard';
 import Transitions from 'ui-component/extended/Transitions';
 import useConfig from 'hooks/useConfig';
+import useAuth from 'hooks/useAuth';
+import { useSnackbar } from 'notistack';
 
 // assets
 import User1 from 'assets/images/users/user-round.svg';
@@ -38,6 +42,9 @@ export default function ProfileSection() {
   const {
     state: { borderRadius }
   } = useConfig();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const { enqueueSnackbar } = useSnackbar();
 
   const [sdm, setSdm] = useState(true);
   const [value, setValue] = useState('');
@@ -69,6 +76,13 @@ export default function ProfileSection() {
 
     prevOpen.current = open;
   }, [open]);
+
+  const handleLogout = () => {
+    logout();
+    enqueueSnackbar('Sesión cerrada.', { variant: 'success' });
+    setOpen(false);
+    navigate('/pages/login');
+  };
 
   return (
     <>
@@ -206,7 +220,7 @@ export default function ProfileSection() {
                             }
                           />
                         </ListItemButton>
-                        <ListItemButton sx={{ borderRadius: `${borderRadius}px` }}>
+                        <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} onClick={handleLogout}>
                           <ListItemIcon>
                             <IconLogout stroke={1.5} size="20px" />
                           </ListItemIcon>

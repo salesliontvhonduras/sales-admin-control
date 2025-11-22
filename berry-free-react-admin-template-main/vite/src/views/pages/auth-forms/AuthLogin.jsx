@@ -56,7 +56,7 @@ export default function AuthLogin() {
     e.preventDefault();
 
     try {
-      const res = await login(values.email, values.password);
+      const res = await login(values.email, values.password, checked);
 
       if (res.status === 200 && res.data.success) {
         enqueueSnackbar('Welcome back! 👋', { variant: 'success' });

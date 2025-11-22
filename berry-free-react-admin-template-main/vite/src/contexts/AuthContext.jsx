@@ -3,11 +3,13 @@ import { authApi } from '../utils/api';
 
 export const AuthContext = createContext(null);
 
+const getStoredValue = (key) => localStorage.getItem(key) ?? sessionStorage.getItem(key);
+
 export default function AuthProvider({ children }) {
   // Inicializar desde localStorage
-  const [accessToken, setAccessToken] = useState(() => localStorage.getItem('token'));
+  const [accessToken, setAccessToken] = useState(() => getStoredValue('token'));
   const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem('user');
+    const storedUser = getStoredValue('user');
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
@@ -22,20 +24,20 @@ export default function AuthProvider({ children }) {
   // ======================
   // LOGIN NORMAL (luego lo haremos)
   // ======================
-  
-const login = async (email, password) => {
-  const res = await authApi.post('/auth/v1/login', { email, password });
+  const login = async (email, password, remember = true) => {
+    const res = await authApi.post('/auth/v1/login', { email, password });
 
-  const { accessToken, user } = res.data.data;
+    const { accessToken, user } = res.data.data;
 
-  localStorage.setItem('token', accessToken);
-  localStorage.setItem('user', JSON.stringify(user));
+    const storage = remember ? localStorage : sessionStorage;
+    storage.setItem('token', accessToken);
+    storage.setItem('user', JSON.stringify(user));
 
-  setAccessToken(accessToken);
-  setUser(user);
+    setAccessToken(accessToken);
+    setUser(user);
 
-  return res;
-};
+    return res;
+  };
 
   // ======================
   // LOGIN CON GOOGLE
@@ -80,6 +82,8 @@ const login = async (email, password) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     setAccessToken(null);
     setUser(null);
   };
