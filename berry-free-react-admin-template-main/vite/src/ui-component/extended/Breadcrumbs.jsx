@@ -141,8 +141,16 @@ export default function Breadcrumbs({
   }
 
   if (!custom && main && main.type === 'collapse' && main.breadcrumbs === true) {
+    const baseCardSx = {
+      mb: 3,
+      bgcolor: card === false ? 'transparent' : 'background.default',
+      width: 'min(1200px, 90vw)',
+      mx: 'auto',
+      ...sx
+    };
+
     breadcrumbContent = (
-      <Card sx={card === false ? { mb: 3, bgcolor: 'transparent', ...sx } : { mb: 3, bgcolor: 'background.default', ...sx }} {...others}>
+      <Card sx={baseCardSx} {...others}>
         <Box sx={{ p: 1.25, px: card === false ? 0 : 2 }}>
           <Grid
             container

@@ -3,6 +3,7 @@ import { authApi } from '../utils/api';
 
 export const AuthContext = createContext(null);
 
+const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
 const getStoredValue = (key) => localStorage.getItem(key) ?? sessionStorage.getItem(key);
 
 export default function AuthProvider({ children }) {
@@ -25,7 +26,7 @@ export default function AuthProvider({ children }) {
   // LOGIN NORMAL (luego lo haremos)
   // ======================
   const login = async (email, password, remember = true) => {
-    const res = await authApi.post('/auth/v1/login', { email, password });
+    const res = await authApi.post('/auth/v1/session', { email, password });
 
     const { accessToken, user } = res.data.data;
 
@@ -86,6 +87,7 @@ export default function AuthProvider({ children }) {
     sessionStorage.removeItem('user');
     setAccessToken(null);
     setUser(null);
+    window.location.replace(BASE_URL + '/pages/login');
   };
 
   return (

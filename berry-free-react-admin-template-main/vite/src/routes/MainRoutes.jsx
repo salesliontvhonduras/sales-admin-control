@@ -7,6 +7,7 @@ import Loadable from 'ui-component/Loadable';
 
 // dashboard routing
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
+const SmsManagement = Loadable(lazy(() => import('views/sms/SmsManagement')));
 
 const MainRoutes = {
   path: '/',
@@ -25,6 +26,15 @@ const MainRoutes = {
             {
               path: 'default',
               element: <DashboardDefault />
+            }
+          ]
+        },
+        {
+          path: 'sms',
+          children: [
+            {
+              path: 'management',
+              element: <SmsManagement />
             }
           ]
         }
