@@ -65,15 +65,6 @@ export default function AuthProvider({ children }) {
 
     const res = await authApi.post('/auth/v1/register', { name, email, serialCode, password });
 
-    // El backend devuelve más o menos: data: { accessToken, user }
-    // const { accessToken, user } = res.data.data;
-
-    // localStorage.setItem('token', accessToken);
-    // localStorage.setItem('user', JSON.stringify(user));
-
-    // setAccessToken(accessToken);
-    // setUser(user);
-
     return res;
   };
 

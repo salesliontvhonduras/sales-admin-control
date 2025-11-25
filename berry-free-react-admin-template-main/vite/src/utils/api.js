@@ -5,6 +5,7 @@ const API_USERS = import.meta.env.VITE_API_USERS;
 const API_PRODUCTS = import.meta.env.VITE_API_PRODUCTS;
 const API_RESERVATIONS = import.meta.env.VITE_API_RESERVATIONS;
 const API_SMS = import.meta.env.VITE_API_SMS;
+const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
 
 export const authApi = axios.create({
   baseURL: API_AUTH,
@@ -76,11 +77,22 @@ smsApi.interceptors.response.use(
   }
 );
 
-// Redireccionar a login en 401
+// Redireccionar a login en 401 (evita loops)
+let isRedirecting401 = false;
 const handleUnauthorized = (error) => {
-  if (error?.response?.status === 401) {
-    window.location.href = '/pages/login';
-    return Promise.reject(error);
+  const status = error?.response?.status ?? error?.request?.status;
+  const isNetworkErr =
+    (!status || status === 0) &&
+    (error?.code === 'ERR_NETWORK' || (error?.message || '').toLowerCase().includes('network'));
+
+  if ((status === 401 || isNetworkErr) && !isRedirecting401) {
+    isRedirecting401 = true;
+    // Limpia estado local antes de salir
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    window.location.replace(BASE_URL + '/pages/login');
   }
   return Promise.reject(error);
 };
@@ -90,3 +102,6 @@ usersApi.interceptors.response.use((res) => res, handleUnauthorized);
 productsApi.interceptors.response.use((res) => res, handleUnauthorized);
 reservationsApi.interceptors.response.use((res) => res, handleUnauthorized);
 smsApi.interceptors.response.use((res) => res, handleUnauthorized);
+
+// Catch-all por si se usa axios directo en algún punto
+axios.interceptors.response.use((res) => res, handleUnauthorized);

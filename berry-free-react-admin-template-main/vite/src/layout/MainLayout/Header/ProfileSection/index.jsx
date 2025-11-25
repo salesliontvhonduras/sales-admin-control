@@ -37,6 +37,9 @@ import { IconLogout, IconSearch, IconSettings, IconUser } from '@tabler/icons-re
 
 // ==============================|| PROFILE MENU ||============================== //
 
+const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
+
+
 export default function ProfileSection() {
   const theme = useTheme();
   const {
@@ -81,7 +84,7 @@ export default function ProfileSection() {
     logout();
     enqueueSnackbar('Sesión cerrada.', { variant: 'success' });
     setOpen(false);
-    navigate('/pages/login');
+    navigate(BASE_URL + '/pages/login');
   };
 
   return (

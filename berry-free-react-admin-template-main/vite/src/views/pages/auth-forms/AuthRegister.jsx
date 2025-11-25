@@ -31,6 +31,8 @@ import { useSnackbar } from 'notistack';
 
 // ===========================|| JWT - REGISTER ||=========================== //
 
+const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
+
 export default function AuthRegister() {
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
@@ -107,7 +109,7 @@ export default function AuthRegister() {
 
       if (res.status === 201 && res.data.success) {
         enqueueSnackbar('User registered successfuly.', { variant: 'success' });
-        navigate('/pages/login');
+        navigate(BASE_URL + '/pages/login');
       } else {
         const backendMessage = res?.data?.message || 'Registration failed.';
         enqueueSnackbar(backendMessage, { variant: 'error' });

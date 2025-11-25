@@ -55,9 +55,12 @@ const defaultForm = {
   messageText: '',
   scheduledAt: '',
   priority: 0,
-  sourceSystem: 'PANEL_LION_TV',
+  sourceSystem: 'SALES_PANEL',
   externalId: ''
 };
+
+const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
+const MAX_MESSAGE_LEN = 160;
 
 const statusOptions = ['ALL', 'PENDING', 'IN_PROGRESS', 'SENT', 'FAILED', 'CANCELLED'];
 const filterFieldSx = {
@@ -92,6 +95,13 @@ function parsePhones(text) {
     .split(/[\n,; ]+/)
     .map((p) => p.trim())
     .filter(Boolean);
+}
+
+function sanitizeMessage(value) {
+  if (!value) return '';
+  const noDiacritics = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const asciiOnly = noDiacritics.replace(/[^\x00-\x7F]/g, '');
+  return asciiOnly.slice(0, MAX_MESSAGE_LEN);
 }
 
 function formatDate(value) {
@@ -154,6 +164,11 @@ export default function SmsManagement() {
       setRows(normalized);
       setTotal(payload.total ?? payload.totalElements ?? payload.count ?? normalized.length);
     } catch (err) {
+      const status = err?.response?.status || err?.request?.status;
+      if (status === 401) {
+        window.location.replace(BASE_URL + '/pages/login');
+        return;
+      }
       const message = err?.response?.data?.message || err?.message || 'No se pudo cargar el historial de SMS.';
       enqueueSnackbar(message, { variant: 'error' });
     } finally {
@@ -169,6 +184,11 @@ export default function SmsManagement() {
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
   };
 
+  const handleMessageChange = (event) => {
+    const sanitized = sanitizeMessage(event.target.value);
+    setForm((prev) => ({ ...prev, messageText: sanitized }));
+  };
+
   const handleReset = () => {
     setForm({ ...defaultForm });
   };
@@ -179,14 +199,15 @@ export default function SmsManagement() {
       enqueueSnackbar('Agrega al menos un numero de telefono.', { variant: 'warning' });
       return;
     }
-    if (!form.messageText.trim()) {
-      enqueueSnackbar('El mensaje no puede estar vacio.', { variant: 'warning' });
+    const sanitizedMessage = sanitizeMessage(form.messageText || '');
+    if (!sanitizedMessage.trim()) {
+      enqueueSnackbar('El mensaje no puede estar vacio ni contener acentos/emojis.', { variant: 'warning' });
       return;
     }
 
     const payload = {
       phoneNumbers,
-      messageText: form.messageText.trim(),
+      messageText: sanitizedMessage.trim(),
       scheduledAt: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : null,
       priority: form.priority === '' ? null : Number(form.priority),
       sourceSystem: form.sourceSystem || undefined,
@@ -204,6 +225,11 @@ export default function SmsManagement() {
       setRefreshKey((prev) => prev + 1);
       setOpenModal(false);
     } catch (err) {
+      const status = err?.response?.status || err?.request?.status;
+      if (status === 401) {
+        window.location.replace(BASE_URL + '/pages/login');
+        return;
+      }
       const message = err?.response?.data?.message || err?.message || 'No se pudo encolar el SMS.';
       enqueueSnackbar(message, { variant: 'error' });
     } finally {
@@ -449,7 +475,7 @@ export default function SmsManagement() {
         >
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }}>
             <Chip label={`${parsedPhones.length} numeros`} color="primary" variant="outlined" />
-            <Chip label={`${form.messageText.length}/480 chars`} variant="outlined" />
+            <Chip label={`${form.messageText.length}/160 chars`} variant="outlined" />
             <Chip label={form.scheduledAt ? `Programado: ${formatDate(form.scheduledAt)}` : 'Envio inmediato'} variant="outlined" />
           </Stack>
 
@@ -460,7 +486,7 @@ export default function SmsManagement() {
             multiline
             value={form.phoneNumbersText}
             onChange={handleFormChange('phoneNumbersText')}
-            helperText="Separa por coma, salto de linea o espacio."
+            helperText="Separa por coma cada número."
             fullWidth
           />
           <Box
@@ -475,13 +501,13 @@ export default function SmsManagement() {
           >
             <TextField
               label="Mensaje"
-              placeholder="Max 480 caracteres"
+              placeholder="Max 160 caracteres"
               minRows={4}
               multiline
               value={form.messageText}
-              inputProps={{ maxLength: 480 }}
-              onChange={handleFormChange('messageText')}
-              helperText="Redacta un texto claro y sin tildes si el operador es estricto."
+              inputProps={{ maxLength: MAX_MESSAGE_LEN }}
+              onChange={handleMessageChange}
+              helperText={`${form.messageText.length}/${MAX_MESSAGE_LEN} (sin acentos ni emojis)`}
               fullWidth
             />
           </Box>
@@ -497,20 +523,7 @@ export default function SmsManagement() {
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <TextField
-                label="Prioridad"
-                type="number"
-                value={form.priority}
-                onChange={handleFormChange('priority')}
-                helperText="0 por defecto"
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
               <TextField label="External Id" value={form.externalId} onChange={handleFormChange('externalId')} fullWidth />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <TextField label="Source system" value={form.sourceSystem} onChange={handleFormChange('sourceSystem')} fullWidth />
             </Grid>
           </Grid>
         </DialogContent>
