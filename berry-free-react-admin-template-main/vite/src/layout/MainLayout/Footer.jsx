@@ -11,7 +11,7 @@ export default function Footer() {
       <Typography variant="caption">
         &copy; All rights reserved{' '}
         <Typography component={Link} href="https://liontvpremium.com" underline="hover" target="_blank" sx={{ color: 'secondary.main' }}>
-          Lion Tv Services
+          Lion Services
         </Typography>
       </Typography>
       <Stack direction="row" sx={{ gap: 1.5, alignItems: 'center', justifyContent: 'space-between' }}>

@@ -5,7 +5,7 @@ const icons = { IconMessages };
 
 const sms = {
   id: 'sms',
-  title: 'Sms Management',
+  title: 'Sms',
   type: 'group',
   children: [
     {

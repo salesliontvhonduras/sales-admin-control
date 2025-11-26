@@ -46,7 +46,7 @@ export const links = () => [
 // export meta
 export const meta = () => ({
     charset: 'utf-8',
-    title: 'Berry - React Material Admin Dashboard Template',
+    title: 'Lion Services',
     viewport: 'width=device-width,initial-scale=1',
     description:
         'Start your next React project with Berry admin template. It build with Reactjs, Material-UI, Redux, and Hook for faster web development.'

@@ -45,6 +45,7 @@ import { smsApi } from 'utils/api';
 const statusColors = {
   PENDING: 'warning',
   IN_PROGRESS: 'info',
+  WAITING: 'info',
   SENT: 'success',
   FAILED: 'error',
   CANCELLED: 'default'
@@ -62,7 +63,7 @@ const defaultForm = {
 const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
 const MAX_MESSAGE_LEN = 160;
 
-const statusOptions = ['ALL', 'PENDING', 'IN_PROGRESS', 'SENT', 'FAILED', 'CANCELLED'];
+const statusOptions = ['ALL', 'PENDING','WAITING', 'IN_PROGRESS', 'SENT', 'FAILED', 'CANCELLED'];
 const filterFieldSx = {
   '& .MuiInputBase-root': { minHeight: 44 },
   '& .MuiInputLabel-root': { transform: 'translate(14px, 12px) scale(1)' },
@@ -139,8 +140,36 @@ export default function SmsManagement() {
     dateFrom: '',
     dateTo: ''
   });
+  const [balance, setBalance] = useState(null);
+  const [balanceLoading, setBalanceLoading] = useState(false);
 
   const parsedPhones = useMemo(() => parsePhones(form.phoneNumbersText), [form.phoneNumbersText]);
+  const estimatedCost = useMemo(() => parsedPhones.length * 1, [parsedPhones.length]);
+  const remainingBalance = useMemo(() => (balance != null ? balance - estimatedCost : null), [balance, estimatedCost]);
+
+  const loadBalance = useCallback(async () => {
+    if (!accessToken) return;
+    setBalanceLoading(true);
+    try {
+      const res = await smsApi.get('/sms/v1/balance', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const value = res?.data?.data ?? res?.data;
+      const numeric = typeof value === 'number' ? value : Number(value?.balance ?? value);
+      if (!Number.isNaN(numeric)) {
+        setBalance(numeric);
+      }
+    } catch (err) {
+      const status = err?.response?.status || err?.request?.status;
+      if (status === 401) {
+        window.location.replace(BASE_URL + '/pages/login');
+        return;
+      }
+      enqueueSnackbar('No se pudo obtener el saldo.', { variant: 'warning' });
+    } finally {
+      setBalanceLoading(false);
+    }
+  }, [accessToken, enqueueSnackbar]);
 
   const loadMessages = useCallback(async () => {
     if (!accessToken) return;
@@ -180,6 +209,10 @@ export default function SmsManagement() {
     loadMessages();
   }, [loadMessages, refreshKey]);
 
+  useEffect(() => {
+    loadBalance();
+  }, [loadBalance]);
+
   const handleFormChange = (field) => (event) => {
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
   };
@@ -204,6 +237,14 @@ export default function SmsManagement() {
       enqueueSnackbar('El mensaje no puede estar vacio ni contener acentos/emojis.', { variant: 'warning' });
       return;
     }
+    if (balanceLoading || balance === null) {
+      enqueueSnackbar('No se pudo validar el saldo. Intenta recargar saldo o vuelve a intentar.', { variant: 'warning' });
+      return;
+    }
+    if (balance != null && estimatedCost > balance) {
+      enqueueSnackbar('Saldo insuficiente para enviar estos SMS. Por favor recarga.', { variant: 'warning' });
+      return;
+    }
 
     const payload = {
       phoneNumbers,
@@ -223,6 +264,7 @@ export default function SmsManagement() {
       const totalQueued = Array.isArray(ids) ? ids.length : 0;
       enqueueSnackbar(totalQueued ? `Se encolaron ${totalQueued} SMS.` : 'Solicitud enviada.', { variant: 'success' });
       setRefreshKey((prev) => prev + 1);
+      loadBalance();
       setOpenModal(false);
     } catch (err) {
       const status = err?.response?.status || err?.request?.status;
@@ -473,10 +515,34 @@ export default function SmsManagement() {
                 : undefined
           }}
         >
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }} flexWrap="wrap">
             <Chip label={`${parsedPhones.length} numeros`} color="primary" variant="outlined" />
-            <Chip label={`${form.messageText.length}/160 chars`} variant="outlined" />
+            <Chip label={`${form.messageText.length}/${MAX_MESSAGE_LEN} chars`} variant="outlined" />
             <Chip label={form.scheduledAt ? `Programado: ${formatDate(form.scheduledAt)}` : 'Envio inmediato'} variant="outlined" />
+            <Chip
+              label={
+                balanceLoading
+                  ? 'Saldo cargando...'
+                  : balance != null
+                    ? `Saldo: ${balance}`
+                    : 'Saldo no disponible'
+              }
+              color={balance != null && balance > 0 ? 'success' : 'warning'}
+              variant="outlined"
+            />
+            <Chip
+              label={`Costo estimado: ${estimatedCost}`}
+              color={estimatedCost > (balance ?? Infinity) ? 'warning' : 'default'}
+              variant="outlined"
+            />
+            <Chip
+              label={
+                remainingBalance != null
+                  ? `Saldo luego del envio: ${remainingBalance}`
+                  : 'Saldo luego del envio: --'
+              }
+              variant="outlined"
+            />
           </Stack>
 
           <TextField
@@ -523,7 +589,20 @@ export default function SmsManagement() {
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                label="Prioridad"
+                type="number"
+                value={form.priority}
+                onChange={handleFormChange('priority')}
+                helperText="0 por defecto"
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
               <TextField label="External Id" value={form.externalId} onChange={handleFormChange('externalId')} fullWidth />
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField label="Source system" value={form.sourceSystem} onChange={handleFormChange('sourceSystem')} fullWidth />
             </Grid>
           </Grid>
         </DialogContent>
@@ -538,12 +617,17 @@ export default function SmsManagement() {
             Limpiar
           </Button>
           <Button
-            variant="contained"
-            startIcon={<SendIcon />}
-            onClick={handleSend}
-            disabled={sending}
-            sx={{ minWidth: 150 }}
-          >
+          variant="contained"
+          startIcon={<SendIcon />}
+          onClick={handleSend}
+          disabled={
+            sending ||
+            balanceLoading ||
+            balance === null ||
+            (balance != null && estimatedCost > balance)
+          }
+          sx={{ minWidth: 150 }}
+        >
             {sending ? 'Enviando...' : 'Encolar SMS'}
           </Button>
         </DialogActions>
