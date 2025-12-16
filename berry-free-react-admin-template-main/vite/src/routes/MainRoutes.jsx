@@ -4,6 +4,8 @@ import RequireAuth from '../routes/RequireAuth';
 // project imports
 import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
+import DemosLionTv from 'views/liontv/DemosLionTv';
+
 
 // dashboard routing
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
@@ -28,6 +30,10 @@ const MainRoutes = {
               element: <DashboardDefault />
             }
           ]
+        },
+        {
+          path: '/liontv/demos',
+          element: <DemosLionTv />
         },
         {
           path: 'sms',

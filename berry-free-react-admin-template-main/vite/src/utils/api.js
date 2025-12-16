@@ -1,11 +1,25 @@
 import axios from 'axios';
 
+
 const API_AUTH = import.meta.env.VITE_API_AUTH;
 const API_USERS = import.meta.env.VITE_API_USERS;
 const API_PRODUCTS = import.meta.env.VITE_API_PRODUCTS;
 const API_RESERVATIONS = import.meta.env.VITE_API_RESERVATIONS;
 const API_SMS = import.meta.env.VITE_API_SMS;
 const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
+const API_CATALOGS = import.meta.env.VITE_API_CATALOGS;
+const API_LIONTV = import.meta.env.VITE_API_LIONTV;
+
+export const lionTvApi = axios.create({
+  baseURL: API_LIONTV,
+  headers: { 'Content-Type': 'application/json' }
+});
+
+export const catalogsApi = axios.create({
+  baseURL: API_CATALOGS,
+  headers: { 'Content-Type': 'application/json' }
+});
+
 
 export const authApi = axios.create({
   baseURL: API_AUTH,
@@ -51,6 +65,10 @@ usersApi.interceptors.request.use(attachToken);
 productsApi.interceptors.request.use(attachToken);
 reservationsApi.interceptors.request.use(attachToken);
 smsApi.interceptors.request.use(attachToken);
+lionTvApi.interceptors.request.use(attachToken);
+catalogsApi.interceptors.request.use(attachToken);
+
+
 
 // (Opcional) Manejo global de errores
 authApi.interceptors.response.use(
@@ -102,6 +120,8 @@ usersApi.interceptors.response.use((res) => res, handleUnauthorized);
 productsApi.interceptors.response.use((res) => res, handleUnauthorized);
 reservationsApi.interceptors.response.use((res) => res, handleUnauthorized);
 smsApi.interceptors.response.use((res) => res, handleUnauthorized);
+lionTvApi.interceptors.response.use((res) => res, handleUnauthorized);
+catalogsApi.interceptors.response.use((res) => res, handleUnauthorized);
 
 // Catch-all por si se usa axios directo en algún punto
 axios.interceptors.response.use((res) => res, handleUnauthorized);

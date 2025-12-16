@@ -1,10 +1,9 @@
 import dashboard from './dashboard';
 import sms from './sms';
-
-// ==============================|| MENU ITEMS ||============================== //
+import liontv from './liontv';
 
 const menuItems = {
-  items: [dashboard, sms]
+  items: [dashboard, sms, liontv]
 };
 
 export default menuItems;
