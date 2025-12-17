@@ -29,6 +29,7 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import InputLabel from '@mui/material/InputLabel';
 import FormHelperText from '@mui/material/FormHelperText';
+import SearchIcon from '@mui/icons-material/Search';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -39,7 +40,7 @@ import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
-import { catalogsApi, lionTvApi } from 'utils/api';
+import { catalogsApi,sagaApi, lionTvApi } from 'utils/api';
 
 const statusColors = {
   ACTIVE: 'success',
@@ -121,6 +122,7 @@ export default function DemosLionTv() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [total, setTotal] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [search, setSearch] = useState('');
 
   const [openModal, setOpenModal] = useState(false);
   const [sending, setSending] = useState(false);
@@ -214,32 +216,44 @@ export default function DemosLionTv() {
     }
   }, []);
 
-//   const loadDemos = useCallback(async () => {
-//     if (!accessToken) return;
-//     setLoading(true);
+  const loadDemos = useCallback(async () => {
+    if (!accessToken) return;
+    setLoading(true);
 
-//     try {
-//       const response = await eventBusApi.get('/saga/v1/demos', {
-//         headers: { Authorization: `Bearer ${accessToken}` },
-//         params: { page, size: rowsPerPage },
-//         skipAuthRedirect: true
-//       });
+    try {
+      const response = await sagaApi.get('/demos/v1/list-all', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: { page, size: rowsPerPage },
+        skipAuthRedirect: true
+      });
 
-//       const payload = response?.data?.data ?? response?.data;
-//       const items = payload.data ?? payload.content ?? payload.items ?? payload ?? [];
+      const payload = response?.data?.data ?? response?.data;
+      const items = payload.data ?? payload.content ?? payload.items ?? payload ?? [];
+      const normalized = items.map(normalizeDemo);
 
-//       const normalized = items.map(normalizeDemo);
+      setRows(normalized);
+      setTotal(payload.total ?? payload.totalElements ?? normalized.length);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message, { variant: 'error' });
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, page, rowsPerPage]);
 
-//       setRows(normalized);
-//       setTotal(payload.total ?? payload.totalElements ?? normalized.length);
-//     } catch (err) {
-//       if (!handleUnauthorized(err)) {
-//         enqueueSnackbar(err?.response?.data?.message || err.message, { variant: 'error' });
-//       }
-//     } finally {
-//       setLoading(false);
-//     }
-//   }, [accessToken, page, rowsPerPage]);
+  const filteredRows = useMemo(() => {
+    if (!search) return rows;
+    const term = search.toLowerCase();
+    return rows.filter((row) => {
+      return (
+        (row.cellphone || '').toLowerCase().includes(term) ||
+        (row.username || '').toLowerCase().includes(term) ||
+        (row.packageId || '').toLowerCase().includes(term) ||
+        (row.appCode || '').toLowerCase().includes(term)
+      );
+    });
+  }, [rows, search]);
 
   useEffect(() => {
     loadPackages();
@@ -248,7 +262,7 @@ export default function DemosLionTv() {
   }, []);
 
   useEffect(() => {
-   // loadDemos();
+    loadDemos();
   }, [page, rowsPerPage, refreshKey]);
 
   useEffect(() => {
@@ -295,7 +309,7 @@ export default function DemosLionTv() {
     setSending(true);
 
     try {
-      await eventBusApi.post('/saga/v1/create-demo', payload, {
+      await sagaApi.post('/saga/v1/create-demo', payload, {
         headers: { Authorization: `Bearer ${accessToken}` },
         skipAuthRedirect: true
       });
@@ -311,6 +325,12 @@ export default function DemosLionTv() {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleMacChange = (event) => {
+    const raw = (event.target.value || '').replace(/[^a-fA-F0-9]/g, '').slice(0, 12);
+    const formatted = raw.match(/.{1,2}/g)?.join(':') ?? raw;
+    setForm((prev) => ({ ...prev, macAddress: formatted.toLowerCase() }));
   };
 
   return (
@@ -343,7 +363,27 @@ export default function DemosLionTv() {
       </MainCard>
 
       {/* -------------------- TABLE ---------------------- */}
-      <MainCard title="Listado de demos">
+      <MainCard
+        title="Listado de demos"
+        secondary={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 360 } }}>
+            <TextField
+              size="small"
+              placeholder="Buscar (celular, usuario, package, app)"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              fullWidth
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                )
+              }}
+            />
+          </Box>
+        }
+      >
         <TableContainer component={Paper}>
           <Table size="small">
             <TableHead>
@@ -358,7 +398,7 @@ export default function DemosLionTv() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map((row) => (
+              {filteredRows.map((row) => (
                 <TableRow key={row.id || row.cellphone}>
                   <TableCell>{row.cellphone}</TableCell>
                   <TableCell>{row.countryCode}</TableCell>
@@ -369,7 +409,7 @@ export default function DemosLionTv() {
                   <TableCell>{formatDate(row.expiresAt)}</TableCell>
                 </TableRow>
               ))}
-              {!loading && rows.length === 0 && (
+              {!loading && filteredRows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} align="center">No hay demos registradas.</TableCell>
                 </TableRow>
@@ -395,9 +435,16 @@ export default function DemosLionTv() {
 
       {/* -------------------- MODAL ---------------------- */}
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="md">
-        <DialogTitle>
+        <DialogTitle sx={{ position: 'relative', pr: 5 }}>
           Crear Demo
-          <IconButton onClick={() => setOpenModal(false)}><CloseIcon /></IconButton>
+          <IconButton
+            aria-label="Cerrar"
+            onClick={() => setOpenModal(false)}
+            size="small"
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
         </DialogTitle>
 
         <DialogContent dividers>
@@ -430,7 +477,13 @@ export default function DemosLionTv() {
             <SectionCard title="Dispositivo y playlist">
               <Stack spacing={2}>
                 <TextField label="Nombre del dispositivo" required value={form.deviceName} onChange={handleFormChange('deviceName')} />
-                <TextField label="MAC Address" required value={form.macAddress} onChange={handleFormChange('macAddress')} />
+                <TextField
+                  label="MAC Address"
+                  required
+                  value={form.macAddress}
+                  onChange={handleMacChange}
+                  placeholder="aa:bb:cc:dd:ee:ff"
+                />
                 <TextField label="Playlist" required value={form.playlistName} onChange={handleFormChange('playlistName')} />
 
                 <FormControl fullWidth required>

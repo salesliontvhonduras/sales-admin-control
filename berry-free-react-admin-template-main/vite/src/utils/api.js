@@ -9,6 +9,14 @@ const API_SMS = import.meta.env.VITE_API_SMS;
 const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
 const API_CATALOGS = import.meta.env.VITE_API_CATALOGS;
 const API_LIONTV = import.meta.env.VITE_API_LIONTV;
+const API_SAGA = import.meta.env.VITE_API_SAGA;
+
+
+export const sagaApi = axios.create({
+  baseURL: API_SAGA,
+  headers: { 'Content-Type': 'application/json' }
+});
+
 
 export const lionTvApi = axios.create({
   baseURL: API_LIONTV,
@@ -67,6 +75,7 @@ reservationsApi.interceptors.request.use(attachToken);
 smsApi.interceptors.request.use(attachToken);
 lionTvApi.interceptors.request.use(attachToken);
 catalogsApi.interceptors.request.use(attachToken);
+sagaApi.interceptors.request.use(attachToken);
 
 
 
@@ -122,6 +131,7 @@ reservationsApi.interceptors.response.use((res) => res, handleUnauthorized);
 smsApi.interceptors.response.use((res) => res, handleUnauthorized);
 lionTvApi.interceptors.response.use((res) => res, handleUnauthorized);
 catalogsApi.interceptors.response.use((res) => res, handleUnauthorized);
+sagaApi.interceptors.response.use((res) => res, handleUnauthorized);
 
 // Catch-all por si se usa axios directo en algún punto
 axios.interceptors.response.use((res) => res, handleUnauthorized);
