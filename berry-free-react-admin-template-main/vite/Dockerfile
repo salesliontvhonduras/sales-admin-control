@@ -44,24 +44,18 @@ ENV NODE_ENV=production \
   VITE_API_SAGA=${VITE_API_SAGA} \
   VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
 
-# Toolchain por si hay deps nativas (bcrypt, sharp, etc.)
+# Toolchain por si hay deps nativas
 RUN apk add --no-cache python3 make g++ git
 
-# Copia manifests primero para cache
+# Copia manifests + lockfiles si existen (los * no fallan si no existen)
 COPY package.json ./
-# Copia lockfiles si existen (si no existen, no pasa nada)
 COPY yarn.lock* package-lock.json* pnpm-lock.yaml* ./
-
-# Si usas Yarn Berry (muy común en Yarn 4), copia su config si existe
 COPY .yarnrc.yml* ./
-COPY .yarn/ .yarn/
 
 # Instala deps: Yarn si hay yarn.lock, npm si hay package-lock
 RUN set -eux; \
   if [ -f yarn.lock ]; then \
     corepack enable; \
-    yarn --version || true; \
-    # Si tu proyecto tiene "packageManager": "yarn@4.x.x" en package.json, corepack usará esa versión
     yarn install --immutable; \
   elif [ -f package-lock.json ]; then \
     npm ci; \
@@ -72,7 +66,7 @@ RUN set -eux; \
     npm install; \
   fi
 
-# Copia el resto
+# Copia el resto del proyecto (si tuvieras .yarn, se copiaría aquí sin romper)
 COPY . .
 
 # Build
