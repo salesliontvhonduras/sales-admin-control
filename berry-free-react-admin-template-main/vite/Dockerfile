@@ -44,15 +44,15 @@ ENV NODE_ENV=production \
   VITE_API_SAGA=${VITE_API_SAGA} \
   VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
 
-# Toolchain por si hay deps nativas
+# toolchain por si hay deps nativas
 RUN apk add --no-cache python3 make g++ git
 
-# Copia manifests y lockfiles (los * NO fallan si no existen)
+# manifests + lockfiles (los * no fallan si no existen)
 COPY package.json ./
 COPY yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 COPY .yarnrc.yml* ./
 
-# Instala dependencias según lockfile
+# instalar deps
 RUN set -eux; \
   if [ -f yarn.lock ]; then \
     corepack enable; \
@@ -66,20 +66,31 @@ RUN set -eux; \
     npm install; \
   fi
 
-# Copia el resto del proyecto
+# copiar proyecto
 COPY . .
 
-# Build con logs detallados de Vite para ver el error real en Actions
+# Build (captura log completo y lo imprime si falla)
 RUN set -eux; \
+  set -o pipefail; \
   export DEBUG=vite:*; \
   export VITE_LOG_LEVEL=info; \
-  if [ -f yarn.lock ]; then \
-    yarn build --base "${VITE_APP_BASE_NAME:-/}"; \
-  elif [ -f pnpm-lock.yaml ]; then \
-    pnpm build --base "${VITE_APP_BASE_NAME:-/}"; \
-  else \
-    npm run build -- --base "${VITE_APP_BASE_NAME:-/}"; \
-  fi; \
+  echo "=== Node ==="; node -v; \
+  echo "=== Package manager ==="; \
+  if [ -f yarn.lock ]; then yarn -v; elif [ -f pnpm-lock.yaml ]; then pnpm -v; else npm -v; fi; \
+  echo "=== Running build (base=${VITE_APP_BASE_NAME:-/}) ==="; \
+  ( \
+    if [ -f yarn.lock ]; then \
+      yarn build --base "${VITE_APP_BASE_NAME:-/}" --debug; \
+    elif [ -f pnpm-lock.yaml ]; then \
+      pnpm build -- --base "${VITE_APP_BASE_NAME:-/}" --debug; \
+    else \
+      npm run build -- --base "${VITE_APP_BASE_NAME:-/}" --debug; \
+    fi \
+  ) 2>&1 | tee /tmp/vite-build.log; \
+  echo "=== Build exit code: $? ==="; \
+  echo "=== If build failed, full log below ==="; \
+  cat /tmp/vite-build.log; \
+  echo "=== End log ==="; \
   BASE_PATH="$(printf '%s' "${VITE_APP_BASE_NAME:-/}" | sed 's#^/##;s#/$##')"; \
   DEST="/app/output"; \
   if [ -n "$BASE_PATH" ]; then DEST="/app/output/${BASE_PATH}"; fi; \
@@ -96,7 +107,6 @@ ENV VITE_APP_BASE_NAME=${VITE_APP_BASE_NAME:-/}
 
 COPY --from=build /app/output/ /usr/share/nginx/html/
 
-# Genera nginx.conf para SPA en / o /<base> sin heredocs
 RUN set -eux; \
   BASE_PATH="${VITE_APP_BASE_NAME:-/}"; \
   BASE_PATH="${BASE_PATH%/}"; \
