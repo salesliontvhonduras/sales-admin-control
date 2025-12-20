@@ -49,7 +49,7 @@ ENV NODE_ENV=production \
 
 RUN apk add --no-cache python3 make g++ git
 
-# manifests + lockfiles (los * no fallan si no existen)
+# manifests + lockfiles
 COPY package.json ./
 COPY yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 COPY .yarnrc.yml* ./
@@ -70,31 +70,35 @@ RUN set -eux; \
 
 COPY . .
 
-# Build (captura log, imprime grep + tail si falla)
-RUN set -eux; \
+# Build (captura salida SIEMPRE y la imprime SIEMPRE si falla)
+RUN set -ux; \
   set -o pipefail; \
   export DEBUG=vite:*; \
   export VITE_LOG_LEVEL=info; \
   echo "=== Node ==="; node -v; \
-  echo "=== Running build (base=${VITE_APP_BASE_NAME:-/}) ==="; \
-  status=0; \
-  ( \
-    if [ -f yarn.lock ]; then \
-      yarn build --base "${VITE_APP_BASE_NAME:-/}" --debug --clearScreen=false; \
-    elif [ -f pnpm-lock.yaml ]; then \
-      pnpm build -- --base "${VITE_APP_BASE_NAME:-/}" --debug; \
-    else \
-      npm run build -- --base "${VITE_APP_BASE_NAME:-/}" --debug; \
-    fi \
-  ) 2>&1 | tee /tmp/vite-build.log || status=$?; \
+  echo "=== Base === ${VITE_APP_BASE_NAME:-/}"; \
+  echo "=== Build starting... ==="; \
+  set +e; \
+  if [ -f yarn.lock ]; then \
+    (yarn build --base "${VITE_APP_BASE_NAME:-/}" --debug --clearScreen=false) 2>&1 | tee /tmp/vite-build.log; \
+    status=${PIPESTATUS:-${?}}; \
+  elif [ -f pnpm-lock.yaml ]; then \
+    (pnpm build -- --base "${VITE_APP_BASE_NAME:-/}" --debug) 2>&1 | tee /tmp/vite-build.log; \
+    status=${PIPESTATUS:-${?}}; \
+  else \
+    (npm run build -- --base "${VITE_APP_BASE_NAME:-/}" --debug) 2>&1 | tee /tmp/vite-build.log; \
+    status=${PIPESTATUS:-${?}}; \
+  fi; \
+  set -e; \
   echo "=== Build exit code: ${status} ==="; \
   if [ "${status}" -ne 0 ]; then \
     echo "=== IMPORTANT: resolver errors (grep) ==="; \
-    grep -nE "Failed to resolve|Could not resolve|Cannot find module|ERR_MODULE_NOT_FOUND|ENOENT|Cannot resolve|Unresolved" /tmp/vite-build.log || true; \
-    echo "=== IMPORTANT: last 250 lines of build log ==="; \
-    tail -n 250 /tmp/vite-build.log || true; \
+    grep -nE "Failed to resolve|Could not resolve|Cannot find module|ERR_MODULE_NOT_FOUND|ENOENT|Cannot resolve|Unresolved|not found|is not defined" /tmp/vite-build.log || true; \
+    echo "=== IMPORTANT: last 300 lines ==="; \
+    tail -n 300 /tmp/vite-build.log || true; \
     exit "${status}"; \
   fi; \
+  echo "=== Build succeeded, copying dist ==="; \
   BASE_PATH="$(printf '%s' "${VITE_APP_BASE_NAME:-/}" | sed 's#^/##;s#/$##')"; \
   DEST="/app/output"; \
   if [ -n "$BASE_PATH" ]; then DEST="/app/output/${BASE_PATH}"; fi; \
