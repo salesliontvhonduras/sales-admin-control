@@ -19,6 +19,18 @@ jobs:
       contents: read
       packages: write
 
+    env:
+      VITE_APP_BASE_NAME: ${{ vars.VITE_APP_BASE_NAME || '/liontvpremium' }}
+      VITE_API_AUTH: ${{ secrets.VITE_API_AUTH || vars.VITE_API_AUTH || 'http://192.168.1.150:30100/' }}
+      VITE_API_USERS: ${{ secrets.VITE_API_USERS || vars.VITE_API_USERS || 'http://192.168.1.150:8082/v1' }}
+      VITE_API_PRODUCTS: ${{ secrets.VITE_API_PRODUCTS || vars.VITE_API_PRODUCTS || 'http://192.168.1.150:8083/v1' }}
+      VITE_API_RESERVATIONS: ${{ secrets.VITE_API_RESERVATIONS || vars.VITE_API_RESERVATIONS || 'http://192.168.1.150:8084/v1' }}
+      VITE_API_SMS: ${{ secrets.VITE_API_SMS || vars.VITE_API_SMS || '' }}
+      VITE_API_CATALOGS: ${{ secrets.VITE_API_CATALOGS || vars.VITE_API_CATALOGS || 'http://192.168.1.150:30104' }}
+      VITE_API_LIONTV: ${{ secrets.VITE_API_LIONTV || vars.VITE_API_LIONTV || 'http://192.168.1.150:30102' }}
+      VITE_API_SAGA: ${{ secrets.VITE_API_SAGA || vars.VITE_API_SAGA || 'http://192.168.1.150:30110' }}
+      VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID || vars.VITE_GOOGLE_CLIENT_ID || '881879419726-dviv75rgbqofnh33288jr5loriie72ot.apps.googleusercontent.com' }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,13 +68,13 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             VITE_APP_VERSION=${{ github.ref_name }}
-            VITE_APP_BASE_NAME=${{ vars.VITE_APP_BASE_NAME || '/liontvpremium' }}
-            VITE_API_AUTH=${{ secrets.VITE_API_AUTH || vars.VITE_API_AUTH || 'http://192.168.1.150:30100/' }}
-            VITE_API_USERS=${{ secrets.VITE_API_USERS || vars.VITE_API_USERS || 'http://192.168.1.150:8082/v1' }}
-            VITE_API_PRODUCTS=${{ secrets.VITE_API_PRODUCTS || vars.VITE_API_PRODUCTS || 'http://192.168.1.150:8083/v1' }}
-            VITE_API_RESERVATIONS=${{ secrets.VITE_API_RESERVATIONS || vars.VITE_API_RESERVATIONS || 'http://192.168.1.150:8084/v1' }}
-            VITE_API_SMS=${{ secrets.VITE_API_SMS || vars.VITE_API_SMS || '' }}
-            VITE_API_CATALOGS=${{ secrets.VITE_API_CATALOGS || vars.VITE_API_CATALOGS || 'http://192.168.1.150:30104' }}
-            VITE_API_LIONTV=${{ secrets.VITE_API_LIONTV || vars.VITE_API_LIONTV || 'http://192.168.1.150:30102' }}
-            VITE_API_SAGA=${{ secrets.VITE_API_SAGA || vars.VITE_API_SAGA || 'http://192.168.1.150:30110' }}
-            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID || vars.VITE_GOOGLE_CLIENT_ID || '881879419726-dviv75rgbqofnh33288jr5loriie72ot.apps.googleusercontent.com' }}
+            VITE_APP_BASE_NAME=${{ env.VITE_APP_BASE_NAME }}
+            VITE_API_AUTH=${{ env.VITE_API_AUTH }}
+            VITE_API_USERS=${{ env.VITE_API_USERS }}
+            VITE_API_PRODUCTS=${{ env.VITE_API_PRODUCTS }}
+            VITE_API_RESERVATIONS=${{ env.VITE_API_RESERVATIONS }}
+            VITE_API_SMS=${{ env.VITE_API_SMS }}
+            VITE_API_CATALOGS=${{ env.VITE_API_CATALOGS }}
+            VITE_API_LIONTV=${{ env.VITE_API_LIONTV }}
+            VITE_API_SAGA=${{ env.VITE_API_SAGA }}
+            VITE_GOOGLE_CLIENT_ID=${{ env.VITE_GOOGLE_CLIENT_ID }}
