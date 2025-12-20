@@ -13,7 +13,7 @@ ARG VITE_API_SAGA=http://192.168.1.150:30110
 ARG VITE_GOOGLE_CLIENT_ID=881879419726-dviv75rgbqofnh33288jr5loriie72ot.apps.googleusercontent.com
 
 # =========================
-# Build stage (Vite build)
+# Build stage
 # =========================
 FROM node:20-alpine AS build
 
@@ -42,9 +42,11 @@ ENV NODE_ENV=production \
   VITE_API_CATALOGS=${VITE_API_CATALOGS} \
   VITE_API_LIONTV=${VITE_API_LIONTV} \
   VITE_API_SAGA=${VITE_API_SAGA} \
-  VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+  VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID} \
+  CI=true \
+  FORCE_COLOR=0 \
+  TERM=dumb
 
-# toolchain por si hay deps nativas
 RUN apk add --no-cache python3 make g++ git
 
 # manifests + lockfiles (los * no fallan si no existen)
@@ -66,31 +68,33 @@ RUN set -eux; \
     npm install; \
   fi
 
-# copiar proyecto
 COPY . .
 
-# Build (captura log completo y lo imprime si falla)
+# Build (captura log, imprime grep + tail si falla)
 RUN set -eux; \
   set -o pipefail; \
   export DEBUG=vite:*; \
   export VITE_LOG_LEVEL=info; \
   echo "=== Node ==="; node -v; \
-  echo "=== Package manager ==="; \
-  if [ -f yarn.lock ]; then yarn -v; elif [ -f pnpm-lock.yaml ]; then pnpm -v; else npm -v; fi; \
   echo "=== Running build (base=${VITE_APP_BASE_NAME:-/}) ==="; \
+  status=0; \
   ( \
     if [ -f yarn.lock ]; then \
-      yarn build --base "${VITE_APP_BASE_NAME:-/}" --debug; \
+      yarn build --base "${VITE_APP_BASE_NAME:-/}" --debug --clearScreen=false; \
     elif [ -f pnpm-lock.yaml ]; then \
       pnpm build -- --base "${VITE_APP_BASE_NAME:-/}" --debug; \
     else \
       npm run build -- --base "${VITE_APP_BASE_NAME:-/}" --debug; \
     fi \
-  ) 2>&1 | tee /tmp/vite-build.log; \
-  echo "=== Build exit code: $? ==="; \
-  echo "=== If build failed, full log below ==="; \
-  cat /tmp/vite-build.log; \
-  echo "=== End log ==="; \
+  ) 2>&1 | tee /tmp/vite-build.log || status=$?; \
+  echo "=== Build exit code: ${status} ==="; \
+  if [ "${status}" -ne 0 ]; then \
+    echo "=== IMPORTANT: resolver errors (grep) ==="; \
+    grep -nE "Failed to resolve|Could not resolve|Cannot find module|ERR_MODULE_NOT_FOUND|ENOENT|Cannot resolve|Unresolved" /tmp/vite-build.log || true; \
+    echo "=== IMPORTANT: last 250 lines of build log ==="; \
+    tail -n 250 /tmp/vite-build.log || true; \
+    exit "${status}"; \
+  fi; \
   BASE_PATH="$(printf '%s' "${VITE_APP_BASE_NAME:-/}" | sed 's#^/##;s#/$##')"; \
   DEST="/app/output"; \
   if [ -n "$BASE_PATH" ]; then DEST="/app/output/${BASE_PATH}"; fi; \
