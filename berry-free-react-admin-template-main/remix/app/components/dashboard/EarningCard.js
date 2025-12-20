@@ -12,7 +12,6 @@ import SkeletonEarningCard from 'ui-component/cards/Skeleton/EarningCard';
 import PropTypes from 'prop-types';
 
 // assets
-import EarningIcon from "../../../assets/images/icons/earning.svg";
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import GetAppTwoToneIcon from '@mui/icons-material/GetAppOutlined';
@@ -91,7 +90,7 @@ const EarningCard = ({ isLoading }) => {
                                                 mt: 1
                                             }}
                                         >
-                                            <img src={EarningIcon} alt="Notification" />
+                                            
                                         </Avatar>
                                     </Grid>
                                     <Grid item>

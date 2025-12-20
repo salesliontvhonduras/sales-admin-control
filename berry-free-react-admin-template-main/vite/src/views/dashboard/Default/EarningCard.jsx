@@ -4,7 +4,7 @@ import React from 'react';
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import Avatar from '@mui/material/Avatar';
-import CardMedia from '@mui/material/CardMedia';
+//import CardMedia from '@mui/material/CardMedia';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
@@ -16,7 +16,7 @@ import MainCard from 'ui-component/cards/MainCard';
 import SkeletonEarningCard from 'ui-component/cards/Skeleton/EarningCard';
 
 // assets
-import EarningIcon from "../../../assets/images/icons/earning.svg";
+//import EarningIcon from "../../../assets/images/icons/earning.svg";
 
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
@@ -85,7 +85,7 @@ export default function EarningCard({ isLoading }) {
                   mt: 1
                 }}
               >
-                <CardMedia sx={{ width: 30, height: 30 }} component="img" src={EarningIcon} alt="Notification" />
+                
               </Avatar>
               <Avatar
                 variant="rounded"
