@@ -70,9 +70,8 @@ RUN set -eux; \
 
 COPY . .
 
-# Build (captura salida SIEMPRE y la imprime SIEMPRE si falla)
-RUN set -ux; \
-  set -o pipefail; \
+# Build: captura TODA la salida en archivo y luego la imprime SIEMPRE si falla
+RUN set -eux; \
   export DEBUG=vite:*; \
   export VITE_LOG_LEVEL=info; \
   echo "=== Node ==="; node -v; \
@@ -80,14 +79,14 @@ RUN set -ux; \
   echo "=== Build starting... ==="; \
   set +e; \
   if [ -f yarn.lock ]; then \
-    (yarn build --base "${VITE_APP_BASE_NAME:-/}" --debug --clearScreen=false) 2>&1 | tee /tmp/vite-build.log; \
-    status=${PIPESTATUS:-${?}}; \
+    yarn build --base "${VITE_APP_BASE_NAME:-/}" --debug --clearScreen=false > /tmp/vite-build.log 2>&1; \
+    status=$?; \
   elif [ -f pnpm-lock.yaml ]; then \
-    (pnpm build -- --base "${VITE_APP_BASE_NAME:-/}" --debug) 2>&1 | tee /tmp/vite-build.log; \
-    status=${PIPESTATUS:-${?}}; \
+    pnpm build -- --base "${VITE_APP_BASE_NAME:-/}" --debug > /tmp/vite-build.log 2>&1; \
+    status=$?; \
   else \
-    (npm run build -- --base "${VITE_APP_BASE_NAME:-/}" --debug) 2>&1 | tee /tmp/vite-build.log; \
-    status=${PIPESTATUS:-${?}}; \
+    npm run build -- --base "${VITE_APP_BASE_NAME:-/}" --debug > /tmp/vite-build.log 2>&1; \
+    status=$?; \
   fi; \
   set -e; \
   echo "=== Build exit code: ${status} ==="; \
@@ -96,6 +95,8 @@ RUN set -ux; \
     grep -nE "Failed to resolve|Could not resolve|Cannot find module|ERR_MODULE_NOT_FOUND|ENOENT|Cannot resolve|Unresolved|not found|is not defined" /tmp/vite-build.log || true; \
     echo "=== IMPORTANT: last 300 lines ==="; \
     tail -n 300 /tmp/vite-build.log || true; \
+    echo "=== IMPORTANT: full log (may be long) ==="; \
+    cat /tmp/vite-build.log || true; \
     exit "${status}"; \
   fi; \
   echo "=== Build succeeded, copying dist ==="; \
