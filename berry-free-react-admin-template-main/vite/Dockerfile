@@ -13,7 +13,7 @@ ARG VITE_API_SAGA=http://192.168.1.150:30110
 ARG VITE_GOOGLE_CLIENT_ID=881879419726-dviv75rgbqofnh33288jr5loriie72ot.apps.googleusercontent.com
 
 # =========================
-# Build stage (Vite build)
+# Build stage
 # =========================
 FROM node:22-alpine AS build
 
@@ -44,17 +44,46 @@ ENV NODE_ENV=production \
   VITE_API_SAGA=${VITE_API_SAGA} \
   VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
 
-COPY package.json yarn.lock ./
+# Toolchain por si hay deps nativas (bcrypt, sharp, etc.)
+RUN apk add --no-cache python3 make g++ git
 
-RUN corepack enable \
-  && yarn set version 4.10.3 \
-  && yarn install --immutable
+# Copia manifests primero para cache
+COPY package.json ./
+# Copia lockfiles si existen (si no existen, no pasa nada)
+COPY yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 
+# Si usas Yarn Berry (muy común en Yarn 4), copia su config si existe
+COPY .yarnrc.yml* ./
+COPY .yarn/ .yarn/
+
+# Instala deps: Yarn si hay yarn.lock, npm si hay package-lock
+RUN set -eux; \
+  if [ -f yarn.lock ]; then \
+    corepack enable; \
+    yarn --version || true; \
+    # Si tu proyecto tiene "packageManager": "yarn@4.x.x" en package.json, corepack usará esa versión
+    yarn install --immutable; \
+  elif [ -f package-lock.json ]; then \
+    npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then \
+    corepack enable; \
+    pnpm install --frozen-lockfile; \
+  else \
+    npm install; \
+  fi
+
+# Copia el resto
 COPY . .
 
-# Build Vite with base path, and copy output to /app/output (or /app/output/<basePath>)
+# Build
 RUN set -eux; \
-  yarn build --base "${VITE_APP_BASE_NAME:-/}"; \
+  if [ -f yarn.lock ]; then \
+    yarn build --base "${VITE_APP_BASE_NAME:-/}"; \
+  elif [ -f pnpm-lock.yaml ]; then \
+    pnpm build --base "${VITE_APP_BASE_NAME:-/}"; \
+  else \
+    npm run build -- --base "${VITE_APP_BASE_NAME:-/}"; \
+  fi; \
   BASE_PATH="$(printf '%s' "${VITE_APP_BASE_NAME:-/}" | sed 's#^/##;s#/$##')"; \
   DEST="/app/output"; \
   if [ -n "$BASE_PATH" ]; then DEST="/app/output/${BASE_PATH}"; fi; \
@@ -62,7 +91,7 @@ RUN set -eux; \
   cp -r dist/* "$DEST/"
 
 # =========================
-# Runtime stage (Nginx)
+# Runtime stage
 # =========================
 FROM nginx:1.27-alpine AS runner
 
@@ -71,7 +100,6 @@ ENV VITE_APP_BASE_NAME=${VITE_APP_BASE_NAME:-/}
 
 COPY --from=build /app/output/ /usr/share/nginx/html/
 
-# Generate nginx config depending on base path (no heredocs)
 RUN set -eux; \
   BASE_PATH="${VITE_APP_BASE_NAME:-/}"; \
   BASE_PATH="${BASE_PATH%/}"; \
