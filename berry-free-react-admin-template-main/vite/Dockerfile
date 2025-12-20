@@ -13,9 +13,9 @@ ARG VITE_API_SAGA=http://192.168.1.150:30110
 ARG VITE_GOOGLE_CLIENT_ID=881879419726-dviv75rgbqofnh33288jr5loriie72ot.apps.googleusercontent.com
 
 # =========================
-# Build stage
+# Build stage (Vite build)
 # =========================
-FROM node:22-alpine AS build
+FROM node:20-alpine AS build
 
 ARG VITE_APP_VERSION
 ARG VITE_APP_BASE_NAME
@@ -47,16 +47,16 @@ ENV NODE_ENV=production \
 # Toolchain por si hay deps nativas
 RUN apk add --no-cache python3 make g++ git
 
-# Copia manifests + lockfiles si existen (los * no fallan si no existen)
+# Copia manifests y lockfiles (los * NO fallan si no existen)
 COPY package.json ./
 COPY yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 COPY .yarnrc.yml* ./
 
-# Instala deps: Yarn si hay yarn.lock, npm si hay package-lock
+# Instala dependencias según lockfile
 RUN set -eux; \
   if [ -f yarn.lock ]; then \
     corepack enable; \
-    yarn install --immutable; \
+    yarn install; \
   elif [ -f package-lock.json ]; then \
     npm ci; \
   elif [ -f pnpm-lock.yaml ]; then \
@@ -66,11 +66,13 @@ RUN set -eux; \
     npm install; \
   fi
 
-# Copia el resto del proyecto (si tuvieras .yarn, se copiaría aquí sin romper)
+# Copia el resto del proyecto
 COPY . .
 
-# Build
+# Build con logs detallados de Vite para ver el error real en Actions
 RUN set -eux; \
+  export DEBUG=vite:*; \
+  export VITE_LOG_LEVEL=info; \
   if [ -f yarn.lock ]; then \
     yarn build --base "${VITE_APP_BASE_NAME:-/}"; \
   elif [ -f pnpm-lock.yaml ]; then \
@@ -85,7 +87,7 @@ RUN set -eux; \
   cp -r dist/* "$DEST/"
 
 # =========================
-# Runtime stage
+# Runtime stage (Nginx)
 # =========================
 FROM nginx:1.27-alpine AS runner
 
@@ -94,6 +96,7 @@ ENV VITE_APP_BASE_NAME=${VITE_APP_BASE_NAME:-/}
 
 COPY --from=build /app/output/ /usr/share/nginx/html/
 
+# Genera nginx.conf para SPA en / o /<base> sin heredocs
 RUN set -eux; \
   BASE_PATH="${VITE_APP_BASE_NAME:-/}"; \
   BASE_PATH="${BASE_PATH%/}"; \
