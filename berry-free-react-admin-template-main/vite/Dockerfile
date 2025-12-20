@@ -71,40 +71,37 @@ ENV VITE_APP_BASE_NAME=${VITE_APP_BASE_NAME:-/}
 
 COPY --from=build /app/output/ /usr/share/nginx/html/
 
-# Generate nginx config depending on base path
+# Generate nginx config depending on base path (no heredocs)
 RUN set -eux; \
   BASE_PATH="${VITE_APP_BASE_NAME:-/}"; \
   BASE_PATH="${BASE_PATH%/}"; \
   [ -z "$BASE_PATH" ] && BASE_PATH="/"; \
-  case "$BASE_PATH" in \
-    /) \
-      cat > /etc/nginx/conf.d/default.conf <<'EOF'; \
-server {
-  listen 80;
-  server_name _;
-  root /usr/share/nginx/html;
-  location / {
-    try_files $uri $uri/ /index.html;
-  }
-}
-EOF \
-      ;; \
-    *) \
-      BASE_PATH="/${BASE_PATH#/}"; \
-      cat > /etc/nginx/conf.d/default.conf <<EOF; \
-server {
-  listen 80;
-  server_name _;
-  root /usr/share/nginx/html;
-  location ${BASE_PATH}/ {
-    try_files \$uri \$uri/ ${BASE_PATH}/index.html;
-  }
-  location / {
-    return 301 ${BASE_PATH}/;
-  }
-}
-EOF \
-      ;; \
-  esac
+  if [ "$BASE_PATH" = "/" ]; then \
+    printf '%s\n' \
+      'server {' \
+      '  listen 80;' \
+      '  server_name _;' \
+      '  root /usr/share/nginx/html;' \
+      '  location / {' \
+      '    try_files $uri $uri/ /index.html;' \
+      '  }' \
+      '}' \
+    > /etc/nginx/conf.d/default.conf; \
+  else \
+    BASE_PATH="/${BASE_PATH#/}"; \
+    printf '%s\n' \
+      'server {' \
+      '  listen 80;' \
+      '  server_name _;' \
+      '  root /usr/share/nginx/html;' \
+      "  location ${BASE_PATH}/ {" \
+      "    try_files \$uri \$uri/ ${BASE_PATH}/index.html;" \
+      '  }' \
+      '  location / {' \
+      "    return 301 ${BASE_PATH}/;" \
+      '  }' \
+      '}' \
+    > /etc/nginx/conf.d/default.conf; \
+  fi
 
 EXPOSE 80
