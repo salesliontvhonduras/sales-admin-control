@@ -45,7 +45,9 @@ ENV NODE_ENV=production \
   VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID} \
   CI=true \
   FORCE_COLOR=0 \
-  TERM=dumb
+  TERM=dumb \
+  VITE_LOG_LEVEL=info \
+  DEBUG=vite:*
 
 RUN apk add --no-cache python3 make g++ git
 
@@ -54,7 +56,7 @@ COPY package.json ./
 COPY yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 COPY .yarnrc.yml* ./
 
-# instalar deps
+# install deps
 RUN set -eux; \
   if [ -f yarn.lock ]; then \
     corepack enable; \
@@ -70,36 +72,27 @@ RUN set -eux; \
 
 COPY . .
 
-# Build: captura TODA la salida en archivo y luego la imprime SIEMPRE si falla
-RUN set -eux; \
-  export DEBUG=vite:*; \
-  export VITE_LOG_LEVEL=info; \
+# Build (log en vivo; no redirecciones)
+RUN set -ux; \
   echo "=== Node ==="; node -v; \
   echo "=== Base === ${VITE_APP_BASE_NAME:-/}"; \
-  echo "=== Build starting... ==="; \
+  echo "=== Build starting (LIVE LOG) ==="; \
   set +e; \
   if [ -f yarn.lock ]; then \
-    yarn build --base "${VITE_APP_BASE_NAME:-/}" --debug --clearScreen=false > /tmp/vite-build.log 2>&1; \
+    yarn build --base "${VITE_APP_BASE_NAME:-/}" --debug --clearScreen=false; \
     status=$?; \
   elif [ -f pnpm-lock.yaml ]; then \
-    pnpm build -- --base "${VITE_APP_BASE_NAME:-/}" --debug > /tmp/vite-build.log 2>&1; \
+    pnpm build -- --base "${VITE_APP_BASE_NAME:-/}" --debug; \
     status=$?; \
   else \
-    npm run build -- --base "${VITE_APP_BASE_NAME:-/}" --debug > /tmp/vite-build.log 2>&1; \
+    npm run build -- --base "${VITE_APP_BASE_NAME:-/}" --debug; \
     status=$?; \
   fi; \
-  set -e; \
   echo "=== Build exit code: ${status} ==="; \
-  if [ "${status}" -ne 0 ]; then \
-    echo "=== IMPORTANT: resolver errors (grep) ==="; \
-    grep -nE "Failed to resolve|Could not resolve|Cannot find module|ERR_MODULE_NOT_FOUND|ENOENT|Cannot resolve|Unresolved|not found|is not defined" /tmp/vite-build.log || true; \
-    echo "=== IMPORTANT: last 300 lines ==="; \
-    tail -n 300 /tmp/vite-build.log || true; \
-    echo "=== IMPORTANT: full log (may be long) ==="; \
-    cat /tmp/vite-build.log || true; \
-    exit "${status}"; \
-  fi; \
-  echo "=== Build succeeded, copying dist ==="; \
+  test "${status}" -eq 0
+
+# Copiar dist a output con basePath (solo si build pasó)
+RUN set -eux; \
   BASE_PATH="$(printf '%s' "${VITE_APP_BASE_NAME:-/}" | sed 's#^/##;s#/$##')"; \
   DEST="/app/output"; \
   if [ -n "$BASE_PATH" ]; then DEST="/app/output/${BASE_PATH}"; fi; \
