@@ -12,7 +12,11 @@ ARG VITE_API_LIONTV=http://192.168.1.150:30102
 ARG VITE_API_SAGA=http://192.168.1.150:30110
 ARG VITE_GOOGLE_CLIENT_ID=881879419726-dviv75rgbqofnh33288jr5loriie72ot.apps.googleusercontent.com
 
+# =========================
+# Build stage (Vite build)
+# =========================
 FROM node:22-alpine AS build
+
 ARG VITE_APP_VERSION
 ARG VITE_APP_BASE_NAME
 ARG VITE_API_AUTH
@@ -26,6 +30,7 @@ ARG VITE_API_SAGA
 ARG VITE_GOOGLE_CLIENT_ID
 
 WORKDIR /app
+
 ENV NODE_ENV=production \
   VITE_APP_VERSION=${VITE_APP_VERSION} \
   VITE_APP_BASE_NAME=${VITE_APP_BASE_NAME} \
@@ -40,30 +45,40 @@ ENV NODE_ENV=production \
   VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
 
 COPY package.json yarn.lock ./
+
 RUN corepack enable \
   && yarn set version 4.10.3 \
   && yarn install --immutable
 
 COPY . .
-RUN yarn build --base "${VITE_APP_BASE_NAME:-/}" \
-  && BASE_PATH=$(printf '%s' "${VITE_APP_BASE_NAME:-/}" | sed 's#^/##;s#/$##') \
-  && DEST="/app/output" \
-  && if [ -n "$BASE_PATH" ]; then DEST="/app/output/${BASE_PATH}"; fi \
-  && mkdir -p "$DEST" \
-  && cp -r dist/* "$DEST/"
 
+# Build Vite with base path, and copy output to /app/output (or /app/output/<basePath>)
+RUN set -eux; \
+  yarn build --base "${VITE_APP_BASE_NAME:-/}"; \
+  BASE_PATH="$(printf '%s' "${VITE_APP_BASE_NAME:-/}" | sed 's#^/##;s#/$##')"; \
+  DEST="/app/output"; \
+  if [ -n "$BASE_PATH" ]; then DEST="/app/output/${BASE_PATH}"; fi; \
+  mkdir -p "$DEST"; \
+  cp -r dist/* "$DEST/"
+
+# =========================
+# Runtime stage (Nginx)
+# =========================
 FROM nginx:1.27-alpine AS runner
+
 ARG VITE_APP_BASE_NAME
 ENV VITE_APP_BASE_NAME=${VITE_APP_BASE_NAME:-/}
 
 COPY --from=build /app/output/ /usr/share/nginx/html/
 
-RUN BASE_PATH="${VITE_APP_BASE_NAME:-/}" \
-  && BASE_PATH="${BASE_PATH%/}" \
-  && if [ -z "$BASE_PATH" ]; then BASE_PATH="/"; fi \
-  && if [ "$BASE_PATH" != "/" ]; then BASE_PATH="/${BASE_PATH#/}"; fi \
-  && if [ "$BASE_PATH" = "/" ]; then \
-cat > /etc/nginx/conf.d/default.conf <<'EOF'
+# Generate nginx config depending on base path
+RUN set -eux; \
+  BASE_PATH="${VITE_APP_BASE_NAME:-/}"; \
+  BASE_PATH="${BASE_PATH%/}"; \
+  [ -z "$BASE_PATH" ] && BASE_PATH="/"; \
+  case "$BASE_PATH" in \
+    /) \
+      cat > /etc/nginx/conf.d/default.conf <<'EOF'; \
 server {
   listen 80;
   server_name _;
@@ -72,9 +87,11 @@ server {
     try_files $uri $uri/ /index.html;
   }
 }
-EOF
-     else \
-cat > /etc/nginx/conf.d/default.conf <<EOF
+EOF \
+      ;; \
+    *) \
+      BASE_PATH="/${BASE_PATH#/}"; \
+      cat > /etc/nginx/conf.d/default.conf <<EOF; \
 server {
   listen 80;
   server_name _;
@@ -86,7 +103,8 @@ server {
     return 301 ${BASE_PATH}/;
   }
 }
-EOF
-     fi
+EOF \
+      ;; \
+  esac
 
 EXPOSE 80
