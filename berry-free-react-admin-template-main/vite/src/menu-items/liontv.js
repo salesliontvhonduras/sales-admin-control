@@ -1,7 +1,8 @@
-import { IconDeviceTv } from '@tabler/icons-react';
+import { IconDeviceTv, IconUsers } from '@tabler/icons-react';
 
 const icons = {
-  IconDeviceTv
+  IconDeviceTv,
+  IconUsers
 };
 
 const liontv = {
@@ -15,6 +16,14 @@ const liontv = {
       type: 'item',
       url: '/liontv/demos',
       icon: icons.IconDeviceTv,
+      breadcrumbs: true
+    },
+    {
+      id: 'liontv-customers',
+      title: 'Clientes',
+      type: 'item',
+      url: '/liontv/customers',
+      icon: icons.IconUsers,
       breadcrumbs: true
     }
   ]

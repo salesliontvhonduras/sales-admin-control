@@ -5,6 +5,7 @@ import RequireAuth from '../routes/RequireAuth';
 import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
 import DemosLionTv from 'views/liontv/DemosLionTv';
+import CustomersLionTv from 'views/liontv/CustomersLionTv';
 
 
 // dashboard routing
@@ -34,6 +35,10 @@ const MainRoutes = {
         {
           path: '/liontv/demos',
           element: <DemosLionTv />
+        },
+        {
+          path: '/liontv/customers',
+          element: <CustomersLionTv />
         },
         {
           path: 'sms',

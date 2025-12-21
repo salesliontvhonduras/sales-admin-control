@@ -31,12 +31,16 @@ import InputLabel from '@mui/material/InputLabel';
 import FormHelperText from '@mui/material/FormHelperText';
 import SearchIcon from '@mui/icons-material/Search';
 import CircularProgress from '@mui/material/CircularProgress';
+import Avatar from '@mui/material/Avatar';
 
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CloseIcon from '@mui/icons-material/Close';
 import NoteAltOutlinedIcon from '@mui/icons-material/NoteAltOutlined';
 import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
+import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined';
+import DevicesOtherOutlinedIcon from '@mui/icons-material/DevicesOtherOutlined';
+import QueueMusicIcon from '@mui/icons-material/QueueMusic';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
@@ -64,6 +68,19 @@ const APP_CODE_STATIC = [
   { value: '2', label: '2 - Smart One IPTV' }
 ];
 
+const fieldSx = {
+  '& .MuiInputBase-root': { borderRadius: 2 },
+  '& .MuiInputLabel-root': { fontWeight: 500 }
+};
+
+const sectionSx = {
+  p: 2,
+  borderRadius: 2,
+  border: '1px solid',
+  borderColor: 'divider',
+  bgcolor: 'background.paper'
+};
+
 function formatDate(value) {
   if (!value) return '-';
   const date = new Date(value);
@@ -75,21 +92,20 @@ function StatusChip({ status }) {
   return <Chip size="small" color={color} label={status || '-'} />;
 }
 
-function SectionCard({ title, children }) {
+function SectionCard({ title, helper, children }) {
   return (
-    <Box
-      sx={{
-        p: 2,
-        borderRadius: 2,
-        bgcolor: 'background.paper',
-        border: '1px solid',
-        borderColor: 'divider'
-      }}
-    >
-      <Typography variant="subtitle1" gutterBottom>
-        {title}
-      </Typography>
-      {children}
+    <Box sx={sectionSx}>
+      <Stack spacing={1.5}>
+        <Box>
+          <Typography variant="subtitle2">{title}</Typography>
+          {helper ? (
+            <Typography variant="caption" color="text.secondary">
+              {helper}
+            </Typography>
+          ) : null}
+        </Box>
+        {children}
+      </Stack>
     </Box>
   );
 }
@@ -227,8 +243,9 @@ export default function DemosLionTv() {
         skipAuthRedirect: true
       });
 
-      const payload = response?.data?.data ?? response?.data;
-      const items = payload.data ?? payload.content ?? payload.items ?? payload ?? [];
+      const payload = response?.data?.data ?? response?.data ?? {};
+      const rawItems = payload.data ?? payload.content ?? payload.items ?? payload ?? [];
+      const items = Array.isArray(rawItems) ? rawItems : [];
       const normalized = items.map(normalizeDemo);
 
       setRows(normalized);
@@ -436,7 +453,25 @@ export default function DemosLionTv() {
       {/* -------------------- MODAL ---------------------- */}
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="md">
         <DialogTitle sx={{ position: 'relative', pr: 5 }}>
-          Crear Demo
+          <Stack direction="row" alignItems="center" spacing={1.5}>
+            <Avatar
+              sx={{
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                width: 36,
+                height: 36,
+                boxShadow: 3
+              }}
+            >
+              <AddCircleOutlineIcon fontSize="small" />
+            </Avatar>
+            <Box>
+              <Typography variant="h6">Nueva demo</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Genera un demo con datos de contacto y dispositivo.
+              </Typography>
+            </Box>
+          </Stack>
           <IconButton
             aria-label="Cerrar"
             onClick={() => setOpenModal(false)}
@@ -447,83 +482,160 @@ export default function DemosLionTv() {
           </IconButton>
         </DialogTitle>
 
-        <DialogContent dividers>
-          <Stack spacing={3}>
-            {/* DATOS DEL CLIENTE */}
-            <SectionCard title="Datos del cliente">
-              <Stack spacing={2}>
-                <TextField
-                  required
-                  label="Celular"
-                  value={form.cellphone}
-                  onChange={handleFormChange('cellphone')}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start"><PhoneIphoneIcon /></InputAdornment>
-                  }}
-                />
+        <DialogContent dividers sx={{ bgcolor: 'background.default' }}>
+          <Box
+            sx={{
+              mb: 2,
+              p: 2,
+              borderRadius: 2,
+              background: (theme) =>
+                `linear-gradient(135deg, ${theme.palette.primary.light}1A, ${theme.palette.primary.main}12)`
+            }}
+          >
+            <Typography variant="subtitle2" color="text.secondary">
+              Datos de la demo
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Completa los campos requeridos; las fechas se asignan automáticamente según tu backend.
+            </Typography>
+          </Box>
 
-                <FormControl fullWidth required>
-                  <InputLabel>País</InputLabel>
-                  <Select value={form.countryCode} onChange={handleFormChange('countryCode')} disabled={countriesLoading}>
-                    {countries.map((c) => (
-                      <MenuItem key={c.code} value={c.code}>{c.name} (+{c.code})</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Stack>
+          <Stack spacing={2}>
+            <SectionCard title="Cliente y app" helper="Celular, país y aplicación a asignar.">
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    required
+                    label="Celular"
+                    value={form.cellphone}
+                    onChange={handleFormChange('cellphone')}
+                    fullWidth
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PhoneIphoneIcon />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControl fullWidth required sx={fieldSx}>
+                    <InputLabel>País</InputLabel>
+                    <Select value={form.countryCode} onChange={handleFormChange('countryCode')} disabled={countriesLoading} label="País">
+                      {countries.map((c) => (
+                        <MenuItem key={c.code} value={c.code}>
+                          {c.name} (+{c.code})
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {countriesLoading && <FormHelperText>Cargando países...</FormHelperText>}
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <FormControl fullWidth required sx={fieldSx}>
+                    <InputLabel>Aplicación</InputLabel>
+                    <Select value={form.appCode} onChange={handleAppCodeChange} disabled={appCodesLoading} label="Aplicación">
+                      {appCodes.map((a) => (
+                        <MenuItem key={a.value} value={a.value}>
+                          {a.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {appCodesLoading && (
+                      <FormHelperText>
+                        <CircularProgress size={14} sx={{ mr: 1 }} />
+                        Cargando…
+                      </FormHelperText>
+                    )}
+                  </FormControl>
+                </Grid>
+              </Grid>
             </SectionCard>
 
-            {/* DISPOSITIVO */}
-            <SectionCard title="Dispositivo y playlist">
-              <Stack spacing={2}>
-                <TextField label="Nombre del dispositivo" required value={form.deviceName} onChange={handleFormChange('deviceName')} />
-                <TextField
-                  label="MAC Address"
-                  required
-                  value={form.macAddress}
-                  onChange={handleMacChange}
-                  placeholder="aa:bb:cc:dd:ee:ff"
-                />
-                <TextField label="Playlist" required value={form.playlistName} onChange={handleFormChange('playlistName')} />
-
-                <FormControl fullWidth required>
-                  <InputLabel>Package ID</InputLabel>
-                  <Select value={form.packageId} onChange={handleFormChange('packageId')} disabled={packagesLoading}>
-                    {packages.map((p) => (
-                      <MenuItem key={p.id} value={p.id}>{p.name} ({p.id})</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Stack>
+            <SectionCard title="Dispositivo y playlist" helper="Datos del dispositivo y playlist a provisionar.">
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    label="Nombre del dispositivo"
+                    required
+                    value={form.deviceName}
+                    onChange={handleFormChange('deviceName')}
+                    fullWidth
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <DevicesOtherOutlinedIcon />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    label="MAC Address"
+                    required
+                    value={form.macAddress}
+                    onChange={handleMacChange}
+                    placeholder="aa:bb:cc:dd:ee:ff"
+                    fullWidth
+                    sx={fieldSx}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    label="Playlist"
+                    required
+                    value={form.playlistName}
+                    onChange={handleFormChange('playlistName')}
+                    fullWidth
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <QueueMusicIcon />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
+              </Grid>
             </SectionCard>
 
-            {/* METADATOS */}
-            <SectionCard title="Metadatos">
-              <Stack spacing={2}>
-                {/* SELECT APLICACIÓN */}
-                <FormControl fullWidth required>
-                  <InputLabel>Aplicación</InputLabel>
-                  <Select
-                    value={form.appCode}
-                    onChange={handleAppCodeChange}
-                    disabled={appCodesLoading}
-                  >
-                    {appCodes.map((a) => (
-                      <MenuItem key={a.value} value={a.value}>{a.label}</MenuItem>
-                    ))}
-                  </Select>
-                  {appCodesLoading && <FormHelperText><CircularProgress size={14} /> Cargando…</FormHelperText>}
-                </FormControl>
-
-                <TextField
-                  label="Nota"
-                  value={form.note}
-                  onChange={handleFormChange('note')}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start"><NoteAltOutlinedIcon /></InputAdornment>
-                  }}
-                />
-              </Stack>
+            <SectionCard title="Servicio" helper="Selecciona el paquete demo y agrega notas si aplica.">
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth required sx={fieldSx}>
+                    <InputLabel>Package ID</InputLabel>
+                    <Select value={form.packageId} onChange={handleFormChange('packageId')} disabled={packagesLoading} label="Package ID">
+                      {packages.map((p) => (
+                        <MenuItem key={p.id} value={p.id}>
+                          {p.name} ({p.id})
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {packagesLoading && <FormHelperText>Cargando paquetes…</FormHelperText>}
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    label="Nota"
+                    value={form.note}
+                    onChange={handleFormChange('note')}
+                    fullWidth
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <NoteAltOutlinedIcon />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
+              </Grid>
             </SectionCard>
           </Stack>
         </DialogContent>
