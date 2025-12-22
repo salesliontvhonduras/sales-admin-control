@@ -6,6 +6,7 @@ import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
 import DemosLionTv from 'views/liontv/DemosLionTv';
 import CustomersLionTv from 'views/liontv/CustomersLionTv';
+import SubscriptionsLionTv from 'views/liontv/SubscriptionsLionTv';
 
 
 // dashboard routing
@@ -39,6 +40,10 @@ const MainRoutes = {
         {
           path: '/liontv/customers',
           element: <CustomersLionTv />
+        },
+        {
+          path: '/liontv/subscriptions',
+          element: <SubscriptionsLionTv />
         },
         {
           path: 'sms',

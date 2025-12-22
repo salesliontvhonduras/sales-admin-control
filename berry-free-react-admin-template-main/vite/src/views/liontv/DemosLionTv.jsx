@@ -32,6 +32,7 @@ import FormHelperText from '@mui/material/FormHelperText';
 import SearchIcon from '@mui/icons-material/Search';
 import CircularProgress from '@mui/material/CircularProgress';
 import Avatar from '@mui/material/Avatar';
+import { useTheme, useMediaQuery } from '@mui/material';
 
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -69,7 +70,7 @@ const APP_CODE_STATIC = [
 ];
 
 const fieldSx = {
-  '& .MuiInputBase-root': { borderRadius: 2 },
+  '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
   '& .MuiInputLabel-root': { fontWeight: 500 }
 };
 
@@ -131,6 +132,8 @@ function normalizeDemo(item = {}) {
 export default function DemosLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -451,7 +454,7 @@ export default function DemosLionTv() {
       </MainCard>
 
       {/* -------------------- MODAL ---------------------- */}
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="md">
+      <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="md" fullScreen={isMobile}>
         <DialogTitle sx={{ position: 'relative', pr: 5 }}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Avatar
@@ -482,7 +485,14 @@ export default function DemosLionTv() {
           </IconButton>
         </DialogTitle>
 
-        <DialogContent dividers sx={{ bgcolor: 'background.default' }}>
+        <DialogContent
+          dividers
+          sx={{
+            bgcolor: 'background.default',
+            px: { xs: 1.5, sm: 3 },
+            py: { xs: 1.5, sm: 2 }
+          }}
+        >
           <Box
             sx={{
               mb: 2,
@@ -503,7 +513,7 @@ export default function DemosLionTv() {
           <Stack spacing={2}>
             <SectionCard title="Cliente y app" helper="Celular, país y aplicación a asignar.">
               <Grid container spacing={2}>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} sm={4} md={4}>
                   <TextField
                     required
                     label="Celular"
@@ -520,7 +530,7 @@ export default function DemosLionTv() {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} sm={4} md={4}>
                   <FormControl fullWidth required sx={fieldSx}>
                     <InputLabel>País</InputLabel>
                     <Select value={form.countryCode} onChange={handleFormChange('countryCode')} disabled={countriesLoading} label="País">
@@ -533,7 +543,7 @@ export default function DemosLionTv() {
                     {countriesLoading && <FormHelperText>Cargando países...</FormHelperText>}
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} sm={4} md={4}>
                   <FormControl fullWidth required sx={fieldSx}>
                     <InputLabel>Aplicación</InputLabel>
                     <Select value={form.appCode} onChange={handleAppCodeChange} disabled={appCodesLoading} label="Aplicación">

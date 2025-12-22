@@ -34,6 +34,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
 import FormHelperText from '@mui/material/FormHelperText';
+import { useTheme, useMediaQuery } from '@mui/material';
 
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
@@ -65,7 +66,7 @@ const channelOptions = [
 ];
 
 const fieldSx = {
-  '& .MuiInputBase-root': { borderRadius: 2 },
+  '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
   '& .MuiInputLabel-root': { fontWeight: 500 }
 };
 
@@ -172,6 +173,8 @@ function FormSection({ title, helper, children }) {
 export default function CustomersLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const defaultForm = {
     customerId: null,
@@ -588,7 +591,7 @@ export default function CustomersLionTv() {
         />
       </MainCard>
 
-      <Dialog open={openCreate} onClose={() => setOpenCreate(false)} fullWidth maxWidth="md">
+      <Dialog open={openCreate} onClose={() => setOpenCreate(false)} fullWidth maxWidth="md" fullScreen={isMobile}>
         <DialogTitle sx={{ pb: 1 }}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Avatar
@@ -610,7 +613,14 @@ export default function CustomersLionTv() {
             </Box>
           </Stack>
         </DialogTitle>
-        <DialogContent dividers sx={{ bgcolor: 'background.default' }}>
+        <DialogContent
+          dividers
+          sx={{
+            bgcolor: 'background.default',
+            px: { xs: 1.5, sm: 3 },
+            py: { xs: 1.5, sm: 2 }
+          }}
+        >
           <Box
             sx={{
               mb: 2,
@@ -631,7 +641,7 @@ export default function CustomersLionTv() {
           <Stack spacing={2}>
             <FormSection title="Identificación" helper="Nombre, género y estado del cliente.">
               <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} sm={4} md={4}>
                   <TextField
                     required
                     label="Nombre completo"
@@ -648,7 +658,7 @@ export default function CustomersLionTv() {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} sm={4} md={4}>
                   <FormControl fullWidth required sx={fieldSx}>
                     <InputLabel>Genero</InputLabel>
                     <Select value={form.gender} label="Genero" onChange={handleFormChange('gender')}>
@@ -658,7 +668,7 @@ export default function CustomersLionTv() {
                   </FormControl>
                 </Grid>
 
-                <Grid item xs={12} md={2}>
+                <Grid item xs={12} sm={4} md={4}>
                   <FormControl fullWidth required sx={fieldSx}>
                     <InputLabel>Estado</InputLabel>
                     <Select value={form.customerStatus} label="Estado" onChange={handleFormChange('customerStatus')}>
@@ -824,7 +834,7 @@ export default function CustomersLionTv() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openEdit} onClose={() => setOpenEdit(false)} fullWidth maxWidth="md">
+      <Dialog open={openEdit} onClose={() => setOpenEdit(false)} fullWidth maxWidth="md" fullScreen={isMobile}>
         <DialogTitle sx={{ pb: 1 }}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Avatar
@@ -846,7 +856,14 @@ export default function CustomersLionTv() {
             </Box>
           </Stack>
         </DialogTitle>
-        <DialogContent dividers sx={{ bgcolor: 'background.default' }}>
+        <DialogContent
+          dividers
+          sx={{
+            bgcolor: 'background.default',
+            px: { xs: 1.5, sm: 3 },
+            py: { xs: 1.5, sm: 2 }
+          }}
+        >
           <Box
             sx={{
               mb: 2,
@@ -867,7 +884,7 @@ export default function CustomersLionTv() {
           <Stack spacing={2}>
             <FormSection title="Identificación" helper="Nombre, género, estado y canal.">
               <Grid container spacing={2}>
-                <Grid item xs={12} md={5}>
+                <Grid item xs={12} sm={3} md={3}>
                   <TextField
                     required
                     label="Nombre completo"
@@ -884,7 +901,7 @@ export default function CustomersLionTv() {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} md={3}>
+                <Grid item xs={12} sm={3} md={3}>
                   <FormControl fullWidth required sx={fieldSx}>
                     <InputLabel>Genero</InputLabel>
                     <Select value={form.gender} label="Genero" onChange={handleFormChange('gender')}>
@@ -893,7 +910,7 @@ export default function CustomersLionTv() {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} md={2}>
+                <Grid item xs={12} sm={3} md={3}>
                   <FormControl fullWidth required sx={fieldSx}>
                     <InputLabel>Estado</InputLabel>
                     <Select value={form.customerStatus} label="Estado" onChange={handleFormChange('customerStatus')}>
@@ -902,7 +919,7 @@ export default function CustomersLionTv() {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} md={2}>
+                <Grid item xs={12} sm={3} md={3}>
                   <FormControl fullWidth required sx={fieldSx}>
                     <InputLabel>Canal</InputLabel>
                     <Select value={form.channel} label="Canal" onChange={handleFormChange('channel')}>
@@ -1058,7 +1075,13 @@ export default function CustomersLionTv() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openDelete.open} onClose={() => setOpenDelete({ open: false, row: null })} maxWidth="xs" fullWidth>
+      <Dialog
+        open={openDelete.open}
+        onClose={() => setOpenDelete({ open: false, row: null })}
+        maxWidth="xs"
+        fullWidth
+        fullScreen={isMobile}
+      >
         <DialogTitle>Eliminar cliente</DialogTitle>
         <DialogContent dividers>
           <Typography>
