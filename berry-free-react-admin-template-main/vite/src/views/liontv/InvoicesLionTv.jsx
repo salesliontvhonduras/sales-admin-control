@@ -86,7 +86,7 @@ function formatDateTimePayload(value) {
   if (!value) return null;
   // value esperado: yyyy-MM-dd (desde input date)
   const base = value.slice(0, 10);
-  return `${base} 00:00:00`;
+  return `${base}T00:00:00`;
 }
 
 function StatusChip({ status }) {
