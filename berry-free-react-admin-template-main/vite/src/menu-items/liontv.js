@@ -1,9 +1,10 @@
-import { IconDeviceTv, IconUsers, IconReceipt2 } from '@tabler/icons-react';
+import { IconDeviceTv, IconUsers, IconReceipt2, IconFileInvoice } from '@tabler/icons-react';
 
 const icons = {
   IconDeviceTv,
   IconUsers,
-  IconReceipt2
+  IconReceipt2,
+  IconFileInvoice
 };
 
 const liontv = {
@@ -25,6 +26,14 @@ const liontv = {
       type: 'item',
       url: '/liontv/subscriptions',
       icon: icons.IconReceipt2,
+      breadcrumbs: true
+    },
+    {
+      id: 'liontv-invoices',
+      title: 'Facturas',
+      type: 'item',
+      url: '/liontv/invoices',
+      icon: icons.IconFileInvoice,
       breadcrumbs: true
     },
     {
