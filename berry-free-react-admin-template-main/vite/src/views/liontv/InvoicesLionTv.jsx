@@ -82,6 +82,13 @@ function formatDateInput(value) {
   return '';
 }
 
+function formatDateTimePayload(value) {
+  if (!value) return null;
+  // value esperado: yyyy-MM-dd (desde input date)
+  const base = value.slice(0, 10);
+  return `${base} 00:00:00`;
+}
+
 function StatusChip({ status }) {
   const color = statusColors[status] || 'default';
   return <Chip size="small" color={color} label={status || '-'} />;
@@ -321,7 +328,7 @@ export default function InvoicesLionTv() {
 
     const payload = {
       serviceId: Number(form.serviceId),
-      paymentDate: form.paymentDate || null,
+      paymentDate: formatDateTimePayload(form.paymentDate),
       amountPaid: form.amountPaid ? Number(form.amountPaid) : 0,
       amountDiscount: form.amountDiscount ? Number(form.amountDiscount) : 0,
       status: form.status || 'Pending',
