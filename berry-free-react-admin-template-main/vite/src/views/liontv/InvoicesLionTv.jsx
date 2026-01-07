@@ -65,7 +65,7 @@ const sectionSx = {
   bgcolor: 'background.paper'
 };
 
-const PAYMENT_METHODS = ['Bank Transfer', 'Paypal', 'Ecommerce', 'Link pago'];
+const PAYMENT_METHODS = ['Bank Transfer', 'Paypal', 'Ecommerce', 'Link pago','Debito Automatico'];
 const STATUS_OPTIONS = ['Paid', 'Pending'];
 
 function formatDate(value) {
@@ -214,7 +214,13 @@ export default function InvoicesLionTv() {
       });
       const payload = res?.data?.data ?? res?.data ?? {};
       const raw = payload.data ?? payload.items ?? payload.content ?? payload ?? [];
-      setCustomers(Array.isArray(raw) ? raw : []);
+      const list = Array.isArray(raw) ? raw : [];
+      const sorted = list.sort((a, b) => {
+        const aName = (a.customerFullname || a.fullName || a.username || a.customerMail || '').toString().toLowerCase();
+        const bName = (b.customerFullname || b.fullName || b.username || b.customerMail || '').toString().toLowerCase();
+        return aName.localeCompare(bName);
+      });
+      setCustomers(sorted);
     } catch (err) {
       if (!handleUnauthorized(err)) {
         enqueueSnackbar('No se pudieron cargar los clientes.', { variant: 'warning' });
@@ -231,7 +237,10 @@ export default function InvoicesLionTv() {
         params: { index: 0, size: 200, start: 0, filters: '', sorting: '' }
       });
       const list = response?.data?.data?.data || [];
-      setPackages(Array.isArray(list) ? list : []);
+      const filtered = (Array.isArray(list) ? list : []).filter(
+        (pkg) => !String(pkg?.name || '').trim().toUpperCase().startsWith('DEMO')
+      );
+      setPackages(filtered);
     } catch (err) {
       enqueueSnackbar('No se pudieron cargar los paquetes.', { variant: 'warning' });
     } finally {
