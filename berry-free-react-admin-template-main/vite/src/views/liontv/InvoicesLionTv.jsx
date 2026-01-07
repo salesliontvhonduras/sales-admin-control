@@ -65,7 +65,13 @@ const sectionSx = {
   bgcolor: 'background.paper'
 };
 
-const PAYMENT_METHODS = ['Bank Transfer', 'Paypal', 'Ecommerce', 'Link pago','Debito Automatico'];
+const PAYMENT_METHODS = [
+  { value: 'Bank Transfer', label: 'Bank Transfer' },
+  { value: 'Paypal', label: 'Paypal' },
+  { value: 'Ecommerce', label: 'Ecommerce' },
+  { value: 'Link pago', label: 'Link pago' },
+  { value: 'Debito Automatico', label: 'Débito Automático' }
+];
 const STATUS_OPTIONS = ['Paid', 'Pending'];
 
 function formatDate(value) {
@@ -692,8 +698,8 @@ export default function InvoicesLionTv() {
                         <em>Selecciona</em>
                       </MenuItem>
                       {PAYMENT_METHODS.map((m) => (
-                        <MenuItem key={m} value={m}>
-                          {m}
+                        <MenuItem key={m.value} value={m.value}>
+                          {m.label}
                         </MenuItem>
                       ))}
                     </Select>
