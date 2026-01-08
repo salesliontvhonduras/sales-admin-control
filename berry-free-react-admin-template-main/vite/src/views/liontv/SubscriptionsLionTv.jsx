@@ -50,6 +50,7 @@ import { lionTvApi } from 'utils/api';
 const statusColors = {
   ACTIVE: 'success',
   INACTIVE: 'default',
+  EXPIRED: 'error',
   CANCELLED: 'error'
 };
 
