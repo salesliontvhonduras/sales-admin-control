@@ -110,7 +110,9 @@ function normalizeSubscription(item = {}) {
     packageId: item.packageId ?? null,
     automaticPay: Boolean(item.automaticPay),
     linkAutomatic: item.linkAutomatic ?? '',
-    username: item.username ?? ''
+    username: item.username ?? '',
+    customer_name: item.customer_name ?? '',
+    username_line: item.username_line ?? '',
   };
 }
 
@@ -471,8 +473,8 @@ export default function SubscriptionsLionTv() {
               {filteredRows.map((row) => (
                 <TableRow key={row.subscriptionId || row.lineId}>
                   <TableCell>{row.subscriptionId}</TableCell>
-                  <TableCell>{row.customerId}</TableCell>
-                  <TableCell>{row.lineId}</TableCell>
+                  <TableCell>{row.customer_name}</TableCell>
+                  <TableCell>{row.username_line}</TableCell>
                   <TableCell>{row.packageId}</TableCell>
                   <TableCell>
                     <StatusChip status={row.status} />

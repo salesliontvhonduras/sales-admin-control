@@ -132,7 +132,8 @@ function normalizeInvoice(item = {}) {
     bankId: item.bankId ?? null,
     notes: item.notes ?? '',
     createdAt: item.createdAt ?? null,
-    updatedAt: item.updatedAt ?? null
+    updatedAt: item.updatedAt ?? null,
+    customer_name: item.customer_name ?? '',
   };
 }
 
@@ -479,7 +480,7 @@ export default function InvoicesLionTv() {
               {filteredRows.map((row) => (
                 <TableRow key={row.invoiceId}>
                   <TableCell>{row.invoiceId}</TableCell>
-                  <TableCell>{row.customerId}</TableCell>
+                  <TableCell>{row.customer_name}</TableCell>
                   <TableCell>{row.serviceId}</TableCell>
                   <TableCell>{row.packageId}</TableCell>
                   <TableCell>{row.bankId || '-'}</TableCell>
