@@ -545,8 +545,8 @@ export default function CustomersLionTv() {
                   <TableCell>
                     <StatusChip status={row.status} />
                   </TableCell>
-                  <TableCell>{formatDate(row.openingDate)}</TableCell>
-                  <TableCell>{formatDate(row.closeDate)}</TableCell>
+                  <TableCell>{row.openingDate}</TableCell>
+                  <TableCell>{row.closeDate??'-'}</TableCell>
                   <TableCell>
                     <Chip
                       size="small"

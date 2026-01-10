@@ -487,8 +487,8 @@ export default function SubscriptionsLionTv() {
                       </Typography>
                     </Stack>
                   </TableCell>
-                  <TableCell>{formatDate(row.startDate)}</TableCell>
-                  <TableCell>{formatDate(row.renewalDate)}</TableCell>
+                  <TableCell>{row.startDate}</TableCell>
+                  <TableCell>{row.renewalDate}</TableCell>
                   <TableCell>{row.automaticPay ? 'Sí' : 'No'}</TableCell>
                   <TableCell align="right">
                     <Stack direction="row" spacing={1}>
