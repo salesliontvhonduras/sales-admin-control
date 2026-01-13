@@ -8,6 +8,7 @@ import DemosLionTv from 'views/liontv/DemosLionTv';
 import CustomersLionTv from 'views/liontv/CustomersLionTv';
 import SubscriptionsLionTv from 'views/liontv/SubscriptionsLionTv';
 import InvoicesLionTv from 'views/liontv/InvoicesLionTv';
+import LinesLionTv from 'views/liontv/LinesLionTv';
 
 
 // dashboard routing
@@ -49,6 +50,10 @@ const MainRoutes = {
         {
           path: '/liontv/invoices',
           element: <InvoicesLionTv />
+        },
+        {
+          path: '/liontv/lines',
+          element: <LinesLionTv />
         },
         {
           path: 'sms',
