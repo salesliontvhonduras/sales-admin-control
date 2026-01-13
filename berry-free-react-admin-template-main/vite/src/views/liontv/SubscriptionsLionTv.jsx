@@ -168,6 +168,16 @@ export default function SubscriptionsLionTv() {
   const [lines, setLines] = useState([]);
   const [linesLoading, setLinesLoading] = useState(false);
 
+  const customerNameMap = useMemo(() => {
+    const map = {};
+    customers.forEach((c) => {
+      const id = c.customerId ?? c.id;
+      if (!id) return;
+      map[id] = c.customerFullname ?? c.fullName ?? c.username ?? c.customerMail ?? '';
+    });
+    return map;
+  }, [customers]);
+
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
     return status === 401;
@@ -225,7 +235,7 @@ export default function SubscriptionsLionTv() {
     try {
       const res = await lionTvApi.get('/customers/v1', {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: 0, size: 500 },
+        params: { index: 0, size: 5000 },
         skipAuthRedirect: true
       });
       const payload = res?.data?.data ?? res?.data ?? {};
@@ -247,7 +257,7 @@ export default function SubscriptionsLionTv() {
     try {
       const res = await lionTvApi.get('/subscriptions/v1', {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: page, size: rowsPerPage },
+        params: { index: 0, size: 5000 },
         skipAuthRedirect: true
       });
       const payload = res?.data?.data ?? res?.data ?? {};
@@ -255,7 +265,7 @@ export default function SubscriptionsLionTv() {
       const items = Array.isArray(raw) ? raw : [];
       const normalized = items.map(normalizeSubscription);
       setRows(normalized);
-      setTotal(payload.total ?? payload.totalElements ?? normalized.length);
+      setTotal(normalized.length);
     } catch (err) {
       if (!handleUnauthorized(err)) {
         enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudieron cargar las suscripciones.', {
@@ -265,14 +275,24 @@ export default function SubscriptionsLionTv() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar, page, rowsPerPage]);
+  }, [accessToken, enqueueSnackbar]);
 
   useEffect(() => {
     loadSubscriptions();
     loadCustomers();
     loadPackages();
     loadLines();
-  }, [loadSubscriptions, loadCustomers, loadPackages, loadLines, page, rowsPerPage, refreshKey]);
+  }, [loadSubscriptions, loadCustomers, loadPackages, loadLines, refreshKey]);
+
+  useEffect(() => {
+    if (!customerNameMap || Object.keys(customerNameMap).length === 0) return;
+    setRows((prev) =>
+      prev.map((row) => ({
+        ...row,
+        customerName: row.customerName || customerNameMap[row.customerId] || row.customer_name || ''
+      }))
+    );
+  }, [customerNameMap]);
 
   const filteredRows = useMemo(() => {
     if (!search) return rows;
@@ -280,6 +300,7 @@ export default function SubscriptionsLionTv() {
     return rows.filter((row) => {
       return (
         String(row.customerId || '').toLowerCase().includes(term) ||
+        (row.customerName || row.customer_name || '').toLowerCase().includes(term) ||
         (row.lineId || '').toLowerCase().includes(term) ||
         (row.billing || '').toLowerCase().includes(term) ||
         (row.status || '').toLowerCase().includes(term) ||
@@ -287,6 +308,18 @@ export default function SubscriptionsLionTv() {
       );
     });
   }, [rows, search]);
+
+  const paginatedRows = useMemo(() => {
+    const start = page * rowsPerPage;
+    return filteredRows.slice(start, start + rowsPerPage);
+  }, [filteredRows, page, rowsPerPage]);
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(filteredRows.length / rowsPerPage) - 1);
+    if (page > maxPage) {
+      setPage(0);
+    }
+  }, [filteredRows.length, page, rowsPerPage]);
 
   const resetForm = () => setForm(defaultForm);
 
@@ -470,10 +503,10 @@ export default function SubscriptionsLionTv() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredRows.map((row) => (
+              {paginatedRows.map((row) => (
                 <TableRow key={row.subscriptionId || row.lineId}>
                   <TableCell>{row.subscriptionId}</TableCell>
-                  <TableCell>{row.customer_name}</TableCell>
+                  <TableCell>{row.customerName || row.customer_name}</TableCell>
                   <TableCell>{row.username_line}</TableCell>
                   <TableCell>{row.packageId}</TableCell>
                   <TableCell>
@@ -524,7 +557,7 @@ export default function SubscriptionsLionTv() {
 
         <TablePagination
           component="div"
-          count={total}
+          count={filteredRows.length}
           page={page}
           rowsPerPage={rowsPerPage}
           onPageChange={(e, p) => setPage(p)}

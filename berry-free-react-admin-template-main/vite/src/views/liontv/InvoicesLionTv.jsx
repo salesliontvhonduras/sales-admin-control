@@ -134,6 +134,7 @@ function normalizeInvoice(item = {}) {
     createdAt: item.createdAt ?? null,
     updatedAt: item.updatedAt ?? null,
     customer_name: item.customer_name ?? '',
+    customerName: item.customerName ?? item.customer_name ?? ''
   };
 }
 
@@ -179,6 +180,16 @@ export default function InvoicesLionTv() {
   const [services, setServices] = useState([]);
   const [servicesLoading, setServicesLoading] = useState(false);
 
+  const customerNameMap = useMemo(() => {
+    const map = {};
+    customers.forEach((c) => {
+      const id = c.customerId ?? c.id;
+      if (!id) return;
+      map[id] = c.customerFullname ?? c.fullName ?? c.username ?? c.customerMail ?? '';
+    });
+    return map;
+  }, [customers]);
+
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
     return status === 401;
@@ -190,15 +201,18 @@ export default function InvoicesLionTv() {
     try {
       const res = await lionTvApi.get('/invoices/v1', {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: page, size: rowsPerPage },
+        params: { index: 0, size: 5000 },
         skipAuthRedirect: true
       });
       const payload = res?.data?.data ?? res?.data ?? {};
       const raw = payload.data ?? payload.items ?? payload.content ?? payload ?? [];
       const items = Array.isArray(raw) ? raw : [];
-      const normalized = items.map(normalizeInvoice);
+      const normalized = items.map(normalizeInvoice).map((inv) => ({
+        ...inv,
+        customerName: inv.customerName || customerNameMap[inv.customerId] || inv.customer_name || ''
+      }));
       setRows(normalized);
-      setTotal(payload.total ?? payload.totalElements ?? normalized.length);
+      setTotal(normalized.length);
     } catch (err) {
       if (!handleUnauthorized(err)) {
         enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudieron cargar las facturas.', {
@@ -208,7 +222,7 @@ export default function InvoicesLionTv() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar, page, rowsPerPage]);
+  }, [accessToken, enqueueSnackbar]);
 
   const loadCustomers = useCallback(async () => {
     if (!accessToken) return;
@@ -216,7 +230,7 @@ export default function InvoicesLionTv() {
     try {
       const res = await lionTvApi.get('/customers/v1', {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: 0, size: 300 },
+        params: { index: 0, size: 5000 },
         skipAuthRedirect: true
       });
       const payload = res?.data?.data ?? res?.data ?? {};
@@ -287,8 +301,21 @@ export default function InvoicesLionTv() {
     loadPackages();
     loadBanks();
     loadServices();
-  }, [loadInvoices, loadCustomers, loadPackages, loadBanks, loadServices, page, rowsPerPage, refreshKey]);
+  }, [loadInvoices, loadCustomers, loadPackages, loadBanks, loadServices, refreshKey]);
 
+  useEffect(() => {
+    if (!customerNameMap || Object.keys(customerNameMap).length === 0) return;
+    let changed = false;
+    const updated = rows.map((row) => {
+      const name = row.customerName || customerNameMap[row.customerId] || row.customer_name || '';
+      if (name !== row.customerName) {
+        changed = true;
+        return { ...row, customerName: name };
+      }
+      return row;
+    });
+    if (changed) setRows(updated);
+  }, [customerNameMap, rows]);
   const filteredRows = useMemo(() => {
     if (!search) return rows;
     const term = search.toLowerCase();
@@ -296,12 +323,25 @@ export default function InvoicesLionTv() {
       return (
         String(row.invoiceId || '').toLowerCase().includes(term) ||
         String(row.customerId || '').toLowerCase().includes(term) ||
+        (row.customerName || row.customer_name || '').toLowerCase().includes(term) ||
         String(row.packageId || '').toLowerCase().includes(term) ||
         (row.status || '').toLowerCase().includes(term) ||
         (row.paymentMethod || '').toLowerCase().includes(term)
       );
     });
   }, [rows, search]);
+
+  const paginatedRows = useMemo(() => {
+    const start = page * rowsPerPage;
+    return filteredRows.slice(start, start + rowsPerPage);
+  }, [filteredRows, page, rowsPerPage]);
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(filteredRows.length / rowsPerPage) - 1);
+    if (page > maxPage) {
+      setPage(0);
+    }
+  }, [filteredRows.length, page, rowsPerPage]);
 
   const resetForm = () => setForm(defaultForm);
 
@@ -477,10 +517,10 @@ export default function InvoicesLionTv() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredRows.map((row) => (
+              {paginatedRows.map((row) => (
                 <TableRow key={row.invoiceId}>
                   <TableCell>{row.invoiceId}</TableCell>
-                  <TableCell>{row.customer_name}</TableCell>
+                  <TableCell>{row.customerName || row.customer_name}</TableCell>
                   <TableCell>{row.serviceId}</TableCell>
                   <TableCell>{row.packageId}</TableCell>
                   <TableCell>{row.bankId || '-'}</TableCell>
@@ -525,7 +565,7 @@ export default function InvoicesLionTv() {
 
         <TablePagination
           component="div"
-          count={total}
+          count={filteredRows.length}
           page={page}
           rowsPerPage={rowsPerPage}
           onPageChange={(e, p) => setPage(p)}

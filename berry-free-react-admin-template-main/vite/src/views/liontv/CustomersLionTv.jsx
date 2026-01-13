@@ -218,7 +218,7 @@ export default function CustomersLionTv() {
     try {
       const response = await lionTvApi.get('/customers/v1', {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: page, size: rowsPerPage },
+        params: { index: 0, size: 5000 },
         skipAuthRedirect: true
       });
 
@@ -227,7 +227,7 @@ export default function CustomersLionTv() {
       const normalized = collection.map(normalizeCustomer);
 
       setRows(normalized);
-      setTotal(payload.total ?? payload.totalElements ?? payload.totalCount ?? normalized.length);
+      setTotal(normalized.length);
     } catch (err) {
       if (!handleUnauthorized(err)) {
         enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudieron cargar los clientes.', {
@@ -237,7 +237,7 @@ export default function CustomersLionTv() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar, page, rowsPerPage]);
+  }, [accessToken, enqueueSnackbar]);
 
   const loadReferers = useCallback(async () => {
     if (!accessToken) return;
@@ -264,7 +264,7 @@ export default function CustomersLionTv() {
 
   useEffect(() => {
     loadCustomers();
-  }, [page, rowsPerPage, refreshKey, loadCustomers]);
+  }, [refreshKey, loadCustomers]);
 
   useEffect(() => {
     setReferersFetched(false);
@@ -290,6 +290,18 @@ export default function CustomersLionTv() {
       );
     });
   }, [rows, search]);
+
+  const paginatedRows = useMemo(() => {
+    const start = page * rowsPerPage;
+    return filteredRows.slice(start, start + rowsPerPage);
+  }, [filteredRows, page, rowsPerPage]);
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(filteredRows.length / rowsPerPage) - 1);
+    if (page > maxPage) {
+      setPage(0);
+    }
+  }, [filteredRows.length, page, rowsPerPage]);
 
   const summary = useMemo(
     () =>
@@ -522,7 +534,7 @@ export default function CustomersLionTv() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredRows.map((row) => (
+              {paginatedRows.map((row) => (
                 <TableRow key={row.id || row.username || row.mail}>
                   <TableCell>
                     <Stack direction="row" spacing={1.5} alignItems="center">
@@ -583,7 +595,7 @@ export default function CustomersLionTv() {
 
         <TablePagination
           component="div"
-          count={total}
+          count={filteredRows.length}
           page={page}
           rowsPerPage={rowsPerPage}
           onPageChange={(e, p) => setPage(p)}
