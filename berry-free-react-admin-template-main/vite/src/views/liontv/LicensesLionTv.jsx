@@ -152,17 +152,25 @@ export default function LicensesLionTv() {
     if (!accessToken) return;
     setLoading(true);
     try {
-      const res = await lionTvApi.get('/licenses/v1', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: page, size: rowsPerPage },
-        skipAuthRedirect: true
-      });
-      const payload = res?.data?.data ?? res?.data ?? {};
-      const raw = payload.data ?? payload.items ?? payload.content ?? payload ?? [];
-      const list = Array.isArray(raw) ? raw : [];
-      const normalized = list.map(normalizeLicense);
+      const all = [];
+      const pageSize = 5000;
+      let index = 0;
+      while (true) {
+        const res = await lionTvApi.get('/licenses/v1', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: { index, size: pageSize },
+          skipAuthRedirect: true
+        });
+        const payload = res?.data?.data ?? res?.data ?? {};
+        const raw = payload.data ?? payload.items ?? payload.content ?? payload ?? [];
+        const batch = Array.isArray(raw) ? raw : [];
+        all.push(...batch);
+        if (batch.length < pageSize) break;
+        index += 1;
+      }
+      const normalized = all.map(normalizeLicense);
       setRows(normalized);
-      setTotal(payload.total ?? normalized.length);
+      setTotal(normalized.length);
     } catch (err) {
       if (!handleUnauthorized(err)) {
         enqueueSnackbar('No se pudieron cargar las licencias.', { variant: 'error' });
@@ -170,7 +178,7 @@ export default function LicensesLionTv() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar, page, rowsPerPage]);
+  }, [accessToken, enqueueSnackbar]);
 
   const loadCustomers = useCallback(async () => {
     if (!accessToken) return;
@@ -178,7 +186,7 @@ export default function LicensesLionTv() {
     try {
       const all = [];
       let idx = 0;
-      const size = 500;
+      const size = 5000;
       while (true) {
         const res = await lionTvApi.get('/customers/v1', {
           headers: { Authorization: `Bearer ${accessToken}` },
@@ -210,7 +218,7 @@ export default function LicensesLionTv() {
   useEffect(() => {
     loadLicenses();
     loadCustomers();
-  }, [loadLicenses, loadCustomers, refreshKey, page, rowsPerPage]);
+  }, [loadLicenses, loadCustomers, refreshKey]);
 
   const customerNameMap = useMemo(() => {
     const map = {};
