@@ -1,11 +1,13 @@
 import { IconDeviceTv, IconUsers, IconReceipt2, IconFileInvoice, IconRouter } from '@tabler/icons-react';
+import { IconKey } from '@tabler/icons-react';
 
 const icons = {
   IconDeviceTv,
   IconUsers,
   IconReceipt2,
   IconFileInvoice,
-  IconRouter
+  IconRouter,
+  IconKey
 };
 
 const liontv = {
@@ -51,6 +53,14 @@ const liontv = {
       type: 'item',
       url: '/liontv/lines',
       icon: icons.IconRouter,
+      breadcrumbs: true
+    },
+    {
+      id: 'liontv-licenses',
+      title: 'Licencias',
+      type: 'item',
+      url: '/liontv/licenses',
+      icon: icons.IconKey,
       breadcrumbs: true
     }
   ]

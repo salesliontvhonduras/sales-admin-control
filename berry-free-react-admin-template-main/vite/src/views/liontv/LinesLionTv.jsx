@@ -48,6 +48,20 @@ const fieldSx = {
   '& .MuiInputLabel-root': { fontWeight: 500 }
 };
 
+const detailCardSx = {
+  p: 2,
+  borderRadius: 2,
+  border: '1px solid',
+  borderColor: 'divider',
+  bgcolor: 'background.paper',
+  boxShadow: 2,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 0.75,
+  minHeight: 140,
+  justifyContent: 'space-between'
+};
+
 function formatDate(value) {
   if (!value) return '-';
   const d = new Date(value.replace(' ', 'T'));
@@ -398,7 +412,7 @@ export default function LinesLionTv() {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: 2,
-                boxShadow: 6,
+                boxShadow: 8,
                 background: (theme) =>
                   `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.background.paper} 80%)`
               }}
@@ -424,21 +438,7 @@ export default function LinesLionTv() {
 
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    border: '1px dashed',
-                    borderColor: 'divider',
-                    bgcolor: 'background.paper',
-                    boxShadow: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 0.75,
-                    minHeight: 120,
-                    justifyContent: 'space-between'
-                  }}
-                >
+                <Box sx={detailCardSx}>
                   <Stack spacing={0.75}>
                     <Stack direction="row" spacing={1} alignItems="center">
                       <BoltIcon color="warning" fontSize="small" />
@@ -457,21 +457,7 @@ export default function LinesLionTv() {
                 </Box>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    border: '1px dashed',
-                    borderColor: 'divider',
-                    bgcolor: 'background.paper',
-                    boxShadow: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 0.75,
-                    minHeight: 120,
-                    justifyContent: 'space-between'
-                  }}
-                >
+                <Box sx={detailCardSx}>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <LanIcon color="action" fontSize="small" />
                     <Typography variant="caption" color="text.secondary">
@@ -483,21 +469,7 @@ export default function LinesLionTv() {
                 </Box>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    border: '1px dashed',
-                    borderColor: 'divider',
-                    bgcolor: 'background.paper',
-                    boxShadow: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 0.75,
-                    minHeight: 110,
-                    justifyContent: 'space-between'
-                  }}
-                >
+                <Box sx={{ ...detailCardSx, minHeight: 120 }}>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <AccessTimeIcon color="action" fontSize="small" />
                     <Typography variant="caption" color="text.secondary">
@@ -508,21 +480,7 @@ export default function LinesLionTv() {
                 </Box>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    border: '1px dashed',
-                    borderColor: 'divider',
-                    bgcolor: 'background.paper',
-                    boxShadow: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 0.75,
-                    minHeight: 110,
-                    justifyContent: 'space-between'
-                  }}
-                >
+                <Box sx={{ ...detailCardSx, minHeight: 120 }}>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <CalendarMonthIcon color="action" fontSize="small" />
                     <Typography variant="caption" color="text.secondary">
@@ -539,17 +497,8 @@ export default function LinesLionTv() {
 
             <Box
               sx={{
-                p: 2,
-                borderRadius: 2,
-                border: '1px dashed',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-                boxShadow: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 0.75,
-                minHeight: 120,
-                justifyContent: 'space-between'
+                ...detailCardSx,
+                borderStyle: 'dashed'
               }}
             >
               <Typography variant="caption" color="text.secondary">
@@ -575,17 +524,9 @@ export default function LinesLionTv() {
             {detail.row?.resellerNotes ? (
               <Box
                 sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  bgcolor: 'background.default',
-                  border: '1px dashed',
-                  borderColor: 'divider',
-                  boxShadow: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 0.5,
-                  minHeight: 110,
-                  justifyContent: 'space-between'
+                  ...detailCardSx,
+                  borderStyle: 'dashed',
+                  gap: 0.5
                 }}
               >
                 <Typography variant="caption" color="text.secondary">
