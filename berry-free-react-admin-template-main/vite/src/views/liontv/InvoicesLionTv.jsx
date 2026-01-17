@@ -165,6 +165,7 @@ export default function InvoicesLionTv() {
   const [total, setTotal] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   const [openModal, setOpenModal] = useState(false);
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
@@ -317,9 +318,10 @@ export default function InvoicesLionTv() {
     if (changed) setRows(updated);
   }, [customerNameMap, rows]);
   const filteredRows = useMemo(() => {
-    if (!search) return rows;
+    if (!search && !statusFilter) return rows;
     const term = search.toLowerCase();
     return rows.filter((row) => {
+      if (statusFilter && (row.status || '').toUpperCase() !== statusFilter.toUpperCase()) return false;
       return (
         String(row.invoiceId || '').toLowerCase().includes(term) ||
         String(row.customerId || '').toLowerCase().includes(term) ||
@@ -329,7 +331,7 @@ export default function InvoicesLionTv() {
         (row.paymentMethod || '').toLowerCase().includes(term)
       );
     });
-  }, [rows, search]);
+  }, [rows, search, statusFilter]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -481,7 +483,7 @@ export default function InvoicesLionTv() {
       <MainCard
         title="Listado de facturas"
         secondary={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 360 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 480 } }}>
             <TextField
               size="small"
               placeholder="Buscar (cliente, paquete, estado)"
@@ -496,6 +498,16 @@ export default function InvoicesLionTv() {
                 )
               }}
             />
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Estado</InputLabel>
+              <Select value={statusFilter} label="Estado" onChange={(e) => setStatusFilter(e.target.value)}>
+                <MenuItem value="">
+                  <em>Todos</em>
+                </MenuItem>
+                <MenuItem value="PAID">PAID</MenuItem>
+                <MenuItem value="PENDING">PENDING</MenuItem>
+              </Select>
+            </FormControl>
           </Box>
         }
       >

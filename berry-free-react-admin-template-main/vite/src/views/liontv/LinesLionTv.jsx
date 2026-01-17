@@ -26,6 +26,10 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import IconButton from '@mui/material/IconButton';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
@@ -111,6 +115,7 @@ export default function LinesLionTv() {
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [statusFilter, setStatusFilter] = useState('');
   const [detail, setDetail] = useState({ open: false, row: null });
 
   const handleUnauthorized = (err) => {
@@ -149,9 +154,11 @@ export default function LinesLionTv() {
   }, [loadLines, refreshKey]);
 
   const filteredRows = useMemo(() => {
-    if (!search) return rows;
+    if (!search && !statusFilter) return rows;
     const term = search.toLowerCase();
     return rows.filter((row) => {
+      const statusValue = row.enabled ? (row.expired ? 'EXPIRED' : 'ACTIVE') : 'INACTIVE';
+      if (statusFilter && statusValue.toLowerCase() !== statusFilter.toLowerCase()) return false;
       return (
         (row.username || '').toLowerCase().includes(term) ||
         (row.packageName || '').toLowerCase().includes(term) ||
@@ -160,7 +167,7 @@ export default function LinesLionTv() {
         (row.enabledLabel || '').toLowerCase().includes(term)
       );
     });
-  }, [rows, search]);
+  }, [rows, search, statusFilter]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -213,14 +220,14 @@ export default function LinesLionTv() {
       <MainCard
         title="Listado de líneas"
         secondary={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 360 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 480 } }}>
             <TextField
               size="small"
               placeholder="Buscar (usuario, paquete, dueño, IP)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               fullWidth
-              sx={fieldSx}
+              sx={{ '& .MuiOutlinedInput-root': { minHeight: 40 } }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -229,6 +236,17 @@ export default function LinesLionTv() {
                 )
               }}
             />
+            <FormControl size="small" sx={{ minWidth: 140, '& .MuiOutlinedInput-root': { minHeight: 40 } }}>
+              <InputLabel>Status</InputLabel>
+              <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)}>
+                <MenuItem value="">
+                  <em>Todos</em>
+                </MenuItem>
+                <MenuItem value="ACTIVE">ACTIVE</MenuItem>
+                <MenuItem value="EXPIRED">EXPIRED</MenuItem>
+                <MenuItem value="INACTIVE">INACTIVE</MenuItem>
+              </Select>
+            </FormControl>
           </Box>
         }
       >

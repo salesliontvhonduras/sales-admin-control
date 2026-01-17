@@ -197,6 +197,7 @@ export default function CustomersLionTv() {
   const [total, setTotal] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
@@ -277,9 +278,10 @@ export default function CustomersLionTv() {
   }, [openCreate, openEdit, referersFetched, referersLoading, loadReferers]);
 
   const filteredRows = useMemo(() => {
-    if (!search) return rows;
+    if (!search && !statusFilter) return rows;
     const term = search.toLowerCase();
     return rows.filter((row) => {
+      if (statusFilter && (row.status || '').toLowerCase() !== statusFilter.toLowerCase()) return false;
       return (
         (row.fullName || '').toLowerCase().includes(term) ||
         (row.username || '').toLowerCase().includes(term) ||
@@ -289,7 +291,7 @@ export default function CustomersLionTv() {
         (row.channel || '').toLowerCase().includes(term)
       );
     });
-  }, [rows, search]);
+  }, [rows, search, statusFilter]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -499,7 +501,7 @@ export default function CustomersLionTv() {
       <MainCard
         title="Listado de clientes"
         secondary={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 360 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 480 } }}>
             <TextField
               size="small"
               placeholder="Buscar (nombre, usuario, mail, telefono)"
@@ -514,6 +516,19 @@ export default function CustomersLionTv() {
                 )
               }}
             />
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Status</InputLabel>
+              <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)}>
+                <MenuItem value="">
+                  <em>Todos</em>
+                </MenuItem>
+                {[...new Set(rows.map((r) => r.status).filter(Boolean))].map((s) => (
+                  <MenuItem key={s} value={s}>
+                    {s}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Box>
         }
       >

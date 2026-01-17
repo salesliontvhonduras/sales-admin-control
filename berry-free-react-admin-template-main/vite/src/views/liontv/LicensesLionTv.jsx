@@ -49,7 +49,7 @@ import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
-const STATUS_OPTIONS = ['ACTIVE', 'EXPIRED'];
+const STATUS_OPTIONS = ['ACTIVE', 'EXPIRED', 'AVAILABLE'];
 const APPS = ['Vivo Player', 'Smart One'];
 const LICENSE_PERIOD = ['ANNUAL', 'LIFETIME'];
 const TYPE_LICENSE = ['PRIMARY', 'USED'];
@@ -117,6 +117,7 @@ export default function LicensesLionTv() {
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [statusFilter, setStatusFilter] = useState('');
 
   const [customers, setCustomers] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(false);
@@ -230,11 +231,12 @@ export default function LicensesLionTv() {
     return map;
   }, [customers]);
 
-  // Nota: esto filtra solo la página actual (porque el backend pagina).
+  // Nota: busca en todas las licencias cargadas, incluye filtro por status
   const filteredRows = useMemo(() => {
-    if (!search) return rows;
+    if (!search && !statusFilter) return rows;
     const term = search.toLowerCase();
     return rows.filter((row) => {
+      if (statusFilter && (row.status || '').toLowerCase() !== statusFilter.toLowerCase()) return false;
       return (
         (row.macAddress || '').toLowerCase().includes(term) ||
         (row.name || '').toLowerCase().includes(term) ||
@@ -244,7 +246,17 @@ export default function LicensesLionTv() {
         (row.customerName || customerNameMap[row.customerId] || '').toLowerCase().includes(term)
       );
     });
-  }, [rows, search, customerNameMap]);
+  }, [rows, search, customerNameMap, statusFilter]);
+
+  const paginatedRows = useMemo(() => {
+    const start = page * rowsPerPage;
+    return filteredRows.slice(start, start + rowsPerPage);
+  }, [filteredRows, page, rowsPerPage]);
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(filteredRows.length / rowsPerPage) - 1);
+    if (page > maxPage) setPage(0);
+  }, [filteredRows.length, page, rowsPerPage]);
 
   const resetForm = () =>
     setForm({
@@ -432,7 +444,7 @@ export default function LicensesLionTv() {
       <MainCard
         title="Listado de licencias"
         secondary={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 360 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 480 } }}>
             <TextField
               size="small"
               placeholder="Buscar (mac, cliente, app)"
@@ -447,6 +459,21 @@ export default function LicensesLionTv() {
                 )
               }}
             />
+            
+
+            <FormControl size="small" sx={{ minWidth: 140, '& .MuiOutlinedInput-root': { minHeight: 40 } }}>
+                          <InputLabel>Status</InputLabel>
+                          <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)}>
+                            <MenuItem value="">
+                              <em>Todos</em>
+                            </MenuItem>
+                            {STATUS_OPTIONS.map((s) => (
+                  <MenuItem key={s} value={s}>
+                    {s}
+                  </MenuItem>
+                ))}
+                          </Select>
+                        </FormControl>
           </Box>
         }
       >
@@ -467,15 +494,29 @@ export default function LicensesLionTv() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredRows.map((row) => (
+              {paginatedRows.map((row) => (
                 <TableRow key={row.licenseId}>
                   <TableCell>{row.macAddress}</TableCell>
                   <TableCell>{row.name}</TableCell>
                   <TableCell>{row.customerName || customerNameMap[row.customerId] || '-'}</TableCell>
                   <TableCell>{row.app}</TableCell>
-                  <TableCell>{row.status}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={row.status}
+                      color={row.status === 'ACTIVE' ? 'success' : row.status === 'EXPIRED' ? 'warning' : 'default'}
+                      variant="outlined"
+                    />
+                  </TableCell>
                   <TableCell>{row.licensePeriod}</TableCell>
-                  <TableCell>{row.typeLicense}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={row.typeLicense}
+                      color={row.typeLicense === 'PRIMARY' ? 'primary' : 'secondary'}
+                      variant="outlined"
+                    />
+                  </TableCell>
                   <TableCell>{Number(row.price || 0).toFixed(2)}</TableCell>
                   <TableCell>{row.expireAt ? String(row.expireAt).slice(0, 10) : '-'}</TableCell>
                   <TableCell align="right">
@@ -520,7 +561,7 @@ export default function LicensesLionTv() {
 
         <TablePagination
           component="div"
-          count={total}
+          count={filteredRows.length}
           page={page}
           rowsPerPage={rowsPerPage}
           onPageChange={(e, p) => setPage(p)}
