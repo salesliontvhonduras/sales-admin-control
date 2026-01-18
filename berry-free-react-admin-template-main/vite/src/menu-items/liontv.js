@@ -1,5 +1,5 @@
 import { IconDeviceTv, IconUsers, IconReceipt2, IconFileInvoice, IconRouter } from '@tabler/icons-react';
-import { IconKey } from '@tabler/icons-react';
+import { IconKey, IconUserSearch } from '@tabler/icons-react';
 
 const icons = {
   IconDeviceTv,
@@ -7,7 +7,8 @@ const icons = {
   IconReceipt2,
   IconFileInvoice,
   IconRouter,
-  IconKey
+  IconKey,
+  IconUserSearch
 };
 
 const liontv = {
@@ -45,6 +46,14 @@ const liontv = {
       type: 'item',
       url: '/liontv/customers',
       icon: icons.IconUsers,
+      breadcrumbs: true
+    },
+    {
+      id: 'liontv-crm',
+      title: 'CRM Clientes',
+      type: 'item',
+      url: '/liontv/crm',
+      icon: icons.IconUserSearch,
       breadcrumbs: true
     },
     {

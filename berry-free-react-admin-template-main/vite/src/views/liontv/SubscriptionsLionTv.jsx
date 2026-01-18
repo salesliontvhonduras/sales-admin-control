@@ -179,6 +179,31 @@ export default function SubscriptionsLionTv() {
     return map;
   }, [customers]);
 
+  const packageMap = useMemo(() => {
+    const map = {};
+    packages.forEach((p) => {
+      const rawId = p.id ?? p.packageId ?? p.package_id ?? p.packageID;
+      if (!rawId) return;
+      const id = String(rawId);
+      map[id] = {
+        name: p.name || p.packageName || `Paquete ${id}`,
+        description: p.description || p.packageDescription || ''
+      };
+    });
+    return map;
+  }, [packages]);
+
+  const lineNameMap = useMemo(() => {
+    const map = {};
+    lines.forEach((l) => {
+      const rawId = l.id ?? l.lineId ?? l.line_id ?? l.username;
+      if (!rawId) return;
+      const id = String(rawId);
+      map[id] = l.username || l.username_line || l.usernameLine || l.name || id;
+    });
+    return map;
+  }, [lines]);
+
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
     return status === 401;
@@ -284,6 +309,27 @@ export default function SubscriptionsLionTv() {
     loadPackages();
     loadLines();
   }, [loadSubscriptions, loadCustomers, loadPackages, loadLines, refreshKey]);
+
+  // enriquecer filas con nombres de línea y paquete cuando lleguen los catálogos
+  useEffect(() => {
+    if ((!lineNameMap || Object.keys(lineNameMap).length === 0) && (!packageMap || Object.keys(packageMap).length === 0)) return;
+    setRows((prev) =>
+      prev.map((row) => {
+        const lineLabel =
+          lineNameMap[String(row.lineId ?? row.username_line ?? '')] ||
+          row.username_line ||
+          row.lineId ||
+          '';
+        const pkgInfo = packageMap[String(row.packageId ?? '')] || {};
+        return {
+          ...row,
+          username_line: lineLabel,
+          packageName: pkgInfo.name || row.packageId,
+          packageDescription: pkgInfo.description || ''
+        };
+      })
+    );
+  }, [lineNameMap, packageMap]);
 
   useEffect(() => {
     if (!customerNameMap || Object.keys(customerNameMap).length === 0) return;
@@ -517,18 +563,39 @@ export default function SubscriptionsLionTv() {
                 <TableCell>Acciones</TableCell>
               </TableRow>
             </TableHead>
-            <TableBody>
-              {paginatedRows.map((row) => (
-                <TableRow key={row.subscriptionId || row.lineId}>
-                  <TableCell>{row.subscriptionId}</TableCell>
-                  <TableCell>{row.customerName || row.customer_name}</TableCell>
-                  <TableCell>{row.username_line}</TableCell>
-                  <TableCell>{row.packageId}</TableCell>
-                  <TableCell>
-                    <StatusChip status={row.status} />
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" alignItems="center" spacing={0.5}>
+              <TableBody>
+                {paginatedRows.map((row) => (
+                  <TableRow key={row.subscriptionId || row.lineId}>
+                    <TableCell>{row.subscriptionId}</TableCell>
+                    <TableCell>{row.customerName || row.customer_name}</TableCell>
+                    <TableCell>
+                      {lineNameMap[String(row.lineId ?? row.username_line ?? '')] ||
+                        row.username_line ||
+                        row.lineId ||
+                        '-'}
+                    </TableCell>
+                    <TableCell>
+                      <Stack spacing={0.25}>
+                        <Typography variant="body2">
+                          {row.packageName ||
+                            packageMap[String(row.packageId ?? '')]?.name ||
+                            row.packageId ||
+                            '-'}
+                        </Typography>
+                        {row.packageDescription ||
+                        packageMap[String(row.packageId ?? '')]?.description ? (
+                          <Typography variant="caption" color="text.secondary" noWrap>
+                            {row.packageDescription ||
+                              packageMap[String(row.packageId ?? '')]?.description}
+                          </Typography>
+                        ) : null}
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <StatusChip status={row.status} />
+                    </TableCell>
+                    <TableCell>
+                      <Stack direction="row" alignItems="center" spacing={0.5}>
                       <PriceChangeIcon fontSize="small" color="action" />
                       <Typography variant="body2">
                         {Number(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -661,7 +728,14 @@ export default function SubscriptionsLionTv() {
                       ) : (
                         packages.map((p) => (
                           <MenuItem key={p.id} value={p.id}>
-                            {p.name} ({p.id})
+                            <Stack spacing={0.25}>
+                              <Typography variant="body2">{p.name || `Paquete ${p.id}`}</Typography>
+                              {p.description ? (
+                                <Typography variant="caption" color="text.secondary" noWrap>
+                                  {p.description}
+                                </Typography>
+                              ) : null}
+                            </Stack>
                           </MenuItem>
                         ))
                       )}
