@@ -20,6 +20,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Autocomplete from '@mui/material/Autocomplete';
+import TablePagination from '@mui/material/TablePagination';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -44,7 +45,6 @@ import LinkIcon from '@mui/icons-material/Link';
 import WifiTetheringIcon from '@mui/icons-material/WifiTethering';
 import LanguageIcon from '@mui/icons-material/Language';
 import PriceChangeIcon from '@mui/icons-material/PriceChange';
-import AppShortcutIcon from '@mui/icons-material/AppShortcut';
 import SmartDisplayIcon from '@mui/icons-material/SmartDisplay';
 
 import MainCard from 'ui-component/cards/MainCard';
@@ -201,52 +201,6 @@ function StatCard({ icon, title, value, helper, color = 'primary' }) {
   );
 }
 
-function TableSection({ title, rows, columns, emptyMessage, onDetail }) {
-  return (
-    <MainCard title={title}>
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              {columns.map((col) => (
-                <TableCell key={col.field}>{col.title}</TableCell>
-              ))}
-              {onDetail ? <TableCell align="right">Detalle</TableCell> : null}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.id || row.subscriptionId || row.invoiceId || row.licenseId}>
-                {columns.map((col) => (
-                  <TableCell key={col.field}>
-                    {typeof col.render === 'function' ? col.render(row) : row[col.field] ?? '-'}
-                  </TableCell>
-                ))}
-                {onDetail ? (
-                  <TableCell align="right">
-                    <Tooltip title="Ver detalle">
-                      <IconButton size="small" onClick={() => onDetail(row)}>
-                        <VisibilityOutlinedIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                ) : null}
-              </TableRow>
-            ))}
-            {rows.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={columns.length + (onDetail ? 1 : 0)} align="center">
-                  {emptyMessage}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </MainCard>
-  );
-}
-
 export default function CustomerCrmLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
@@ -268,6 +222,16 @@ export default function CustomerCrmLionTv() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [detail, setDetail] = useState({ open: false, type: null, row: null });
+  const [tableDialog, setTableDialog] = useState({
+    open: false,
+    title: '',
+    description: '',
+    rows: [],
+    columns: [],
+    onDetail: null
+  });
+  const [tablePage, setTablePage] = useState(0);
+  const [tableRpp, setTableRpp] = useState(10);
 
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
@@ -392,6 +356,61 @@ export default function CustomerCrmLionTv() {
       lastInvoice
     };
   }, [customerSubscriptions, customerLicenses, customerInvoices]);
+
+  const openFullModule = (type) => {
+    if (type === 'subscriptions') {
+      setTableDialog({
+        open: true,
+        title: 'Todas las suscripciones',
+        description: 'Vista completa de líneas, paquetes, billing y fechas del cliente.',
+        rows: customerSubscriptions,
+        columns: [
+          { field: 'lineLabel', title: 'Línea' },
+          { field: 'packageName', title: 'Paquete' },
+          { field: 'billing', title: 'Billing' },
+          { field: 'status', title: 'Estado', render: (row) => <StatusChip status={row.status} /> },
+          { field: 'startDate', title: 'Inicio', render: (row) => formatDate(row.startDate) },
+          { field: 'renewalDate', title: 'Renovación', render: (row) => formatDate(row.renewalDate) }
+        ],
+        onDetail: (row) => setDetail({ open: true, type: 'subscription', row })
+      });
+    }
+    if (type === 'licenses') {
+      setTableDialog({
+        open: true,
+        title: 'Todas las licencias',
+        description: 'Detalle de licencias: app, tipo, vigencia y estado actual.',
+        rows: customerLicenses,
+        columns: [
+          { field: 'macAddress', title: 'MAC' },
+          { field: 'app', title: 'App' },
+          { field: 'typeLicense', title: 'Tipo', render: (row) => <StatusChip status={row.typeLicense} /> },
+          { field: 'status', title: 'Estado', render: (row) => <StatusChip status={row.status} /> },
+          { field: 'expireAt', title: 'Expira', render: (row) => formatDate(row.expireAt) }
+        ],
+        onDetail: (row) => setDetail({ open: true, type: 'license', row })
+      });
+    }
+    if (type === 'invoices') {
+      setTableDialog({
+        open: true,
+        title: 'Todas las facturas',
+        description: 'Historial completo de facturación en Lempiras con método y estado.',
+        rows: customerInvoices,
+        columns: [
+          { field: 'paymentDate', title: 'Fecha', render: (row) => formatDate(row.paymentDate) },
+          { field: 'paymentMethod', title: 'Método' },
+          { field: 'status', title: 'Estado', render: (row) => <StatusChip status={row.status} /> },
+          {
+            field: 'amountPaid',
+            title: 'Total',
+            render: (row) => formatCurrency(Number(row.amountPaid || 0) - Number(row.amountDiscount || 0))
+          }
+        ],
+        onDetail: (row) => setDetail({ open: true, type: 'invoice', row })
+      });
+    }
+  };
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
@@ -548,73 +567,65 @@ export default function CustomerCrmLionTv() {
               </Box>
             </MainCard>
 
-            <Grid container spacing={gridSpacing}>
-              <Grid item xs={12} md={6}>
-                <TableSection
-                  title="Suscripciones"
-                  rows={customerSubscriptions.slice(0, 6)}
-                  emptyMessage="Sin suscripciones para este cliente."
-                  onDetail={(row) => setDetail({ open: true, type: 'subscription', row })}
-                  columns={[
-                    { field: 'lineLabel', title: 'Línea' },
-                    {
-                      field: 'packageName',
-                      title: 'Paquete',
-                      render: (row) => (
-                        <Stack spacing={0.25}>
-                          <Typography variant="body2">{row.packageName || row.packageId || '-'}</Typography>
-                          {row.packageDescription ? (
-                            <Typography variant="caption" color="text.secondary" noWrap>
-                              {row.packageDescription}
-                            </Typography>
-                          ) : null}
-                        </Stack>
-                      )
-                    },
-                    { field: 'billing', title: 'Billing' },
-                    { field: 'status', title: 'Estado', render: (row) => <StatusChip status={row.status} /> },
-                    { field: 'startDate', title: 'Inicio', render: (row) => formatDate(row.startDate) },
-                    { field: 'renewalDate', title: 'Renovación', render: (row) => formatDate(row.renewalDate) }
-                  ]}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TableSection
-                  title="Licencias"
-                  rows={customerLicenses.slice(0, 6)}
-                  emptyMessage="Sin licencias para este cliente."
-                  onDetail={(row) => setDetail({ open: true, type: 'license', row })}
-                  columns={[
-                    { field: 'macAddress', title: 'MAC' },
-                    { field: 'app', title: 'App' },
-                    { field: 'typeLicense', title: 'Tipo', render: (row) => <StatusChip status={row.typeLicense} /> },
-                    { field: 'status', title: 'Estado', render: (row) => <StatusChip status={row.status} /> },
-                    { field: 'expireAt', title: 'Expira', render: (row) => formatDate(row.expireAt) }
-                  ]}
-                />
-              </Grid>
-            </Grid>
+            
 
-            <Grid container spacing={gridSpacing}>
-              <Grid item xs={12}>
-                <TableSection
-                  title="Historial de facturación"
-                  rows={customerInvoices.slice(0, 8)}
-                  emptyMessage="Sin facturas para este cliente."
-                  onDetail={(row) => setDetail({ open: true, type: 'invoice', row })}
-                  columns={[
-                    { field: 'paymentDate', title: 'Fecha', render: (row) => formatDate(row.paymentDate) },
-                    { field: 'paymentMethod', title: 'Método' },
-                    { field: 'status', title: 'Estado', render: (row) => <StatusChip status={row.status} /> },
-                    {
-                      field: 'amountPaid',
-                      title: 'Total',
-                      render: (row) => formatCurrency(Number(row.amountPaid || 0) - Number(row.amountDiscount || 0))
-                    }
-                  ]}
-                />
-              </Grid>
-            </Grid>
+            <MainCard
+              sx={{
+                borderRadius: 2,
+                background: (theme) =>
+                  `linear-gradient(135deg, ${theme.palette.primary.light}26, ${theme.palette.secondary.light}1F)`
+              }}
+            >
+              <Stack spacing={2}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                  Módulos detallados
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Abre un submódulo dedicado para navegar listas grandes sin perder contexto del cliente.
+                </Typography>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<WifiTetheringIcon />}
+                    onClick={() => openFullModule('subscriptions')}
+                    sx={{ flex: 1, borderRadius: 2, boxShadow: 3, textTransform: 'none' }}
+                  >
+                    Ver suscripciones
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    startIcon={<ReceiptLongIcon />}
+                    onClick={() => openFullModule('invoices')}
+                    sx={{
+                      flex: 1,
+                      borderRadius: 2,
+                      boxShadow: 2,
+                      textTransform: 'none',
+                      backgroundColor: (theme) => `${theme.palette.secondary.light}16`
+                    }}
+                  >
+                    Ver facturación
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<SmartDisplayIcon />}
+                    onClick={() => openFullModule('licenses')}
+                    sx={{
+                      flex: 1,
+                      borderRadius: 2,
+                      boxShadow: 2,
+                      textTransform: 'none',
+                      backgroundColor: (theme) => `${theme.palette.error.light}16`
+                    }}
+                  >
+                    Ver licencias
+                  </Button>
+                </Stack>
+              </Stack>
+            </MainCard>
           </Stack>
         )}
       </MainCard>
@@ -655,20 +666,20 @@ export default function CustomerCrmLionTv() {
           }}
         >
           <Box sx={{ mb: 2 }}>
-            <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
-              {detail.type === 'subscription' && 'Resumen de la suscripción'}
-              {detail.type === 'license' && 'Resumen de la licencia'}
-              {detail.type === 'invoice' && 'Resumen de la factura'}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {detail.type === 'subscription' &&
-                'Visualiza línea, paquete, fechas y estado de pago automático de la suscripción seleccionada.'}
-              {detail.type === 'license' &&
-                'Información clave de la licencia: aplicación, tipo, ciclo, vigencia y propietario actual.'}
-              {detail.type === 'invoice' &&
-                'Monto pagado en Lps, método, banco y notas relevantes para la factura elegida.'}
-            </Typography>
-          </Box>
+          <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
+            {detail.type === 'subscription' && 'Resumen de la suscripción'}
+            {detail.type === 'license' && 'Resumen de la licencia'}
+            {detail.type === 'invoice' && 'Resumen de la factura'}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {detail.type === 'subscription' &&
+              'Visualiza línea, paquete, fechas y estado de pago automático de la suscripción seleccionada.'}
+            {detail.type === 'license' &&
+              'Información clave de la licencia: aplicación, tipo, ciclo, vigencia y propietario actual.'}
+            {detail.type === 'invoice' &&
+              'Monto pagado en Lps, método, banco y notas relevantes para la factura elegida.'}
+          </Typography>
+        </Box>
 
           {detail.type === 'subscription' && detail.row ? (
             <Stack spacing={2}>
@@ -828,6 +839,93 @@ export default function CustomerCrmLionTv() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDetail({ open: false, type: null, row: null })}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialogo para ver tablas completas cuando hay muchos registros */}
+      <Dialog
+        open={tableDialog.open}
+        onClose={() => {
+          setTableDialog({ open: false, title: '', description: '', rows: [], columns: [], onDetail: null });
+          setTablePage(0);
+        }}
+        fullWidth
+        maxWidth="lg"
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <VisibilityOutlinedIcon color="primary" />
+          {tableDialog.title}
+        </DialogTitle>
+        <DialogContent dividers>
+          {tableDialog.description ? (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+              {tableDialog.description}
+            </Typography>
+          ) : null}
+          <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  {tableDialog.columns.map((col) => (
+                    <TableCell key={col.field}>{col.title}</TableCell>
+                  ))}
+                  {tableDialog.onDetail ? <TableCell align="right">Detalle</TableCell> : null}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {tableDialog.rows
+                  .slice(tablePage * tableRpp, tablePage * tableRpp + tableRpp)
+                  .map((row) => (
+                    <TableRow key={row.id || row.subscriptionId || row.invoiceId || row.licenseId}>
+                      {tableDialog.columns.map((col) => (
+                        <TableCell key={col.field}>
+                          {typeof col.render === 'function' ? col.render(row) : row[col.field] ?? '-'}
+                        </TableCell>
+                      ))}
+                      {tableDialog.onDetail ? (
+                        <TableCell align="right">
+                          <Tooltip title="Ver detalle">
+                            <IconButton
+                              size="small"
+                              onClick={() => tableDialog.onDetail(row)}
+                            >
+                              <VisibilityOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                      ) : null}
+                    </TableRow>
+                  ))}
+                {tableDialog.rows.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={tableDialog.columns.length + (tableDialog.onDetail ? 1 : 0)}
+                      align="center"
+                    >
+                      No hay datos
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'space-between' }}>
+          <TablePagination
+            component="div"
+            count={tableDialog.rows.length}
+            page={tablePage}
+            onPageChange={(e, p) => setTablePage(p)}
+            rowsPerPage={tableRpp}
+            onRowsPerPageChange={(e) => {
+              setTableRpp(parseInt(e.target.value, 10));
+              setTablePage(0);
+            }}
+            rowsPerPageOptions={[5, 10, 25, 50, 100]}
+          />
+          <Button onClick={() => setTableDialog({ open: false, title: '', rows: [], columns: [], onDetail: null })}>
+            Cerrar
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
