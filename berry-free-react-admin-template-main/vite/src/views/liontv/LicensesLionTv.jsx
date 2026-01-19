@@ -44,6 +44,8 @@ import MemoryIcon from '@mui/icons-material/Memory';
 import PersonIcon from '@mui/icons-material/Person';
 import AppsIcon from '@mui/icons-material/Apps';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import ShieldMoonIcon from '@mui/icons-material/ShieldMoon';
+import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
@@ -180,6 +182,30 @@ export default function LicensesLionTv() {
       setLoading(false);
     }
   }, [accessToken, enqueueSnackbar]);
+
+  const handleContingency = async (action) => {
+    if (!accessToken) return;
+    setSending(true);
+    try {
+      const url = action === 'remove' ? '/licenses/v1/contingency/remove' : '/licenses/v1/contingency';
+      const res = await lionTvApi.post(
+        url,
+        {},
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          skipAuthRedirect: true
+        }
+      );
+      const msg = res?.data?.data || res?.data?.message || 'Solicitud enviada.';
+      enqueueSnackbar(msg, { variant: 'success' });
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || 'No se pudo ejecutar la contingencia.', { variant: 'error' });
+      }
+    } finally {
+      setSending(false);
+    }
+  };
 
   const loadCustomers = useCallback(async () => {
     if (!accessToken) return;
@@ -441,42 +467,77 @@ export default function LicensesLionTv() {
         </Grid>
       </MainCard>
 
-      <MainCard
-        title="Listado de licencias"
-        secondary={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 480 } }}>
-            <TextField
-              size="small"
-              placeholder="Buscar (mac, cliente, app)"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              fullWidth
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                )
-              }}
-            />
-            
-
-            <FormControl size="small" sx={{ minWidth: 140, '& .MuiOutlinedInput-root': { minHeight: 40 } }}>
-                          <InputLabel>Status</InputLabel>
-                          <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)}>
-                            <MenuItem value="">
-                              <em>Todos</em>
-                            </MenuItem>
-                            {STATUS_OPTIONS.map((s) => (
-                  <MenuItem key={s} value={s}>
-                    {s}
+      <MainCard content={false}>
+        <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
+          <Stack spacing={1.5}>
+            <Stack spacing={0.5}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                Contingencia
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Crea o elimina playlists de contingencia para licencias activas de Vivo Player según la MAC registrada.
+              </Typography>
+            </Stack>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+              alignItems={{ xs: 'stretch', sm: 'center' }}
+              justifyContent="flex-start"
+            >
+              <Button
+                variant="contained"
+                color="warning"
+                size="small"
+                startIcon={<ShieldMoonIcon />}
+                onClick={() => handleContingency('create')}
+                disabled={sending}
+                sx={{ borderRadius: 2, boxShadow: 2, textTransform: 'none' }}
+              >
+                Habilitar contingencia
+              </Button>
+              <Button
+                variant="outlined"
+                color="secondary"
+                size="small"
+                startIcon={<ShieldOutlinedIcon />}
+                onClick={() => handleContingency('remove')}
+                disabled={sending}
+                sx={{ borderRadius: 2, textTransform: 'none' }}
+              >
+                Quitar contingencia
+              </Button>
+            </Stack>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
+              <TextField
+                size="small"
+                placeholder="Buscar (mac, cliente, app)"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  )
+                }}
+              />
+              <FormControl size="small" sx={{ minWidth: 140, '& .MuiOutlinedInput-root': { minHeight: 40 } }}>
+                <InputLabel>Status</InputLabel>
+                <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)}>
+                  <MenuItem value="">
+                    <em>Todos</em>
                   </MenuItem>
-                ))}
-                          </Select>
-                        </FormControl>
-          </Box>
-        }
-      >
+                  {STATUS_OPTIONS.map((s) => (
+                    <MenuItem key={s} value={s}>
+                      {s}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
+          </Stack>
+        </Box>
         <TableContainer component={Paper}>
           <Table size="small">
             <TableHead>
