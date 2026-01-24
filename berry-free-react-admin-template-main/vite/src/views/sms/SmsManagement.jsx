@@ -39,7 +39,6 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import useAuth from 'hooks/useAuth';
 
 import MainCard from 'ui-component/cards/MainCard';
-import { gridSpacing } from 'store/constant';
 import { smsApi } from 'utils/api';
 
 const statusColors = {
@@ -140,36 +139,9 @@ export default function SmsManagement() {
     dateFrom: '',
     dateTo: ''
   });
-  const [balance, setBalance] = useState(null);
-  const [balanceLoading, setBalanceLoading] = useState(false);
 
   const parsedPhones = useMemo(() => parsePhones(form.phoneNumbersText), [form.phoneNumbersText]);
   const estimatedCost = useMemo(() => parsedPhones.length * 1, [parsedPhones.length]);
-  const remainingBalance = useMemo(() => (balance != null ? balance - estimatedCost : null), [balance, estimatedCost]);
-
-  const loadBalance = useCallback(async () => {
-    if (!accessToken) return;
-    setBalanceLoading(true);
-    try {
-      const res = await smsApi.get('/sms/v1/balance', {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      const value = res?.data?.data ?? res?.data;
-      const numeric = typeof value === 'number' ? value : Number(value?.balance ?? value);
-      if (!Number.isNaN(numeric)) {
-        setBalance(numeric);
-      }
-    } catch (err) {
-      const status = err?.response?.status || err?.request?.status;
-      if (status === 401) {
-        window.location.replace(BASE_URL + '/pages/login');
-        return;
-      }
-      enqueueSnackbar('No se pudo obtener el saldo.', { variant: 'warning' });
-    } finally {
-      setBalanceLoading(false);
-    }
-  }, [accessToken, enqueueSnackbar]);
 
   const loadMessages = useCallback(async () => {
     if (!accessToken) return;
@@ -209,10 +181,6 @@ export default function SmsManagement() {
     loadMessages();
   }, [loadMessages, refreshKey]);
 
-  useEffect(() => {
-    loadBalance();
-  }, [loadBalance]);
-
   const handleFormChange = (field) => (event) => {
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
   };
@@ -237,14 +205,6 @@ export default function SmsManagement() {
       enqueueSnackbar('El mensaje no puede estar vacio ni contener acentos/emojis.', { variant: 'warning' });
       return;
     }
-    if (balanceLoading || balance === null) {
-      enqueueSnackbar('No se pudo validar el saldo. Intenta recargar saldo o vuelve a intentar.', { variant: 'warning' });
-      return;
-    }
-    if (balance != null && estimatedCost > balance) {
-      enqueueSnackbar('Saldo insuficiente para enviar estos SMS. Por favor recarga.', { variant: 'warning' });
-      return;
-    }
 
     const payload = {
       phoneNumbers,
@@ -264,7 +224,6 @@ export default function SmsManagement() {
       const totalQueued = Array.isArray(ids) ? ids.length : 0;
       enqueueSnackbar(totalQueued ? `Se encolaron ${totalQueued} SMS.` : 'Solicitud enviada.', { variant: 'success' });
       setRefreshKey((prev) => prev + 1);
-      loadBalance();
       setOpenModal(false);
     } catch (err) {
       const status = err?.response?.status || err?.request?.status;
@@ -519,30 +478,7 @@ export default function SmsManagement() {
             <Chip label={`${parsedPhones.length} numeros`} color="primary" variant="outlined" />
             <Chip label={`${form.messageText.length}/${MAX_MESSAGE_LEN} chars`} variant="outlined" />
             <Chip label={form.scheduledAt ? `Programado: ${formatDate(form.scheduledAt)}` : 'Envio inmediato'} variant="outlined" />
-            <Chip
-              label={
-                balanceLoading
-                  ? 'Saldo cargando...'
-                  : balance != null
-                    ? `Saldo: ${balance}`
-                    : 'Saldo no disponible'
-              }
-              color={balance != null && balance > 0 ? 'success' : 'warning'}
-              variant="outlined"
-            />
-            <Chip
-              label={`Costo estimado: ${estimatedCost}`}
-              color={estimatedCost > (balance ?? Infinity) ? 'warning' : 'default'}
-              variant="outlined"
-            />
-            <Chip
-              label={
-                remainingBalance != null
-                  ? `Saldo luego del envio: ${remainingBalance}`
-                  : 'Saldo luego del envio: --'
-              }
-              variant="outlined"
-            />
+            <Chip label={`Costo estimado: ${estimatedCost}`} variant="outlined" />
           </Stack>
 
           <TextField
@@ -620,12 +556,7 @@ export default function SmsManagement() {
           variant="contained"
           startIcon={<SendIcon />}
           onClick={handleSend}
-          disabled={
-            sending ||
-            balanceLoading ||
-            balance === null ||
-            (balance != null && estimatedCost > balance)
-          }
+          disabled={sending}
           sx={{ minWidth: 150 }}
         >
             {sending ? 'Enviando...' : 'Encolar SMS'}
