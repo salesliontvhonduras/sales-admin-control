@@ -41,7 +41,7 @@ import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import LoyaltyIcon from '@mui/icons-material/Loyalty';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import LinkIcon from '@mui/icons-material/Link';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import WifiTetheringIcon from '@mui/icons-material/WifiTethering';
 import LanguageIcon from '@mui/icons-material/Language';
 import PriceChangeIcon from '@mui/icons-material/PriceChange';
@@ -493,6 +493,25 @@ export default function CustomerCrmLionTv() {
                           <Stack direction="row" spacing={1} alignItems="center">
                             <PhoneIphoneIcon fontSize="small" color="action" />
                             <Typography variant="body2">{selectedCustomer.phone || '-'}</Typography>
+                            {selectedCustomer.phone ? (
+                              <Tooltip title="Abrir chat en WhatsApp">
+                                <IconButton
+                                  size="small"
+                                  component="a"
+                                  href={`https://wa.me/${(selectedCustomer.phone || '').replace(/\\D/g, '')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  sx={{
+                                    ml: -0.5,
+                                    bgcolor: '#25D366',
+                                    color: '#fff',
+                                    '&:hover': { bgcolor: '#1ebe5d' }
+                                  }}
+                                >
+                                  <WhatsAppIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            ) : null}
                           </Stack>
                           <Stack direction="row" spacing={1} alignItems="center">
                             <LoyaltyIcon fontSize="small" color="action" />
