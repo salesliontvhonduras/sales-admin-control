@@ -10,6 +10,7 @@ import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
+import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -36,6 +37,9 @@ import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
 import FormHelperText from '@mui/material/FormHelperText';
 import { useTheme, useMediaQuery } from '@mui/material';
+import Skeleton from '@mui/material/Skeleton';
+import FemaleIcon from '@mui/icons-material/Female';
+import MaleIcon from '@mui/icons-material/Male';
 
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
@@ -47,6 +51,9 @@ import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import PublicIcon from '@mui/icons-material/Public';
+import ShareIcon from '@mui/icons-material/Share';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
@@ -70,6 +77,18 @@ const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
   '& .MuiInputLabel-root': { fontWeight: 500 }
 };
+
+const glassCard = (theme) => ({
+  p: 2,
+  borderRadius: 2.5,
+  border: '1px solid',
+  borderColor: 'divider',
+  boxShadow: '0 12px 30px rgba(0,0,0,0.08)',
+  background:
+    theme.palette.mode === 'light'
+      ? `linear-gradient(135deg, ${theme.palette.primary.lighter} 0%, ${theme.palette.secondary.lighter} 50%, #ffffff 100%)`
+      : theme.palette.background.default
+});
 
 const sectionSx = {
   p: 2,
@@ -112,6 +131,26 @@ function initialsFromName(name = '') {
   if (!parts.length) return '?';
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return `${parts[0][0] ?? ''}${parts[parts.length - 1][0] ?? ''}`.toUpperCase();
+}
+
+function flagFromPhone(phone = '') {
+  const clean = phone.replace(/[^\d+]/g, '');
+  if (clean.startsWith('+504') || clean.startsWith('504')) return '🇭🇳';
+  if (clean.startsWith('+502') || clean.startsWith('502')) return '🇬🇹';
+  if (clean.startsWith('+503') || clean.startsWith('503')) return '🇸🇻';
+  if (clean.startsWith('+505') || clean.startsWith('505')) return '🇳🇮';
+  if (clean.startsWith('+506') || clean.startsWith('506')) return '🇨🇷';
+  if (clean.startsWith('+507') || clean.startsWith('507')) return '🇵🇦';
+  if (clean.startsWith('+509') || clean.startsWith('509')) return '🇭🇹';
+  if (clean.startsWith('+501') || clean.startsWith('501')) return '🇧🇿';
+  if (clean.startsWith('+58') || clean.startsWith('58')) return '🇻🇪';
+  if (clean.startsWith('+54') || clean.startsWith('54')) return '🇦🇷';
+  if (clean.startsWith('+52') || clean.startsWith('52')) return '🇲🇽';
+  if (clean.startsWith('+1') || clean.startsWith('1')) return '🇺🇸';
+  if (clean.startsWith('+34') || clean.startsWith('34')) return '🇪🇸';
+  if (clean.startsWith('+57') || clean.startsWith('57')) return '🇨🇴';
+  if (clean.startsWith('+48') || clean.startsWith('48')) return '🇵🇱';
+  return null;
 }
 
 function RowActions({ row, onEdit, onDelete }) {
@@ -485,18 +524,47 @@ export default function CustomersLionTv() {
         }
       >
         <Grid container spacing={gridSpacing}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Chip label={`${total} ${t('customers.title').toLowerCase()}`} color="primary" />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Chip label={`${t('customers.headers.status')}: ACTIVE ${summary.active}`} color="success" />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Chip label={`${t('customers.headers.status')}: INACTIVE ${summary.inactive}`} color="default" />
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Chip label={`${t('customers.headers.referred')}: ${summary.referred}`} color="secondary" />
-          </Grid>
+          {[
+            { label: `${total} ${t('customers.title').toLowerCase()}`, color: 'primary.main' },
+            { label: `${t('customers.headers.status')}: ACTIVE ${summary.active}`, color: 'success.main' },
+            { label: `${t('customers.headers.status')}: INACTIVE ${summary.inactive}`, color: 'text.secondary' },
+            { label: `${t('customers.headers.referred')}: ${summary.referred}`, color: 'secondary.main' }
+          ].map((item, idx) => (
+            <Grid item xs={12} sm={6} md={3} key={idx}>
+              <Card
+                sx={(theme) => ({
+                  ...glassCard(theme),
+                  py: 1.5,
+                  px: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  background:
+                    theme.palette.mode === 'light'
+                      ? `linear-gradient(150deg, ${theme.palette.primary.light}1F 0%, ${theme.palette.secondary.light}26 60%, #ffffff 100%)`
+                      : theme.palette.background.paper
+                })}
+              >
+                <Avatar
+                  sx={(theme) => ({
+                    width: 40,
+                    height: 40,
+                    bgcolor: theme.palette.mode === 'light' ? `${item.color}` : theme.palette.primary.dark,
+                    color: theme.palette.getContrastText(theme.palette.primary.main),
+                    fontWeight: 700,
+                    boxShadow: 3,
+                    border: '2px solid',
+                    borderColor: 'background.paper'
+                  })}
+                >
+                  <PeopleAltIcon fontSize="small" />
+                </Avatar>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                  {item.label}
+                </Typography>
+              </Card>
+            </Grid>
+          ))}
         </Grid>
       </MainCard>
 
@@ -534,10 +602,10 @@ export default function CustomersLionTv() {
           </Box>
         }
       >
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.06)' }}>
           <Table size="small">
             <TableHead>
-              <TableRow>
+              <TableRow sx={{ bgcolor: 'background.default' }}>
                 <TableCell>{t('customers.headers.customer')}</TableCell>
                 <TableCell>{t('customers.headers.email')}</TableCell>
                 <TableCell>{t('customers.headers.phone')}</TableCell>
@@ -552,10 +620,29 @@ export default function CustomersLionTv() {
             </TableHead>
             <TableBody>
               {paginatedRows.map((row) => (
-                <TableRow key={row.id || row.username || row.mail}>
+                <TableRow
+                  key={row.id || row.username || row.mail}
+                  hover
+                  sx={{
+                    '&:nth-of-type(odd)': { bgcolor: 'background.default' },
+                    transition: 'background 0.2s ease',
+                    cursor: 'pointer'
+                  }}
+                >
                   <TableCell>
                     <Stack direction="row" spacing={1.5} alignItems="center">
-                      <Avatar sx={{ width: 32, height: 32 }}>
+                      <Avatar
+                        sx={{
+                          width: 34,
+                          height: 34,
+                          bgcolor: (theme) => theme.palette.secondary.light,
+                          color: (theme) => theme.palette.secondary.dark,
+                          fontWeight: 700,
+                          boxShadow: 2,
+                          border: '1px solid',
+                          borderColor: 'divider'
+                        }}
+                      >
                         {initialsFromName(row.fullName)}
                       </Avatar>
                       <Box>
@@ -569,22 +656,80 @@ export default function CustomersLionTv() {
                     </Stack>
                   </TableCell>
                   <TableCell>{row.mail || '-'}</TableCell>
-                  <TableCell>{row.phone || '-'}</TableCell>
-                  <TableCell>{row.gender || '-'}</TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={0.75} alignItems="center">
+                      <Avatar
+                        sx={{
+                          width: 26,
+                          height: 26,
+                          bgcolor: 'grey.100',
+                          color: 'text.secondary',
+                          fontSize: 14,
+                          fontWeight: 700
+                        }}
+                      >
+                        {flagFromPhone(row.phone) || <PublicIcon fontSize="small" />}
+                      </Avatar>
+                      <Typography variant="body2">{row.phone || '-'}</Typography>
+                    </Stack>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      icon={
+                        row.gender === 'F' ? (
+                          <FemaleIcon fontSize="small" />
+                        ) : row.gender === 'M' ? (
+                          <MaleIcon fontSize="small" />
+                        ) : null
+                      }
+                      label={row.gender || '-'}
+                      sx={(theme) => ({
+                        bgcolor:
+                          row.gender === 'F'
+                            ? theme.palette.secondary.lighter
+                            : row.gender === 'M'
+                              ? theme.palette.primary.lighter
+                              : theme.palette.grey[100],
+                        color:
+                          row.gender === 'F'
+                            ? theme.palette.secondary.dark
+                            : row.gender === 'M'
+                              ? theme.palette.primary.dark
+                              : theme.palette.text.secondary,
+                        fontWeight: 600
+                      })}
+                    />
+                  </TableCell>
                   <TableCell>
                     <StatusChip status={row.status} />
                   </TableCell>
                   <TableCell>{row.openingDate}</TableCell>
-                  <TableCell>{row.closeDate??'-'}</TableCell>
+                  <TableCell>{row.closeDate ?? '-'}</TableCell>
                   <TableCell>
                     <Chip
                       size="small"
-                      color={row.isReferred || row.refererBy ? 'info' : 'default'}
-                      label={row.isReferred || row.refererBy ? 'Si' : 'No'}
+                      label={row.isReferred || row.refererBy ? 'Sí' : 'No'}
+                      sx={(theme) => ({
+                        bgcolor: row.isReferred || row.refererBy ? theme.palette.info.lighter : theme.palette.grey[100],
+                        color: row.isReferred || row.refererBy ? theme.palette.info.dark : theme.palette.text.secondary,
+                        fontWeight: 600
+                      })}
                       icon={<PeopleAltIcon fontSize="small" />}
                     />
                   </TableCell>
-                  <TableCell>{row.channel || '-'}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      icon={<ShareIcon fontSize="small" />}
+                      label={row.channel || '-'}
+                      sx={(theme) => ({
+                        bgcolor: theme.palette.mode === 'light' ? theme.palette.info.lighter : theme.palette.info.dark,
+                        color: theme.palette.mode === 'light' ? theme.palette.info.darker : theme.palette.info.contrastText,
+                        fontWeight: 600
+                      })}
+                    />
+                  </TableCell>
                   <TableCell align="right">
                     <RowActions row={row} onEdit={handleEdit} onDelete={handleDelete} />
                   </TableCell>
@@ -592,15 +737,31 @@ export default function CustomersLionTv() {
               ))}
               {!loading && filteredRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={11} align="center">
-                    No hay clientes registrados.
+                  <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
+                    <Stack spacing={1} alignItems="center">
+                      <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                        <PeopleAltIcon />
+                      </Avatar>
+                      <Typography variant="subtitle1">No hay clientes registrados.</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Crea tu primer cliente para verlo aquí.
+                      </Typography>
+                      <Button variant="contained" onClick={() => setOpenCreate(true)} size="small">
+                        {t('actions.newCustomer')}
+                      </Button>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               )}
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={11} align="center">
-                    Cargando...
+                  <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
+                    <Stack spacing={1} alignItems="center">
+                      <Skeleton variant="circular" width={40} height={40} />
+                      <Typography variant="body2" color="text.secondary">
+                        Cargando clientes...
+                      </Typography>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               )}
@@ -620,15 +781,27 @@ export default function CustomersLionTv() {
         />
       </MainCard>
 
-      <Dialog open={openCreate} onClose={() => setOpenCreate(false)} fullWidth maxWidth="md" fullScreen={isMobile}>
-        <DialogTitle sx={{ pb: 1 }}>
+      <Dialog
+        open={openCreate}
+        onClose={() => setOpenCreate(false)}
+        fullWidth
+        maxWidth="md"
+        fullScreen={isMobile}
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle
+          sx={(theme) => ({
+            pb: 1,
+            background: `linear-gradient(135deg, ${theme.palette.primary.light}33 0%, ${theme.palette.primary.main}20 45%, ${theme.palette.background.paper} 100%)`
+          })}
+        >
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Avatar
               sx={{
                 bgcolor: 'primary.main',
                 color: 'primary.contrastText',
-                width: 36,
-                height: 36,
+                width: 40,
+                height: 40,
                 boxShadow: 3
               }}
             >
@@ -647,7 +820,11 @@ export default function CustomersLionTv() {
           sx={{
             bgcolor: 'background.default',
             px: { xs: 1.5, sm: 3 },
-            py: { xs: 1.5, sm: 2 }
+            py: { xs: 1.5, sm: 2 },
+            background: (theme) =>
+              theme.palette.mode === 'light'
+                ? `linear-gradient(180deg, ${theme.palette.primary.light}12 0%, ${theme.palette.background.paper} 70%)`
+                : theme.palette.background.default
           }}
         >
           <Box
@@ -656,7 +833,7 @@ export default function CustomersLionTv() {
               p: 2,
               borderRadius: 2,
               background: (theme) =>
-                `linear-gradient(135deg, ${theme.palette.primary.light}1A, ${theme.palette.primary.main}12)`
+                `linear-gradient(135deg, ${theme.palette.primary.light}1F, ${theme.palette.secondary.light}14)`
             }}
           >
             <Typography variant="subtitle2" color="text.secondary">
@@ -853,8 +1030,8 @@ export default function CustomersLionTv() {
             </FormSection>
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button variant="outlined" onClick={resetForm}>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button variant="outlined" onClick={resetForm} disabled={sending}>
             Limpiar
           </Button>
           <Button variant="contained" onClick={handleCreateCustomer} disabled={sending}>
@@ -863,15 +1040,27 @@ export default function CustomersLionTv() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openEdit} onClose={() => setOpenEdit(false)} fullWidth maxWidth="md" fullScreen={isMobile}>
-        <DialogTitle sx={{ pb: 1 }}>
+      <Dialog
+        open={openEdit}
+        onClose={() => setOpenEdit(false)}
+        fullWidth
+        maxWidth="md"
+        fullScreen={isMobile}
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle
+          sx={(theme) => ({
+            pb: 1,
+            background: `linear-gradient(135deg, ${theme.palette.warning.light}33 0%, ${theme.palette.warning.main}20 45%, ${theme.palette.background.paper} 100%)`
+          })}
+        >
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Avatar
               sx={{
                 bgcolor: 'warning.main',
                 color: 'warning.contrastText',
-                width: 36,
-                height: 36,
+                width: 40,
+                height: 40,
                 boxShadow: 3
               }}
             >
@@ -890,7 +1079,11 @@ export default function CustomersLionTv() {
           sx={{
             bgcolor: 'background.default',
             px: { xs: 1.5, sm: 3 },
-            py: { xs: 1.5, sm: 2 }
+            py: { xs: 1.5, sm: 2 },
+            background: (theme) =>
+              theme.palette.mode === 'light'
+                ? `linear-gradient(180deg, ${theme.palette.warning.light}12 0%, ${theme.palette.background.paper} 70%)`
+                : theme.palette.background.default
           }}
         >
           <Box
@@ -899,7 +1092,7 @@ export default function CustomersLionTv() {
               p: 2,
               borderRadius: 2,
               background: (theme) =>
-                `linear-gradient(135deg, ${theme.palette.warning.light}1A, ${theme.palette.warning.main}12)`
+                `linear-gradient(135deg, ${theme.palette.warning.light}1F, ${theme.palette.secondary.light}12)`
             }}
           >
             <Typography variant="subtitle2" color="text.secondary">
@@ -1094,8 +1287,8 @@ export default function CustomersLionTv() {
             </FormSection>
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button variant="outlined" onClick={resetForm}>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button variant="outlined" onClick={resetForm} disabled={sending}>
             Limpiar
           </Button>
           <Button variant="contained" onClick={handleUpdateCustomer} disabled={sending}>
@@ -1110,16 +1303,36 @@ export default function CustomersLionTv() {
         maxWidth="xs"
         fullWidth
         fullScreen={isMobile}
+        PaperProps={{ sx: { borderRadius: 3 } }}
       >
-        <DialogTitle>Eliminar cliente</DialogTitle>
+        <DialogTitle
+          sx={(theme) => ({
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            background: `linear-gradient(135deg, ${theme.palette.error.light}33 0%, ${theme.palette.background.paper} 100%)`
+          })}
+        >
+          <Avatar sx={{ bgcolor: 'error.main', color: 'error.contrastText', width: 40, height: 40, boxShadow: 3 }}>
+            <WarningAmberIcon fontSize="small" />
+          </Avatar>
+          <Box>
+            <Typography variant="h6">Eliminar cliente</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Esta acción no se puede deshacer.
+            </Typography>
+          </Box>
+        </DialogTitle>
         <DialogContent dividers>
-          <Typography>
+          <Typography variant="body2" sx={{ mb: 1 }}>
             ¿Estás seguro de eliminar a{' '}
-            <strong>{openDelete.row?.fullName || openDelete.row?.username || openDelete.row?.mail || 'este cliente'}</strong>
-            ? Esta acción no se puede deshacer.
+            <strong>{openDelete.row?.fullName || openDelete.row?.username || openDelete.row?.mail || 'este cliente'}</strong>?
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Se eliminarán también sus referencias asociadas.
           </Typography>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button onClick={() => setOpenDelete({ open: false, row: null })} disabled={sending}>
             Cancelar
           </Button>
