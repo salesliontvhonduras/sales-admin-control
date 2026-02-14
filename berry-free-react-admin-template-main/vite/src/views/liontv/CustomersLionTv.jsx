@@ -83,10 +83,10 @@ const glassCard = (theme) => ({
   borderRadius: 2.5,
   border: '1px solid',
   borderColor: 'divider',
-  boxShadow: '0 12px 30px rgba(0,0,0,0.08)',
+  boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
   background:
     theme.palette.mode === 'light'
-      ? `linear-gradient(135deg, ${theme.palette.primary.lighter} 0%, ${theme.palette.secondary.lighter} 50%, #ffffff 100%)`
+      ? `linear-gradient(135deg, ${theme.palette.primary.light}24 0%, ${theme.palette.secondary.main}12 45%, #ffffff 100%)`
       : theme.palette.background.default
 });
 
@@ -513,11 +513,30 @@ export default function CustomersLionTv() {
       <MainCard
         title={t('customers.title')}
         secondary={
-          <Stack direction="row" spacing={1}>
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => setRefreshKey((v) => v + 1)}>
+          <Stack direction="row" spacing={1.25}>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={() => setRefreshKey((v) => v + 1)}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                px: 2
+              }}
+            >
               {t('actions.refresh')}
             </Button>
-            <Button variant="contained" onClick={() => setOpenCreate(true)}>
+            <Button
+              variant="contained"
+              startIcon={<PersonAddAlt1Icon />}
+              onClick={() => setOpenCreate(true)}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                px: 2.5,
+                boxShadow: '0 10px 24px rgba(0,0,0,0.12)'
+              }}
+            >
               {t('actions.newCustomer')}
             </Button>
           </Stack>
@@ -541,7 +560,7 @@ export default function CustomersLionTv() {
                   gap: 1.5,
                   background:
                     theme.palette.mode === 'light'
-                      ? `linear-gradient(150deg, ${theme.palette.primary.light}1F 0%, ${theme.palette.secondary.light}26 60%, #ffffff 100%)`
+                      ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, #ffffff 100%)`
                       : theme.palette.background.paper
                 })}
               >
@@ -569,26 +588,69 @@ export default function CustomersLionTv() {
       </MainCard>
 
       <MainCard
-        title={t('customers.title')}
+        title=""
         secondary={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 480 } }}>
+          <Paper
+            elevation={0}
+            sx={(theme) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              width: { xs: '100%', sm: 520 },
+              p: 1,
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              background:
+                theme.palette.mode === 'light'
+                  ? `linear-gradient(120deg, ${theme.palette.primary.light}12 0%, ${theme.palette.secondary.light}12 100%)`
+                  : theme.palette.background.paper,
+              boxShadow: '0 8px 18px rgba(0,0,0,0.05)'
+            })}
+          >
             <TextField
               size="small"
               placeholder={t('customers.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               fullWidth
+              variant="outlined"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  backgroundColor: 'background.paper'
+                }
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon />
+                    <SearchIcon color="action" />
                   </InputAdornment>
                 )
               }}
             />
-            <FormControl size="small" sx={{ minWidth: 140 }}>
+            <FormControl
+              size="small"
+              sx={{
+                minWidth: 160,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  backgroundColor: 'background.paper'
+                }
+              }}
+            >
               <InputLabel>{t('customers.headers.status')}</InputLabel>
-              <Select value={statusFilter} label={t('customers.headers.status')} onChange={(e) => setStatusFilter(e.target.value)}>
+              <Select
+                value={statusFilter}
+                label={t('customers.headers.status')}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                renderValue={(val) => (val ? val : t('invoices.filters.all'))}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <PeopleAltIcon fontSize="small" />
+                  </InputAdornment>
+                }
+              >
                 <MenuItem value="">
                   <em>{t('invoices.filters.all')}</em>
                 </MenuItem>
@@ -599,13 +661,26 @@ export default function CustomersLionTv() {
                 ))}
               </Select>
             </FormControl>
-          </Box>
+          </Paper>
         }
       >
-        <TableContainer component={Paper} sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.06)' }}>
+        <TableContainer
+          component={Paper}
+          sx={{
+            borderRadius: 3,
+            overflow: 'hidden',
+            boxShadow: '0 12px 32px rgba(0,0,0,0.10)',
+            border: '1px solid',
+            borderColor: 'divider'
+          }}
+        >
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ bgcolor: 'background.default' }}>
+              <TableRow
+                sx={(theme) => ({
+                  bgcolor: theme.palette.mode === 'light' ? theme.palette.primary.lighter : theme.palette.background.default
+                })}
+              >
                 <TableCell>{t('customers.headers.customer')}</TableCell>
                 <TableCell>{t('customers.headers.email')}</TableCell>
                 <TableCell>{t('customers.headers.phone')}</TableCell>
@@ -787,12 +862,12 @@ export default function CustomersLionTv() {
         fullWidth
         maxWidth="md"
         fullScreen={isMobile}
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        PaperProps={{ sx: { borderRadius: 3, boxShadow: 16 } }}
       >
         <DialogTitle
           sx={(theme) => ({
             pb: 1,
-            background: `linear-gradient(135deg, ${theme.palette.primary.light}33 0%, ${theme.palette.primary.main}20 45%, ${theme.palette.background.paper} 100%)`
+            background: `linear-gradient(135deg, ${theme.palette.primary.light}40 0%, ${theme.palette.secondary.light}20 45%, ${theme.palette.background.paper} 100%)`
           })}
         >
           <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -823,7 +898,7 @@ export default function CustomersLionTv() {
             py: { xs: 1.5, sm: 2 },
             background: (theme) =>
               theme.palette.mode === 'light'
-                ? `linear-gradient(180deg, ${theme.palette.primary.light}12 0%, ${theme.palette.background.paper} 70%)`
+                ? `linear-gradient(180deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}10 50%, ${theme.palette.background.paper} 80%)`
                 : theme.palette.background.default
           }}
         >
@@ -833,7 +908,7 @@ export default function CustomersLionTv() {
               p: 2,
               borderRadius: 2,
               background: (theme) =>
-                `linear-gradient(135deg, ${theme.palette.primary.light}1F, ${theme.palette.secondary.light}14)`
+                `linear-gradient(135deg, ${theme.palette.primary.light}22, ${theme.palette.secondary.light}1A)`
             }}
           >
             <Typography variant="subtitle2" color="text.secondary">
@@ -1031,10 +1106,15 @@ export default function CustomersLionTv() {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="outlined" onClick={resetForm} disabled={sending}>
+          <Button variant="outlined" onClick={resetForm} disabled={sending} sx={{ borderRadius: 2 }}>
             Limpiar
           </Button>
-          <Button variant="contained" onClick={handleCreateCustomer} disabled={sending}>
+          <Button
+            variant="contained"
+            onClick={handleCreateCustomer}
+            disabled={sending}
+            sx={{ borderRadius: 2, boxShadow: '0 10px 24px rgba(0,0,0,0.12)' }}
+          >
             {sending ? 'Creando...' : 'Crear'}
           </Button>
         </DialogActions>
@@ -1046,12 +1126,12 @@ export default function CustomersLionTv() {
         fullWidth
         maxWidth="md"
         fullScreen={isMobile}
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        PaperProps={{ sx: { borderRadius: 3, boxShadow: 16 } }}
       >
         <DialogTitle
           sx={(theme) => ({
             pb: 1,
-            background: `linear-gradient(135deg, ${theme.palette.warning.light}33 0%, ${theme.palette.warning.main}20 45%, ${theme.palette.background.paper} 100%)`
+            background: `linear-gradient(135deg, ${theme.palette.warning.light}40 0%, ${theme.palette.secondary.light}20 45%, ${theme.palette.background.paper} 100%)`
           })}
         >
           <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -1082,7 +1162,7 @@ export default function CustomersLionTv() {
             py: { xs: 1.5, sm: 2 },
             background: (theme) =>
               theme.palette.mode === 'light'
-                ? `linear-gradient(180deg, ${theme.palette.warning.light}12 0%, ${theme.palette.background.paper} 70%)`
+                ? `linear-gradient(180deg, ${theme.palette.warning.light}18 0%, ${theme.palette.secondary.light}12 55%, ${theme.palette.background.paper} 80%)`
                 : theme.palette.background.default
           }}
         >
@@ -1092,7 +1172,7 @@ export default function CustomersLionTv() {
               p: 2,
               borderRadius: 2,
               background: (theme) =>
-                `linear-gradient(135deg, ${theme.palette.warning.light}1F, ${theme.palette.secondary.light}12)`
+                `linear-gradient(135deg, ${theme.palette.warning.light}22, ${theme.palette.secondary.light}18)`
             }}
           >
             <Typography variant="subtitle2" color="text.secondary">
@@ -1288,10 +1368,15 @@ export default function CustomersLionTv() {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="outlined" onClick={resetForm} disabled={sending}>
+          <Button variant="outlined" onClick={resetForm} disabled={sending} sx={{ borderRadius: 2 }}>
             Limpiar
           </Button>
-          <Button variant="contained" onClick={handleUpdateCustomer} disabled={sending}>
+          <Button
+            variant="contained"
+            onClick={handleUpdateCustomer}
+            disabled={sending}
+            sx={{ borderRadius: 2, boxShadow: '0 10px 24px rgba(0,0,0,0.12)' }}
+          >
             {sending ? 'Guardando...' : 'Guardar cambios'}
           </Button>
         </DialogActions>
@@ -1303,14 +1388,14 @@ export default function CustomersLionTv() {
         maxWidth="xs"
         fullWidth
         fullScreen={isMobile}
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        PaperProps={{ sx: { borderRadius: 3, boxShadow: 16 } }}
       >
         <DialogTitle
           sx={(theme) => ({
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            background: `linear-gradient(135deg, ${theme.palette.error.light}33 0%, ${theme.palette.background.paper} 100%)`
+            background: `linear-gradient(135deg, ${theme.palette.error.light}45 0%, ${theme.palette.secondary.light}15 60%, ${theme.palette.background.paper} 100%)`
           })}
         >
           <Avatar sx={{ bgcolor: 'error.main', color: 'error.contrastText', width: 40, height: 40, boxShadow: 3 }}>
@@ -1333,10 +1418,16 @@ export default function CustomersLionTv() {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button onClick={() => setOpenDelete({ open: false, row: null })} disabled={sending}>
+          <Button onClick={() => setOpenDelete({ open: false, row: null })} disabled={sending} sx={{ borderRadius: 2 }}>
             Cancelar
           </Button>
-          <Button color="error" variant="contained" onClick={handleDeleteCustomer} disabled={sending}>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleDeleteCustomer}
+            disabled={sending}
+            sx={{ borderRadius: 2, boxShadow: '0 10px 24px rgba(0,0,0,0.16)' }}
+          >
             {sending ? 'Eliminando...' : 'Eliminar'}
           </Button>
         </DialogActions>
