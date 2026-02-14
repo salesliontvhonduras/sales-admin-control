@@ -8,6 +8,10 @@ import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import Divider from '@mui/material/Divider';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import InputAdornment from '@mui/material/InputAdornment';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -32,10 +36,15 @@ import useAuth from 'hooks/useAuth';
 import { useSnackbar } from 'notistack';
 import LanguageSwitcher from 'ui-component/LanguageSwitcher';
 import Tooltip from '@mui/material/Tooltip';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
+import { authApi } from 'utils/api';
+import IconButton from '@mui/material/IconButton';
 
 // assets
 import User1 from 'assets/images/users/user-round.svg';
-import { IconLogout, IconSearch, IconSettings, IconUser } from '@tabler/icons-react';
+import { IconLogout, IconSearch, IconSettings, IconUser, IconLock, IconKey, IconEye, IconEyeOff } from '@tabler/icons-react';
 
 // ==============================|| PROFILE MENU ||============================== //
 
@@ -55,6 +64,11 @@ export default function ProfileSection() {
   const [value, setValue] = useState('');
   const [notification, setNotification] = useState(false);
   const [open, setOpen] = useState(false);
+  const [openPwd, setOpenPwd] = useState(false);
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdForm, setPwdForm] = useState({ current: '', next: '', confirm: '' });
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   /**
    * anchorRef is used on different components and specifying one type leads to other components throwing an error
@@ -87,6 +101,32 @@ export default function ProfileSection() {
     enqueueSnackbar('Sesión cerrada.', { variant: 'success' });
     setOpen(false);
     navigate(BASE_URL + '/pages/login');
+  };
+
+  const handleChangePwd = async () => {
+    if (!pwdForm.current || !pwdForm.next || !pwdForm.confirm) {
+      enqueueSnackbar('Completa todos los campos.', { variant: 'warning' });
+      return;
+    }
+    if (pwdForm.next !== pwdForm.confirm) {
+      enqueueSnackbar('Las contraseñas no coinciden.', { variant: 'warning' });
+      return;
+    }
+    setPwdLoading(true);
+    try {
+      await authApi.post('/auth/v1/password/change', {
+        currentPassword: pwdForm.current,
+        newPassword: pwdForm.next
+      });
+      enqueueSnackbar('Contraseña actualizada.', { variant: 'success' });
+      setOpenPwd(false);
+      setPwdForm({ current: '', next: '', confirm: '' });
+    } catch (err) {
+      const msg = err?.response?.data?.message || 'No se pudo actualizar la contraseña.';
+      enqueueSnackbar(msg, { variant: 'error' });
+    } finally {
+      setPwdLoading(false);
+    }
   };
 
   return (
@@ -227,23 +267,14 @@ export default function ProfileSection() {
                           </ListItemIcon>
                           <ListItemText primary={<Typography variant="body2">Account Settings</Typography>} />
                         </ListItemButton>
-                        <ListItemButton sx={{ borderRadius: `${borderRadius}px` }}>
+                        <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} onClick={() => setOpenPwd(true)}>
                           <ListItemIcon>
                             <IconUser stroke={1.5} size="20px" />
                           </ListItemIcon>
                           <ListItemText
                             primary={
                               <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                                <Typography variant="body2">Social Profile</Typography>
-                                <Chip
-                                  slotProps={{
-                                    label: { sx: { mt: 0.25 } }
-                                  }}
-                                  label="02"
-                                  variant="filled"
-                                  size="small"
-                                  color="warning"
-                                />
+                                <Typography variant="body2">Change Password</Typography>
                               </Stack>
                             }
                           />
@@ -263,6 +294,124 @@ export default function ProfileSection() {
           </ClickAwayListener>
         )}
       </Popper>
+
+      <Dialog open={openPwd} onClose={() => setOpenPwd(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle
+          sx={{
+            pb: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            background: (theme) =>
+              `linear-gradient(135deg, ${theme.palette.primary.light}30 0%, ${theme.palette.background.paper} 100%)`
+          }}
+        >
+          <Avatar sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', width: 40, height: 40, boxShadow: 2 }}>
+            <IconLock size={20} />
+          </Avatar>
+          <Box>
+            <Typography variant="h6" sx={{ lineHeight: 1 }}>
+              Cambiar contraseña
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Mantén tu cuenta segura con una contraseña fuerte.
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent
+          dividers
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1.5,
+            pt: 2,
+            background: (theme) =>
+              theme.palette.mode === 'light'
+                ? `linear-gradient(180deg, ${theme.palette.primary.light}12 0%, ${theme.palette.background.paper} 60%)`
+                : theme.palette.background.default
+          }}
+        >
+          <TextField
+            label="Contraseña actual"
+            type="password"
+            value={pwdForm.current}
+            onChange={(e) => setPwdForm((p) => ({ ...p, current: e.target.value }))}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <IconKey size={18} />
+                </InputAdornment>
+              )
+            }}
+          />
+          <TextField
+            label="Nueva contraseña"
+            type={showNew ? 'text' : 'password'}
+            value={pwdForm.next}
+            onChange={(e) => setPwdForm((p) => ({ ...p, next: e.target.value }))}
+            fullWidth
+            helperText="Usa al menos 8 caracteres, mezcla letras, números y símbolos."
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <IconLock size={18} />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton edge="end" onClick={() => setShowNew((v) => !v)} size="small">
+                    {showNew ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
+          <TextField
+            label="Confirmar nueva contraseña"
+            type={showConfirm ? 'text' : 'password'}
+            value={pwdForm.confirm}
+            onChange={(e) => setPwdForm((p) => ({ ...p, confirm: e.target.value }))}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <IconLock size={18} />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton edge="end" onClick={() => setShowConfirm((v) => !v)} size="small">
+                    {showConfirm ? <IconEyeOff size={18} /> : <IconEye size={18} />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
+          <Box
+            sx={{
+              mt: 0.5,
+              p: 1.25,
+              borderRadius: 2,
+              bgcolor: 'primary.lighter',
+              color: 'primary.dark',
+              border: '1px dashed',
+              borderColor: 'primary.main',
+              fontSize: 13
+            }}
+          >
+            Consejo: evita reutilizar contraseñas y no compartas este cambio.
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button onClick={() => setOpenPwd(false)} disabled={pwdLoading}>
+            Cancelar
+          </Button>
+          <Button variant="contained" onClick={handleChangePwd} disabled={pwdLoading}>
+            {pwdLoading ? <CircularProgress size={18} color="inherit" /> : 'Guardar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
