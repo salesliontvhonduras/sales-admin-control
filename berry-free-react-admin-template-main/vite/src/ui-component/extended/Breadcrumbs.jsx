@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -50,6 +51,7 @@ export default function Breadcrumbs({
 }) {
   const theme = useTheme();
   const location = useLocation();
+  const { t } = useTranslation();
   const [main, setMain] = useState();
   const [item, setItem] = useState();
 
@@ -135,7 +137,7 @@ export default function Breadcrumbs({
         color={window.location.pathname === main.url ? 'text.primary' : 'text.secondary'}
       >
         {icons && <CollapseIcon style={{ ...iconSX }} />}
-        {main.title}
+        {t(main.title, { defaultValue: main.title })}
       </Typography>
     );
   }
@@ -158,7 +160,7 @@ export default function Breadcrumbs({
             sx={{ justifyContent: rightAlign ? 'space-between' : 'flex-start', alignItems: rightAlign ? 'center' : 'flex-start' }}
             spacing={1}
           >
-            {title && !titleBottom && <BTitle title={main.title} />}
+            {title && !titleBottom && <BTitle title={t(main.title, { defaultValue: main.title })} />}
             <Grid>
               <MuiBreadcrumbs
                 aria-label="breadcrumb"
@@ -169,12 +171,12 @@ export default function Breadcrumbs({
                 <Typography component={Link} to="/" variant="h6" sx={{ ...linkSX, color: 'text.secondary' }}>
                   {icons && <HomeTwoToneIcon style={iconSX} />}
                   {icon && !icons && <HomeIcon style={{ ...iconSX, marginRight: 0 }} />}
-                  {(!icon || icons) && 'Dashboard'}
+                  {(!icon || icons) && t('menu.dashboard', { defaultValue: 'Dashboard' })}
                 </Typography>
                 {mainContent}
               </MuiBreadcrumbs>
             </Grid>
-            {title && titleBottom && <BTitle title={main.title} />}
+            {title && titleBottom && <BTitle title={t(main.title, { defaultValue: main.title })} />}
           </Grid>
         </Box>
         {card === false && divider !== false && <Divider sx={{ mt: 2 }} />}
@@ -184,7 +186,7 @@ export default function Breadcrumbs({
 
   // items
   if ((item && item.type === 'item') || (item?.type === 'group' && item?.url) || custom) {
-    itemTitle = item?.title;
+    itemTitle = item?.title ? t(item.title, { defaultValue: item.title }) : '';
 
     ItemIcon = item?.icon ? item.icon : AccountTreeTwoToneIcon;
     itemContent = (
@@ -217,7 +219,7 @@ export default function Breadcrumbs({
         <Typography component={Link} to="/" variant="h6" sx={{ ...linkSX, color: 'text.secondary' }}>
           {icons && <HomeTwoToneIcon style={{ ...iconSX }} />}
           {icon && !icons && <HomeIcon style={{ ...iconSX, marginRight: 0 }} />}
-          {(!icon || icons) && 'Dashboard'}
+          {(!icon || icons) && t('menu.dashboard', { defaultValue: 'Dashboard' })}
         </Typography>
         {mainContent}
         {itemContent}
@@ -243,7 +245,7 @@ export default function Breadcrumbs({
                 sx={{ ...linkSX, color: 'text.secondary' }}
               >
                 {link.icon && <CollapseIcon style={iconSX} />}
-                {link.title}
+                {t(link.title, { defaultValue: link.title })}
               </Typography>
             );
           })}
@@ -273,9 +275,9 @@ export default function Breadcrumbs({
               sx={{ justifyContent: rightAlign ? 'space-between' : 'flex-start', alignItems: rightAlign ? 'center' : 'flex-start' }}
               spacing={1}
             >
-              {title && !titleBottom && <BTitle title={custom ? heading : item?.title} />}
+              {title && !titleBottom && <BTitle title={custom ? heading : itemTitle} />}
               <Grid>{tempContent}</Grid>
-              {title && titleBottom && <BTitle title={custom ? heading : item?.title} />}
+              {title && titleBottom && <BTitle title={custom ? heading : itemTitle} />}
             </Grid>
           </Box>
           {card === false && divider !== false && <Divider sx={{ mt: 2 }} />}

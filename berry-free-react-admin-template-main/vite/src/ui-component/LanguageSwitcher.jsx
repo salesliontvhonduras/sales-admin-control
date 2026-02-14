@@ -1,21 +1,29 @@
 import { useTranslation } from 'react-i18next';
-import Stack from '@mui/material/Stack';
 import Chip from '@mui/material/Chip';
 import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
-import { styled } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 
 const StyledChip = styled(Chip)(({ theme }) => ({
-  borderRadius: 16,
-  height: 34,
-  padding: '0 8px',
-  fontWeight: 600,
-  background: theme.palette.mode === 'dark' ? theme.palette.background.default : '#f5f7fb',
-  borderColor: theme.palette.divider,
+  borderRadius: 18,
+  height: 38,
+  padding: '0 10px',
+  fontWeight: 700,
+  letterSpacing: 0.1,
+  background:
+    theme.palette.mode === 'dark'
+      ? alpha(theme.palette.primary.main, 0.14)
+      : `linear-gradient(120deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(
+          theme.palette.primary.light,
+          0.16
+        )} 45%, ${alpha(theme.palette.background.paper, 0.92)} 100%)`,
+  borderColor: alpha(theme.palette.primary.main, 0.5),
   color: theme.palette.text.primary,
-  boxShadow: '0 4px 10px rgba(0,0,0,0.08)',
+  boxShadow: '0 8px 18px rgba(0,0,0,0.12)',
   '&:hover': {
-    background: theme.palette.mode === 'dark' ? theme.palette.grey[800] : '#eef2f7'
+    background:
+      theme.palette.mode === 'dark'
+        ? alpha(theme.palette.primary.main, 0.22)
+        : alpha(theme.palette.primary.light, 0.28)
   }
 }));
 
@@ -33,7 +41,7 @@ export default function LanguageSwitcher({ overlay = false }) {
     }
   };
 
-  const chip = (
+  return (
     <StyledChip
       clickable
       onClick={toggle}
@@ -42,19 +50,5 @@ export default function LanguageSwitcher({ overlay = false }) {
       variant="outlined"
       size="small"
     />
-  );
-
-  if (overlay) {
-    return (
-      <Box sx={{ position: 'absolute', top: 12, right: 12, zIndex: 2 }}>
-        {chip}
-      </Box>
-    );
-  }
-
-  return (
-    <Stack direction="row" justifyContent="flex-end">
-      {chip}
-    </Stack>
   );
 }

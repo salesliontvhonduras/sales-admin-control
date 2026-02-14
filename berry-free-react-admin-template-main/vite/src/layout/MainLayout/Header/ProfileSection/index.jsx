@@ -30,6 +30,8 @@ import Transitions from 'ui-component/extended/Transitions';
 import useConfig from 'hooks/useConfig';
 import useAuth from 'hooks/useAuth';
 import { useSnackbar } from 'notistack';
+import LanguageSwitcher from 'ui-component/LanguageSwitcher';
+import Tooltip from '@mui/material/Tooltip';
 
 // assets
 import User1 from 'assets/images/users/user-round.svg';
@@ -46,7 +48,7 @@ export default function ProfileSection() {
     state: { borderRadius }
   } = useConfig();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
 
   const [sdm, setSdm] = useState(true);
@@ -135,13 +137,36 @@ export default function ProfileSection() {
                   <MainCard border={false} elevation={16} content={false} boxShadow shadow={theme.shadows[16]}>
                     <Box sx={{ p: 2, pb: 0 }}>
                       <Stack>
-                        <Stack direction="row" sx={{ alignItems: 'center', gap: 0.5 }}>
-                          <Typography variant="h4">Good Morning,</Typography>
-                          <Typography component="span" variant="h4" sx={{ fontWeight: 400 }}>
-                            Johne Doe
-                          </Typography>
+                        <Stack direction="row" sx={{ alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                          <Box>
+                            <Typography variant="h4">Good Morning,</Typography>
+                            <Typography component="span" variant="h4" sx={{ fontWeight: 400 }}>
+                              {user?.name || 'User'}
+                            </Typography>
+                            <Typography variant="subtitle2" color="text.secondary">
+                              {user?.role || 'Project Admin'}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ flexGrow: 1 }} />
+                          <Tooltip title="Change language">
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                justifyContent: 'flex-end',
+                                alignItems: 'center',
+                                px: 1,
+                                py: 0.5,
+                                bgcolor: 'primary.lighter',
+                                borderRadius: 2,
+                                border: '1px solid',
+                                borderColor: 'primary.light',
+                                boxShadow: theme.shadows[2]
+                              }}
+                            >
+                              <LanguageSwitcher />
+                            </Box>
+                          </Tooltip>
                         </Stack>
-                        <Typography variant="subtitle2">Project Admin</Typography>
                       </Stack>
                       <OutlinedInput
                         sx={{ width: '100%', pr: 1, pl: 2, my: 2 }}
