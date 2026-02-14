@@ -80,7 +80,9 @@ const resources = {
         refresh: 'Refresh',
         add: 'Add',
         newInvoice: 'New invoice',
-        newCustomer: 'New customer'
+        newCustomer: 'New customer',
+        edit: 'Edit',
+        delete: 'Delete'
       },
       invoices: {
         title: 'Invoices',
@@ -210,6 +212,64 @@ const resources = {
           closing: 'Closing',
           referred: 'Referred',
           channel: 'Channel'
+        },
+        badge: { new: 'New', edit: 'Edit' },
+        tips: {
+          new: 'Review channel and gender; they help segment campaigns and reports.',
+          edit: 'If you change email or phone, ensure the channel stays consistent.'
+        },
+        form: {
+          sections: {
+            identification: 'Identification',
+            identificationHelper: 'Name, gender, status and channel.',
+            contact: 'Contact',
+            contactHelper: 'How to reach this customer.',
+            dates: 'Dates',
+            datesHelper: 'Opening and closing control (optional).',
+            referred: 'Referred',
+            referredHelper: 'Mark if the customer is referred and by whom.'
+          },
+          name: 'Full name',
+          gender: 'Gender',
+          status: 'Status',
+          channel: 'Channel',
+          email: 'Email',
+          phone: 'Phone',
+          opening: 'Opening date',
+          closing: 'Closing date',
+          referredToggle: 'Is referred',
+          referredBy: 'Referred by',
+          placeholderSelect: 'Select a customer',
+          noReferrers: 'No customers available',
+          helperOff: 'Enable "Is referred" to select.',
+          helperNone: 'No customers to refer yet.',
+          helperPick: 'Choose from existing customers.',
+          helperLoading: 'Loading customers...',
+          createTitle: 'New customer',
+          createSubtitle: 'Register a customer with basic info and key dates.',
+          editTitle: 'Edit customer',
+          editSubtitle: 'Update only the fields you need; then save the changes.',
+          deleteTitle: 'Delete customer',
+          deleteSubtitle: 'This action cannot be undone.',
+          deleteBody: 'Are you sure you want to delete {{name}}?',
+          buttons: {
+            clear: 'Clear',
+            create: 'Create',
+            creating: 'Creating...',
+            save: 'Save changes',
+            saving: 'Saving...',
+            delete: 'Delete',
+            deleting: 'Deleting...',
+            cancel: 'Cancel'
+          },
+          states: { yes: 'Yes', no: 'No', male: 'Male', female: 'Female', active: 'Active', inactive: 'Inactive' }
+        },
+        table: { loading: 'Loading customers...', emptyTitle: 'No customers yet.', emptyText: 'Create your first customer to see it here.' },
+        messages: {
+          required: 'Please complete the required fields.',
+          created: 'Customer created successfully.',
+          updated: 'Customer updated successfully.',
+          deleted: 'Customer deleted successfully.'
         }
       },
       sms: {
@@ -340,7 +400,9 @@ const resources = {
         refresh: 'Recargar',
         add: 'Agregar',
         newInvoice: 'Nueva factura',
-        newCustomer: 'Nuevo cliente'
+        newCustomer: 'Nuevo cliente',
+        edit: 'Editar',
+        delete: 'Eliminar'
       },
       invoices: {
         title: 'Facturas',
@@ -470,6 +532,64 @@ const resources = {
           closing: 'Cierre',
           referred: 'Referido',
           channel: 'Canal'
+        },
+        badge: { new: 'Alta', edit: 'Edición' },
+        tips: {
+          new: 'Revisa el canal y el género; ayudan a segmentar campañas y reportes.',
+          edit: 'Si cambias el correo o teléfono, valida que el canal se mantenga coherente.'
+        },
+        form: {
+          sections: {
+            identification: 'Identificación',
+            identificationHelper: 'Nombre, género, estado y canal.',
+            contact: 'Contacto',
+            contactHelper: 'Cómo comunicarnos con el cliente.',
+            dates: 'Fechas',
+            datesHelper: 'Control de apertura y cierre (opcional).',
+            referred: 'Referido',
+            referredHelper: 'Marca si el cliente viene referido y quién lo recomendó.'
+          },
+          name: 'Nombre completo',
+          gender: 'Género',
+          status: 'Estado',
+          channel: 'Canal',
+          email: 'Correo',
+          phone: 'Teléfono',
+          opening: 'Fecha de apertura',
+          closing: 'Fecha de cierre',
+          referredToggle: 'Es referido',
+          referredBy: 'Referido por',
+          placeholderSelect: 'Selecciona un cliente',
+          noReferrers: 'No hay clientes disponibles',
+          helperOff: 'Activa "Es referido" para seleccionar.',
+          helperNone: 'No hay clientes para referir aún.',
+          helperPick: 'Escoge entre los clientes existentes.',
+          helperLoading: 'Cargando clientes...',
+          createTitle: 'Nuevo cliente',
+          createSubtitle: 'Registra un cliente con la información básica y fechas clave.',
+          editTitle: 'Editar cliente',
+          editSubtitle: 'Modifica sólo los campos necesarios; guarda los cambios para aplicarlos.',
+          deleteTitle: 'Eliminar cliente',
+          deleteSubtitle: 'Esta acción no se puede deshacer.',
+          deleteBody: '¿Estás seguro de eliminar a {{name}}?',
+          buttons: {
+            clear: 'Limpiar',
+            create: 'Crear',
+            creating: 'Creando...',
+            save: 'Guardar cambios',
+            saving: 'Guardando...',
+            delete: 'Eliminar',
+            deleting: 'Eliminando...',
+            cancel: 'Cancelar'
+          },
+          states: { yes: 'Sí', no: 'No', male: 'Masculino', female: 'Femenino', active: 'Activo', inactive: 'Inactivo' }
+        },
+        table: { loading: 'Cargando clientes...', emptyTitle: 'No hay clientes registrados.', emptyText: 'Crea tu primer cliente para verlo aquí.' },
+        messages: {
+          required: 'Completa los campos requeridos.',
+          created: 'Cliente creado correctamente.',
+          updated: 'Cliente actualizado correctamente.',
+          deleted: 'Cliente eliminado correctamente.'
         }
       },
       sms: {

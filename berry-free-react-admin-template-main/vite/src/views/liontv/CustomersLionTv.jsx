@@ -54,6 +54,12 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import PublicIcon from '@mui/icons-material/Public';
 import ShareIcon from '@mui/icons-material/Share';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import WcIcon from '@mui/icons-material/Wc';
+import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
+import RouteIcon from '@mui/icons-material/Route';
+import PermContactCalendarIcon from '@mui/icons-material/PermContactCalendar';
+import Diversity1Icon from '@mui/icons-material/Diversity1';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
@@ -156,6 +162,7 @@ function flagFromPhone(phone = '') {
 function RowActions({ row, onEdit, onDelete }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const { t } = useTranslation();
 
   return (
     <>
@@ -176,7 +183,7 @@ function RowActions({ row, onEdit, onDelete }) {
           }}
         >
           <EditOutlinedIcon fontSize="small" style={{ marginRight: 8 }} />
-          Editar
+          {t('actions.edit')}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -185,7 +192,7 @@ function RowActions({ row, onEdit, onDelete }) {
           }}
         >
           <DeleteOutlineIcon fontSize="small" style={{ marginRight: 8 }} />
-          Eliminar
+          {t('actions.delete')}
         </MenuItem>
       </Menu>
     </>
@@ -194,10 +201,23 @@ function RowActions({ row, onEdit, onDelete }) {
 
 function FormSection({ title, helper, children }) {
   return (
-    <Box sx={sectionSx}>
+    <Box
+      sx={(theme) => ({
+        ...sectionSx,
+        position: 'relative',
+        overflow: 'hidden',
+        borderLeft: `4px solid ${theme.palette.primary.main}44`,
+        background:
+          theme.palette.mode === 'light'
+            ? `linear-gradient(135deg, ${theme.palette.primary.light}08 0%, ${theme.palette.secondary.light}08 100%)`
+            : theme.palette.background.paper
+      })}
+    >
       <Stack spacing={1.5}>
         <Box>
-          <Typography variant="subtitle2">{title}</Typography>
+          <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {title}
+          </Typography>
           {helper ? (
             <Typography variant="caption" color="text.secondary">
               {helper}
@@ -382,7 +402,7 @@ export default function CustomersLionTv() {
 
   const handleCreateCustomer = async () => {
     if (!form.customerFullname || !form.gender || !form.customerPhone || !form.customerMail || !form.channel) {
-      enqueueSnackbar('Completa los campos requeridos.', { variant: 'warning' });
+      enqueueSnackbar(t('customers.messages.required'), { variant: 'warning' });
       return;
     }
 
@@ -405,7 +425,7 @@ export default function CustomersLionTv() {
         headers: { Authorization: `Bearer ${accessToken}` },
         skipAuthRedirect: true
       });
-      enqueueSnackbar('Cliente creado correctamente.', { variant: 'success' });
+      enqueueSnackbar(t('customers.messages.created'), { variant: 'success' });
       setOpenCreate(false);
       resetForm();
       setRefreshKey((v) => v + 1);
@@ -443,7 +463,7 @@ export default function CustomersLionTv() {
       return;
     }
     if (!form.customerFullname || !form.gender || !form.customerPhone || !form.customerMail || !form.channel) {
-      enqueueSnackbar('Completa los campos requeridos.', { variant: 'warning' });
+      enqueueSnackbar(t('customers.messages.required'), { variant: 'warning' });
       return;
     }
 
@@ -466,7 +486,7 @@ export default function CustomersLionTv() {
         headers: { Authorization: `Bearer ${accessToken}` },
         skipAuthRedirect: true
       });
-      enqueueSnackbar('Cliente actualizado correctamente.', { variant: 'success' });
+      enqueueSnackbar(t('customers.messages.updated'), { variant: 'success' });
       setOpenEdit(false);
       resetForm();
       setRefreshKey((v) => v + 1);
@@ -494,7 +514,7 @@ export default function CustomersLionTv() {
         headers: { Authorization: `Bearer ${accessToken}` },
         skipAuthRedirect: true
       });
-      enqueueSnackbar('Cliente eliminado correctamente.', { variant: 'success' });
+      enqueueSnackbar(t('customers.messages.deleted'), { variant: 'success' });
       setOpenDelete({ open: false, row: null });
       setRefreshKey((v) => v + 1);
     } catch (err) {
@@ -588,7 +608,7 @@ export default function CustomersLionTv() {
       </MainCard>
 
       <MainCard
-        title=""
+        title={t('customers.search')}
         secondary={
           <Paper
             elevation={0}
@@ -817,9 +837,9 @@ export default function CustomersLionTv() {
                       <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
                         <PeopleAltIcon />
                       </Avatar>
-                      <Typography variant="subtitle1">No hay clientes registrados.</Typography>
+                      <Typography variant="subtitle1">{t('customers.table.emptyTitle')}</Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Crea tu primer cliente para verlo aquí.
+                        {t('customers.table.emptyText')}
                       </Typography>
                       <Button variant="contained" onClick={() => setOpenCreate(true)} size="small">
                         {t('actions.newCustomer')}
@@ -834,7 +854,7 @@ export default function CustomersLionTv() {
                     <Stack spacing={1} alignItems="center">
                       <Skeleton variant="circular" width={40} height={40} />
                       <Typography variant="body2" color="text.secondary">
-                        Cargando clientes...
+                        {t('customers.table.loading')}
                       </Typography>
                     </Stack>
                   </TableCell>
@@ -883,11 +903,18 @@ export default function CustomersLionTv() {
               <PersonAddAlt1Icon fontSize="small" />
             </Avatar>
             <Box>
-              <Typography variant="h6">Nuevo cliente</Typography>
+              <Typography variant="h6">{t('customers.form.createTitle')}</Typography>
               <Typography variant="caption" color="text.secondary">
-                Registra un cliente con la información básica y fechas clave.
+                {t('customers.form.createSubtitle')}
               </Typography>
             </Box>
+            <Chip
+              label={t('customers.badge.new')}
+              size="small"
+              color="primary"
+              variant="filled"
+              sx={{ ml: 'auto', fontWeight: 700, borderRadius: 1.5 }}
+            />
           </Stack>
         </DialogTitle>
         <DialogContent
@@ -912,20 +939,37 @@ export default function CustomersLionTv() {
             }}
           >
             <Typography variant="subtitle2" color="text.secondary">
-              Datos del cliente
+              {t('customers.form.createTitle')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Completa los campos requeridos; puedes dejar las fechas vacías si no aplican.
+              {t('customers.form.createSubtitle')}
             </Typography>
+          </Box>
+          <Box
+            sx={(theme) => ({
+              mb: 2,
+              p: 1.25,
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              bgcolor: theme.palette.info.lighter,
+              color: theme.palette.info.dark,
+              border: '1px dashed',
+              borderColor: theme.palette.info.main
+            })}
+          >
+            <InfoOutlinedIcon fontSize="small" />
+            <Typography variant="caption">{t('customers.tips.new')}</Typography>
           </Box>
 
           <Stack spacing={2}>
-            <FormSection title="Identificación" helper="Nombre, género y estado del cliente.">
+            <FormSection title={t('customers.form.sections.identification')} helper={t('customers.form.sections.identificationHelper')}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={4} md={4}>
                   <TextField
                     required
-                    label="Nombre completo"
+                    label={t('customers.form.name')}
                     value={form.customerFullname}
                     onChange={handleFormChange('customerFullname')}
                     fullWidth
@@ -933,7 +977,7 @@ export default function CustomersLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <PersonAddAlt1Icon fontSize="small" />
+                          <PersonAddAlt1Icon fontSize="small" color="secondary" />
                         </InputAdornment>
                       )
                     }}
@@ -941,20 +985,38 @@ export default function CustomersLionTv() {
                 </Grid>
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl fullWidth required sx={fieldSx}>
-                    <InputLabel>Genero</InputLabel>
-                    <Select value={form.gender} label="Genero" onChange={handleFormChange('gender')}>
-                      <MenuItem value="M">Masculino</MenuItem>
-                      <MenuItem value="F">Femenino</MenuItem>
+                    <InputLabel>{t('customers.form.gender')}</InputLabel>
+                    <Select
+                      value={form.gender}
+                      label={t('customers.form.gender')}
+                      onChange={handleFormChange('gender')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <WcIcon fontSize="small" color="primary" />
+                        </InputAdornment>
+                      }
+                    >
+                      <MenuItem value="M">{t('customers.form.states.male')}</MenuItem>
+                      <MenuItem value="F">{t('customers.form.states.female')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
 
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl fullWidth required sx={fieldSx}>
-                    <InputLabel>Estado</InputLabel>
-                    <Select value={form.customerStatus} label="Estado" onChange={handleFormChange('customerStatus')}>
-                      <MenuItem value="ACTIVE">Activo</MenuItem>
-                      <MenuItem value="INACTIVE">Inactivo</MenuItem>
+                    <InputLabel>{t('customers.form.status')}</InputLabel>
+                    <Select
+                      value={form.customerStatus}
+                      label={t('customers.form.status')}
+                      onChange={handleFormChange('customerStatus')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <SignalCellularAltIcon fontSize="small" color="warning" />
+                        </InputAdornment>
+                      }
+                    >
+                      <MenuItem value="ACTIVE">{t('customers.form.states.active')}</MenuItem>
+                      <MenuItem value="INACTIVE">{t('customers.form.states.inactive')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -962,12 +1024,12 @@ export default function CustomersLionTv() {
               </Grid>
             </FormSection>
 
-            <FormSection title="Contacto" helper="Cómo comunicarnos con el cliente.">
+            <FormSection title={t('customers.form.sections.contact')} helper={t('customers.form.sections.contactHelper')}>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
                   <TextField
                     required
-                    label="Correo"
+                    label={t('customers.form.email')}
                     type="email"
                     value={form.customerMail}
                     onChange={handleFormChange('customerMail')}
@@ -976,7 +1038,7 @@ export default function CustomersLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <MailOutlineIcon fontSize="small" />
+                          <MailOutlineIcon fontSize="small" color="info" />
                         </InputAdornment>
                       )
                     }}
@@ -985,7 +1047,7 @@ export default function CustomersLionTv() {
                 <Grid item xs={12} md={6}>
                   <TextField
                     required
-                    label="Telefono"
+                    label={t('customers.form.phone')}
                     value={form.customerPhone}
                     onChange={handleFormChange('customerPhone')}
                     fullWidth
@@ -993,16 +1055,25 @@ export default function CustomersLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <PhoneIphoneIcon fontSize="small" />
+                          <PhoneIphoneIcon fontSize="small" color="success" />
                         </InputAdornment>
                       )
                     }}
                   />
                 </Grid>
-                 <Grid item xs={12} md={2}>
+                <Grid item xs={12} md={2.5}>
                   <FormControl fullWidth required sx={fieldSx}>
-                    <InputLabel>Canal</InputLabel>
-                    <Select value={form.channel} label="Canal" onChange={handleFormChange('channel')}>
+                    <InputLabel>{t('customers.form.channel')}</InputLabel>
+                    <Select
+                      value={form.channel}
+                      label={t('customers.form.channel')}
+                      onChange={handleFormChange('channel')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <ShareIcon fontSize="small" color="info" />
+                        </InputAdornment>
+                      }
+                    >
                       {channelOptions.map((opt) => (
                         <MenuItem key={opt.value} value={opt.value}>
                           {opt.label}
@@ -1014,11 +1085,11 @@ export default function CustomersLionTv() {
               </Grid>
             </FormSection>
 
-            <FormSection title="Fechas" helper="Control de apertura y cierre (opcional).">
+            <FormSection title={t('customers.form.sections.dates')} helper={t('customers.form.sections.datesHelper')}>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
                   <TextField
-                    label="Fecha de apertura"
+                    label={t('customers.form.opening')}
                     type="date"
                     value={form.openingDate}
                     onChange={handleFormChange('openingDate')}
@@ -1028,7 +1099,7 @@ export default function CustomersLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <CalendarMonthIcon fontSize="small" />
+                          <CalendarMonthIcon fontSize="small" color="primary" />
                         </InputAdornment>
                       )
                     }}
@@ -1036,7 +1107,7 @@ export default function CustomersLionTv() {
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <TextField
-                    label="Fecha de cierre"
+                    label={t('customers.form.closing')}
                     type="date"
                     value={form.closeDate}
                     onChange={handleFormChange('closeDate')}
@@ -1046,7 +1117,7 @@ export default function CustomersLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <CalendarMonthIcon fontSize="small" />
+                          <CalendarMonthIcon fontSize="small" color="warning" />
                         </InputAdornment>
                       )
                     }}
@@ -1055,12 +1126,12 @@ export default function CustomersLionTv() {
               </Grid>
             </FormSection>
 
-            <FormSection title="Referido" helper="Marca si el cliente viene referido y quién lo recomendó.">
+            <FormSection title={t('customers.form.sections.referred')} helper={t('customers.form.sections.referredHelper')}>
               <Grid container spacing={2} alignItems="center">
                 <Grid item xs={12} md={4}>
                   <FormControlLabel
                     control={<Switch checked={form.isReferered} onChange={handleFormChange('isReferered')} />}
-                    label="Es referido"
+                    label={t('customers.form.referredToggle')}
                   />
                 </Grid>
                 <Grid item xs={12} md={8}>
@@ -1069,18 +1140,23 @@ export default function CustomersLionTv() {
                     disabled={!form.isReferered || referersLoading || referers.length === 0}
                     sx={fieldSx}
                   >
-                    <InputLabel>Referido por</InputLabel>
+                    <InputLabel>{t('customers.form.referredBy')}</InputLabel>
                     <Select
                       value={form.refererBy}
-                      label="Referido por"
+                      label={t('customers.form.referredBy')}
                       onChange={handleFormChange('refererBy')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <Diversity1Icon fontSize="small" color="info" />
+                        </InputAdornment>
+                      }
                     >
                       <MenuItem value="">
-                        <em>Selecciona un cliente</em>
+                        <em>{t('customers.form.placeholderSelect')}</em>
                       </MenuItem>
                       {referers.length === 0 ? (
                         <MenuItem value="" disabled>
-                          No hay clientes disponibles
+                          {t('customers.form.noReferrers')}
                         </MenuItem>
                       ) : (
                         referers.map((c) => (
@@ -1092,12 +1168,12 @@ export default function CustomersLionTv() {
                     </Select>
                     <FormHelperText>
                       {referersLoading
-                        ? 'Cargando clientes...'
+                        ? t('customers.form.helperLoading')
                         : !form.isReferered
-                          ? 'Activa "Es referido" para seleccionar.'
+                          ? t('customers.form.helperOff')
                           : referers.length === 0
-                            ? 'No hay clientes para referir aún.'
-                            : 'Escoge entre los clientes existentes.'}
+                            ? t('customers.form.helperNone')
+                            : t('customers.form.helperPick')}
                     </FormHelperText>
                   </FormControl>
                 </Grid>
@@ -1107,7 +1183,7 @@ export default function CustomersLionTv() {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button variant="outlined" onClick={resetForm} disabled={sending} sx={{ borderRadius: 2 }}>
-            Limpiar
+            {t('customers.form.buttons.clear')}
           </Button>
           <Button
             variant="contained"
@@ -1115,7 +1191,7 @@ export default function CustomersLionTv() {
             disabled={sending}
             sx={{ borderRadius: 2, boxShadow: '0 10px 24px rgba(0,0,0,0.12)' }}
           >
-            {sending ? 'Creando...' : 'Crear'}
+            {sending ? t('customers.form.buttons.creating') : t('customers.form.buttons.create')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1147,11 +1223,18 @@ export default function CustomersLionTv() {
               <EditOutlinedIcon fontSize="small" />
             </Avatar>
             <Box>
-              <Typography variant="h6">Editar cliente</Typography>
+              <Typography variant="h6">{t('customers.form.editTitle')}</Typography>
               <Typography variant="caption" color="text.secondary">
-                Actualiza los datos del cliente seleccionado.
+                {t('customers.form.editSubtitle')}
               </Typography>
             </Box>
+            <Chip
+              label={t('customers.badge.edit')}
+              size="small"
+              color="warning"
+              variant="filled"
+              sx={{ ml: 'auto', fontWeight: 700, borderRadius: 1.5 }}
+            />
           </Stack>
         </DialogTitle>
         <DialogContent
@@ -1175,21 +1258,41 @@ export default function CustomersLionTv() {
                 `linear-gradient(135deg, ${theme.palette.warning.light}22, ${theme.palette.secondary.light}18)`
             }}
           >
-            <Typography variant="subtitle2" color="text.secondary">
-              Datos del cliente
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Modifica sólo los campos necesarios; guarda los cambios para aplicarlos.
-            </Typography>
+              <Typography variant="subtitle2" color="text.secondary">
+                {t('customers.form.editTitle')}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t('customers.form.editSubtitle')}
+              </Typography>
+          </Box>
+          <Box
+            sx={(theme) => ({
+              mb: 2,
+              p: 1.25,
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              bgcolor: theme.palette.info.lighter,
+              color: theme.palette.info.dark,
+              border: '1px dashed',
+              borderColor: theme.palette.info.main
+            })}
+          >
+            <InfoOutlinedIcon fontSize="small" />
+            <Typography variant="caption">{t('customers.tips.edit')}</Typography>
           </Box>
           {/* Reuso el mismo formulario */}
           <Stack spacing={2}>
-            <FormSection title="Identificación" helper="Nombre, género, estado y canal.">
+            <FormSection
+              title={t('customers.form.sections.identification')}
+              helper={t('customers.form.sections.identificationHelper')}
+            >
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={3} md={3}>
                   <TextField
                     required
-                    label="Nombre completo"
+                    label={t('customers.form.name')}
                     value={form.customerFullname}
                     onChange={handleFormChange('customerFullname')}
                     fullWidth
@@ -1197,7 +1300,7 @@ export default function CustomersLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <PersonAddAlt1Icon fontSize="small" />
+                          <PersonAddAlt1Icon fontSize="small" color="secondary" />
                         </InputAdornment>
                       )
                     }}
@@ -1205,26 +1308,53 @@ export default function CustomersLionTv() {
                 </Grid>
                 <Grid item xs={12} sm={3} md={3}>
                   <FormControl fullWidth required sx={fieldSx}>
-                    <InputLabel>Genero</InputLabel>
-                    <Select value={form.gender} label="Genero" onChange={handleFormChange('gender')}>
-                      <MenuItem value="M">Masculino</MenuItem>
-                      <MenuItem value="F">Femenino</MenuItem>
+                    <InputLabel>{t('customers.form.gender')}</InputLabel>
+                    <Select
+                      value={form.gender}
+                      label={t('customers.form.gender')}
+                      onChange={handleFormChange('gender')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <WcIcon fontSize="small" color="primary" />
+                        </InputAdornment>
+                      }
+                    >
+                      <MenuItem value="M">{t('customers.form.states.male')}</MenuItem>
+                      <MenuItem value="F">{t('customers.form.states.female')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={3} md={3}>
                   <FormControl fullWidth required sx={fieldSx}>
-                    <InputLabel>Estado</InputLabel>
-                    <Select value={form.customerStatus} label="Estado" onChange={handleFormChange('customerStatus')}>
-                      <MenuItem value="ACTIVE">Activo</MenuItem>
-                      <MenuItem value="INACTIVE">Inactivo</MenuItem>
+                    <InputLabel>{t('customers.form.status')}</InputLabel>
+                    <Select
+                      value={form.customerStatus}
+                      label={t('customers.form.status')}
+                      onChange={handleFormChange('customerStatus')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <SignalCellularAltIcon fontSize="small" color="warning" />
+                        </InputAdornment>
+                      }
+                    >
+                      <MenuItem value="ACTIVE">{t('customers.form.states.active')}</MenuItem>
+                      <MenuItem value="INACTIVE">{t('customers.form.states.inactive')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={3} md={3}>
                   <FormControl fullWidth required sx={fieldSx}>
-                    <InputLabel>Canal</InputLabel>
-                    <Select value={form.channel} label="Canal" onChange={handleFormChange('channel')}>
+                    <InputLabel>{t('customers.form.channel')}</InputLabel>
+                    <Select
+                      value={form.channel}
+                      label={t('customers.form.channel')}
+                      onChange={handleFormChange('channel')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <ShareIcon fontSize="small" color="info" />
+                        </InputAdornment>
+                      }
+                    >
                       {channelOptions.map((opt) => (
                         <MenuItem key={opt.value} value={opt.value}>
                           {opt.label}
@@ -1236,12 +1366,12 @@ export default function CustomersLionTv() {
               </Grid>
             </FormSection>
 
-            <FormSection title="Contacto" helper="Cómo comunicarnos con el cliente.">
+            <FormSection title={t('customers.form.sections.contact')} helper={t('customers.form.sections.contactHelper')}>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
                   <TextField
                     required
-                    label="Correo"
+                    label={t('customers.form.email')}
                     type="email"
                     value={form.customerMail}
                     onChange={handleFormChange('customerMail')}
@@ -1250,7 +1380,7 @@ export default function CustomersLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <MailOutlineIcon fontSize="small" />
+                          <MailOutlineIcon fontSize="small" color="info" />
                         </InputAdornment>
                       )
                     }}
@@ -1259,7 +1389,7 @@ export default function CustomersLionTv() {
                 <Grid item xs={12} md={6}>
                   <TextField
                     required
-                    label="Telefono"
+                    label={t('customers.form.phone')}
                     value={form.customerPhone}
                     onChange={handleFormChange('customerPhone')}
                     fullWidth
@@ -1267,7 +1397,7 @@ export default function CustomersLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <PhoneIphoneIcon fontSize="small" />
+                          <PhoneIphoneIcon fontSize="small" color="success" />
                         </InputAdornment>
                       )
                     }}
@@ -1276,11 +1406,11 @@ export default function CustomersLionTv() {
               </Grid>
             </FormSection>
 
-            <FormSection title="Fechas" helper="Control de apertura y cierre (opcional).">
+            <FormSection title={t('customers.form.sections.dates')} helper={t('customers.form.sections.datesHelper')}>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
                   <TextField
-                    label="Fecha de apertura"
+                    label={t('customers.form.opening')}
                     type="date"
                     value={form.openingDate}
                     onChange={handleFormChange('openingDate')}
@@ -1290,7 +1420,7 @@ export default function CustomersLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <CalendarMonthIcon fontSize="small" />
+                          <CalendarMonthIcon fontSize="small" color="primary" />
                         </InputAdornment>
                       )
                     }}
@@ -1298,7 +1428,7 @@ export default function CustomersLionTv() {
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <TextField
-                    label="Fecha de cierre"
+                    label={t('customers.form.closing')}
                     type="date"
                     value={form.closeDate}
                     onChange={handleFormChange('closeDate')}
@@ -1308,7 +1438,7 @@ export default function CustomersLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <CalendarMonthIcon fontSize="small" />
+                          <CalendarMonthIcon fontSize="small" color="warning" />
                         </InputAdornment>
                       )
                     }}
@@ -1317,12 +1447,12 @@ export default function CustomersLionTv() {
               </Grid>
             </FormSection>
 
-            <FormSection title="Referido" helper="Marca si el cliente viene referido y quién lo recomendó.">
+            <FormSection title={t('customers.form.sections.referred')} helper={t('customers.form.sections.referredHelper')}>
               <Grid container spacing={2} alignItems="center">
                 <Grid item xs={12} md={4}>
                   <FormControlLabel
                     control={<Switch checked={form.isReferered} onChange={handleFormChange('isReferered')} />}
-                    label="Es referido"
+                    label={t('customers.form.referredToggle')}
                   />
                 </Grid>
                 <Grid item xs={12} md={8}>
@@ -1331,18 +1461,18 @@ export default function CustomersLionTv() {
                     disabled={!form.isReferered || referersLoading || referers.length === 0}
                     sx={fieldSx}
                   >
-                    <InputLabel>Referido por</InputLabel>
+                    <InputLabel>{t('customers.form.referredBy')}</InputLabel>
                     <Select
                       value={form.refererBy}
-                      label="Referido por"
+                      label={t('customers.form.referredBy')}
                       onChange={handleFormChange('refererBy')}
                     >
                       <MenuItem value="">
-                        <em>Selecciona un cliente</em>
+                        <em>{t('customers.form.placeholderSelect')}</em>
                       </MenuItem>
                       {referers.length === 0 ? (
                         <MenuItem value="" disabled>
-                          No hay clientes disponibles
+                          {t('customers.form.noReferrers')}
                         </MenuItem>
                       ) : (
                         referers.map((c) => (
@@ -1354,12 +1484,12 @@ export default function CustomersLionTv() {
                     </Select>
                     <FormHelperText>
                       {referersLoading
-                        ? 'Cargando clientes...'
+                        ? t('customers.form.helperLoading')
                         : !form.isReferered
-                          ? 'Activa "Es referido" para seleccionar.'
+                          ? t('customers.form.helperOff')
                           : referers.length === 0
-                            ? 'No hay clientes para referir aún.'
-                            : 'Escoge entre los clientes existentes.'}
+                            ? t('customers.form.helperNone')
+                            : t('customers.form.helperPick')}
                     </FormHelperText>
                   </FormControl>
                 </Grid>
@@ -1369,7 +1499,7 @@ export default function CustomersLionTv() {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button variant="outlined" onClick={resetForm} disabled={sending} sx={{ borderRadius: 2 }}>
-            Limpiar
+            {t('customers.form.buttons.clear')}
           </Button>
           <Button
             variant="contained"
@@ -1377,7 +1507,7 @@ export default function CustomersLionTv() {
             disabled={sending}
             sx={{ borderRadius: 2, boxShadow: '0 10px 24px rgba(0,0,0,0.12)' }}
           >
-            {sending ? 'Guardando...' : 'Guardar cambios'}
+            {sending ? t('customers.form.buttons.saving') : t('customers.form.buttons.save')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1402,24 +1532,25 @@ export default function CustomersLionTv() {
             <WarningAmberIcon fontSize="small" />
           </Avatar>
           <Box>
-            <Typography variant="h6">Eliminar cliente</Typography>
+            <Typography variant="h6">{t('customers.form.deleteTitle')}</Typography>
             <Typography variant="caption" color="text.secondary">
-              Esta acción no se puede deshacer.
+              {t('customers.form.deleteSubtitle')}
             </Typography>
           </Box>
         </DialogTitle>
         <DialogContent dividers>
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            ¿Estás seguro de eliminar a{' '}
-            <strong>{openDelete.row?.fullName || openDelete.row?.username || openDelete.row?.mail || 'este cliente'}</strong>?
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Se eliminarán también sus referencias asociadas.
-          </Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              {t('customers.form.deleteBody', {
+                name: openDelete.row?.fullName || openDelete.row?.username || openDelete.row?.mail || t('customers.form.buttons.delete')
+              })}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {t('customers.form.deleteSubtitle')}
+            </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button onClick={() => setOpenDelete({ open: false, row: null })} disabled={sending} sx={{ borderRadius: 2 }}>
-            Cancelar
+            {t('customers.form.buttons.cancel')}
           </Button>
           <Button
             color="error"
@@ -1428,7 +1559,7 @@ export default function CustomersLionTv() {
             disabled={sending}
             sx={{ borderRadius: 2, boxShadow: '0 10px 24px rgba(0,0,0,0.16)' }}
           >
-            {sending ? 'Eliminando...' : 'Eliminar'}
+            {sending ? t('customers.form.buttons.deleting') : t('customers.form.buttons.delete')}
           </Button>
         </DialogActions>
       </Dialog>
