@@ -60,7 +60,8 @@ COPY .yarnrc.yml* ./
 RUN set -eux; \
   if [ -f yarn.lock ]; then \
     corepack enable; \
-    yarn install; \
+    corepack prepare yarn@1.22.22 --activate; \
+    yarn install --frozen-lockfile; \
   elif [ -f package-lock.json ]; then \
     npm ci; \
   elif [ -f pnpm-lock.yaml ]; then \
