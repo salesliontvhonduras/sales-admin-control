@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -155,6 +156,7 @@ const defaultForm = {
 export default function InvoicesLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -455,38 +457,38 @@ export default function InvoicesLionTv() {
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
       <MainCard
-        title="Facturación"
+        title={t('invoices.title')}
         secondary={
           <Stack direction="row" spacing={1}>
             <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => setRefreshKey((v) => v + 1)}>
-              Recargar
+              {t('actions.refresh')}
             </Button>
             <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={() => setOpenModal(true)}>
-              Nueva factura
+              {t('actions.newInvoice')}
             </Button>
           </Stack>
         }
       >
         <Grid container spacing={gridSpacing}>
           <Grid item xs={12} sm={4}>
-            <Chip label={`${total} facturas`} color="primary" />
+            <Chip label={`${total} ${t('invoices.title').toLowerCase()}`} color="primary" />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <Chip label={`Pagadas: ${rows.filter((r) => r.status === 'PAID').length}`} color="success" />
+            <Chip label={`${t('invoices.filters.status')}: PAID ${rows.filter((r) => r.status === 'PAID').length}`} color="success" />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <Chip label={`Pendientes: ${rows.filter((r) => r.status === 'PENDING').length}`} color="warning" />
+            <Chip label={`${t('invoices.filters.status')}: PENDING ${rows.filter((r) => r.status === 'PENDING').length}`} color="warning" />
           </Grid>
         </Grid>
       </MainCard>
 
       <MainCard
-        title="Listado de facturas"
+        title={t('invoices.title')}
         secondary={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 480 } }}>
             <TextField
               size="small"
-              placeholder="Buscar (cliente, paquete, estado)"
+              placeholder={t('invoices.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               fullWidth
@@ -499,10 +501,10 @@ export default function InvoicesLionTv() {
               }}
             />
             <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>Estado</InputLabel>
-              <Select value={statusFilter} label="Estado" onChange={(e) => setStatusFilter(e.target.value)}>
+              <InputLabel>{t('invoices.filters.status')}</InputLabel>
+              <Select value={statusFilter} label={t('invoices.filters.status')} onChange={(e) => setStatusFilter(e.target.value)}>
                 <MenuItem value="">
-                  <em>Todos</em>
+                  <em>{t('invoices.filters.all')}</em>
                 </MenuItem>
                 <MenuItem value="PAID">PAID</MenuItem>
                 <MenuItem value="PENDING">PENDING</MenuItem>
@@ -515,17 +517,17 @@ export default function InvoicesLionTv() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Cliente</TableCell>
-                <TableCell>Servicio</TableCell>
-                <TableCell>Paquete</TableCell>
-                <TableCell>Banco</TableCell>
-                <TableCell>Método</TableCell>
-                <TableCell>Estado</TableCell>
-                <TableCell>Pago</TableCell>
-                <TableCell>Descuento</TableCell>
-                <TableCell>Fecha pago</TableCell>
-                <TableCell>Acciones</TableCell>
+                <TableCell>{t('invoices.headers.id')}</TableCell>
+                <TableCell>{t('invoices.headers.customer')}</TableCell>
+                <TableCell>{t('invoices.headers.service')}</TableCell>
+                <TableCell>{t('invoices.headers.package')}</TableCell>
+                <TableCell>{t('invoices.headers.bank')}</TableCell>
+                <TableCell>{t('invoices.headers.method')}</TableCell>
+                <TableCell>{t('invoices.headers.status')}</TableCell>
+                <TableCell>{t('invoices.headers.payment')}</TableCell>
+                <TableCell>{t('invoices.headers.discount')}</TableCell>
+                <TableCell>{t('invoices.headers.paymentDate')}</TableCell>
+                <TableCell>{t('invoices.headers.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -600,9 +602,9 @@ export default function InvoicesLionTv() {
               <ReceiptLongIcon fontSize="small" />
             </Avatar>
             <Box>
-              <Typography variant="h6">{form.invoiceId ? 'Editar factura' : 'Nueva factura'}</Typography>
+              <Typography variant="h6">{form.invoiceId ? t('invoices.edit') : t('actions.newInvoice')}</Typography>
               <Typography variant="caption" color="text.secondary">
-                Ingresa los datos de pago y asignación.
+                {t('invoices.dialogSubtitle')}
               </Typography>
             </Box>
           </Stack>

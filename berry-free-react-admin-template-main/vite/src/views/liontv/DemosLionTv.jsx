@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -134,6 +135,7 @@ export default function DemosLionTv() {
   const { accessToken } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { t } = useTranslation();
 
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -357,39 +359,39 @@ export default function DemosLionTv() {
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
       {/* -------------------- HEADER ---------------------- */}
       <MainCard
-        title="Demos Lion Tv"
+        title={t('demos.title')}
         secondary={
           <Stack direction="row" spacing={1}>
             <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => setRefreshKey((v) => v + 1)}>
-              Recargar
+              {t('actions.refresh')}
             </Button>
             <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={() => setOpenModal(true)}>
-              Crear Demo
+              {t('demos.new')}
             </Button>
           </Stack>
         }
       >
         <Grid container spacing={gridSpacing}>
           <Grid item xs={12} sm={6} md={3}>
-            <Chip label={`${total} demos`} color="primary" />
+            <Chip label={t('demos.summary.total', { count: total })} color="primary" />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Chip label={`Paquetes demo: ${packages.length}`} color="success" />
+            <Chip label={t('demos.summary.packages', { count: packages.length })} color="success" />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Chip label={`Países: ${countries.length}`} color="secondary" />
+            <Chip label={t('demos.summary.countries', { count: countries.length })} color="secondary" />
           </Grid>
         </Grid>
       </MainCard>
 
       {/* -------------------- TABLE ---------------------- */}
       <MainCard
-        title="Listado de demos"
+        title={t('demos.listTitle')}
         secondary={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 360 } }}>
             <TextField
               size="small"
-              placeholder="Buscar (celular, usuario, package, app)"
+              placeholder={t('demos.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               fullWidth
@@ -408,13 +410,13 @@ export default function DemosLionTv() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Celular</TableCell>
-                <TableCell>Cod. País</TableCell>
-                <TableCell>Package ID</TableCell>
-                <TableCell>App</TableCell>
-                <TableCell>Estado</TableCell>
-                <TableCell>Creado</TableCell>
-                <TableCell>Expira</TableCell>
+                <TableCell>{t('demos.headers.phone')}</TableCell>
+                <TableCell>{t('demos.headers.country')}</TableCell>
+                <TableCell>{t('demos.headers.package')}</TableCell>
+                <TableCell>{t('demos.headers.app')}</TableCell>
+                <TableCell>{t('demos.headers.status')}</TableCell>
+                <TableCell>{t('demos.headers.created')}</TableCell>
+                <TableCell>{t('demos.headers.expires')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -431,12 +433,12 @@ export default function DemosLionTv() {
               ))}
               {!loading && filteredRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">No hay demos registradas.</TableCell>
+                  <TableCell colSpan={7} align="center">{t('demos.table.empty')}</TableCell>
                 </TableRow>
               )}
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">Cargando...</TableCell>
+                  <TableCell colSpan={7} align="center">{t('demos.table.loading')}</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -469,9 +471,9 @@ export default function DemosLionTv() {
               <AddCircleOutlineIcon fontSize="small" />
             </Avatar>
             <Box>
-              <Typography variant="h6">Nueva demo</Typography>
+              <Typography variant="h6">{t('demos.new')}</Typography>
               <Typography variant="caption" color="text.secondary">
-                Genera un demo con datos de contacto y dispositivo.
+                {t('demos.infoSubtitle')}
               </Typography>
             </Box>
           </Stack>
@@ -503,10 +505,10 @@ export default function DemosLionTv() {
             }}
           >
             <Typography variant="subtitle2" color="text.secondary">
-              Datos de la demo
+              {t('demos.infoTitle')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Completa los campos requeridos; las fechas se asignan automáticamente según tu backend.
+              {t('demos.infoSubtitle')}
             </Typography>
           </Box>
 

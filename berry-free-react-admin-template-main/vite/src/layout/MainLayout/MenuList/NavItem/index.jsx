@@ -13,6 +13,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import { useTranslation } from 'react-i18next';
 
 // project imports
 import { handlerDrawerOpen, useGetMenuMaster } from 'api/menu';
@@ -25,6 +26,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
   const theme = useTheme();
   const downMD = useMediaQuery(theme.breakpoints.down('md'));
   const ref = useRef(null);
+  const { t } = useTranslation();
 
   const { pathname } = useLocation();
   const {
@@ -119,7 +121,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
         </ButtonBase>
 
         {(drawerOpen || (!drawerOpen && level !== 1)) && (
-          <Tooltip title={item.title} disableHoverListener={!hoverStatus}>
+          <Tooltip title={t(item.title)} disableHoverListener={!hoverStatus}>
             <ListItemText
               primary={
                 <Typography
@@ -133,7 +135,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
                     color: 'inherit'
                   }}
                 >
-                  {item.title}
+                  {t(item.title)}
                 </Typography>
               }
               secondary={
@@ -150,7 +152,7 @@ export default function NavItem({ item, level, isParents = false, setSelectedID 
                       lineHeight: 1.66
                     }}
                   >
-                    {item.caption}
+                    {t(item.caption)}
                   </Typography>
                 )
               }

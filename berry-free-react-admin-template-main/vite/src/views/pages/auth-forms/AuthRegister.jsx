@@ -12,6 +12,7 @@ import OutlinedInput from '@mui/material/OutlinedInput';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import { useTranslation } from 'react-i18next';
 
 // project imports
 import AnimateButton from 'ui-component/extended/AnimateButton';
@@ -35,6 +36,7 @@ export default function AuthRegister() {
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const { register } = useAuth();
+  const { t } = useTranslation();
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -118,65 +120,65 @@ export default function AuthRegister() {
       <Grid container spacing={{ xs: 0, sm: 2 }}>
         <Grid item xs={12} sm={6}>
           <CustomFormControl fullWidth>
-            <InputLabel htmlFor="outlined-adornment-first-register">First Name</InputLabel>
+            <InputLabel htmlFor="outlined-adornment-first-register">{t('auth.firstName')}</InputLabel>
             <OutlinedInput
               id="outlined-adornment-first-register"
               type="text"
               name="firstName"
               value={form.firstName}
               onChange={handleChange}
-              label="First Name"
+              label={t('auth.firstName')}
             />
           </CustomFormControl>
         </Grid>
         <Grid item xs={12} sm={6}>
           <CustomFormControl fullWidth>
-            <InputLabel htmlFor="outlined-adornment-last-register">Last Name</InputLabel>
+            <InputLabel htmlFor="outlined-adornment-last-register">{t('auth.lastName')}</InputLabel>
             <OutlinedInput
               id="outlined-adornment-last-register"
               type="text"
               name="lastName"
               value={form.lastName}
               onChange={handleChange}
-              label="Last Name"
+              label={t('auth.lastName')}
             />
           </CustomFormControl>
         </Grid>
       </Grid>
 
       <CustomFormControl fullWidth>
-        <InputLabel htmlFor="outlined-adornment-email-register">Email Address / Username</InputLabel>
+        <InputLabel htmlFor="outlined-adornment-email-register">{t('auth.email')}</InputLabel>
         <OutlinedInput
           id="outlined-adornment-email-register"
           type="email"
           name="email"
           value={form.email}
           onChange={handleChange}
-          label="Email Address / Username"
+          label={t('auth.email')}
         />
       </CustomFormControl>
 
       <CustomFormControl fullWidth>
-        <InputLabel htmlFor="outlined-adornment-serial-register">Serial Code</InputLabel>
+        <InputLabel htmlFor="outlined-adornment-serial-register">{t('auth.serial')}</InputLabel>
         <OutlinedInput
           id="outlined-adornment-serial-register"
           type="text"
           name="serialCode"
           value={form.serialCode}
           onChange={handleChange}
-          label="Serial Code"
+          label={t('auth.serial')}
         />
       </CustomFormControl>
 
       <CustomFormControl fullWidth>
-        <InputLabel htmlFor="outlined-adornment-password-register">Password</InputLabel>
+        <InputLabel htmlFor="outlined-adornment-password-register">{t('auth.password')}</InputLabel>
         <OutlinedInput
           id="outlined-adornment-password-register"
           type={showPassword ? 'text' : 'password'}
           name="password"
           value={form.password}
           onChange={handleChange}
-          label="Password"
+          label={t('auth.password')}
           endAdornment={
             <InputAdornment position="end">
               <IconButton

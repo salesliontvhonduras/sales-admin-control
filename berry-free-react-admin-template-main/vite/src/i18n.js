@@ -1,0 +1,536 @@
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+const resources = {
+  en: {
+    translation: {
+      menu: {
+        dashboard: 'Dashboard',
+        pages: 'Pages',
+        pagesCaption: 'Pages',
+        authentication: 'Authentication',
+        login: 'Login',
+        register: 'Register',
+        sms: 'SMS',
+        smsManagement: 'SMS Management',
+        utilities: 'Utilities',
+        typography: 'Typography',
+        color: 'Color',
+        shadow: 'Shadow',
+        liontv: 'Lion TV',
+        demos: 'Lion TV Demos',
+        subscriptions: 'Subscriptions',
+        invoices: 'Invoices',
+        customers: 'Customers',
+        crm: 'Customer CRM',
+        lines: 'Lines',
+        licenses: 'Licenses',
+        sample: 'Sample Page',
+        docs: 'Documentation'
+      },
+      auth: {
+        hi: 'Hi, Welcome Back',
+        enterCredentials: 'Enter your credentials to continue',
+        signIn: 'Sign In',
+        email: 'Email Address',
+        password: 'Password',
+        keepLogged: 'Keep me logged in',
+        forgot: 'Forgot Password?',
+        noAccount: "Don't have an account?",
+        otpTitle: 'Two-step verification',
+        otpInstruction: 'Enter the code we sent to {{dest}}.',
+        codeLabel: 'Verification code',
+        resend: 'Resend code',
+        confirm: 'Confirm',
+        sending: 'Signing in...',
+        verifying: 'Verifying...',
+        sendingCode: 'Sending...',
+        verifyingCode: 'Verifying...',
+        backToCreds: 'Back to credentials',
+        sendToken: 'Send token',
+        resetPass: 'Change password',
+        sendingToken: 'Sending...',
+        savingPass: 'Saving...',
+        sendAnother: 'Send to another email',
+        recoverTitle: 'Recover password',
+        recoverSubtitle: 'We will send a token to your email.',
+        login: 'Back to login',
+        firstName: 'First Name',
+        lastName: 'Last Name',
+        serial: 'Serial Code',
+        register: 'Sign up with Email address',
+        passwordStrength: 'Password strength',
+        registerBtn: 'Create account'
+      },
+      messages: {
+        welcome: 'Welcome back! 👋',
+        invalidCreds: 'Invalid credentials',
+        codeInfo: 'Enter the code we sent to finish signing in.',
+        codeSent: 'If the email exists, we sent a recovery token.',
+        passUpdated: 'Password updated. You can log in now.',
+        fillTokenPass: 'Complete token and new password.',
+        enterEmail: 'Enter your email.',
+        enterCode: 'Enter the code you received.',
+        resendOk: 'We have resent the code.'
+      },
+      actions: {
+        language: 'Language',
+        english: 'English',
+        spanish: 'Español',
+        refresh: 'Refresh',
+        add: 'Add',
+        newInvoice: 'New invoice',
+        newCustomer: 'New customer'
+      },
+      invoices: {
+        title: 'Invoices',
+        filters: { status: 'Status', all: 'All' },
+        search: 'Search',
+        edit: 'Edit invoice',
+        dialogSubtitle: 'Enter payment and assignment data.',
+        headers: {
+          id: 'ID',
+          customer: 'Customer',
+          service: 'Service',
+          package: 'Package',
+          bank: 'Bank',
+          method: 'Method',
+          status: 'Status',
+          payment: 'Payment',
+          discount: 'Discount',
+          paymentDate: 'Payment date',
+          actions: 'Actions'
+        }
+      },
+      subscriptions: {
+        title: 'Subscriptions',
+        search: 'Search (customer, line, package, status)',
+        filters: { status: 'Status', all: 'All' },
+        headers: {
+          id: 'ID',
+          customer: 'Customer',
+          line: 'Line',
+          package: 'Package',
+          status: 'Status',
+          amount: 'Amount',
+          start: 'Start',
+          renewal: 'Renewal',
+          autopay: 'Auto pay',
+          actions: 'Actions'
+        }
+      },
+      licenses: {
+        title: 'Licenses',
+        search: 'Search (MAC, customer, status)',
+        filters: { status: 'Status', all: 'All' },
+        headers: {
+          id: 'ID',
+          mac: 'MAC',
+          name: 'Name',
+          customer: 'Customer',
+          status: 'Status',
+          app: 'App',
+          price: 'Price',
+          created: 'Created',
+          expire: 'Expire',
+          period: 'Period',
+          type: 'Type',
+          ownerSince: 'Owner since',
+          actions: 'Actions'
+        }
+      },
+      demos: {
+        title: 'Lion TV demos',
+        listTitle: 'Demo list',
+        search: 'Search (phone, user, package, app)',
+        headers: {
+          phone: 'Phone',
+          country: 'Country code',
+          package: 'Package',
+          app: 'App',
+          status: 'Status',
+          created: 'Created',
+          expires: 'Expires'
+        },
+        summary: { total: '{{count}} demos', packages: 'Demo packages: {{count}}', countries: 'Countries: {{count}}' },
+        new: 'New demo',
+        infoTitle: 'Demo data',
+        infoSubtitle: 'Fill required fields; dates are assigned by backend.',
+        table: { empty: 'No demos found.', loading: 'Loading...' }
+      },
+      lines: {
+        title: 'Lines',
+        listTitle: 'Line list',
+        summary: { total: '{{count}} lines', active: 'Active: {{count}}', expired: 'Expired: {{count}}' },
+        search: 'Search (user, package, IP, status)',
+        filters: { status: 'Status', all: 'All' },
+        status: { active: 'Active', expired: 'Expired', inactive: 'Inactive', trial: 'Trial' },
+        headers: {
+          user: 'User',
+          password: 'Password',
+          package: 'Package',
+          status: 'Status',
+          max: 'Max connections',
+          type: 'Type',
+          created: 'Created',
+          expires: 'Expires',
+          owner: 'Owner',
+          lastIp: 'Last IP',
+          lastWatch: 'Last watched',
+          actions: 'Actions'
+        },
+        detail: {
+          title: 'Line detail',
+          user: 'User',
+          password: 'Password',
+          package: 'Package',
+          id: 'ID',
+          owner: 'Owner',
+          created: 'Created',
+          expires: 'Expires',
+          lastIp: 'Last IP',
+          lastStream: 'Last stream',
+          type: 'Type',
+          notes: 'Notes',
+          lastStreamLabel: 'Last stream',
+          close: 'Close'
+        },
+        table: { empty: 'No lines found.', loading: 'Loading...' }
+      },
+      customers: {
+        title: 'Customers',
+        search: 'Search',
+        headers: {
+          customer: 'Customer',
+          email: 'Email',
+          phone: 'Phone',
+          gender: 'Gender',
+          status: 'Status',
+          opening: 'Opening',
+          closing: 'Closing',
+          referred: 'Referred',
+          channel: 'Channel'
+        }
+      },
+      sms: {
+        title: 'SMS Management',
+        enqueue: 'Enqueue SMS',
+        history: 'SMS history',
+        chips: { ready: '{{count}} numbers ready', total: '{{count}} records' },
+        search: 'Search (phone, message, external)',
+        filters: { from: 'From', to: 'To', status: 'Status', all: 'All' },
+        headers: { phone: 'Phone', message: 'Message', status: 'Status', scheduled: 'Scheduled', detail: 'Detail' },
+        table: { empty: 'No SMS found.', loading: 'Loading...' },
+        mobile: { scheduled: 'Scheduled', view: 'View detail' },
+        detail: {
+          title: 'SMS detail',
+          phone: 'Phone',
+          created: 'Created',
+          priority: 'Priority',
+          message: 'Message',
+          scheduled: 'Scheduled',
+          sent: 'Sent',
+          externalId: 'External Id',
+          user: 'User',
+          source: 'Source',
+          retries: 'Retries',
+          failReason: 'Fail reason',
+          none: 'No data',
+          close: 'Close'
+        },
+        form: {
+          numbers: 'Destination numbers',
+          numbersPlaceholder: 'Ex: 51999999999, 51888888888',
+          numbersHelper: 'Separate each number with a comma.',
+          message: 'Message',
+          messagePlaceholder: 'Max 160 characters',
+          messageHelper: '{{count}}/{{max}} (no accents or emojis)',
+          schedule: 'Schedule send',
+          priority: 'Priority',
+          priorityHelper: '0 by default',
+          externalId: 'External Id',
+          sourceSystem: 'Source system',
+          chips: {
+            numbers: '{{count}} numbers',
+            chars: '{{count}}/{{max}} chars',
+            scheduled: 'Scheduled: {{value}}',
+            immediate: 'Immediate send',
+            cost: 'Estimated cost: {{cost}}'
+          },
+          actions: { clear: 'Clear', send: 'Enqueue SMS', sending: 'Sending...' }
+        }
+      }
+    }
+  },
+  es: {
+    translation: {
+      menu: {
+        dashboard: 'Tablero',
+        pages: 'Páginas',
+        pagesCaption: 'Páginas',
+        authentication: 'Autenticación',
+        login: 'Iniciar sesión',
+        register: 'Registrarse',
+        sms: 'SMS',
+        smsManagement: 'Gestión de SMS',
+        utilities: 'Utilidades',
+        typography: 'Tipografía',
+        color: 'Color',
+        shadow: 'Sombra',
+        liontv: 'Lion TV',
+        demos: 'Demos Lion TV',
+        subscriptions: 'Suscripciones',
+        invoices: 'Facturas',
+        customers: 'Clientes',
+        crm: 'CRM Clientes',
+        lines: 'Líneas',
+        licenses: 'Licencias',
+        sample: 'Página de ejemplo',
+        docs: 'Documentación'
+      },
+      auth: {
+        hi: 'Hola, bienvenido',
+        enterCredentials: 'Ingresa tus credenciales para continuar',
+        signIn: 'Iniciar sesión',
+        email: 'Correo electrónico',
+        password: 'Contraseña',
+        keepLogged: 'Mantener sesión iniciada',
+        forgot: '¿Olvidaste tu contraseña?',
+        noAccount: '¿No tienes cuenta?',
+        otpTitle: 'Verificación en dos pasos',
+        otpInstruction: 'Ingresa el código enviado a {{dest}}.',
+        codeLabel: 'Código de verificación',
+        resend: 'Reenviar código',
+        confirm: 'Confirmar',
+        sending: 'Ingresando...',
+        verifying: 'Verificando...',
+        sendingCode: 'Enviando...',
+        verifyingCode: 'Verificando...',
+        backToCreds: 'Volver a credenciales',
+        sendToken: 'Enviar token',
+        resetPass: 'Cambiar contraseña',
+        sendingToken: 'Enviando...',
+        savingPass: 'Guardando...',
+        sendAnother: 'Enviar a otro correo',
+        recoverTitle: 'Recuperar contraseña',
+        recoverSubtitle: 'Te enviaremos un token a tu correo.',
+        login: 'Volver a iniciar sesión',
+        firstName: 'Nombre',
+        lastName: 'Apellido',
+        serial: 'Código serial',
+        register: 'Regístrate con correo',
+        passwordStrength: 'Fortaleza de la contraseña',
+        registerBtn: 'Crear cuenta'
+      },
+      messages: {
+        welcome: '¡Bienvenido de nuevo! 👋',
+        invalidCreds: 'Credenciales inválidas',
+        codeInfo: 'Ingresa el código que enviamos para completar el acceso.',
+        codeSent: 'Si el correo existe, enviamos un token de recuperación.',
+        passUpdated: 'Contraseña actualizada. Ahora puedes iniciar sesión.',
+        fillTokenPass: 'Completa token y nueva contraseña.',
+        enterEmail: 'Ingresa tu correo.',
+        enterCode: 'Ingresa el código que recibiste.',
+        resendOk: 'Hemos reenviado el código.'
+      },
+      actions: {
+        language: 'Idioma',
+        english: 'Inglés',
+        spanish: 'Español',
+        refresh: 'Recargar',
+        add: 'Agregar',
+        newInvoice: 'Nueva factura',
+        newCustomer: 'Nuevo cliente'
+      },
+      invoices: {
+        title: 'Facturas',
+        filters: { status: 'Estado', all: 'Todos' },
+        search: 'Buscar',
+        edit: 'Editar factura',
+        dialogSubtitle: 'Ingresa los datos de pago y asignación.',
+        headers: {
+          id: 'ID',
+          customer: 'Cliente',
+          service: 'Servicio',
+          package: 'Paquete',
+          bank: 'Banco',
+          method: 'Método',
+          status: 'Estado',
+          payment: 'Pago',
+          discount: 'Descuento',
+          paymentDate: 'Fecha pago',
+          actions: 'Acciones'
+        }
+      },
+      subscriptions: {
+        title: 'Suscripciones',
+        search: 'Buscar (cliente, línea, paquete, estado)',
+        filters: { status: 'Estado', all: 'Todos' },
+        headers: {
+          id: 'ID',
+          customer: 'Cliente',
+          line: 'Línea',
+          package: 'Paquete',
+          status: 'Estado',
+          amount: 'Monto',
+          start: 'Inicio',
+          renewal: 'Renovación',
+          autopay: 'Débito automático',
+          actions: 'Acciones'
+        }
+      },
+      licenses: {
+        title: 'Licencias',
+        search: 'Buscar (MAC, cliente, estado)',
+        filters: { status: 'Estado', all: 'Todos' },
+        headers: {
+          id: 'ID',
+          mac: 'MAC',
+          name: 'Nombre',
+          customer: 'Cliente',
+          status: 'Estado',
+          app: 'App',
+          price: 'Precio',
+          created: 'Creada',
+          expire: 'Expira',
+          period: 'Periodo',
+          type: 'Tipo',
+          ownerSince: 'Desde',
+          actions: 'Acciones'
+        }
+      },
+      demos: {
+        title: 'Demos Lion TV',
+        listTitle: 'Listado de demos',
+        search: 'Buscar (celular, usuario, paquete, app)',
+        headers: {
+          phone: 'Celular',
+          country: 'Código país',
+          package: 'Paquete',
+          app: 'App',
+          status: 'Estado',
+          created: 'Creado',
+          expires: 'Expira'
+        },
+        summary: { total: '{{count}} demos', packages: 'Paquetes demo: {{count}}', countries: 'Países: {{count}}' },
+        new: 'Nueva demo',
+        infoTitle: 'Datos de la demo',
+        infoSubtitle: 'Completa los campos requeridos; las fechas se asignan automáticamente.',
+        table: { empty: 'No hay demos registradas.', loading: 'Cargando...' }
+      },
+      lines: {
+        title: 'Líneas',
+        listTitle: 'Listado de líneas',
+        summary: { total: '{{count}} líneas', active: 'Activas: {{count}}', expired: 'Expiradas: {{count}}' },
+        search: 'Buscar (usuario, paquete, IP, estado)',
+        filters: { status: 'Estado', all: 'Todos' },
+        status: { active: 'Activa', expired: 'Expirada', inactive: 'Inactiva', trial: 'Prueba' },
+        headers: {
+          user: 'Usuario',
+          password: 'Contraseña',
+          package: 'Paquete',
+          status: 'Estado',
+          max: 'Conexiones máx.',
+          type: 'Tipo',
+          created: 'Creado',
+          expires: 'Expira',
+          owner: 'Dueño',
+          lastIp: 'Última IP',
+          lastWatch: 'Última vista',
+          actions: 'Acciones'
+        },
+        detail: {
+          title: 'Detalle de línea',
+          user: 'Usuario',
+          password: 'Contraseña',
+          package: 'Paquete',
+          id: 'ID',
+          owner: 'Propietario',
+          created: 'Creada',
+          expires: 'Expira',
+          lastIp: 'Última IP',
+          lastStream: 'Último stream',
+          type: 'Tipo',
+          notes: 'Notas',
+          lastStreamLabel: 'Último stream',
+          close: 'Cerrar'
+        },
+        table: { empty: 'No hay líneas registradas.', loading: 'Cargando...' }
+      },
+      customers: {
+        title: 'Clientes',
+        search: 'Buscar',
+        headers: {
+          customer: 'Cliente',
+          email: 'Correo',
+          phone: 'Teléfono',
+          gender: 'Género',
+          status: 'Estado',
+          opening: 'Apertura',
+          closing: 'Cierre',
+          referred: 'Referido',
+          channel: 'Canal'
+        }
+      },
+      sms: {
+        title: 'Gestión de SMS',
+        enqueue: 'Encolar SMS',
+        history: 'Historial de SMS',
+        chips: { ready: '{{count}} números listos', total: '{{count}} registros' },
+        search: 'Buscar (teléfono, mensaje, external)',
+        filters: { from: 'Desde', to: 'Hasta', status: 'Estado', all: 'Todos' },
+        headers: { phone: 'Teléfono', message: 'Mensaje', status: 'Estado', scheduled: 'Programado', detail: 'Detalle' },
+        table: { empty: 'No hay SMS registrados.', loading: 'Cargando...' },
+        mobile: { scheduled: 'Programado', view: 'Ver detalle' },
+        detail: {
+          title: 'Detalle del SMS',
+          phone: 'Teléfono',
+          created: 'Creado',
+          priority: 'Prioridad',
+          message: 'Mensaje',
+          scheduled: 'Programado',
+          sent: 'Enviado',
+          externalId: 'External Id',
+          user: 'Usuario',
+          source: 'Source',
+          retries: 'Reintentos',
+          failReason: 'Motivo de falla',
+          none: 'Sin datos',
+          close: 'Cerrar'
+        },
+        form: {
+          numbers: 'Números destino',
+          numbersPlaceholder: 'Ej: 51999999999, 51888888888',
+          numbersHelper: 'Separa por coma cada número.',
+          message: 'Mensaje',
+          messagePlaceholder: 'Máx 160 caracteres',
+          messageHelper: '{{count}}/{{max}} (sin acentos ni emojis)',
+          schedule: 'Programar envío',
+          priority: 'Prioridad',
+          priorityHelper: '0 por defecto',
+          externalId: 'External Id',
+          sourceSystem: 'Source system',
+          chips: {
+            numbers: '{{count}} números',
+            chars: '{{count}}/{{max}} chars',
+            scheduled: 'Programado: {{value}}',
+            immediate: 'Envío inmediato',
+            cost: 'Costo estimado: {{cost}}'
+          },
+          actions: { clear: 'Limpiar', send: 'Encolar SMS', sending: 'Enviando...' }
+        }
+      }
+    }
+  }
+};
+
+const storedLng = typeof window !== 'undefined' ? localStorage.getItem('lng') : null;
+
+i18n.use(initReactI18next).init({
+  resources,
+  lng: storedLng || 'es',
+  fallbackLng: 'en',
+  interpolation: { escapeValue: false }
+});
+
+export default i18n;

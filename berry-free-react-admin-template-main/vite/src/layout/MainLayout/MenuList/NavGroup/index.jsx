@@ -6,6 +6,7 @@ import { matchPath, useLocation } from 'react-router-dom';
 import Divider from '@mui/material/Divider';
 import List from '@mui/material/List';
 import Typography from '@mui/material/Typography';
+import { useTranslation } from 'react-i18next';
 
 // project imports
 import NavCollapse from '../NavCollapse';
@@ -17,6 +18,7 @@ import { useGetMenuMaster } from 'api/menu';
 
 export default function NavGroup({ item, lastItem, remItems, lastItemId, setSelectedID }) {
   const { pathname } = useLocation();
+  const { t } = useTranslation();
 
   const { menuMaster } = useGetMenuMaster();
   const drawerOpen = menuMaster.isDashboardDrawerOpened;
@@ -109,7 +111,7 @@ export default function NavGroup({ item, lastItem, remItems, lastItemId, setSele
                 marginTop: 1.25
               }}
             >
-              {currentItem.title}
+              {t(currentItem.title)}
               {currentItem.caption && (
                 <Typography
                   gutterBottom
@@ -122,7 +124,7 @@ export default function NavGroup({ item, lastItem, remItems, lastItemId, setSele
                     lineHeight: 1.66
                   }}
                 >
-                  {currentItem.caption}
+                  {t(currentItem.caption)}
                 </Typography>
               )}
             </Typography>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -146,6 +147,7 @@ const defaultForm = {
 export default function SubscriptionsLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -437,13 +439,13 @@ export default function SubscriptionsLionTv() {
           headers: { Authorization: `Bearer ${accessToken}` },
           skipAuthRedirect: true
         });
-        enqueueSnackbar('Suscripción actualizada.', { variant: 'success' });
+        enqueueSnackbar(t('messages.welcome'), { variant: 'success' });
       } else {
         await lionTvApi.post('/subscriptions/v1', payload, {
           headers: { Authorization: `Bearer ${accessToken}` },
           skipAuthRedirect: true
         });
-        enqueueSnackbar('Suscripción creada.', { variant: 'success' });
+        enqueueSnackbar(t('messages.welcome'), { variant: 'success' });
       }
       setOpenModal(false);
       resetForm();
@@ -471,7 +473,7 @@ export default function SubscriptionsLionTv() {
         headers: { Authorization: `Bearer ${accessToken}` },
         skipAuthRedirect: true
       });
-      enqueueSnackbar('Suscripción eliminada.', { variant: 'success' });
+      enqueueSnackbar(t('messages.welcome'), { variant: 'success' });
       setOpenDelete({ open: false, row: null });
       setRefreshKey((v) => v + 1);
     } catch (err) {
@@ -488,38 +490,38 @@ export default function SubscriptionsLionTv() {
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
       <MainCard
-        title="Suscripciones"
+        title={t('subscriptions.title')}
         secondary={
           <Stack direction="row" spacing={1}>
             <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => setRefreshKey((v) => v + 1)}>
-              Recargar
+              {t('actions.refresh')}
             </Button>
             <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={() => setOpenModal(true)}>
-              Nueva
+              {t('actions.add')}
             </Button>
           </Stack>
         }
       >
         <Grid container spacing={gridSpacing}>
           <Grid item xs={12} sm={4}>
-            <Chip label={`${total} suscripciones`} color="primary" />
+            <Chip label={`${total} ${t('subscriptions.title').toLowerCase()}`} color="primary" />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <Chip label={`Activas: ${rows.filter((r) => r.status === 'ACTIVE').length}`} color="success" />
+            <Chip label={`ACTIVE: ${rows.filter((r) => r.status === 'ACTIVE').length}`} color="success" />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <Chip label={`Automático: ${rows.filter((r) => r.automaticPay).length}`} color="secondary" />
+            <Chip label={`${t('subscriptions.headers.autopay')}: ${rows.filter((r) => r.automaticPay).length}`} color="secondary" />
           </Grid>
         </Grid>
       </MainCard>
 
       <MainCard
-        title="Listado de suscripciones"
+        title={t('subscriptions.title')}
         secondary={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 480 } }}>
             <TextField
               size="small"
-              placeholder="Buscar (cliente, línea, paquete, estado)"
+              placeholder={t('subscriptions.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               fullWidth
@@ -532,10 +534,10 @@ export default function SubscriptionsLionTv() {
               }}
             />
             <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>Status</InputLabel>
-              <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)}>
+              <InputLabel>{t('subscriptions.filters.status')}</InputLabel>
+              <Select value={statusFilter} label={t('subscriptions.filters.status')} onChange={(e) => setStatusFilter(e.target.value)}>
                 <MenuItem value="">
-                  <em>Todos</em>
+                  <em>{t('subscriptions.filters.all')}</em>
                 </MenuItem>
                 {[...new Set(rows.map((r) => r.status).filter(Boolean))].map((s) => (
                   <MenuItem key={s} value={s}>
@@ -549,20 +551,20 @@ export default function SubscriptionsLionTv() {
       >
         <TableContainer component={Paper}>
           <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Cliente</TableCell>
-                <TableCell>Línea</TableCell>
-                <TableCell>Package</TableCell>
-                <TableCell>Estado</TableCell>
-                <TableCell>Monto</TableCell>
-                <TableCell>Inicio</TableCell>
-                <TableCell>Renovación</TableCell>
-                <TableCell>Auto pay</TableCell>
-                <TableCell>Acciones</TableCell>
-              </TableRow>
-            </TableHead>
+              <TableHead>
+                <TableRow>
+                  <TableCell>{t('subscriptions.headers.id')}</TableCell>
+                  <TableCell>{t('subscriptions.headers.customer')}</TableCell>
+                  <TableCell>{t('subscriptions.headers.line')}</TableCell>
+                  <TableCell>{t('subscriptions.headers.package')}</TableCell>
+                  <TableCell>{t('subscriptions.headers.status')}</TableCell>
+                  <TableCell>{t('subscriptions.headers.amount')}</TableCell>
+                  <TableCell>{t('subscriptions.headers.start')}</TableCell>
+                  <TableCell>{t('subscriptions.headers.renewal')}</TableCell>
+                  <TableCell>{t('subscriptions.headers.autopay')}</TableCell>
+                  <TableCell>{t('subscriptions.headers.actions')}</TableCell>
+                </TableRow>
+              </TableHead>
               <TableBody>
                 {paginatedRows.map((row) => (
                   <TableRow key={row.subscriptionId || row.lineId}>
@@ -584,14 +586,14 @@ export default function SubscriptionsLionTv() {
                         </Typography>
                         {row.packageDescription ||
                         packageMap[String(row.packageId ?? '')]?.description ? (
-                          <Typography variant="caption" color="text.secondary" noWrap>
-                            {row.packageDescription ||
+                        <Typography variant="caption" color="text.secondary" noWrap>
+                          {row.packageDescription ||
                               packageMap[String(row.packageId ?? '')]?.description}
-                          </Typography>
-                        ) : null}
-                      </Stack>
-                    </TableCell>
-                    <TableCell>
+                        </Typography>
+                      ) : null}
+                    </Stack>
+                  </TableCell>
+                  <TableCell>
                       <StatusChip status={row.status} />
                     </TableCell>
                     <TableCell>

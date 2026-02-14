@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -173,6 +174,7 @@ function FormSection({ title, helper, children }) {
 export default function CustomersLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -470,41 +472,41 @@ export default function CustomersLionTv() {
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
       <MainCard
-        title="Clientes Lion Tv"
+        title={t('customers.title')}
         secondary={
           <Stack direction="row" spacing={1}>
             <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => setRefreshKey((v) => v + 1)}>
-              Recargar
+              {t('actions.refresh')}
             </Button>
             <Button variant="contained" onClick={() => setOpenCreate(true)}>
-              Crear cliente
+              {t('actions.newCustomer')}
             </Button>
           </Stack>
         }
       >
         <Grid container spacing={gridSpacing}>
           <Grid item xs={12} sm={6} md={3}>
-            <Chip label={`${total} clientes`} color="primary" />
+            <Chip label={`${total} ${t('customers.title').toLowerCase()}`} color="primary" />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Chip label={`Activos: ${summary.active}`} color="success" />
+            <Chip label={`${t('customers.headers.status')}: ACTIVE ${summary.active}`} color="success" />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Chip label={`Inactivos: ${summary.inactive}`} color="default" />
+            <Chip label={`${t('customers.headers.status')}: INACTIVE ${summary.inactive}`} color="default" />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Chip label={`Referidos: ${summary.referred}`} color="secondary" />
+            <Chip label={`${t('customers.headers.referred')}: ${summary.referred}`} color="secondary" />
           </Grid>
         </Grid>
       </MainCard>
 
       <MainCard
-        title="Listado de clientes"
+        title={t('customers.title')}
         secondary={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 480 } }}>
             <TextField
               size="small"
-              placeholder="Buscar (nombre, usuario, mail, telefono)"
+              placeholder={t('customers.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               fullWidth
@@ -517,10 +519,10 @@ export default function CustomersLionTv() {
               }}
             />
             <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>Status</InputLabel>
-              <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)}>
+              <InputLabel>{t('customers.headers.status')}</InputLabel>
+              <Select value={statusFilter} label={t('customers.headers.status')} onChange={(e) => setStatusFilter(e.target.value)}>
                 <MenuItem value="">
-                  <em>Todos</em>
+                  <em>{t('invoices.filters.all')}</em>
                 </MenuItem>
                 {[...new Set(rows.map((r) => r.status).filter(Boolean))].map((s) => (
                   <MenuItem key={s} value={s}>
@@ -536,16 +538,16 @@ export default function CustomersLionTv() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Cliente</TableCell>
-                <TableCell>Mail</TableCell>
-                <TableCell>Telefono</TableCell>
-                <TableCell>Genero</TableCell>
-                <TableCell>Estado</TableCell>
-                <TableCell>Apertura</TableCell>
-                <TableCell>Cierre</TableCell>
-                <TableCell>Referido</TableCell>
-                <TableCell>Canal</TableCell>
-                <TableCell>Acciones</TableCell>
+                <TableCell>{t('customers.headers.customer')}</TableCell>
+                <TableCell>{t('customers.headers.email')}</TableCell>
+                <TableCell>{t('customers.headers.phone')}</TableCell>
+                <TableCell>{t('customers.headers.gender')}</TableCell>
+                <TableCell>{t('customers.headers.status')}</TableCell>
+                <TableCell>{t('customers.headers.opening')}</TableCell>
+                <TableCell>{t('customers.headers.closing')}</TableCell>
+                <TableCell>{t('customers.headers.referred')}</TableCell>
+                <TableCell>{t('customers.headers.channel')}</TableCell>
+                <TableCell>{t('invoices.headers.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -560,7 +562,7 @@ export default function CustomersLionTv() {
                         <Typography variant="subtitle2">{row.fullName || '-'}</Typography>
                         {row.refererBy ? (
                           <Typography variant="caption" color="text.secondary">
-                            Referido por {row.refererBy}
+                            {t('customers.headers.referred')}: {row.refererBy}
                           </Typography>
                         ) : null}
                       </Box>

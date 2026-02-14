@@ -5,12 +5,12 @@ const icons = { IconMessages };
 
 const sms = {
   id: 'sms',
-  title: 'Sms',
+  title: 'menu.sms',
   type: 'group',
   children: [
     {
       id: 'sms-management',
-      title: 'Sms Management',
+      title: 'menu.smsManagement',
       type: 'item',
       url: '/sms/management',
       icon: icons.IconMessages,

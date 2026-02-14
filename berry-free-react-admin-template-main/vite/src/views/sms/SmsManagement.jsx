@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -121,6 +122,7 @@ export default function SmsManagement() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { accessToken } = useAuth();
+  const { t } = useTranslation();
 
   const [form, setForm] = useState(defaultForm);
   const [sending, setSending] = useState(false);
@@ -197,12 +199,12 @@ export default function SmsManagement() {
   const handleSend = async () => {
     const phoneNumbers = parsedPhones;
     if (!phoneNumbers.length) {
-      enqueueSnackbar('Agrega al menos un numero de telefono.', { variant: 'warning' });
+      enqueueSnackbar(t('messages.enterEmail') || 'Agrega al menos un numero de telefono.', { variant: 'warning' });
       return;
     }
     const sanitizedMessage = sanitizeMessage(form.messageText || '');
     if (!sanitizedMessage.trim()) {
-      enqueueSnackbar('El mensaje no puede estar vacio ni contener acentos/emojis.', { variant: 'warning' });
+      enqueueSnackbar(t('messages.enterCode') || 'El mensaje no puede estar vacio ni contener acentos/emojis.', { variant: 'warning' });
       return;
     }
 
@@ -222,7 +224,10 @@ export default function SmsManagement() {
       });
       const ids = response?.data?.data ?? [];
       const totalQueued = Array.isArray(ids) ? ids.length : 0;
-      enqueueSnackbar(totalQueued ? `Se encolaron ${totalQueued} SMS.` : 'Solicitud enviada.', { variant: 'success' });
+      enqueueSnackbar(
+        totalQueued ? t('sms.chips.ready', { count: totalQueued }) : t('messages.resendOk'),
+        { variant: 'success' }
+      );
       setRefreshKey((prev) => prev + 1);
       setOpenModal(false);
     } catch (err) {
@@ -231,7 +236,7 @@ export default function SmsManagement() {
         window.location.replace(BASE_URL + '/pages/login');
         return;
       }
-      const message = err?.response?.data?.message || err?.message || 'No se pudo encolar el SMS.';
+      const message = err?.response?.data?.message || err?.message || t('messages.invalidCreds');
       enqueueSnackbar(message, { variant: 'error' });
     } finally {
       setSending(false);
@@ -262,12 +267,12 @@ export default function SmsManagement() {
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto', display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 3 }, pb: 3 }}>
       <MainCard
-        title="Sms Management"
+        title={t('sms.title')}
         secondary={
           <Stack direction="row" spacing={1} alignItems="center">
             <Chip label="Secure" size="small" color="primary" />
             <Button variant="contained" startIcon={<SendIcon />} onClick={() => setOpenModal(true)}>
-              Encolar SMS
+              {t('sms.enqueue')}
             </Button>
           </Stack>
         }
@@ -275,18 +280,18 @@ export default function SmsManagement() {
       >
         
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-          <Chip label={`${parsedPhones.length} numeros listos`} size="small" color="secondary" variant="outlined" />
-          <Chip label={`${total} registros`} size="small" variant="outlined" />
+          <Chip label={t('sms.chips.ready', { count: parsedPhones.length })} size="small" color="secondary" variant="outlined" />
+          <Chip label={t('sms.chips.total', { count: total })} size="small" variant="outlined" />
         </Stack>
       </MainCard>
 
       <MainCard
-        title="Historial de SMS"
+        title={t('sms.history')}
         secondary={
           <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <Chip label={`${total} registros`} size="small" variant="outlined" />
+            <Chip label={t('sms.chips.total', { count: total })} size="small" variant="outlined" />
             <Button size="small" variant="outlined" startIcon={<RefreshIcon />} onClick={handleRefresh} disabled={loading}>
-              Recargar
+              {t('actions.refresh')}
             </Button>
           </Stack>
         }
@@ -300,7 +305,7 @@ export default function SmsManagement() {
             }}
           >
             <TextField
-              label="Buscar (telefono, mensaje, external)"
+              label={t('sms.search')}
               value={filters.search}
               onChange={handleFilterChange('search')}
               size="small"
@@ -315,7 +320,7 @@ export default function SmsManagement() {
               }}
             />
             <TextField
-              label="Desde"
+              label={t('sms.filters.from')}
               type="date"
               InputLabelProps={{ shrink: true }}
               value={filters.dateFrom}
@@ -324,7 +329,7 @@ export default function SmsManagement() {
               sx={filterFieldSx}
             />
             <TextField
-              label="Hasta"
+              label={t('sms.filters.to')}
               type="date"
               InputLabelProps={{ shrink: true }}
               value={filters.dateTo}
@@ -333,16 +338,16 @@ export default function SmsManagement() {
               sx={filterFieldSx}
             />
             <FormControl size="small" sx={{ ...filterFieldSx }}>
-              <InputLabel id="status-filter-label">Estado</InputLabel>
+              <InputLabel id="status-filter-label">{t('sms.filters.status')}</InputLabel>
               <Select
                 labelId="status-filter-label"
-                label="Estado"
+                label={t('sms.filters.status')}
                 value={filters.status}
                 onChange={handleFilterChange('status')}
               >
                 {statusOptions.map((opt) => (
                   <MenuItem key={opt} value={opt}>
-                    {opt === 'ALL' ? 'Todos' : opt}
+                    {opt === 'ALL' ? t('sms.filters.all') : opt}
                   </MenuItem>
                 ))}
               </Select>
@@ -354,11 +359,11 @@ export default function SmsManagement() {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Telefono</TableCell>
-                      <TableCell>Mensaje</TableCell>
-                      <TableCell>Estado</TableCell>
-                      <TableCell>Programado</TableCell>
-                      <TableCell align="right">Detalle</TableCell>
+                      <TableCell>{t('sms.headers.phone')}</TableCell>
+                      <TableCell>{t('sms.headers.message')}</TableCell>
+                      <TableCell>{t('sms.headers.status')}</TableCell>
+                      <TableCell>{t('sms.headers.scheduled')}</TableCell>
+                      <TableCell align="right">{t('sms.headers.detail')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -383,7 +388,7 @@ export default function SmsManagement() {
                             startIcon={<InfoOutlinedIcon />}
                             onClick={() => setDetailModal({ open: true, row })}
                           >
-                            Ver
+                            {t('sms.headers.detail')}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -392,7 +397,7 @@ export default function SmsManagement() {
                       <TableRow>
                         <TableCell colSpan={10} align="center">
                         <Typography variant="body2" color="text.secondary">
-                          No hay SMS registrados.
+                          {t('sms.table.empty')}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -401,7 +406,7 @@ export default function SmsManagement() {
                     <TableRow>
                       <TableCell colSpan={10} align="center">
                         <Typography variant="body2" color="text.secondary">
-                          Cargando...
+                          {t('sms.table.loading')}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -438,8 +443,8 @@ export default function SmsManagement() {
                 <Typography variant="body2" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                   {row.messageText || '-'}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Programado: {formatDate(row.scheduledAt)}
+                  <Typography variant="caption" color="text.secondary">
+                  {t('sms.mobile.scheduled')}: {formatDate(row.scheduledAt)}
                 </Typography>
                 <Button
                   size="small"
@@ -447,7 +452,7 @@ export default function SmsManagement() {
                   startIcon={<InfoOutlinedIcon />}
                   onClick={() => setDetailModal({ open: true, row })}
                 >
-                  Ver detalle
+                  {t('sms.mobile.view')}
                 </Button>
               </Stack>
             </Paper>
@@ -457,7 +462,7 @@ export default function SmsManagement() {
 
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="md">
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          Encolar SMS
+          {t('sms.enqueue')}
           <IconButton onClick={() => setOpenModal(false)} size="small">
             <CloseIcon />
           </IconButton>
@@ -475,20 +480,27 @@ export default function SmsManagement() {
           }}
         >
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }} flexWrap="wrap">
-            <Chip label={`${parsedPhones.length} numeros`} color="primary" variant="outlined" />
-            <Chip label={`${form.messageText.length}/${MAX_MESSAGE_LEN} chars`} variant="outlined" />
-            <Chip label={form.scheduledAt ? `Programado: ${formatDate(form.scheduledAt)}` : 'Envio inmediato'} variant="outlined" />
-            <Chip label={`Costo estimado: ${estimatedCost}`} variant="outlined" />
+            <Chip label={t('sms.form.chips.numbers', { count: parsedPhones.length })} color="primary" variant="outlined" />
+            <Chip label={t('sms.form.chips.chars', { count: form.messageText.length, max: MAX_MESSAGE_LEN })} variant="outlined" />
+            <Chip
+              label={
+                form.scheduledAt
+                  ? t('sms.form.chips.scheduled', { value: formatDate(form.scheduledAt) })
+                  : t('sms.form.chips.immediate')
+              }
+              variant="outlined"
+            />
+            <Chip label={t('sms.form.chips.cost', { cost: estimatedCost })} variant="outlined" />
           </Stack>
 
           <TextField
-            label="Numeros destino"
-            placeholder="Ej: 51999999999, 51888888888"
+            label={t('sms.form.numbers')}
+            placeholder={t('sms.form.numbersPlaceholder')}
             minRows={3}
             multiline
             value={form.phoneNumbersText}
             onChange={handleFormChange('phoneNumbersText')}
-            helperText="Separa por coma cada número."
+            helperText={t('sms.form.numbersHelper')}
             fullWidth
           />
           <Box
@@ -502,21 +514,21 @@ export default function SmsManagement() {
             }}
           >
             <TextField
-              label="Mensaje"
-              placeholder="Max 160 caracteres"
+              label={t('sms.form.message')}
+              placeholder={t('sms.form.messagePlaceholder')}
               minRows={4}
               multiline
               value={form.messageText}
               inputProps={{ maxLength: MAX_MESSAGE_LEN }}
               onChange={handleMessageChange}
-              helperText={`${form.messageText.length}/${MAX_MESSAGE_LEN} (sin acentos ni emojis)`}
+              helperText={t('sms.form.messageHelper', { count: form.messageText.length, max: MAX_MESSAGE_LEN })}
               fullWidth
             />
           </Box>
           <Grid container spacing={1.5}>
             <Grid item xs={12} sm={6} md={3}>
               <TextField
-                label="Programar envio"
+                label={t('sms.form.schedule')}
                 type="datetime-local"
                 InputLabelProps={{ shrink: true }}
                 value={form.scheduledAt}
@@ -526,19 +538,19 @@ export default function SmsManagement() {
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <TextField
-                label="Prioridad"
+                label={t('sms.form.priority')}
                 type="number"
                 value={form.priority}
                 onChange={handleFormChange('priority')}
-                helperText="0 por defecto"
+                helperText={t('sms.form.priorityHelper')}
                 fullWidth
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <TextField label="External Id" value={form.externalId} onChange={handleFormChange('externalId')} fullWidth />
+              <TextField label={t('sms.form.externalId')} value={form.externalId} onChange={handleFormChange('externalId')} fullWidth />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <TextField label="Source system" value={form.sourceSystem} onChange={handleFormChange('sourceSystem')} fullWidth />
+              <TextField label={t('sms.form.sourceSystem')} value={form.sourceSystem} onChange={handleFormChange('sourceSystem')} fullWidth />
             </Grid>
           </Grid>
         </DialogContent>
@@ -550,7 +562,7 @@ export default function SmsManagement() {
             onClick={handleReset}
             sx={{ minWidth: 150 }}
           >
-            Limpiar
+            {t('sms.form.actions.clear')}
           </Button>
           <Button
           variant="contained"
@@ -559,14 +571,14 @@ export default function SmsManagement() {
           disabled={sending}
           sx={{ minWidth: 150 }}
         >
-            {sending ? 'Enviando...' : 'Encolar SMS'}
+            {sending ? t('sms.form.actions.sending') : t('sms.form.actions.send')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={detailModal.open} onClose={() => setDetailModal({ open: false, row: null })} fullWidth maxWidth="sm">
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          Detalle del SMS
+          {t('sms.detail.title')}
           <IconButton onClick={() => setDetailModal({ open: false, row: null })} size="small">
             <CloseIcon />
           </IconButton>
@@ -597,16 +609,16 @@ export default function SmsManagement() {
               >
                 <Stack spacing={0.5}>
                   <Typography variant="overline" color="text.secondary">
-                    Telefono
+                    {t('sms.detail.phone')}
                   </Typography>
                   <Typography variant="h6">{detailModal.row.phoneNumber || '-'}</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Creado: {formatDate(detailModal.row.createdAt)}
+                    {t('sms.detail.created')}: {formatDate(detailModal.row.createdAt)}
                   </Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">
                   <StatusChip status={detailModal.row.status} />
-                  <Chip size="small" label={`Prioridad ${detailModal.row.priority ?? '-'}`} variant="outlined" />
+                  <Chip size="small" label={`${t('sms.detail.priority')} ${detailModal.row.priority ?? '-'}`} variant="outlined" />
                 </Stack>
               </Stack>
 
@@ -620,7 +632,7 @@ export default function SmsManagement() {
                 }}
               >
                 <Typography variant="subtitle2" gutterBottom>
-                  Mensaje
+                  {t('sms.detail.message')}
                 </Typography>
                 <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
                   {detailModal.row.messageText || '-'}
@@ -629,45 +641,45 @@ export default function SmsManagement() {
 
               <Grid container spacing={1.5}>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Programado</Typography>
+                  <Typography variant="subtitle2">{t('sms.detail.scheduled')}</Typography>
                   <Typography variant="body2">{formatDate(detailModal.row.scheduledAt)}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Enviado</Typography>
+                  <Typography variant="subtitle2">{t('sms.detail.sent')}</Typography>
                   <Typography variant="body2">{formatDate(detailModal.row.sentAt)}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">External Id</Typography>
+                  <Typography variant="subtitle2">{t('sms.detail.externalId')}</Typography>
                   <Typography variant="body2">{detailModal.row.externalId || '-'}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Usuario</Typography>
+                  <Typography variant="subtitle2">{t('sms.detail.user')}</Typography>
                   <Typography variant="body2">{detailModal.row.username || '-'}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Source</Typography>
+                  <Typography variant="subtitle2">{t('sms.detail.source')}</Typography>
                   <Typography variant="body2">{detailModal.row.sourceSystem || '-'}</Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Typography variant="subtitle2">Reintentos</Typography>
+                  <Typography variant="subtitle2">{t('sms.detail.retries')}</Typography>
                   <Typography variant="body2">
                     {detailModal.row.retryCount ?? 0} / {detailModal.row.maxRetries ?? '-'}
                   </Typography>
                 </Grid>
                 <Grid item xs={12}>
-                  <Typography variant="subtitle2">Fail reason</Typography>
+                  <Typography variant="subtitle2">{t('sms.detail.failReason')}</Typography>
                   <Typography variant="body2">{detailModal.row.failReason || '-'}</Typography>
                 </Grid>
               </Grid>
             </Stack>
           ) : (
             <Typography variant="body2" color="text.secondary">
-              Sin datos
+              {t('sms.detail.none')}
             </Typography>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDetailModal({ open: false, row: null })}>Cerrar</Button>
+          <Button onClick={() => setDetailModal({ open: false, row: null })}>{t('sms.detail.close')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

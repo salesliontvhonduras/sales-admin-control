@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -109,6 +110,7 @@ function normalizeLicense(item = {}) {
 export default function LicensesLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -435,11 +437,11 @@ export default function LicensesLionTv() {
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
       <MainCard
-        title="Licencias"
+        title={t('licenses.title')}
         secondary={
           <Stack direction="row" spacing={1}>
             <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => setRefreshKey((v) => v + 1)}>
-              Recargar
+              {t('actions.refresh')}
             </Button>
             <Button
               variant="contained"
@@ -449,20 +451,20 @@ export default function LicensesLionTv() {
                 setOpenModal(true);
               }}
             >
-              Nueva licencia
+              {t('actions.add')}
             </Button>
           </Stack>
         }
       >
         <Grid container spacing={gridSpacing}>
           <Grid item xs={12} sm={4}>
-            <Chip label={`${total} licencias`} color="primary" />
+            <Chip label={`${total} ${t('licenses.title').toLowerCase()}`} color="primary" />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <Chip label={`Activas: ${rows.filter((r) => r.status === 'ACTIVE').length}`} color="success" />
+            <Chip label={`ACTIVE: ${rows.filter((r) => r.status === 'ACTIVE').length}`} color="success" />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <Chip label={`Expiradas: ${rows.filter((r) => r.status === 'EXPIRED').length}`} color="warning" />
+            <Chip label={`EXPIRED: ${rows.filter((r) => r.status === 'EXPIRED').length}`} color="warning" />
           </Grid>
         </Grid>
       </MainCard>
@@ -472,10 +474,10 @@ export default function LicensesLionTv() {
           <Stack spacing={1.5}>
             <Stack spacing={0.5}>
               <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                Contingencia
+                {t('licenses.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Crea o elimina playlists de contingencia para licencias activas de Vivo Player según la MAC registrada.
+                {t('licenses.title')}
               </Typography>
             </Stack>
             <Stack
@@ -504,13 +506,13 @@ export default function LicensesLionTv() {
                 disabled={sending}
                 sx={{ borderRadius: 2, textTransform: 'none' }}
               >
-                Quitar contingencia
+                {t('actions.refresh')}
               </Button>
             </Stack>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
               <TextField
                 size="small"
-                placeholder="Buscar (mac, cliente, app)"
+                placeholder={t('licenses.search')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 fullWidth
@@ -523,10 +525,10 @@ export default function LicensesLionTv() {
                 }}
               />
               <FormControl size="small" sx={{ minWidth: 140, '& .MuiOutlinedInput-root': { minHeight: 40 } }}>
-                <InputLabel>Status</InputLabel>
-                <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)}>
+                <InputLabel>{t('licenses.filters.status')}</InputLabel>
+                <Select value={statusFilter} label={t('licenses.filters.status')} onChange={(e) => setStatusFilter(e.target.value)}>
                   <MenuItem value="">
-                    <em>Todos</em>
+                    <em>{t('licenses.filters.all')}</em>
                   </MenuItem>
                   {STATUS_OPTIONS.map((s) => (
                     <MenuItem key={s} value={s}>
@@ -542,16 +544,16 @@ export default function LicensesLionTv() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Mac</TableCell>
-                <TableCell>Nombre</TableCell>
-                <TableCell>Cliente</TableCell>
-                <TableCell>App</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Periodo</TableCell>
-                <TableCell>Tipo</TableCell>
-                <TableCell>Precio</TableCell>
-                <TableCell>Expira</TableCell>
-                <TableCell>Acciones</TableCell>
+                <TableCell>{t('licenses.headers.mac')}</TableCell>
+                <TableCell>{t('licenses.headers.name')}</TableCell>
+                <TableCell>{t('licenses.headers.customer')}</TableCell>
+                <TableCell>{t('licenses.headers.app')}</TableCell>
+                <TableCell>{t('licenses.headers.status')}</TableCell>
+                <TableCell>{t('licenses.headers.period')}</TableCell>
+                <TableCell>{t('licenses.headers.type')}</TableCell>
+                <TableCell>{t('licenses.headers.price')}</TableCell>
+                <TableCell>{t('licenses.headers.expire')}</TableCell>
+                <TableCell>{t('licenses.headers.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

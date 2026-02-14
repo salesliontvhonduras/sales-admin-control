@@ -13,9 +13,12 @@ import AuthCardWrapper from './AuthCardWrapper';
 import Logo from 'ui-component/Logo';
 import AuthFooter from 'ui-component/cards/AuthFooter';
 import { authApi } from 'utils/api';
+import LanguageSwitcher from 'ui-component/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 export default function ForgotPassword() {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
   const [step, setStep] = useState('email'); // email | reset
   const [email, setEmail] = useState('');
   const [token, setToken] = useState('');
@@ -24,13 +27,13 @@ export default function ForgotPassword() {
 
   const handleSendEmail = async () => {
     if (!email.trim()) {
-      enqueueSnackbar('Ingresa tu correo.', { variant: 'warning' });
+      enqueueSnackbar(t('messages.enterEmail'), { variant: 'warning' });
       return;
     }
     setLoading(true);
     try {
       await authApi.post('/auth/v1/password/forgot', { email });
-      enqueueSnackbar('Si el correo existe, enviamos un token de recuperación.', { variant: 'info' });
+      enqueueSnackbar(t('messages.codeSent'), { variant: 'info' });
       setStep('reset');
     } catch (err) {
       const msg = err?.response?.data?.message || 'No pudimos enviar el correo, intenta más tarde.';
@@ -42,13 +45,13 @@ export default function ForgotPassword() {
 
   const handleReset = async () => {
     if (!token.trim() || !password.trim()) {
-      enqueueSnackbar('Completa token y nueva contraseña.', { variant: 'warning' });
+      enqueueSnackbar(t('messages.fillTokenPass'), { variant: 'warning' });
       return;
     }
     setLoading(true);
     try {
       await authApi.post('/auth/v1/password/reset', { token, newPassword: password });
-      enqueueSnackbar('Contraseña actualizada. Ahora puedes iniciar sesión.', { variant: 'success' });
+      enqueueSnackbar(t('messages.passUpdated'), { variant: 'success' });
       setStep('email');
       setToken('');
       setPassword('');
@@ -64,7 +67,8 @@ export default function ForgotPassword() {
     <AuthWrapper1>
       <Stack sx={{ justifyContent: 'flex-end', minHeight: '100vh' }}>
         <Stack sx={{ justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 68px)' }}>
-          <Box sx={{ m: { xs: 1, sm: 3 }, mb: 0 }}>
+          <Box sx={{ m: { xs: 1, sm: 3 }, mb: 0, position: 'relative' }}>
+            <LanguageSwitcher overlay />
             <AuthCardWrapper>
               <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
                 <Box sx={{ mb: 3 }}>
@@ -74,17 +78,17 @@ export default function ForgotPassword() {
                 </Box>
                 <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                   <Typography variant="h4" sx={{ color: 'secondary.main' }}>
-                    Recuperar contraseña
+                    {t('auth.recoverTitle')}
                   </Typography>
                   <Typography variant="caption" sx={{ fontSize: '16px', textAlign: { xs: 'center', md: 'inherit' } }}>
-                    Te enviaremos un token a tu correo.
+                    {t('auth.recoverSubtitle')}
                   </Typography>
                 </Stack>
                 <Stack spacing={2} sx={{ width: 1 }}>
                   {step === 'email' ? (
                     <>
                       <TextField
-                        label="Correo electrónico"
+                        label={t('auth.email')}
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -97,19 +101,19 @@ export default function ForgotPassword() {
                         disabled={loading}
                         startIcon={loading ? <CircularProgress color="inherit" size={16} /> : null}
                       >
-                        {loading ? 'Enviando...' : 'Enviar token'}
+                        {loading ? t('auth.sendingToken') : t('auth.sendToken')}
                       </Button>
                     </>
                   ) : (
                     <>
                       <TextField
-                        label="Token recibido"
+                        label="Token"
                         value={token}
                         onChange={(e) => setToken(e.target.value)}
                         fullWidth
                       />
                       <TextField
-                        label="Nueva contraseña"
+                        label={t('auth.password')}
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -122,10 +126,10 @@ export default function ForgotPassword() {
                         disabled={loading}
                         startIcon={loading ? <CircularProgress color="inherit" size={16} /> : null}
                       >
-                        {loading ? 'Guardando...' : 'Cambiar contraseña'}
+                        {loading ? t('auth.savingPass') : t('auth.resetPass')}
                       </Button>
                       <Button size="small" onClick={() => setStep('email')} sx={{ alignSelf: 'flex-start' }}>
-                        Enviar a otro correo
+                        {t('auth.sendAnother')}
                       </Button>
                     </>
                   )}
@@ -133,7 +137,7 @@ export default function ForgotPassword() {
                 <Divider sx={{ width: 1 }} />
                 <Stack sx={{ alignItems: 'center' }}>
                   <Typography component={Link} to="/pages/login" variant="subtitle1" sx={{ textDecoration: 'none' }}>
-                    Volver a iniciar sesión
+                    {t('auth.login')}
                   </Typography>
                 </Stack>
               </Stack>

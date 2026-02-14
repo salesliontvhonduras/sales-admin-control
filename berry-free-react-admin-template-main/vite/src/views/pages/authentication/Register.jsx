@@ -5,6 +5,8 @@ import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import LanguageSwitcher from 'ui-component/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 // project imports
 import AuthWrapper1 from './AuthWrapper1';
@@ -16,12 +18,14 @@ import AuthRegister from '../auth-forms/AuthRegister';
 
 export default function Register() {
   const downMD = useMediaQuery((theme) => theme.breakpoints.down('md'));
+  const { t } = useTranslation();
 
   return (
     <AuthWrapper1>
       <Stack sx={{ justifyContent: 'flex-end', minHeight: '100vh' }}>
         <Stack sx={{ justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 68px)' }}>
-          <Box sx={{ m: { xs: 1, sm: 3 }, mb: 0 }}>
+          <Box sx={{ m: { xs: 1, sm: 3 }, mb: 0, position: 'relative' }}>
+            <LanguageSwitcher overlay />
             <AuthCardWrapper>
               <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
                 <Box sx={{ mb: 3 }}>
@@ -31,10 +35,10 @@ export default function Register() {
                 </Box>
                 <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                   <Typography gutterBottom variant={downMD ? 'h3' : 'h2'} sx={{ color: 'secondary.main', mb: 0 }}>
-                    Sign up
+                    {t('auth.registerBtn')}
                   </Typography>
                   <Typography variant="caption" sx={{ fontSize: '16px', textAlign: { xs: 'center', md: 'inherit' } }}>
-                    Enter your details to continue
+                    {t('auth.enterCredentials')}
                   </Typography>
                 </Stack>
                 <Box>
@@ -43,7 +47,7 @@ export default function Register() {
                 <Divider sx={{ width: 1 }} />
                 <Stack sx={{ alignItems: 'center' }}>
                   <Typography component={Link} to="/pages/login" variant="subtitle1" sx={{ textDecoration: 'none' }}>
-                    Already have an account?
+                    {t('auth.login')}
                   </Typography>
                 </Stack>
               </Stack>

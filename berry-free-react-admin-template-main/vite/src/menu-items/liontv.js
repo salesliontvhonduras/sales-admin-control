@@ -13,12 +13,12 @@ const icons = {
 
 const liontv = {
   id: 'liontv',
-  title: 'Lion TV',
+  title: 'menu.liontv',
   type: 'group',
   children: [
     {
       id: 'liontv-demos',
-      title: 'Demos Lion Tv',
+      title: 'menu.demos',
       type: 'item',
       url: '/liontv/demos',
       icon: icons.IconDeviceTv,
@@ -26,7 +26,7 @@ const liontv = {
     },
     {
       id: 'liontv-subscriptions',
-      title: 'Suscripciones',
+      title: 'menu.subscriptions',
       type: 'item',
       url: '/liontv/subscriptions',
       icon: icons.IconReceipt2,
@@ -34,7 +34,7 @@ const liontv = {
     },
     {
       id: 'liontv-invoices',
-      title: 'Facturas',
+      title: 'menu.invoices',
       type: 'item',
       url: '/liontv/invoices',
       icon: icons.IconFileInvoice,
@@ -42,7 +42,7 @@ const liontv = {
     },
     {
       id: 'liontv-customers',
-      title: 'Clientes',
+      title: 'menu.customers',
       type: 'item',
       url: '/liontv/customers',
       icon: icons.IconUsers,
@@ -50,7 +50,7 @@ const liontv = {
     },
     {
       id: 'liontv-crm',
-      title: 'CRM Clientes',
+      title: 'menu.crm',
       type: 'item',
       url: '/liontv/crm',
       icon: icons.IconUserSearch,
@@ -58,7 +58,7 @@ const liontv = {
     },
     {
       id: 'liontv-lines',
-      title: 'Líneas',
+      title: 'menu.lines',
       type: 'item',
       url: '/liontv/lines',
       icon: icons.IconRouter,
@@ -66,7 +66,7 @@ const liontv = {
     },
     {
       id: 'liontv-licenses',
-      title: 'Licencias',
+      title: 'menu.licenses',
       type: 'item',
       url: '/liontv/licenses',
       icon: icons.IconKey,

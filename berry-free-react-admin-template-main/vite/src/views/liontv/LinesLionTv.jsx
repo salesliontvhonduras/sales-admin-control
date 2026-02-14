@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -98,15 +99,16 @@ function normalizeLine(item = {}) {
   };
 }
 
-function StatusChip({ enabled, expired }) {
+function StatusChip({ enabled, expired, t }) {
   const color = enabled ? (expired ? 'warning' : 'success') : 'default';
-  const label = expired ? 'Expirada' : enabled ? 'Activa' : 'Inactiva';
+  const label = expired ? t('lines.status.expired') : enabled ? t('lines.status.active') : t('lines.status.inactive');
   return <Chip size="small" color={color} label={label} />;
 }
 
 export default function LinesLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
+  const { t } = useTranslation();
 
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -195,35 +197,35 @@ export default function LinesLionTv() {
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
       <MainCard
-        title="Líneas"
+        title={t('lines.title')}
         secondary={
           <Stack direction="row" spacing={1}>
             <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => setRefreshKey((v) => v + 1)}>
-              Recargar
+              {t('actions.refresh')}
             </Button>
           </Stack>
         }
       >
         <Grid container spacing={gridSpacing}>
           <Grid item xs={12} sm={4}>
-            <Chip label={`${total} líneas`} color="primary" />
+            <Chip label={t('lines.summary.total', { count: total })} color="primary" />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <Chip label={`Activas: ${summary.enabled}`} color="success" />
+            <Chip label={t('lines.summary.active', { count: summary.enabled })} color="success" />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <Chip label={`Expiradas: ${summary.expired}`} color="warning" />
+            <Chip label={t('lines.summary.expired', { count: summary.expired })} color="warning" />
           </Grid>
         </Grid>
       </MainCard>
 
       <MainCard
-        title="Listado de líneas"
+        title={t('lines.listTitle')}
         secondary={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 480 } }}>
             <TextField
               size="small"
-              placeholder="Buscar (usuario, paquete, dueño, IP)"
+              placeholder={t('lines.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               fullWidth
@@ -237,14 +239,14 @@ export default function LinesLionTv() {
               }}
             />
             <FormControl size="small" sx={{ minWidth: 140, '& .MuiOutlinedInput-root': { minHeight: 40 } }}>
-              <InputLabel>Status</InputLabel>
-              <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)}>
+              <InputLabel>{t('lines.filters.status')}</InputLabel>
+              <Select value={statusFilter} label={t('lines.filters.status')} onChange={(e) => setStatusFilter(e.target.value)}>
                 <MenuItem value="">
-                  <em>Todos</em>
+                  <em>{t('lines.filters.all')}</em>
                 </MenuItem>
-                <MenuItem value="ACTIVE">ACTIVE</MenuItem>
-                <MenuItem value="EXPIRED">EXPIRED</MenuItem>
-                <MenuItem value="INACTIVE">INACTIVE</MenuItem>
+                <MenuItem value="ACTIVE">{t('lines.status.active')}</MenuItem>
+                <MenuItem value="EXPIRED">{t('lines.status.expired')}</MenuItem>
+                <MenuItem value="INACTIVE">{t('lines.status.inactive')}</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -254,16 +256,16 @@ export default function LinesLionTv() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Usuario</TableCell>
-                <TableCell>Estado</TableCell>
-                <TableCell>Paquete</TableCell>
-                <TableCell>Expira</TableCell>
-                <TableCell>Conexiones</TableCell>
-                <TableCell>Creada</TableCell>
-                <TableCell>Owner</TableCell>
-                <TableCell>Último stream</TableCell>
-                <TableCell>IP</TableCell>
-                <TableCell>Acciones</TableCell>
+                <TableCell>{t('lines.headers.user')}</TableCell>
+                <TableCell>{t('lines.headers.status')}</TableCell>
+                <TableCell>{t('lines.headers.package')}</TableCell>
+                <TableCell>{t('lines.headers.expires')}</TableCell>
+                <TableCell>{t('lines.headers.max')}</TableCell>
+                <TableCell>{t('lines.headers.created')}</TableCell>
+                <TableCell>{t('lines.headers.owner')}</TableCell>
+                <TableCell>{t('lines.headers.lastWatch')}</TableCell>
+                <TableCell>{t('lines.headers.lastIp')}</TableCell>
+                <TableCell>{t('lines.headers.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -276,7 +278,7 @@ export default function LinesLionTv() {
                       </Avatar>
                       <Box>
                         <Typography variant="subtitle2">{row.username}</Typography>
-                        <Tooltip title={`Password: ${row.password}`}>
+                        <Tooltip title={`${t('lines.detail.password')}: ${row.password}`}>
                           <Stack direction="row" spacing={0.5} alignItems="center">
                             <KeyIcon fontSize="inherit" color="action" />
                             <Typography variant="caption" color="text.secondary">
@@ -288,7 +290,7 @@ export default function LinesLionTv() {
                     </Stack>
                   </TableCell>
                   <TableCell>
-                    <StatusChip enabled={row.enabled} expired={row.expired} />
+                    <StatusChip enabled={row.enabled} expired={row.expired} t={t} />
                   </TableCell>
                   <TableCell>
                     <Stack spacing={0.25}>
@@ -320,7 +322,7 @@ export default function LinesLionTv() {
                     <IconButton
                       size="small"
                       onClick={() => setDetail({ open: true, row })}
-                      aria-label="Ver detalles de la línea"
+                      aria-label={t('lines.detail.title')}
                     >
                       <InfoOutlinedIcon fontSize="small" />
                     </IconButton>
@@ -330,14 +332,14 @@ export default function LinesLionTv() {
               {!loading && paginatedRows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={10} align="center">
-                    No hay líneas registradas.
+                    {t('lines.table.empty')}
                   </TableCell>
                 </TableRow>
               )}
               {loading && (
                 <TableRow>
                   <TableCell colSpan={10} align="center">
-                    Cargando...
+                    {t('lines.table.loading')}
                   </TableCell>
                 </TableRow>
               )}
@@ -399,7 +401,7 @@ export default function LinesLionTv() {
             </Avatar>
             <Box>
               <Typography variant="h6" sx={{ lineHeight: 1 }}>
-                Detalle de línea
+                {t('lines.detail.title')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {detail.row?.username || '-'}
@@ -437,18 +439,18 @@ export default function LinesLionTv() {
             >
               <Box>
                 <Typography variant="overline" color="text.secondary">
-                  Usuario
+                  {t('lines.detail.user')}
                 </Typography>
                 <Typography variant="h6" sx={{ lineHeight: 1.1 }}>
                   {detail.row?.username || '-'}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Password: {detail.row?.password || '-'}
+                  {t('lines.detail.password')}: {detail.row?.password || '-'}
                 </Typography>
               </Box>
               <Stack direction="row" spacing={1} alignItems="center">
-                <StatusChip enabled={detail.row?.enabled} expired={detail.row?.expired} />
-                {detail.row?.trial ? <Chip size="small" color="info" label="Trial" /> : null}
+                <StatusChip enabled={detail.row?.enabled} expired={detail.row?.expired} t={t} />
+                {detail.row?.trial ? <Chip size="small" color="info" label={t('lines.status.trial')} /> : null}
               </Stack>
             </Box>
 
@@ -461,7 +463,7 @@ export default function LinesLionTv() {
                     <Stack direction="row" spacing={1} alignItems="center">
                       <BoltIcon color="warning" fontSize="small" />
                       <Typography variant="caption" color="text.secondary">
-                        Paquete
+                        {t('lines.detail.package')}
                       </Typography>
                     </Stack>
                     <Typography variant="subtitle2">{detail.row?.packageName || '-'}</Typography>
@@ -469,7 +471,7 @@ export default function LinesLionTv() {
                       <Typography variant="caption" color="text.secondary">
                         ID: {detail.row?.packageId ?? '-'}
                       </Typography>
-                      <Chip size="small" label={`Tipo: ${detail.row?.type || '-'}`} variant="outlined" />
+                      <Chip size="small" label={`${t('lines.detail.type')}: ${detail.row?.type || '-'}`} variant="outlined" />
                     </Stack>
                   </Stack>
                 </Box>
@@ -479,11 +481,11 @@ export default function LinesLionTv() {
                   <Stack direction="row" spacing={1} alignItems="center">
                     <LanIcon color="action" fontSize="small" />
                     <Typography variant="caption" color="text.secondary">
-                      Conexiones
+                      {t('lines.headers.max')}
                     </Typography>
                   </Stack>
                   <Typography variant="subtitle2">{detail.row?.maxConnections ?? '-'}</Typography>
-                  <Chip size="small" label={`Estado: ${detail.row?.enabledLabel || '-'}`} variant="outlined" />
+                  <Chip size="small" label={`${t('lines.headers.status')}: ${detail.row?.enabledLabel || '-'}`} variant="outlined" />
                 </Box>
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -491,7 +493,7 @@ export default function LinesLionTv() {
                   <Stack direction="row" spacing={1} alignItems="center">
                     <AccessTimeIcon color="action" fontSize="small" />
                     <Typography variant="caption" color="text.secondary">
-                      Expira
+                      {t('lines.detail.expires')}
                     </Typography>
                   </Stack>
                   <Typography variant="subtitle2">{formatDate(detail.row?.expDate)}</Typography>
@@ -502,12 +504,12 @@ export default function LinesLionTv() {
                   <Stack direction="row" spacing={1} alignItems="center">
                     <CalendarMonthIcon color="action" fontSize="small" />
                     <Typography variant="caption" color="text.secondary">
-                      Creada
+                      {t('lines.detail.created')}
                     </Typography>
                   </Stack>
                   <Typography variant="subtitle2">{formatDate(detail.row?.createdAt)}</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Owner: {detail.row?.ownerName || '-'}
+                    {t('lines.detail.owner')}: {detail.row?.ownerName || '-'}
                   </Typography>
                 </Box>
               </Grid>
@@ -520,7 +522,7 @@ export default function LinesLionTv() {
               }}
             >
               <Typography variant="caption" color="text.secondary">
-                Último stream
+                {t('lines.detail.lastStreamLabel')}
               </Typography>
               <Typography variant="subtitle2">{detail.row?.lastWatchedName || '-'}</Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems="flex-start">
@@ -548,7 +550,7 @@ export default function LinesLionTv() {
                 }}
               >
                 <Typography variant="caption" color="text.secondary">
-                  Notas
+                  {t('lines.detail.notes')}
                 </Typography>
                 <Typography variant="body2">{detail.row.resellerNotes}</Typography>
               </Box>
@@ -557,7 +559,7 @@ export default function LinesLionTv() {
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button onClick={() => setDetail({ open: false, row: null })} variant="outlined">
-            Cerrar
+            {t('lines.detail.close')}
           </Button>
         </DialogActions>
       </Dialog>

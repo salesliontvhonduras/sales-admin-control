@@ -27,6 +27,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 // hooks
 import useAuth from 'hooks/useAuth';
 import { useSnackbar } from 'notistack';
+import { useTranslation } from 'react-i18next';
 
 // ===============================|| JWT - LOGIN ||=============================== //
 
@@ -34,6 +35,7 @@ export default function AuthLogin() {
   const { login, verifyOtp, resendOtp, pendingTwoFactor } = useAuth();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
 
   const [checked, setChecked] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -77,18 +79,18 @@ export default function AuthLogin() {
       if (twoFactor?.required) {
         setTwoFactorInfo(twoFactor);
         setStep('otp');
-        enqueueSnackbar('Ingresa el código que enviamos para completar el acceso.', { variant: 'info' });
+        enqueueSnackbar(t('messages.codeInfo'), { variant: 'info' });
         return;
       }
 
       if (success) {
-        enqueueSnackbar('Welcome back! 👋', { variant: 'success' });
+        enqueueSnackbar(t('messages.welcome'), { variant: 'success' });
         navigate('/dashboard/default');
       } else {
-        enqueueSnackbar('Invalid credentials', { variant: 'error' });
+        enqueueSnackbar(t('messages.invalidCreds'), { variant: 'error' });
       }
     } catch (err) {
-      enqueueSnackbar('Invalid email or password', { variant: 'error' });
+      enqueueSnackbar(t('messages.invalidCreds'), { variant: 'error' });
       console.error(err);
     } finally {
       setLoading((prev) => ({ ...prev, creds: false }));
@@ -98,16 +100,16 @@ export default function AuthLogin() {
   // Paso 2: OTP
   const handleVerifyOtp = async () => {
     if (!otpCode.trim()) {
-      enqueueSnackbar('Ingresa el código que recibiste.', { variant: 'warning' });
+      enqueueSnackbar(t('messages.enterCode'), { variant: 'warning' });
       return;
     }
     setLoading((prev) => ({ ...prev, otp: true }));
     try {
       await verifyOtp(otpCode.trim());
-      enqueueSnackbar('Acceso verificado ✅', { variant: 'success' });
+      enqueueSnackbar(t('messages.welcome'), { variant: 'success' });
       navigate('/dashboard/default');
     } catch (err) {
-      const msg = err?.response?.data?.message || 'Código inválido, inténtalo nuevamente.';
+      const msg = err?.response?.data?.message || t('messages.invalidCreds');
       enqueueSnackbar(msg, { variant: 'error' });
       console.error(err);
     } finally {
@@ -119,7 +121,7 @@ export default function AuthLogin() {
     setLoading((prev) => ({ ...prev, resend: true }));
     try {
       await resendOtp();
-      enqueueSnackbar('Hemos reenviado el código.', { variant: 'info' });
+      enqueueSnackbar(t('messages.resendOk'), { variant: 'info' });
     } catch (err) {
       const msg = err?.response?.data?.message || 'No pudimos reenviar el código.';
       enqueueSnackbar(msg, { variant: 'error' });
@@ -143,19 +145,19 @@ export default function AuthLogin() {
       {step === 'creds' ? (
         <>
           <CustomFormControl fullWidth>
-            <InputLabel htmlFor="outlined-adornment-email-login">Email Address</InputLabel>
+            <InputLabel htmlFor="outlined-adornment-email-login">{t('auth.email')}</InputLabel>
             <OutlinedInput
               id="outlined-adornment-email-login"
               type="email"
               value={values.email}
               name="email"
               onChange={handleChange}
-              label="Email Address"
+              label={t('auth.email')}
             />
           </CustomFormControl>
 
           <CustomFormControl fullWidth>
-            <InputLabel htmlFor="outlined-adornment-password-login">Password</InputLabel>
+            <InputLabel htmlFor="outlined-adornment-password-login">{t('auth.password')}</InputLabel>
             <OutlinedInput
               id="outlined-adornment-password-login"
               type={showPassword ? 'text' : 'password'}
@@ -175,62 +177,62 @@ export default function AuthLogin() {
                   </IconButton>
                 </InputAdornment>
               }
-              label="Password"
+              label={t('auth.password')}
             />
           </CustomFormControl>
 
           <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
             <Grid>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={checked}
-                    onChange={(event) => setChecked(event.target.checked)}
-                    name="checked"
-                    color="primary"
-                  />
-                }
-                label="Keep me logged in"
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={checked}
+                onChange={(event) => setChecked(event.target.checked)}
+                name="checked"
+                color="primary"
               />
-            </Grid>
-            <Grid>
-              <Typography
-                variant="subtitle1"
-                component={Link}
-                to="/pages/forgot-password"
-                sx={{ textDecoration: 'none', color: 'secondary.main' }}
-              >
-                Forgot Password?
-              </Typography>
-            </Grid>
-          </Grid>
+            }
+            label={t('auth.keepLogged')}
+          />
+        </Grid>
+        <Grid>
+          <Typography
+            variant="subtitle1"
+            component={Link}
+            to="/pages/forgot-password"
+            sx={{ textDecoration: 'none', color: 'secondary.main' }}
+          >
+            {t('auth.forgot')}
+          </Typography>
+        </Grid>
+      </Grid>
 
-          <Box sx={{ mt: 2 }}>
-            <AnimateButton>
-              <Button
-                color="secondary"
-                fullWidth
-                size="large"
-                type="submit"
-                variant="contained"
-                disabled={loading.creds}
-                startIcon={loading.creds ? <CircularProgress color="inherit" size={18} /> : null}
-              >
-                {loading.creds ? 'Signing in...' : 'Sign In'}
-              </Button>
-            </AnimateButton>
-          </Box>
+      <Box sx={{ mt: 2 }}>
+        <AnimateButton>
+          <Button
+            color="secondary"
+            fullWidth
+            size="large"
+            type="submit"
+            variant="contained"
+            disabled={loading.creds}
+            startIcon={loading.creds ? <CircularProgress color="inherit" size={18} /> : null}
+          >
+            {loading.creds ? t('auth.sending') : t('auth.signIn')}
+          </Button>
+        </AnimateButton>
+      </Box>
         </>
       ) : (
         <Stack spacing={2}>
           <Typography variant="subtitle1" sx={{ color: 'secondary.main' }}>
-            Verificación en dos pasos
+            {t('auth.otpTitle')}
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Ingresa el código enviado a {destinationLabel || 'tu dispositivo registrado'}.
+            {t('auth.otpInstruction', { dest: destinationLabel || 'tu dispositivo' })}
           </Typography>
           <TextField
-            label="Código de verificación"
+            label={t('auth.codeLabel', { defaultValue: 'Código' })}
             value={otpCode}
             onChange={(e) => setOtpCode(e.target.value.replace(/\\s+/g, ''))}
             inputProps={{ inputMode: 'numeric', maxLength: 8 }}
@@ -244,7 +246,7 @@ export default function AuthLogin() {
               disabled={loading.resend}
               startIcon={loading.resend ? <CircularProgress size={16} /> : null}
             >
-              {loading.resend ? 'Enviando...' : 'Reenviar código'}
+              {loading.resend ? t('auth.sendingCode') : t('auth.resend')}
             </Button>
             <Button
               variant="contained"
@@ -253,11 +255,11 @@ export default function AuthLogin() {
               disabled={loading.otp}
               startIcon={loading.otp ? <CircularProgress color="inherit" size={16} /> : null}
             >
-              {loading.otp ? 'Verificando...' : 'Confirmar'}
+              {loading.otp ? t('auth.verifyingCode') : t('auth.confirm')}
             </Button>
           </Stack>
           <Button size="small" onClick={() => setStep('creds')} sx={{ alignSelf: 'flex-start' }}>
-            Volver a credenciales
+            {t('auth.backToCreds')}
           </Button>
         </Stack>
       )}

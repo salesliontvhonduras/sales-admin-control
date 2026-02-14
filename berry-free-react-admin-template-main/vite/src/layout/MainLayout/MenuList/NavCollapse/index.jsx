@@ -15,6 +15,7 @@ import Popper from '@mui/material/Popper';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import { useTranslation } from 'react-i18next';
 
 // project imports
 import NavItem from '../NavItem';
@@ -31,6 +32,7 @@ import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 export default function NavCollapse({ menu, level, parentId }) {
   const theme = useTheme();
   const ref = useRef(null);
+  const { t } = useTranslation();
 
   const {
     state: { borderRadius }
@@ -177,7 +179,7 @@ export default function NavCollapse({ menu, level, parentId }) {
           </ListItemIcon>
         )}
         {(drawerOpen || (!drawerOpen && level !== 1)) && (
-          <Tooltip title={menu.title} disableHoverListener={!hoverStatus}>
+          <Tooltip title={t(menu.title)} disableHoverListener={!hoverStatus}>
             <ListItemText
               primary={
                 <Typography
@@ -191,7 +193,7 @@ export default function NavCollapse({ menu, level, parentId }) {
                     width: 120
                   }}
                 >
-                  {menu.title}
+                  {t(menu.title)}
                 </Typography>
               }
               secondary={
@@ -207,7 +209,7 @@ export default function NavCollapse({ menu, level, parentId }) {
                       lineHeight: 1.66
                     }}
                   >
-                    {menu.caption}
+                    {t(menu.caption)}
                   </Typography>
                 )
               }
