@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useMemo, useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 // material-ui
 import Button from '@mui/material/Button';
@@ -34,6 +34,7 @@ import { useTranslation } from 'react-i18next';
 export default function AuthLogin() {
   const { login, verifyOtp, resendOtp, pendingTwoFactor } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation();
 
@@ -66,6 +67,14 @@ export default function AuthLogin() {
       [name]: value
     }));
   };
+
+  // Prefill email if coming from reset password flow
+  useEffect(() => {
+    const navEmail = location.state?.email;
+    if (navEmail && !values.email) {
+      setValues((prev) => ({ ...prev, email: navEmail }));
+    }
+  }, [location.state, values.email]);
 
   // Paso 1: credenciales
   const handleSubmitCreds = async () => {

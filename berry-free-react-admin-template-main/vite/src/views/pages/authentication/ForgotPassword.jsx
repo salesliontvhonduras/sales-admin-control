@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 export default function ForgotPassword() {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [step, setStep] = useState('email'); // email | reset
   const [email, setEmail] = useState('');
   const [token, setToken] = useState('');
@@ -54,6 +55,7 @@ export default function ForgotPassword() {
       setStep('email');
       setToken('');
       setPassword('');
+      navigate('/pages/login', { replace: true, state: { email } });
     } catch (err) {
       const msg = err?.response?.data?.message || 'No se pudo actualizar la contraseña.';
       enqueueSnackbar(msg, { variant: 'error' });
