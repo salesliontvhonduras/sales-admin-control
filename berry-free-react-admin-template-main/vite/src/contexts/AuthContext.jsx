@@ -68,7 +68,7 @@ export default function AuthProvider({ children }) {
   // LOGIN NORMAL (luego lo haremos)
   // ======================
   const login = async (email, password, remember = true) => {
-    const res = await authApi.post('/auth/v1/session', { email, password });
+    const res = await authApi.post('/auth/v1/session', { email, password, remember });
 
     const payload = res.data?.data ?? {};
     const twoFactor = parseTwoFactor(payload);

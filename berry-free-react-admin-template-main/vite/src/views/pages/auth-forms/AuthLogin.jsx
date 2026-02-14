@@ -197,7 +197,7 @@ export default function AuthLogin() {
               <Typography
                 variant="subtitle1"
                 component={Link}
-                to="#!"
+                to="/pages/forgot-password"
                 sx={{ textDecoration: 'none', color: 'secondary.main' }}
               >
                 Forgot Password?

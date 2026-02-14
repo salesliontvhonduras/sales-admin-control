@@ -3,9 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 // material-ui
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -39,7 +37,6 @@ export default function AuthRegister() {
   const { register } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [checked, setChecked] = useState(true);
 
   const [strength, setStrength] = useState(0);
   const [level, setLevel] = useState();
@@ -72,12 +69,7 @@ export default function AuthRegister() {
   }, []);
 
   const handleChange = (e) => {
-    const { name, value, type, checked: checkedValue } = e.target;
-
-    if (name === 'checked') {
-      setChecked(checkedValue);
-      return;
-    }
+    const { name, value } = e.target;
 
     setForm((prev) => ({
       ...prev,
@@ -91,11 +83,6 @@ export default function AuthRegister() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!checked) {
-      enqueueSnackbar('You must agree with Terms & Conditions.', { variant: 'error' });
-      return;
-    }
 
     const name = `${form.firstName} ${form.lastName}`.trim();
 
@@ -218,25 +205,6 @@ export default function AuthRegister() {
           </Box>
         </FormControl>
       )}
-
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={checked}
-            onChange={handleChange}
-            name="checked"
-            color="primary"
-          />
-        }
-        label={
-          <Typography variant="subtitle1">
-            Agree with &nbsp;
-            <Typography variant="subtitle1" component={Link} to="#">
-              Terms & Condition.
-            </Typography>
-          </Typography>
-        }
-      />
 
       <Box sx={{ mt: 2 }}>
         <AnimateButton>
