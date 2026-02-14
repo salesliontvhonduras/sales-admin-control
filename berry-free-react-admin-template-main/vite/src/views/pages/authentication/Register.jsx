@@ -5,7 +5,6 @@ import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import LanguageSwitcher from 'ui-component/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 
 // project imports
@@ -25,7 +24,6 @@ export default function Register() {
       <Stack sx={{ justifyContent: 'flex-end', minHeight: '100vh' }}>
         <Stack sx={{ justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 68px)' }}>
           <Box sx={{ m: { xs: 1, sm: 3 }, mb: 0, position: 'relative' }}>
-            <LanguageSwitcher overlay />
             <AuthCardWrapper>
               <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
                 <Box sx={{ mb: 3 }}>

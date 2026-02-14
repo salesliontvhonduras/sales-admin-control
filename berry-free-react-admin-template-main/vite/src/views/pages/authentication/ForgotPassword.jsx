@@ -13,7 +13,6 @@ import AuthCardWrapper from './AuthCardWrapper';
 import Logo from 'ui-component/Logo';
 import AuthFooter from 'ui-component/cards/AuthFooter';
 import { authApi } from 'utils/api';
-import LanguageSwitcher from 'ui-component/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 
 export default function ForgotPassword() {
@@ -68,7 +67,6 @@ export default function ForgotPassword() {
       <Stack sx={{ justifyContent: 'flex-end', minHeight: '100vh' }}>
         <Stack sx={{ justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 68px)' }}>
           <Box sx={{ m: { xs: 1, sm: 3 }, mb: 0, position: 'relative' }}>
-            <LanguageSwitcher overlay />
             <AuthCardWrapper>
               <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
                 <Box sx={{ mb: 3 }}>
