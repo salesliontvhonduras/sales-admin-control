@@ -166,7 +166,18 @@ function RowActions({ row, onEdit, onDelete }) {
 
   return (
     <>
-      <IconButton size="small" onClick={(e) => setAnchorEl(e.currentTarget)}>
+      <IconButton
+        size="small"
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        sx={(theme) => ({
+          bgcolor: theme.palette.primary.lighter,
+          color: theme.palette.primary.main,
+          '&:hover': {
+            bgcolor: theme.palette.primary.light
+          },
+          boxShadow: '0 6px 14px rgba(0,0,0,0.12)'
+        })}
+      >
         <MoreVertIcon fontSize="small" />
       </IconButton>
       <Menu
@@ -182,7 +193,7 @@ function RowActions({ row, onEdit, onDelete }) {
             onEdit?.(row);
           }}
         >
-          <EditOutlinedIcon fontSize="small" style={{ marginRight: 8 }} />
+          <EditOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#1e88e5' }} />
           {t('actions.edit')}
         </MenuItem>
         <MenuItem
@@ -191,7 +202,7 @@ function RowActions({ row, onEdit, onDelete }) {
             onDelete?.(row);
           }}
         >
-          <DeleteOutlineIcon fontSize="small" style={{ marginRight: 8 }} />
+          <DeleteOutlineIcon fontSize="small" style={{ marginRight: 8, color: '#e53935' }} />
           {t('actions.delete')}
         </MenuItem>
       </Menu>
@@ -358,6 +369,14 @@ export default function CustomersLionTv() {
     const start = page * rowsPerPage;
     return filteredRows.slice(start, start + rowsPerPage);
   }, [filteredRows, page, rowsPerPage]);
+
+  const customerStatusLabel = useCallback(
+    (val) => {
+      if (!val) return t('invoices.filters.all');
+      return val === 'ACTIVE' ? t('customers.form.states.active') : t('customers.form.states.inactive');
+    },
+    [t]
+  );
 
   useEffect(() => {
     const maxPage = Math.max(0, Math.ceil(filteredRows.length / rowsPerPage) - 1);
@@ -664,10 +683,10 @@ export default function CustomersLionTv() {
                 value={statusFilter}
                 label={t('customers.headers.status')}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                renderValue={(val) => (val ? val : t('invoices.filters.all'))}
+                renderValue={(val) => customerStatusLabel(val)}
                 startAdornment={
                   <InputAdornment position="start">
-                    <PeopleAltIcon fontSize="small" />
+                    <PeopleAltIcon fontSize="small" color="action" />
                   </InputAdornment>
                 }
               >
@@ -676,7 +695,7 @@ export default function CustomersLionTv() {
                 </MenuItem>
                 {[...new Set(rows.map((r) => r.status).filter(Boolean))].map((s) => (
                   <MenuItem key={s} value={s}>
-                    {s}
+                    {customerStatusLabel(s)}
                   </MenuItem>
                 ))}
               </Select>
@@ -689,7 +708,7 @@ export default function CustomersLionTv() {
           sx={{
             borderRadius: 3,
             overflow: 'hidden',
-            boxShadow: '0 12px 32px rgba(0,0,0,0.10)',
+            boxShadow: '0 12px 24px rgba(0,0,0,0.06)',
             border: '1px solid',
             borderColor: 'divider'
           }}
@@ -698,7 +717,8 @@ export default function CustomersLionTv() {
             <TableHead>
               <TableRow
                 sx={(theme) => ({
-                  bgcolor: theme.palette.mode === 'light' ? theme.palette.primary.lighter : theme.palette.background.default
+                  bgcolor: theme.palette.mode === 'light' ? '#f7f9fc' : theme.palette.background.default,
+                  borderBottom: `1px solid ${theme.palette.divider}`
                 })}
               >
                 <TableCell>{t('customers.headers.customer')}</TableCell>

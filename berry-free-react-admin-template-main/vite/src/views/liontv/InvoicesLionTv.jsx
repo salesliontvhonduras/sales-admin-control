@@ -10,6 +10,7 @@ import Chip from '@mui/material/Chip';
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
+import Card from '@mui/material/Card';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -30,6 +31,7 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import FormHelperText from '@mui/material/FormHelperText';
 import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import { useTheme, useMediaQuery } from '@mui/material';
@@ -43,6 +45,20 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import EventRepeatIcon from '@mui/icons-material/EventRepeat';
+import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
+import CreditScoreIcon from '@mui/icons-material/CreditScore';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
+import LanIcon from '@mui/icons-material/Lan';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import LinkIcon from '@mui/icons-material/Link';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import AutorenewIcon from '@mui/icons-material/Autorenew';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
@@ -52,11 +68,41 @@ const statusColors = {
   PAID: 'success',
   PENDING: 'warning'
 };
+const statusIcons = {
+  PAID: PaidOutlinedIcon,
+  PENDING: PendingActionsIcon
+};
+const paymentMethodIcons = {
+  'Bank Transfer': AccountBalanceIcon,
+  Paypal: PaidOutlinedIcon,
+  Ecommerce: ShoppingCartIcon,
+  'Link pago': LinkIcon,
+  'Debito Automatico': AutorenewIcon
+};
+const paymentMethodColors = {
+  'Bank Transfer': 'info.main',
+  Paypal: 'success.main',
+  Ecommerce: 'secondary.main',
+  'Link pago': 'info.main',
+  'Debito Automatico': 'warning.main'
+};
 
 const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
   '& .MuiInputLabel-root': { fontWeight: 500 }
 };
+
+const glassCard = (theme) => ({
+  p: 2,
+  borderRadius: 2.5,
+  border: '1px solid',
+  borderColor: 'divider',
+  boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
+  background:
+    theme.palette.mode === 'light'
+      ? `linear-gradient(135deg, ${theme.palette.primary.light}24 0%, ${theme.palette.secondary.main}12 45%, #ffffff 100%)`
+      : theme.palette.background.default
+});
 
 const sectionSx = {
   p: 2,
@@ -65,15 +111,6 @@ const sectionSx = {
   borderColor: 'divider',
   bgcolor: 'background.paper'
 };
-
-const PAYMENT_METHODS = [
-  { value: 'Bank Transfer', label: 'Bank Transfer' },
-  { value: 'Paypal', label: 'Paypal' },
-  { value: 'Ecommerce', label: 'Ecommerce' },
-  { value: 'Link pago', label: 'Link pago' },
-  { value: 'Debito Automatico', label: 'Débito Automático' }
-];
-const STATUS_OPTIONS = ['Paid', 'Pending'];
 
 function formatDate(value) {
   if (!value) return '-';
@@ -96,17 +133,31 @@ function formatDateTimePayload(value) {
   return `${base}T00:00:00`;
 }
 
-function StatusChip({ status }) {
+function StatusChip({ status, label }) {
   const color = statusColors[status] || 'default';
-  return <Chip size="small" color={color} label={status || '-'} />;
+  const Icon = statusIcons[status];
+  return <Chip size="small" color={color} icon={Icon ? <Icon fontSize="small" /> : undefined} label={label || status || '-'} />;
 }
 
-function SectionCard({ title, helper, children }) {
+function FormSection({ title, helper, children }) {
   return (
-    <Box sx={sectionSx}>
+    <Box
+      sx={(theme) => ({
+        ...sectionSx,
+        position: 'relative',
+        overflow: 'hidden',
+        borderLeft: `4px solid ${theme.palette.primary.main}44`,
+        background:
+          theme.palette.mode === 'light'
+            ? `linear-gradient(135deg, ${theme.palette.primary.light}08 0%, ${theme.palette.secondary.light}08 100%)`
+            : theme.palette.background.paper
+      })}
+    >
       <Stack spacing={1.5}>
         <Box>
-          <Typography variant="subtitle2">{title}</Typography>
+          <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {title}
+          </Typography>
           {helper ? (
             <Typography variant="caption" color="text.secondary">
               {helper}
@@ -116,6 +167,57 @@ function SectionCard({ title, helper, children }) {
         {children}
       </Stack>
     </Box>
+  );
+}
+
+function RowActions({ row, onEdit, onDelete }) {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  const { t } = useTranslation();
+
+  return (
+    <>
+      <IconButton
+        size="small"
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        sx={(theme) => ({
+          bgcolor: theme.palette.primary.lighter,
+          color: theme.palette.primary.main,
+          '&:hover': {
+            bgcolor: theme.palette.primary.light
+          },
+          boxShadow: '0 6px 14px rgba(0,0,0,0.12)'
+        })}
+      >
+        <MoreVertIcon fontSize="small" />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            onEdit?.(row);
+          }}
+        >
+          <EditOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#1e88e5' }} />
+          {t('actions.edit')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            onDelete?.(row);
+          }}
+        >
+          <DeleteOutlineIcon fontSize="small" style={{ marginRight: 8, color: '#e53935' }} />
+          {t('actions.delete')}
+        </MenuItem>
+      </Menu>
+    </>
   );
 }
 
@@ -145,7 +247,7 @@ const defaultForm = {
   paymentDate: '',
   amountPaid: '',
   amountDiscount: '',
-  status: 'Pending',
+  status: 'PENDING',
   packageId: '',
   customerId: '',
   paymentMethod: '',
@@ -164,7 +266,6 @@ export default function InvoicesLionTv() {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -182,6 +283,44 @@ export default function InvoicesLionTv() {
   const [banksLoading, setBanksLoading] = useState(false);
   const [services, setServices] = useState([]);
   const [servicesLoading, setServicesLoading] = useState(false);
+
+  const statusOptions = useMemo(() => ['PAID', 'PENDING'], []);
+
+  const statusLabel = useCallback(
+    (value) => (value === 'PAID' ? t('invoices.form.states.paid') : t('invoices.form.states.pending')),
+    [t]
+  );
+
+  const paymentMethodLabel = useCallback(
+    (value) => {
+      switch (value) {
+        case 'Bank Transfer':
+          return t('invoices.form.paymentMethods.bank');
+        case 'Paypal':
+          return t('invoices.form.paymentMethods.paypal');
+        case 'Ecommerce':
+          return t('invoices.form.paymentMethods.ecommerce');
+        case 'Link pago':
+          return t('invoices.form.paymentMethods.link');
+        case 'Debito Automatico':
+          return t('invoices.form.paymentMethods.debit');
+        default:
+          return value || t('invoices.form.placeholderSelect');
+      }
+    },
+    [t]
+  );
+
+  const paymentMethodOptions = useMemo(
+    () => [
+      { value: 'Bank Transfer', label: t('invoices.form.paymentMethods.bank') },
+      { value: 'Paypal', label: t('invoices.form.paymentMethods.paypal') },
+      { value: 'Ecommerce', label: t('invoices.form.paymentMethods.ecommerce') },
+      { value: 'Link pago', label: t('invoices.form.paymentMethods.link') },
+      { value: 'Debito Automatico', label: t('invoices.form.paymentMethods.debit') }
+    ],
+    [t]
+  );
 
   const customerNameMap = useMemo(() => {
     const map = {};
@@ -215,17 +354,16 @@ export default function InvoicesLionTv() {
         customerName: inv.customerName || customerNameMap[inv.customerId] || inv.customer_name || ''
       }));
       setRows(normalized);
-      setTotal(normalized.length);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudieron cargar las facturas.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('invoices.table.loading'), {
           variant: 'error'
         });
       }
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar]);
+  }, [accessToken, enqueueSnackbar, t]);
 
   const loadCustomers = useCallback(async () => {
     if (!accessToken) return;
@@ -247,12 +385,12 @@ export default function InvoicesLionTv() {
       setCustomers(sorted);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar('No se pudieron cargar los clientes.', { variant: 'warning' });
+        enqueueSnackbar(t('invoices.table.loading'), { variant: 'warning' });
       }
     } finally {
       setCustomersLoading(false);
     }
-  }, [accessToken, enqueueSnackbar]);
+  }, [accessToken, enqueueSnackbar, t]);
 
   const loadPackages = useCallback(async () => {
     setPackagesLoading(true);
@@ -266,11 +404,11 @@ export default function InvoicesLionTv() {
       );
       setPackages(filtered);
     } catch (err) {
-      enqueueSnackbar('No se pudieron cargar los paquetes.', { variant: 'warning' });
+      enqueueSnackbar(t('invoices.table.loading'), { variant: 'warning' });
     } finally {
       setPackagesLoading(false);
     }
-  }, [enqueueSnackbar]);
+  }, [enqueueSnackbar, t]);
 
   const loadBanks = useCallback(async () => {
     setBanksLoading(true);
@@ -279,11 +417,11 @@ export default function InvoicesLionTv() {
       const list = response?.data?.data ?? response?.data ?? [];
       setBanks(Array.isArray(list) ? list : []);
     } catch (err) {
-      enqueueSnackbar('No se pudieron cargar los bancos.', { variant: 'warning' });
+      enqueueSnackbar(t('invoices.table.loading'), { variant: 'warning' });
     } finally {
       setBanksLoading(false);
     }
-  }, [enqueueSnackbar]);
+  }, [enqueueSnackbar, t]);
 
   const loadServices = useCallback(async () => {
     setServicesLoading(true);
@@ -292,11 +430,11 @@ export default function InvoicesLionTv() {
       const list = response?.data?.data ?? response?.data ?? [];
       setServices(Array.isArray(list) ? list : []);
     } catch (err) {
-      enqueueSnackbar('No se pudieron cargar los servicios.', { variant: 'warning' });
+      enqueueSnackbar(t('invoices.table.loading'), { variant: 'warning' });
     } finally {
       setServicesLoading(false);
     }
-  }, [enqueueSnackbar]);
+  }, [enqueueSnackbar, t]);
 
   useEffect(() => {
     loadInvoices();
@@ -347,6 +485,15 @@ export default function InvoicesLionTv() {
     }
   }, [filteredRows.length, page, rowsPerPage]);
 
+  const summary = useMemo(
+    () => ({
+      total: rows.length,
+      paid: rows.filter((r) => r.status === 'PAID').length,
+      pending: rows.filter((r) => r.status === 'PENDING').length
+    }),
+    [rows]
+  );
+
   const resetForm = () => setForm(defaultForm);
 
   const handleFormChange = (field) => (event) => {
@@ -361,7 +508,7 @@ export default function InvoicesLionTv() {
       paymentDate: formatDateInput(row.paymentDate),
       amountPaid: row.amountPaid ?? '',
       amountDiscount: row.amountDiscount ?? '',
-      status: row.status ? row.status.charAt(0) + row.status.slice(1).toLowerCase() : 'Pending',
+      status: row.status ? row.status.toUpperCase() : 'PENDING',
       packageId: row.packageId ?? '',
       customerId: row.customerId ?? '',
       paymentMethod: row.paymentMethod ?? '',
@@ -377,12 +524,12 @@ export default function InvoicesLionTv() {
 
   const handleSave = async () => {
     if (!form.serviceId || !form.paymentDate || !form.packageId || !form.customerId || !form.paymentMethod) {
-      enqueueSnackbar('Completa los campos requeridos.', { variant: 'warning' });
+      enqueueSnackbar(t('invoices.messages.required'), { variant: 'warning' });
       return;
     }
 
     if (form.paymentMethod === 'Bank Transfer' && !form.bankId) {
-      enqueueSnackbar('Selecciona un banco para pagos Bank Transfer.', { variant: 'warning' });
+      enqueueSnackbar(t('invoices.messages.needBank'), { variant: 'warning' });
       return;
     }
 
@@ -406,20 +553,20 @@ export default function InvoicesLionTv() {
           headers: { Authorization: `Bearer ${accessToken}` },
           skipAuthRedirect: true
         });
-        enqueueSnackbar('Factura actualizada.', { variant: 'success' });
+        enqueueSnackbar(t('invoices.messages.updated'), { variant: 'success' });
       } else {
         await lionTvApi.post('/invoices/v1', payload, {
           headers: { Authorization: `Bearer ${accessToken}` },
           skipAuthRedirect: true
         });
-        enqueueSnackbar('Factura creada.', { variant: 'success' });
+        enqueueSnackbar(t('invoices.messages.created'), { variant: 'success' });
       }
       setOpenModal(false);
       resetForm();
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo guardar la factura.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('invoices.messages.required'), {
           variant: 'error'
         });
       }
@@ -440,12 +587,12 @@ export default function InvoicesLionTv() {
         headers: { Authorization: `Bearer ${accessToken}` },
         skipAuthRedirect: true
       });
-      enqueueSnackbar('Factura eliminada.', { variant: 'success' });
+      enqueueSnackbar(t('invoices.messages.deleted'), { variant: 'success' });
       setOpenDelete({ open: false, row: null });
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo eliminar la factura.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('invoices.messages.deleted'), {
           variant: 'error'
         });
       }
@@ -459,64 +606,170 @@ export default function InvoicesLionTv() {
       <MainCard
         title={t('invoices.title')}
         secondary={
-          <Stack direction="row" spacing={1}>
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => setRefreshKey((v) => v + 1)}>
+          <Stack direction="row" spacing={1.25}>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={() => setRefreshKey((v) => v + 1)}
+              sx={{ borderRadius: 2, textTransform: 'none', px: 2 }}
+            >
               {t('actions.refresh')}
             </Button>
-            <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={() => setOpenModal(true)}>
+            <Button
+              variant="contained"
+              startIcon={<AddCircleOutlineIcon />}
+              onClick={() => setOpenModal(true)}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                px: 2.5,
+                boxShadow: '0 10px 24px rgba(0,0,0,0.12)'
+              }}
+            >
               {t('actions.newInvoice')}
             </Button>
           </Stack>
         }
       >
         <Grid container spacing={gridSpacing}>
-          <Grid item xs={12} sm={4}>
-            <Chip label={`${total} ${t('invoices.title').toLowerCase()}`} color="primary" />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Chip label={`${t('invoices.filters.status')}: PAID ${rows.filter((r) => r.status === 'PAID').length}`} color="success" />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Chip label={`${t('invoices.filters.status')}: PENDING ${rows.filter((r) => r.status === 'PENDING').length}`} color="warning" />
-          </Grid>
+          {[
+            { label: t('invoices.summary.total', { count: summary.total }), icon: ReceiptLongIcon, color: 'primary.main' },
+            { label: t('invoices.summary.paid', { count: summary.paid }), icon: PaidOutlinedIcon, color: 'success.main' },
+            { label: t('invoices.summary.pending', { count: summary.pending }), icon: PendingActionsIcon, color: 'warning.main' }
+          ].map((item, idx) => (
+            <Grid item xs={12} sm={4} md={4} key={idx}>
+              <Card
+                sx={(theme) => ({
+                  ...glassCard(theme),
+                  py: 1.5,
+                  px: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  background:
+                    theme.palette.mode === 'light'
+                      ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, #ffffff 100%)`
+                      : theme.palette.background.paper
+                })}
+              >
+                <Avatar
+                  sx={(theme) => ({
+                    width: 40,
+                    height: 40,
+                    bgcolor: theme.palette.mode === 'light' ? `${item.color}` : theme.palette.primary.dark,
+                    color: theme.palette.getContrastText(theme.palette.primary.main),
+                    fontWeight: 700,
+                    boxShadow: 3,
+                    border: '2px solid',
+                    borderColor: 'background.paper'
+                  })}
+                >
+                  <item.icon fontSize="small" />
+                </Avatar>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                  {item.label}
+                </Typography>
+              </Card>
+            </Grid>
+          ))}
         </Grid>
       </MainCard>
 
       <MainCard
-        title={t('invoices.title')}
+        title={t('invoices.search')}
         secondary={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 480 } }}>
+          <Paper
+            elevation={0}
+            sx={(theme) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              width: { xs: '100%', sm: 520 },
+              p: 1,
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              background:
+                theme.palette.mode === 'light'
+                  ? `linear-gradient(120deg, ${theme.palette.primary.light}12 0%, ${theme.palette.secondary.light}12 100%)`
+                  : theme.palette.background.paper,
+              boxShadow: '0 8px 18px rgba(0,0,0,0.05)'
+            })}
+          >
             <TextField
               size="small"
               placeholder={t('invoices.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               fullWidth
+              variant="outlined"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  backgroundColor: 'background.paper'
+                }
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon />
+                    <SearchIcon color="action" />
                   </InputAdornment>
                 )
               }}
             />
-            <FormControl size="small" sx={{ minWidth: 140 }}>
+            <FormControl
+              size="small"
+              sx={{
+                minWidth: 160,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  backgroundColor: 'background.paper'
+                }
+              }}
+            >
               <InputLabel>{t('invoices.filters.status')}</InputLabel>
-              <Select value={statusFilter} label={t('invoices.filters.status')} onChange={(e) => setStatusFilter(e.target.value)}>
+              <Select
+                value={statusFilter}
+                label={t('invoices.filters.status')}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                renderValue={(val) => (val ? statusLabel(val) : t('invoices.filters.all'))}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <PaidOutlinedIcon fontSize="small" />
+                  </InputAdornment>
+                }
+              >
                 <MenuItem value="">
                   <em>{t('invoices.filters.all')}</em>
                 </MenuItem>
-                <MenuItem value="PAID">PAID</MenuItem>
-                <MenuItem value="PENDING">PENDING</MenuItem>
+                {statusOptions.map((s) => (
+                  <MenuItem key={s} value={s}>
+                    {statusLabel(s)}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
-          </Box>
+          </Paper>
         }
       >
-        <TableContainer component={Paper}>
+        <TableContainer
+          component={Paper}
+          sx={{
+            borderRadius: 3,
+            overflow: 'hidden',
+            boxShadow: '0 12px 24px rgba(0,0,0,0.06)',
+            border: '1px solid',
+            borderColor: 'divider'
+          }}
+        >
           <Table size="small">
             <TableHead>
-              <TableRow>
+              <TableRow
+                sx={(theme) => ({
+                  bgcolor: theme.palette.mode === 'light' ? '#f7f9fc' : theme.palette.background.default,
+                  borderBottom: `1px solid ${theme.palette.divider}`
+                })}
+              >
                 <TableCell>{t('invoices.headers.id')}</TableCell>
                 <TableCell>{t('invoices.headers.customer')}</TableCell>
                 <TableCell>{t('invoices.headers.service')}</TableCell>
@@ -532,42 +785,139 @@ export default function InvoicesLionTv() {
             </TableHead>
             <TableBody>
               {paginatedRows.map((row) => (
-                <TableRow key={row.invoiceId}>
-                  <TableCell>{row.invoiceId}</TableCell>
-                  <TableCell>{row.customerName || row.customer_name}</TableCell>
-                  <TableCell>{row.serviceId}</TableCell>
-                  <TableCell>{row.packageId}</TableCell>
-                  <TableCell>{row.bankId || '-'}</TableCell>
-                  <TableCell>{row.paymentMethod || '-'}</TableCell>
+                <TableRow
+                  key={row.invoiceId}
+                  hover
+                  sx={{
+                    '&:nth-of-type(odd)': { bgcolor: 'background.paper' },
+                    transition: 'background 0.2s ease'
+                  }}
+                >
                   <TableCell>
-                    <StatusChip status={row.status} />
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <Avatar
+                        sx={{
+                          width: 34,
+                          height: 34,
+                          bgcolor: (theme) => theme.palette.secondary.light,
+                          color: (theme) => theme.palette.secondary.dark,
+                          fontWeight: 700,
+                          boxShadow: 2,
+                          border: '1px solid',
+                          borderColor: 'divider'
+                        }}
+                      >
+                        <ReceiptLongIcon fontSize="small" />
+                      </Avatar>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                        #{row.invoiceId}
+                      </Typography>
+                    </Stack>
                   </TableCell>
-                  <TableCell>{Number(row.amountPaid || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
-                  <TableCell>{Number(row.amountDiscount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
+                <TableCell>
+                  <Typography variant="subtitle2">{row.customerName || row.customer_name || '-'}</Typography>
+                </TableCell>
+                  <TableCell>{row.serviceId || '-'}</TableCell>
+                  <TableCell>{row.packageId || '-'}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      icon={<AccountBalanceIcon fontSize="small" color="info" />}
+                      label={row.bankId || '-'}
+                      sx={{
+                        fontWeight: 600,
+                        borderColor: 'divider',
+                        bgcolor: 'background.paper',
+                        color: 'text.primary'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      icon={
+                        (() => {
+                          const IconComp = paymentMethodIcons[row.paymentMethod] || CreditScoreIcon;
+                          return <IconComp fontSize="small" color="info" />;
+                        })()
+                      }
+                      label={paymentMethodLabel(row.paymentMethod)}
+                      sx={{
+                        fontWeight: 600,
+                        borderColor: 'divider',
+                        bgcolor: 'background.paper',
+                        color: 'text.primary'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <StatusChip status={row.status} label={statusLabel(row.status)} />
+                  </TableCell>
+                  <TableCell>
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    icon={<MonetizationOnIcon fontSize="small" color="success" />}
+                    label={`L ${Number(row.amountPaid || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                    sx={{
+                      fontWeight: 600,
+                      borderColor: 'divider',
+                      bgcolor: 'background.paper',
+                      color: 'text.primary'
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    icon={<MonetizationOnIcon fontSize="small" color="warning" />}
+                    label={`L ${Number(row.amountDiscount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                    sx={{
+                      fontWeight: 600,
+                      borderColor: 'divider',
+                      bgcolor: 'background.paper',
+                      color: 'text.primary'
+                      }}
+                    />
+                  </TableCell>
                   <TableCell>{formatDate(row.paymentDate)}</TableCell>
                   <TableCell align="right">
-                    <Stack direction="row" spacing={1}>
-                      <IconButton size="small" onClick={() => handleEdit(row)}>
-                        <EditOutlinedIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDelete(row)}>
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
-                    </Stack>
+                    <RowActions row={row} onEdit={handleEdit} onDelete={handleDelete} />
                   </TableCell>
                 </TableRow>
               ))}
               {!loading && filteredRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={11} align="center">
-                    No hay facturas registradas.
+                  <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
+                    <Stack spacing={1} alignItems="center">
+                      <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                        <ReceiptLongIcon />
+                      </Avatar>
+                      <Typography variant="subtitle1">{t('invoices.table.emptyTitle')}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {t('invoices.table.emptyText')}
+                      </Typography>
+                      <Button variant="contained" onClick={() => setOpenModal(true)} size="small">
+                        {t('actions.newInvoice')}
+                      </Button>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               )}
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={11} align="center">
-                    Cargando...
+                  <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
+                    <Stack spacing={1} alignItems="center">
+                      <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                        <RefreshIcon />
+                      </Avatar>
+                      <Typography variant="body2" color="text.secondary">
+                        {t('invoices.table.loading')}
+                      </Typography>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               )}
@@ -588,14 +938,22 @@ export default function InvoicesLionTv() {
       </MainCard>
 
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="md" fullScreen={isMobile}>
-        <DialogTitle sx={{ position: 'relative', pr: 5 }}>
+        <DialogTitle
+          sx={(theme) => ({
+            position: 'relative',
+            pb: 1,
+            background: form.invoiceId
+              ? `linear-gradient(135deg, ${theme.palette.warning.light}40 0%, ${theme.palette.secondary.light}20 45%, ${theme.palette.background.paper} 100%)`
+              : `linear-gradient(135deg, ${theme.palette.primary.light}40 0%, ${theme.palette.secondary.light}20 45%, ${theme.palette.background.paper} 100%)`
+          })}
+        >
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Avatar
               sx={{
                 bgcolor: form.invoiceId ? 'warning.main' : 'primary.main',
                 color: 'primary.contrastText',
-                width: 36,
-                height: 36,
+                width: 40,
+                height: 40,
                 boxShadow: 3
               }}
             >
@@ -607,6 +965,13 @@ export default function InvoicesLionTv() {
                 {t('invoices.dialogSubtitle')}
               </Typography>
             </Box>
+            <Chip
+              label={form.invoiceId ? t('invoices.badge.edit') : t('invoices.badge.new')}
+              size="small"
+              color={form.invoiceId ? 'warning' : 'primary'}
+              variant="filled"
+              sx={{ ml: 'auto', fontWeight: 700, borderRadius: 1.5 }}
+            />
           </Stack>
         </DialogTitle>
         <DialogContent
@@ -614,18 +979,51 @@ export default function InvoicesLionTv() {
           sx={{
             bgcolor: 'background.default',
             px: { xs: 1.5, sm: 3 },
-            py: { xs: 1.5, sm: 2 }
+            py: { xs: 1.5, sm: 2 },
+            background: (theme) =>
+              theme.palette.mode === 'light'
+                ? `linear-gradient(180deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}10 60%, ${theme.palette.background.paper} 85%)`
+                : theme.palette.background.default
           }}
         >
+          <Box
+            sx={(theme) => ({
+              mb: 2,
+              p: 1.25,
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              bgcolor: theme.palette.info.lighter,
+              color: theme.palette.info.dark,
+              border: '1px dashed',
+              borderColor: theme.palette.info.main
+            })}
+          >
+            <InfoOutlinedIcon fontSize="small" />
+            <Typography variant="caption">
+              {form.invoiceId ? t('invoices.form.tips.edit') : t('invoices.form.tips.new')}
+            </Typography>
+          </Box>
+
           <Stack spacing={2}>
-            <SectionCard title="Asignaciones" helper="Cliente, paquete, servicio y banco.">
+            <FormSection title={t('invoices.form.sections.assignment')} helper={t('invoices.form.sections.assignmentHelper')}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={3} md={3}>
                   <FormControl fullWidth required sx={fieldSx} disabled={customersLoading}>
-                    <InputLabel>Cliente</InputLabel>
-                    <Select value={form.customerId} label="Cliente" onChange={handleFormChange('customerId')}>
+                    <InputLabel>{t('invoices.form.customer')}</InputLabel>
+                    <Select
+                      value={form.customerId}
+                      label={t('invoices.form.customer')}
+                      onChange={handleFormChange('customerId')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <PersonAddAlt1Icon fontSize="small" color="secondary" />
+                        </InputAdornment>
+                      }
+                    >
                       <MenuItem value="">
-                        <em>Selecciona un cliente</em>
+                        <em>{t('invoices.form.placeholderSelect')}</em>
                       </MenuItem>
                       {(customers || []).map((c) => (
                         <MenuItem key={c.customerId || c.id} value={c.customerId || c.id}>
@@ -633,15 +1031,26 @@ export default function InvoicesLionTv() {
                         </MenuItem>
                       ))}
                     </Select>
-                    <FormHelperText>{customersLoading ? 'Cargando clientes...' : 'Cliente asociado'}</FormHelperText>
+                    <FormHelperText>
+                      {customersLoading ? t('invoices.form.helperLoading') : t('invoices.form.helperCustomer')}
+                    </FormHelperText>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={3} md={3}>
                   <FormControl fullWidth required sx={fieldSx} disabled={servicesLoading}>
-                    <InputLabel>Servicio</InputLabel>
-                    <Select value={form.serviceId} label="Servicio" onChange={handleFormChange('serviceId')}>
+                    <InputLabel>{t('invoices.form.service')}</InputLabel>
+                    <Select
+                      value={form.serviceId}
+                      label={t('invoices.form.service')}
+                      onChange={handleFormChange('serviceId')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <LanIcon fontSize="small" color="primary" />
+                        </InputAdornment>
+                      }
+                    >
                       <MenuItem value="">
-                        <em>Selecciona un servicio</em>
+                        <em>{t('invoices.form.placeholderSelect')}</em>
                       </MenuItem>
                       {(services || []).map((s) => (
                         <MenuItem key={s.id || s.serviceId} value={s.id || s.serviceId}>
@@ -649,15 +1058,26 @@ export default function InvoicesLionTv() {
                         </MenuItem>
                       ))}
                     </Select>
-                    <FormHelperText>{servicesLoading ? 'Cargando servicios...' : 'Servicio del paquete'}</FormHelperText>
+                    <FormHelperText>
+                      {servicesLoading ? t('invoices.form.helperLoading') : t('invoices.form.helperService')}
+                    </FormHelperText>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={3} md={3}>
                   <FormControl fullWidth required sx={fieldSx} disabled={packagesLoading}>
-                    <InputLabel>Paquete</InputLabel>
-                    <Select value={form.packageId} label="Paquete" onChange={handleFormChange('packageId')}>
+                    <InputLabel>{t('invoices.form.package')}</InputLabel>
+                    <Select
+                      value={form.packageId}
+                      label={t('invoices.form.package')}
+                      onChange={handleFormChange('packageId')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <Inventory2Icon fontSize="small" color="warning" />
+                        </InputAdornment>
+                      }
+                    >
                       <MenuItem value="">
-                        <em>Selecciona un paquete</em>
+                        <em>{t('invoices.form.placeholderSelect')}</em>
                       </MenuItem>
                       {(packages || []).map((p) => (
                         <MenuItem key={p.id} value={p.id}>
@@ -665,7 +1085,9 @@ export default function InvoicesLionTv() {
                         </MenuItem>
                       ))}
                     </Select>
-                    <FormHelperText>{packagesLoading ? 'Cargando paquetes...' : 'Paquete asignado'}</FormHelperText>
+                    <FormHelperText>
+                      {packagesLoading ? t('invoices.form.helperLoading') : t('invoices.form.helperPackage')}
+                    </FormHelperText>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={3} md={3}>
@@ -675,29 +1097,40 @@ export default function InvoicesLionTv() {
                     disabled={banksLoading || form.paymentMethod !== 'Bank Transfer'}
                     required={form.paymentMethod === 'Bank Transfer'}
                   >
-                    <InputLabel>Banco</InputLabel>
-                    <Select value={form.bankId} label="Banco" onChange={handleFormChange('bankId')}>
+                    <InputLabel>{t('invoices.form.bank')}</InputLabel>
+                    <Select
+                      value={form.bankId}
+                      label={t('invoices.form.bank')}
+                      onChange={handleFormChange('bankId')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <AccountBalanceIcon fontSize="small" color="info" />
+                        </InputAdornment>
+                      }
+                    >
                       <MenuItem value="">
-                        <em>Selecciona banco</em>
+                        <em>{t('invoices.form.placeholderSelect')}</em>
                       </MenuItem>
                       {(banks || []).map((b) => (
                         <MenuItem key={b.id || b.bankId} value={b.id || b.bankId}>
-                          {b.bank || b.bank || b.id}
+                          {b.bank || b.name || b.id}
                         </MenuItem>
                       ))}
                     </Select>
-                    <FormHelperText>{banksLoading ? 'Cargando bancos...' : 'Banco usado en el pago'}</FormHelperText>
+                    <FormHelperText>
+                      {banksLoading ? t('invoices.form.helperLoading') : t('invoices.form.helperBank')}
+                    </FormHelperText>
                   </FormControl>
                 </Grid>
               </Grid>
-            </SectionCard>
+            </FormSection>
 
-            <SectionCard title="Pago" helper="Fechas y montos pagados.">
+            <FormSection title={t('invoices.form.sections.payment')} helper={t('invoices.form.sections.paymentHelper')}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={4} md={4}>
                   <TextField
                     required
-                    label="Fecha pago"
+                    label={t('invoices.form.paymentDate')}
                     type="date"
                     value={form.paymentDate}
                     onChange={handleFormChange('paymentDate')}
@@ -707,7 +1140,7 @@ export default function InvoicesLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <EventAvailableIcon fontSize="small" />
+                          <EventAvailableIcon fontSize="small" color="primary" />
                         </InputAdornment>
                       )
                     }}
@@ -715,46 +1148,110 @@ export default function InvoicesLionTv() {
                 </Grid>
                 <Grid item xs={12} sm={4} md={4}>
                   <TextField
-                    label="Monto pagado"
+                    label={t('invoices.form.amountPaid')}
                     type="number"
                     value={form.amountPaid}
                     onChange={handleFormChange('amountPaid')}
                     fullWidth
                     sx={fieldSx}
-                    InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Typography variant="subtitle2" color="success.main" sx={{ fontWeight: 700 }}>
+                            L
+                          </Typography>
+                        </InputAdornment>
+                      )
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={4} md={4}>
                   <TextField
-                    label="Descuento"
+                    label={t('invoices.form.amountDiscount')}
                     type="number"
                     value={form.amountDiscount}
                     onChange={handleFormChange('amountDiscount')}
                     fullWidth
                     sx={fieldSx}
-                    InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Typography variant="subtitle2" color="warning.main" sx={{ fontWeight: 700 }}>
+                            L
+                          </Typography>
+                        </InputAdornment>
+                      )
+                    }}
                   />
                 </Grid>
               </Grid>
-            </SectionCard>
+            </FormSection>
 
-            <SectionCard title="Método y estado" helper="Forma de pago y estado del comprobante.">
+            <FormSection title={t('invoices.form.sections.method')} helper={t('invoices.form.sections.methodHelper')}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl fullWidth required sx={fieldSx}>
-                
+                    <InputLabel shrink id="payment-method-label">
+                      {t('invoices.form.paymentMethod')}
+                    </InputLabel>
                     <Select
+                      labelId="payment-method-label"
+                      id="payment-method-select"
                       value={form.paymentMethod}
+                      label={t('invoices.form.paymentMethod')}
                       onChange={handleFormChange('paymentMethod')}
                       displayEmpty
-                      renderValue={(value) => (value ? value : 'Selecciona método')}
+                      sx={(theme) => {
+                        const currentColor =
+                          paymentMethodColors[form.paymentMethod] || theme.palette.primary.main;
+                        return {
+                          '& .MuiSelect-select': {
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.75,
+                            py: 1
+                          },
+                          '& .MuiSelect-icon': {
+                            color: currentColor
+                          }
+                        };
+                      }}
+                      renderValue={(val) => {
+                        const IconComp = paymentMethodIcons[val] || CreditScoreIcon;
+                        const color = paymentMethodColors[val] || 'primary.main';
+                        if (!val) {
+                          return (
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <IconComp fontSize="small" sx={{ color }} />
+                              <span>{t('invoices.form.placeholderSelect')}</span>
+                            </Stack>
+                          );
+                        }
+                        return (
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <IconComp fontSize="small" sx={{ color }} />
+                            <span>{paymentMethodLabel(val)}</span>
+                          </Stack>
+                        );
+                      }}
                     >
                       <MenuItem value="">
-                        <em>Selecciona</em>
+                        <em>{t('invoices.form.placeholderSelect')}</em>
                       </MenuItem>
-                      {PAYMENT_METHODS.map((m) => (
+                      {paymentMethodOptions.map((m) => (
                         <MenuItem key={m.value} value={m.value}>
-                          {m.label}
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            {(() => {
+                              const IconComp = paymentMethodIcons[m.value] || CreditScoreIcon;
+                              return (
+                                <IconComp
+                                  fontSize="small"
+                                  sx={{ color: paymentMethodColors[m.value] || 'primary.main' }}
+                                />
+                              );
+                            })()}
+                            <span>{m.label}</span>
+                          </Stack>
                         </MenuItem>
                       ))}
                     </Select>
@@ -762,11 +1259,20 @@ export default function InvoicesLionTv() {
                 </Grid>
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl fullWidth required sx={fieldSx}>
-                    <InputLabel>Estado</InputLabel>
-                    <Select value={form.status} label="Estado" onChange={handleFormChange('status')}>
-                      {STATUS_OPTIONS.map((st) => (
+                    <InputLabel>{t('invoices.form.status')}</InputLabel>
+                    <Select
+                      value={form.status}
+                      label={t('invoices.form.status')}
+                      onChange={handleFormChange('status')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <PaidOutlinedIcon fontSize="small" color="success" />
+                        </InputAdornment>
+                      }
+                    >
+                      {statusOptions.map((st) => (
                         <MenuItem key={st} value={st}>
-                          {st}
+                          {st === 'PAID' ? t('invoices.form.states.paid') : t('invoices.form.states.pending')}
                         </MenuItem>
                       ))}
                     </Select>
@@ -774,7 +1280,7 @@ export default function InvoicesLionTv() {
                 </Grid>
                 <Grid item xs={12} sm={4} md={4}>
                   <TextField
-                    label="Notas"
+                    label={t('invoices.form.notes')}
                     value={form.notes}
                     onChange={handleFormChange('notes')}
                     fullWidth
@@ -782,22 +1288,31 @@ export default function InvoicesLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <EventRepeatIcon fontSize="small" />
+                          <EventRepeatIcon fontSize="small" color="secondary" />
                         </InputAdornment>
                       )
                     }}
                   />
                 </Grid>
               </Grid>
-            </SectionCard>
+            </FormSection>
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button variant="outlined" onClick={resetForm} disabled={sending}>
-            Limpiar
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button variant="outlined" onClick={resetForm} disabled={sending} sx={{ borderRadius: 2 }}>
+            {t('invoices.form.buttons.clear')}
           </Button>
-          <Button variant="contained" onClick={handleSave} disabled={sending}>
-            {sending ? 'Guardando...' : form.invoiceId ? 'Guardar cambios' : 'Crear'}
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={sending}
+            sx={{ borderRadius: 2, boxShadow: '0 10px 24px rgba(0,0,0,0.12)' }}
+          >
+            {sending
+              ? t('invoices.form.buttons.saving')
+              : form.invoiceId
+                ? t('invoices.form.buttons.save')
+                : t('invoices.form.buttons.create')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -809,18 +1324,39 @@ export default function InvoicesLionTv() {
         fullWidth
         fullScreen={isMobile}
       >
-        <DialogTitle>Eliminar factura</DialogTitle>
+        <DialogTitle
+          sx={(theme) => ({
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            background: `linear-gradient(135deg, ${theme.palette.error.light}45 0%, ${theme.palette.secondary.light}15 60%, ${theme.palette.background.paper} 100%)`
+          })}
+        >
+          <Avatar sx={{ bgcolor: 'error.main', color: 'error.contrastText', width: 40, height: 40, boxShadow: 3 }}>
+            <WarningAmberIcon fontSize="small" />
+          </Avatar>
+          <Typography variant="h6">{t('invoices.delete.title')}</Typography>
+        </DialogTitle>
         <DialogContent dividers>
-          <Typography>
-            ¿Eliminar la factura <strong>{openDelete.row?.invoiceId ?? ''}</strong>? Esta acción no se puede deshacer.
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            {t('invoices.delete.body', { id: openDelete.row?.invoiceId || '' })}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {t('customers.form.deleteSubtitle')}
           </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDelete({ open: false, row: null })} disabled={sending}>
-            Cancelar
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button onClick={() => setOpenDelete({ open: false, row: null })} disabled={sending} sx={{ borderRadius: 2 }}>
+            {t('invoices.form.buttons.cancel')}
           </Button>
-          <Button color="error" variant="contained" onClick={confirmDelete} disabled={sending}>
-            {sending ? 'Eliminando...' : 'Eliminar'}
+          <Button
+            color="error"
+            variant="contained"
+            onClick={confirmDelete}
+            disabled={sending}
+            sx={{ borderRadius: 2, boxShadow: '0 10px 24px rgba(0,0,0,0.16)' }}
+          >
+            {sending ? t('invoices.form.buttons.deleting') : t('invoices.form.buttons.delete')}
           </Button>
         </DialogActions>
       </Dialog>

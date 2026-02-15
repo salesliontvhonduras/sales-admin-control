@@ -86,8 +86,13 @@ const resources = {
       },
       invoices: {
         title: 'Invoices',
+        summary: {
+          total: '{{count}} invoices',
+          paid: 'Status: PAID {{count}}',
+          pending: 'Status: PENDING {{count}}'
+        },
         filters: { status: 'Status', all: 'All' },
-        search: 'Search',
+        search: 'Search (id, customer, status, method)',
         edit: 'Edit invoice',
         dialogSubtitle: 'Enter payment and assignment data.',
         headers: {
@@ -95,6 +100,7 @@ const resources = {
           customer: 'Customer',
           service: 'Service',
           package: 'Package',
+          service: 'Service',
           bank: 'Bank',
           method: 'Method',
           status: 'Status',
@@ -102,6 +108,67 @@ const resources = {
           discount: 'Discount',
           paymentDate: 'Payment date',
           actions: 'Actions'
+        },
+        badge: { new: 'New', edit: 'Edit' },
+        table: { loading: 'Loading invoices...', emptyTitle: 'No invoices yet.', emptyText: 'Create your first invoice to see it here.' },
+        form: {
+          sections: {
+            assignment: 'Assignment',
+            assignmentHelper: 'Customer, service, package and bank (if needed).',
+            payment: 'Payment',
+            paymentHelper: 'Amounts and payment date.',
+            method: 'Method & status',
+            methodHelper: 'Payment method, status and notes.'
+          },
+          customer: 'Customer',
+          service: 'Service',
+          package: 'Package',
+          bank: 'Bank',
+          paymentMethod: 'Payment method',
+          status: 'Status',
+          paymentDate: 'Payment date',
+          amountPaid: 'Amount paid',
+          amountDiscount: 'Discount',
+          notes: 'Notes',
+          placeholderSelect: 'Select an option',
+          helperCustomer: 'Associated customer',
+          helperService: 'Service for this invoice',
+          helperPackage: 'Package assigned',
+          helperBank: 'Bank used for transfer',
+          helperLoading: 'Loading...',
+          buttons: {
+            clear: 'Clear',
+            create: 'Create',
+            creating: 'Creating...',
+            save: 'Save changes',
+            saving: 'Saving...',
+            delete: 'Delete',
+            deleting: 'Deleting...',
+            cancel: 'Cancel'
+          },
+          tips: {
+            new: 'Verify package and service before saving. Bank is only required for transfers.',
+            edit: 'If you change the payment method, check the bank field.'
+          },
+          states: { paid: 'Paid', pending: 'Pending' },
+          paymentMethods: {
+            bank: 'Bank Transfer',
+            paypal: 'Paypal',
+            ecommerce: 'Ecommerce',
+            link: 'Payment link',
+            debit: 'Automatic debit'
+          }
+        },
+        messages: {
+          required: 'Please complete required fields.',
+          needBank: 'Select a bank for Bank Transfer payments.',
+          created: 'Invoice created successfully.',
+          updated: 'Invoice updated successfully.',
+          deleted: 'Invoice deleted successfully.'
+        },
+        delete: {
+          title: 'Delete invoice',
+          body: 'Delete invoice {{id}}? This action cannot be undone.'
         }
       },
       subscriptions: {
@@ -201,7 +268,7 @@ const resources = {
       },
       customers: {
         title: 'Customers',
-        search: 'Search',
+        search: 'Search (name, email, phone, channel, status)',
         headers: {
           customer: 'Customer',
           email: 'Email',
@@ -406,8 +473,13 @@ const resources = {
       },
       invoices: {
         title: 'Facturas',
+        summary: {
+          total: '{{count}} facturas',
+          paid: 'Estado: PAGADAS {{count}}',
+          pending: 'Estado: PENDIENTES {{count}}'
+        },
         filters: { status: 'Estado', all: 'Todos' },
-        search: 'Buscar',
+        search: 'Buscar (id, cliente, estado, método)',
         edit: 'Editar factura',
         dialogSubtitle: 'Ingresa los datos de pago y asignación.',
         headers: {
@@ -422,6 +494,67 @@ const resources = {
           discount: 'Descuento',
           paymentDate: 'Fecha pago',
           actions: 'Acciones'
+        },
+        badge: { new: 'Nueva', edit: 'Editar' },
+        table: { loading: 'Cargando facturas...', emptyTitle: 'No hay facturas.', emptyText: 'Crea tu primera factura para verla aquí.' },
+        form: {
+          sections: {
+            assignment: 'Asignación',
+            assignmentHelper: 'Cliente, servicio, paquete y banco (si aplica).',
+            payment: 'Pago',
+            paymentHelper: 'Montos y fecha de pago.',
+            method: 'Método y estado',
+            methodHelper: 'Forma de pago, estado y notas.'
+          },
+          customer: 'Cliente',
+          service: 'Servicio',
+          package: 'Paquete',
+          bank: 'Banco',
+          paymentMethod: 'Método de pago',
+          status: 'Estado',
+          paymentDate: 'Fecha de pago',
+          amountPaid: 'Monto pagado',
+          amountDiscount: 'Descuento',
+          notes: 'Notas',
+          placeholderSelect: 'Selecciona una opción',
+          helperCustomer: 'Cliente asociado',
+          helperService: 'Servicio de esta factura',
+          helperPackage: 'Paquete asignado',
+          helperBank: 'Banco usado en la transferencia',
+          helperLoading: 'Cargando...',
+          buttons: {
+            clear: 'Limpiar',
+            create: 'Crear',
+            creating: 'Creando...',
+            save: 'Guardar cambios',
+            saving: 'Guardando...',
+            delete: 'Eliminar',
+            deleting: 'Eliminando...',
+            cancel: 'Cancelar'
+          },
+          tips: {
+            new: 'Revisa paquete y servicio antes de guardar. Banco sólo es requerido para transferencias.',
+            edit: 'Si cambias el método de pago, revisa el banco.'
+          },
+          states: { paid: 'Pagada', pending: 'Pendiente' },
+          paymentMethods: {
+            bank: 'Transferencia bancaria',
+            paypal: 'Paypal',
+            ecommerce: 'Ecommerce',
+            link: 'Link de pago',
+            debit: 'Débito automático'
+          }
+        },
+        messages: {
+          required: 'Completa los campos requeridos.',
+          needBank: 'Selecciona un banco para pagos por transferencia.',
+          created: 'Factura creada correctamente.',
+          updated: 'Factura actualizada correctamente.',
+          deleted: 'Factura eliminada correctamente.'
+        },
+        delete: {
+          title: 'Eliminar factura',
+          body: '¿Eliminar la factura {{id}}? Esta acción no se puede deshacer.'
         }
       },
       subscriptions: {
@@ -521,7 +654,7 @@ const resources = {
       },
       customers: {
         title: 'Clientes',
-        search: 'Buscar',
+        search: 'Buscar (nombre, correo, teléfono, canal, estado)',
         headers: {
           customer: 'Cliente',
           email: 'Correo',
