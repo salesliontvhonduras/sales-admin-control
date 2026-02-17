@@ -1013,7 +1013,7 @@ export default function LicensesLionTv() {
                 onChange={(e) => setServerForm((p) => ({ ...p, serverKey: e.target.value }))}
               >
                 {serverOptions.map((s) => (
-                  <MenuItem key={s.key} value={s.key}>
+                  <MenuItem key={s.value} value={s.value}>
                     {s.label}
                   </MenuItem>
                 ))}
