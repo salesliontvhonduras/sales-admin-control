@@ -233,7 +233,7 @@ export default function LicensesLionTv() {
       });
       const list = res?.data?.data ?? res?.data ?? [];
       const normalized = Array.isArray(list)
-        ? list.map((s) => ({ value: s.url, label: s.label || s.key || s.url }))
+        ? list.map((s) => ({ value: s.key, label: s.label || s.key }))
         : [];
       setServerOptions(normalized);
     } catch (err) {
