@@ -119,13 +119,23 @@ function normalizeSubscription(item = {}) {
 
 function formatDateInput(value) {
   if (!value) return '';
-  const dateObj = new Date(value);
-  if (!Number.isNaN(dateObj.getTime())) {
-    return dateObj.toISOString().slice(0, 10);
+
+  // 1) Intento nativo
+  const native = new Date(value);
+  if (!Number.isNaN(native.getTime())) return native.toISOString().slice(0, 10);
+
+  // 2) Formatos dd-MM-yyyy o dd/MM/yyyy, con o sin hora
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    const match = trimmed.match(/^(\d{2})[-/](\d{2})[-/](\d{4})/);
+    if (match) {
+      const [, dd, MM, yyyy] = match;
+      return `${yyyy}-${MM}-${dd}`; // yyyy-MM-dd
+    }
+    // fallback: primeros 10 caracteres si parecen fecha
+    if (trimmed.length >= 10) return trimmed.slice(0, 10);
   }
-  if (typeof value === 'string' && value.length >= 10) {
-    return value.slice(0, 10);
-  }
+
   return '';
 }
 
