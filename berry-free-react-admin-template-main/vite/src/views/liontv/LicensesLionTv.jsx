@@ -38,7 +38,6 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import SearchIcon from '@mui/icons-material/Search';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import SecurityIcon from '@mui/icons-material/Security';
 import HistoryIcon from '@mui/icons-material/History';
 import MemoryIcon from '@mui/icons-material/Memory';
@@ -47,6 +46,8 @@ import AppsIcon from '@mui/icons-material/Apps';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ShieldMoonIcon from '@mui/icons-material/ShieldMoon';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import FlagCircleIcon from '@mui/icons-material/FlagCircle';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
@@ -56,6 +57,17 @@ const STATUS_OPTIONS = ['ACTIVE', 'EXPIRED', 'AVAILABLE'];
 const APPS = ['Vivo Player', 'Smart One'];
 const LICENSE_PERIOD = ['ANNUAL', 'LIFETIME'];
 const TYPE_LICENSE = ['PRIMARY', 'USED'];
+const SERVER_OPTIONS = [
+  // España
+  { value: 'http://46.62.166.201:8089', label: 'España 8089' },
+  { value: 'http://46.62.166.201:80', label: 'España 80' },
+  { value: 'http://46.62.166.201:8080', label: 'España 8080' },
+  { value: 'http://46.62.166.201:8000', label: 'España 8000' },
+  { value: 'http://46.62.166.201:8888', label: 'España 8888' },
+  // Otros países
+  { value: 'http://liontv.es:8080', label: 'Global 8080' },
+  { value: 'http://tvpremium.pro', label: 'Global Premium' }
+];
 
 const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
@@ -124,6 +136,8 @@ export default function LicensesLionTv() {
   const [statusFilter, setStatusFilter] = useState('');
 
   const [customers, setCustomers] = useState([]);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [lines, setLines] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(false);
 
   const [form, setForm] = useState({
@@ -145,6 +159,8 @@ export default function LicensesLionTv() {
 
   const [history, setHistory] = useState([]);
   const [historyOpen, setHistoryOpen] = useState({ open: false, row: null });
+  const [openServerChange, setOpenServerChange] = useState({ open: false, row: null });
+  const [serverForm, setServerForm] = useState({ serverUrl: '', subscriptionId: '', lineId: '', username: '', password: '', country: '', playlistName: 'Principal' });
 
   const [sending, setSending] = useState(false);
 
@@ -152,6 +168,72 @@ export default function LicensesLionTv() {
     const status = err?.response?.status || err?.request?.status;
     return status === 401;
   };
+
+  const countryFromPhone = (phone) => {
+    if (!phone) return 'N/D';
+    const clean = phone.replace(/[^0-9+]/g, '');
+    if (clean.startsWith('+34') || clean.startsWith('34')) return 'España';
+    if (clean.startsWith('+1') || clean.startsWith('1')) return 'EE.UU.';
+    if (clean.startsWith('+504') || clean.startsWith('504')) return 'Honduras';
+    if (clean.startsWith('+503') || clean.startsWith('503')) return 'El Salvador';
+    if (clean.startsWith('+502') || clean.startsWith('502')) return 'Guatemala';
+    if (clean.startsWith('+57') || clean.startsWith('57')) return 'Colombia';
+    if (clean.startsWith('+58') || clean.startsWith('58')) return 'Venezuela';
+    return 'Otro';
+  };
+
+  const loadSubscriptions = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      const res = await lionTvApi.get('/subscriptions/v1', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: { index: 0, size: 5000 },
+        skipAuthRedirect: true
+      });
+      const payload = res?.data?.data ?? res?.data ?? {};
+      const raw = payload.data ?? payload.items ?? payload.content ?? payload ?? [];
+      const items = Array.isArray(raw) ? raw : [];
+      setSubscriptions(items.map((s) => ({
+        id: s.subscriptionId ?? s.id,
+        customerId: s.customerId,
+        lineId: s.lineId,
+        packageId: s.packageId,
+        renewalDate: s.renewalDate,
+        status: s.status
+      })));
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar('No se pudieron cargar suscripciones', { variant: 'warning' });
+      }
+    }
+  }, [accessToken, enqueueSnackbar]);
+
+  const loadLines = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      const res = await lionTvApi.get('/lines/v1/list-lines', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: { index: 0, size: 5000, start: 0, filters: '', sorting: '' },
+        skipAuthRedirect: true
+      });
+      const payload = res?.data?.data ?? res?.data ?? {};
+      const raw = payload.data ?? payload.items ?? payload.content ?? payload ?? [];
+      const list = Array.isArray(raw) ? raw : [];
+      setLines(list.map((l) => ({
+        id: l.id ?? l.lineId,
+        username: l.username,
+        password: l.password,
+        packageId: l.package_id ?? l.packageId,
+        owner: l.owner_name ?? l.owner,
+        phone: l.phone ?? '',
+        customerId: l.customer_id ?? l.customerId
+      })));
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar('No se pudieron cargar líneas', { variant: 'warning' });
+      }
+    }
+  }, [accessToken, enqueueSnackbar]);
 
   const loadLicenses = useCallback(async () => {
     if (!accessToken) return;
@@ -247,7 +329,9 @@ export default function LicensesLionTv() {
   useEffect(() => {
     loadLicenses();
     loadCustomers();
-  }, [loadLicenses, loadCustomers, refreshKey]);
+    loadSubscriptions();
+    loadLines();
+  }, [loadLicenses, loadCustomers, loadSubscriptions, loadLines, refreshKey]);
 
   const customerNameMap = useMemo(() => {
     const map = {};
@@ -393,6 +477,62 @@ export default function LicensesLionTv() {
 
   const handleTransfer = (row) => {
     setOpenTransfer({ open: true, row, toCustomerId: '', typeLicense: 'USED' });
+  };
+
+  const handleOpenServerChange = (row) => {
+    const customer = customers.find((c) => (c.customerId || c.id) === row.customerId);
+    const country = countryFromPhone(customer?.customerPhone || customer?.customer_phone || '');
+    setServerForm({
+      serverUrl: '',
+      subscriptionId: '',
+      lineId: '',
+      username: '',
+      password: '',
+      country,
+      playlistName: 'Principal'
+    });
+    setOpenServerChange({ open: true, row });
+  };
+
+  const handleSubscriptionSelect = (value) => {
+    const sub = subscriptions.find((s) => (s.id || s.subscriptionId) === value);
+    const lineId = sub?.lineId;
+    const line = lines.find((l) => (l.id || l.lineId) === lineId);
+    setServerForm((prev) => ({
+      ...prev,
+      subscriptionId: value,
+      lineId: lineId || '',
+      username: line?.username || '',
+      password: line?.password || ''
+    }));
+  };
+
+  const handleServerSubmit = async () => {
+    const { serverUrl, macAddress = openServerChange.row?.macAddress, lineId, playlistName } = {
+      ...serverForm,
+      macAddress: openServerChange.row?.macAddress
+    };
+    if (!serverUrl || !macAddress || !lineId) {
+      enqueueSnackbar('Selecciona servidor y suscripción (línea).', { variant: 'warning' });
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await lionTvApi.post(
+        '/licenses/v1/change-server',
+        { serverUrl, macAddress, lineId, playlistName },
+        { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
+      );
+      const msg = res?.data?.data?.message || res?.data?.message || 'Servidor actualizado.';
+      enqueueSnackbar(msg, { variant: 'success' });
+      setOpenServerChange({ open: false, row: null });
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo cambiar el servidor.', { variant: 'error' });
+      }
+    } finally {
+      setSending(false);
+    }
   };
 
   const submitTransfer = async () => {
@@ -584,17 +724,20 @@ export default function LicensesLionTv() {
                   <TableCell>{row.expireAt ? String(row.expireAt).slice(0, 10) : '-'}</TableCell>
                   <TableCell align="right">
                     <Stack direction="row" spacing={1}>
-                      <IconButton size="small" onClick={() => handleEdit(row)}>
-                        <EditOutlinedIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton size="small" onClick={() => handleTransfer(row)}>
-                        <SwapHorizIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton size="small" onClick={() => openHistory(row)}>
-                        <HistoryIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDelete(row)}>
-                        <DeleteOutlineIcon fontSize="small" />
+                  <IconButton size="small" onClick={() => handleEdit(row)}>
+                    <EditOutlinedIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton size="small" onClick={() => handleTransfer(row)}>
+                    <SwapHorizIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton size="small" onClick={() => handleOpenServerChange(row)}>
+                    <AppsIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton size="small" onClick={() => openHistory(row)}>
+                    <HistoryIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton size="small" color="error" onClick={() => handleDelete(row)}>
+                    <DeleteOutlineIcon fontSize="small" />
                       </IconButton>
                     </Stack>
                   </TableCell>
@@ -828,6 +971,109 @@ export default function LicensesLionTv() {
           </Button>
           <Button variant="contained" onClick={handleSave} disabled={sending}>
             {sending ? 'Guardando...' : form.licenseId ? 'Guardar cambios' : 'Crear'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* CHANGE SERVER */}
+      <Dialog
+        open={openServerChange.open}
+        onClose={() => setOpenServerChange({ open: false, row: null })}
+        fullWidth
+        maxWidth="sm"
+        fullScreen={isMobile}
+      >
+        <DialogTitle>Cambiar servidor</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2}>
+            <Typography variant="body2">
+              Mac: <strong>{openServerChange.row?.macAddress}</strong>
+            </Typography>
+            <Typography variant="body2">
+              Cliente: <strong>{customerNameMap[openServerChange.row?.customerId] || '-'}</strong>
+            </Typography>
+            <Typography variant="body2">
+              País (teléfono): <strong>{serverForm.country}</strong>
+            </Typography>
+
+            <FormControl fullWidth sx={fieldSx}>
+              <InputLabel>Servidor</InputLabel>
+              <Select
+                value={serverForm.serverUrl}
+                label="Servidor"
+                onChange={(e) => setServerForm((p) => ({ ...p, serverUrl: e.target.value }))}
+              >
+                {SERVER_OPTIONS.map((s) => (
+                  <MenuItem key={s.value} value={s.value}>
+                    {s.label}
+                  </MenuItem>
+                ))}
+              </Select>
+              <FormHelperText>Selecciona el servidor destino</FormHelperText>
+            </FormControl>
+
+            <FormControl fullWidth sx={fieldSx}>
+              <InputLabel>Suscripción</InputLabel>
+              <Select
+                value={serverForm.subscriptionId}
+                label="Suscripción"
+                onChange={(e) => handleSubscriptionSelect(e.target.value)}
+              >
+                <MenuItem value="">
+                  <em>Selecciona</em>
+                </MenuItem>
+                {subscriptions
+                  .filter((s) => s.customerId === openServerChange.row?.customerId)
+                  .map((s) => (
+                    <MenuItem key={s.id} value={s.id}>
+                      #{s.id} - Line {s.lineId}
+                    </MenuItem>
+                  ))}
+              </Select>
+              <FormHelperText>Filtra por suscripciones del cliente</FormHelperText>
+            </FormControl>
+
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Username"
+                  value={serverForm.username}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  sx={fieldSx}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Password"
+                  value={serverForm.password}
+                  InputProps={{ readOnly: true }}
+                  fullWidth
+                  sx={fieldSx}
+                />
+              </Grid>
+            </Grid>
+
+            <TextField
+              label="Nombre de playlist"
+              value={serverForm.playlistName}
+              onChange={(e) => setServerForm((p) => ({ ...p, playlistName: e.target.value }))}
+              fullWidth
+              sx={fieldSx}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <FlagCircleIcon fontSize="small" />
+                  </InputAdornment>
+                )
+              }}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenServerChange({ open: false, row: null })}>Cancelar</Button>
+          <Button variant="contained" onClick={handleServerSubmit} disabled={sending}>
+            {sending ? 'Enviando...' : 'Cambiar servidor'}
           </Button>
         </DialogActions>
       </Dialog>
