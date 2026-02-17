@@ -57,18 +57,6 @@ const STATUS_OPTIONS = ['ACTIVE', 'EXPIRED', 'AVAILABLE'];
 const APPS = ['Vivo Player', 'Smart One'];
 const LICENSE_PERIOD = ['ANNUAL', 'LIFETIME'];
 const TYPE_LICENSE = ['PRIMARY', 'USED'];
-const SERVER_OPTIONS = [
-  // España
-  { value: 'http://46.62.166.201:8089', label: 'España 8089' },
-  { value: 'http://46.62.166.201:80', label: 'España 80' },
-  { value: 'http://46.62.166.201:8080', label: 'España 8080' },
-  { value: 'http://46.62.166.201:8000', label: 'España 8000' },
-  { value: 'http://46.62.166.201:8888', label: 'España 8888' },
-  // Otros países
-  { value: 'http://liontv.es:8080', label: 'Global 8080' },
-  { value: 'http://tvpremium.pro', label: 'Global Premium' }
-];
-
 const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
   '& .MuiInputLabel-root': { fontWeight: 500 }
@@ -160,7 +148,8 @@ export default function LicensesLionTv() {
   const [history, setHistory] = useState([]);
   const [historyOpen, setHistoryOpen] = useState({ open: false, row: null });
   const [openServerChange, setOpenServerChange] = useState({ open: false, row: null });
-  const [serverForm, setServerForm] = useState({ serverUrl: '', subscriptionId: '', lineId: '', username: '', password: '', country: '', playlistName: 'Principal' });
+  const [serverForm, setServerForm] = useState({ serverKey: '', subscriptionId: '', lineId: '', username: '', password: '', country: '', playlistName: 'Principal' });
+  const [serverOptions, setServerOptions] = useState([]);
 
   const [sending, setSending] = useState(false);
 
@@ -231,6 +220,25 @@ export default function LicensesLionTv() {
     } catch (err) {
       if (!handleUnauthorized(err)) {
         enqueueSnackbar('No se pudieron cargar líneas', { variant: 'warning' });
+      }
+    }
+  }, [accessToken, enqueueSnackbar]);
+
+  const loadServers = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      const res = await lionTvApi.get('/licenses/v1/servers', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        skipAuthRedirect: true
+      });
+      const list = res?.data?.data ?? res?.data ?? [];
+      const normalized = Array.isArray(list)
+        ? list.map((s) => ({ value: s.url, label: s.label || s.key || s.url }))
+        : [];
+      setServerOptions(normalized);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar('No se pudieron cargar los servidores.', { variant: 'warning' });
       }
     }
   }, [accessToken, enqueueSnackbar]);
@@ -331,7 +339,8 @@ export default function LicensesLionTv() {
     loadCustomers();
     loadSubscriptions();
     loadLines();
-  }, [loadLicenses, loadCustomers, loadSubscriptions, loadLines, refreshKey]);
+    loadServers();
+  }, [loadLicenses, loadCustomers, loadSubscriptions, loadLines, loadServers, refreshKey]);
 
   const customerNameMap = useMemo(() => {
     const map = {};
@@ -508,11 +517,11 @@ export default function LicensesLionTv() {
   };
 
   const handleServerSubmit = async () => {
-    const { serverUrl, macAddress = openServerChange.row?.macAddress, lineId, playlistName } = {
+    const { serverKey, macAddress = openServerChange.row?.macAddress, lineId, playlistName } = {
       ...serverForm,
       macAddress: openServerChange.row?.macAddress
     };
-    if (!serverUrl || !macAddress || !lineId) {
+    if (!serverKey || !macAddress || !lineId) {
       enqueueSnackbar('Selecciona servidor y suscripción (línea).', { variant: 'warning' });
       return;
     }
@@ -520,7 +529,7 @@ export default function LicensesLionTv() {
     try {
       const res = await lionTvApi.post(
         '/licenses/v1/change-server',
-        { serverUrl, macAddress, lineId, playlistName },
+        { serverKey, macAddress, lineId, playlistName },
         { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
       );
       const msg = res?.data?.data?.message || res?.data?.message || 'Servidor actualizado.';
@@ -999,12 +1008,12 @@ export default function LicensesLionTv() {
             <FormControl fullWidth sx={fieldSx}>
               <InputLabel>Servidor</InputLabel>
               <Select
-                value={serverForm.serverUrl}
+                value={serverForm.serverKey}
                 label="Servidor"
-                onChange={(e) => setServerForm((p) => ({ ...p, serverUrl: e.target.value }))}
+                onChange={(e) => setServerForm((p) => ({ ...p, serverKey: e.target.value }))}
               >
-                {SERVER_OPTIONS.map((s) => (
-                  <MenuItem key={s.value} value={s.value}>
+                {serverOptions.map((s) => (
+                  <MenuItem key={s.key} value={s.key}>
                     {s.label}
                   </MenuItem>
                 ))}
