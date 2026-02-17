@@ -53,7 +53,7 @@ import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
-const STATUS_OPTIONS = ['ACTIVE', 'EXPIRED', 'AVAILABLE'];
+const STATUS_OPTIONS = ['ACTIVE', 'EXPIRED', 'AVAILABLE', 'EMERGENCY'];
 const APPS = ['Vivo Player', 'Smart One'];
 const LICENSE_PERIOD = ['ANNUAL', 'LIFETIME'];
 const TYPE_LICENSE = ['PRIMARY', 'USED'];
