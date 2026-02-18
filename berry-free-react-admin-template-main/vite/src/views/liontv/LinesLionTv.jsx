@@ -31,6 +31,10 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import Card from '@mui/material/Card';
+import Skeleton from '@mui/material/Skeleton';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
@@ -43,29 +47,68 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LanIcon from '@mui/icons-material/Lan';
 import PublicIcon from '@mui/icons-material/Public';
 import BoltIcon from '@mui/icons-material/Bolt';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
-
-const fieldSx = {
-  '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
-  '& .MuiInputLabel-root': { fontWeight: 500 }
-};
+import SpeedIcon from '@mui/icons-material/Speed';
+import CloudDoneIcon from '@mui/icons-material/CloudDone';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 const detailCardSx = {
   p: 2,
-  borderRadius: 2,
+  borderRadius: 2.5,
   border: '1px solid',
   borderColor: 'divider',
   bgcolor: 'background.paper',
-  boxShadow: 2,
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 0.75,
-  minHeight: 140,
-  justifyContent: 'space-between'
+  boxShadow: '0 10px 24px rgba(0,0,0,0.08)'
 };
+
+const infoCardBase = (theme) => ({
+  ...detailCardSx,
+  p: 2.25,
+  height: '100%',
+  display: 'flex',
+  alignItems: 'stretch',
+  background: `linear-gradient(160deg, ${theme.palette.background.paper} 0%, ${theme.palette.primary.light}08 100%)`
+});
+
+const heroCardSx = (theme) => ({
+  p: 2.5,
+  borderRadius: 3,
+  border: '1px solid',
+  borderColor: theme.palette.primary.main,
+  background: `linear-gradient(135deg, ${theme.palette.primary.light}30 0%, ${theme.palette.secondary.light}18 60%, ${theme.palette.background.paper} 100%)`,
+  boxShadow: '0 18px 44px rgba(0,0,0,0.14)',
+  display: 'flex',
+  gap: 2,
+  alignItems: 'center'
+});
+
+const pillSx = {
+  borderRadius: 999,
+  px: 1.5,
+  py: 0.25,
+  fontWeight: 700,
+  letterSpacing: 0.2
+};
+
+const glassCard = (theme) => ({
+  p: 2.5,
+  borderRadius: 3,
+  border: '1px solid',
+  borderColor: theme.palette.divider,
+  boxShadow: '0 16px 42px rgba(0,0,0,0.14)',
+  background: theme.palette.mode === 'light'
+    ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.primary.light}15 60%, #fff 100%)`
+    : `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.primary.dark}30 100%)`
+});
 
 function formatDate(value) {
   if (!value) return '-';
@@ -109,6 +152,8 @@ export default function LinesLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
   const { t } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -119,6 +164,22 @@ export default function LinesLionTv() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
   const [detail, setDetail] = useState({ open: false, row: null });
+  const [showPassword, setShowPassword] = useState(false);
+  const [visibleRowPassword, setVisibleRowPassword] = useState({});
+
+  const copyCredentials = useCallback(
+    (row) => {
+      if (!row) return;
+      const text = `${row.username || ''}\n${row.password || ''}`;
+      if (navigator?.clipboard?.writeText) {
+        navigator.clipboard.writeText(text);
+        enqueueSnackbar(t('lines.detail.copied', 'Credenciales copiadas'), { variant: 'success' });
+      } else {
+        enqueueSnackbar(t('lines.detail.copyFallback', 'No se pudo copiar, inténtalo manualmente'), { variant: 'warning' });
+      }
+    },
+    [enqueueSnackbar, t]
+  );
 
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
@@ -142,7 +203,7 @@ export default function LinesLionTv() {
       setTotal(payload.rowCount ?? payload.rowTotal ?? normalized.length);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudieron cargar las líneas.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('lines.errors.load', 'No se pudieron cargar las líneas.'), {
           variant: 'error'
         });
       }
@@ -198,61 +259,121 @@ export default function LinesLionTv() {
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
       <MainCard
         title={t('lines.title')}
-        secondary={
-          <Stack direction="row" spacing={1}>
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => setRefreshKey((v) => v + 1)}>
-              {t('actions.refresh')}
-            </Button>
-          </Stack>
-        }
       >
         <Grid container spacing={gridSpacing}>
-          <Grid item xs={12} sm={4}>
-            <Chip label={t('lines.summary.total', { count: total })} color="primary" />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Chip label={t('lines.summary.active', { count: summary.enabled })} color="success" />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Chip label={t('lines.summary.expired', { count: summary.expired })} color="warning" />
-          </Grid>
+          {[
+            { icon: <SpeedIcon fontSize="small" />, label: t('lines.summary.totalLabel', 'Líneas totales'), value: total, color: 'primary.main' },
+            { icon: <CloudDoneIcon fontSize="small" />, label: t('lines.summary.activeLabel', 'Activas'), value: summary.enabled, color: 'success.main' },
+            { icon: <ErrorOutlineIcon fontSize="small" />, label: t('lines.summary.expiredLabel', 'Expiradas'), value: summary.expired, color: 'warning.main' }
+          ].map((item, idx) => (
+            <Grid item xs={12} sm={4} md={4} key={idx}>
+              <Card
+                sx={(theme) => ({
+                  ...glassCard(theme),
+                  py: 1.5,
+                  px: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  background:
+                    theme.palette.mode === 'light'
+                      ? `linear-gradient(155deg, ${theme.palette.primary.main}10 0%, ${theme.palette.secondary.main}14 55%, #ffffff 100%)`
+                      : theme.palette.background.paper
+                })}
+              >
+                <Avatar
+                  sx={(theme) => ({
+                    width: 40,
+                    height: 40,
+                    bgcolor: item.color,
+                    color: theme.palette.getContrastText(theme.palette.primary.main),
+                    fontWeight: 700,
+                    boxShadow: 3,
+                    border: '2px solid',
+                    borderColor: 'background.paper'
+                  })}
+                >
+                  {item.icon}
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                    {item.value}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {item.label}
+                  </Typography>
+                </Box>
+              </Card>
+            </Grid>
+          ))}
         </Grid>
       </MainCard>
 
-      <MainCard
-        title={t('lines.listTitle')}
-        secondary={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 480 } }}>
+      <MainCard title={t('lines.listTitle')}>
+        <Box
+          sx={(theme) => ({
+            mb: 2,
+            p: 2,
+            borderRadius: 2.5,
+            border: '1px solid',
+            borderColor: theme.palette.divider,
+            background:
+              theme.palette.mode === 'light'
+                ? `linear-gradient(135deg, ${theme.palette.primary.light}12 0%, ${theme.palette.secondary.light}10 100%)`
+                : theme.palette.background.paper,
+            boxShadow: '0 10px 28px rgba(0,0,0,0.08)'
+          })}
+        >
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems="stretch">
             <TextField
               size="small"
               placeholder={t('lines.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               fullWidth
-              sx={{ '& .MuiOutlinedInput-root': { minHeight: 40 } }}
+              sx={{ '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon />
+                    <SearchIcon color="action" />
                   </InputAdornment>
                 )
               }}
             />
-            <FormControl size="small" sx={{ minWidth: 140, '& .MuiOutlinedInput-root': { minHeight: 40 } }}>
+            <FormControl size="small" sx={{ minWidth: isMobile ? '100%' : 200, '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}>
               <InputLabel>{t('lines.filters.status')}</InputLabel>
-              <Select value={statusFilter} label={t('lines.filters.status')} onChange={(e) => setStatusFilter(e.target.value)}>
-                <MenuItem value="">
-                  <em>{t('lines.filters.all')}</em>
+              <Select
+                value={statusFilter}
+                label={t('lines.filters.status')}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                startAdornment={
+                  <InputAdornment position="start" sx={{ pl: 1 }}>
+                    <FilterAltOutlinedIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                }
+              >
+              <MenuItem value="">
+                <em>{t('lines.filters.all')}</em>
+              </MenuItem>
+              {['ACTIVE', 'EXPIRED', 'INACTIVE'].map((opt) => (
+                <MenuItem key={opt} value={opt}>
+                  {t(`lines.status.${opt.toLowerCase()}`, opt)}
                 </MenuItem>
-                <MenuItem value="ACTIVE">{t('lines.status.active')}</MenuItem>
-                <MenuItem value="EXPIRED">{t('lines.status.expired')}</MenuItem>
-                <MenuItem value="INACTIVE">{t('lines.status.inactive')}</MenuItem>
+              ))}
               </Select>
             </FormControl>
-          </Box>
-        }
-      >
-        <TableContainer component={Paper}>
+            <Button
+              variant="outlined"
+              color="secondary"
+              startIcon={<RefreshIcon />}
+              onClick={() => setRefreshKey((v) => v + 1)}
+              sx={{ minWidth: isMobile ? '100%' : 140, borderRadius: 2, textTransform: 'none' }}
+            >
+              {t('actions.refresh')}
+            </Button>
+          </Stack>
+        </Box>
+        <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: '0 14px 32px rgba(0,0,0,0.08)' }}>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -269,8 +390,18 @@ export default function LinesLionTv() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedRows.map((row) => (
-                <TableRow key={row.id || row.username}>
+              {loading &&
+                Array.from({ length: 4 }).map((_, idx) => (
+                  <TableRow key={`skeleton-${idx}`}>
+                    {Array.from({ length: 10 }).map((__, cidx) => (
+                      <TableCell key={cidx}>
+                        <Skeleton variant="text" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              {!loading && paginatedRows.map((row) => (
+                <TableRow key={row.id || row.username} hover sx={{ cursor: 'pointer' }} onClick={() => setDetail({ open: true, row })}>
                   <TableCell>
                     <Stack direction="row" spacing={1} alignItems="center">
                       <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.light', color: 'primary.dark' }}>
@@ -278,12 +409,28 @@ export default function LinesLionTv() {
                       </Avatar>
                       <Box>
                         <Typography variant="subtitle2">{row.username}</Typography>
-                        <Tooltip title={`${t('lines.detail.password')}: ${row.password}`}>
+                        <Tooltip title={`${t('lines.detail.password')}: ${visibleRowPassword[row.id || row.username] ? row.password : '••••••'}`}>
                           <Stack direction="row" spacing={0.5} alignItems="center">
                             <KeyIcon fontSize="inherit" color="action" />
                             <Typography variant="caption" color="text.secondary">
-                              {row.passwordEncode || row.password}
+                              {visibleRowPassword[row.id || row.username] ? row.passwordEncode || row.password : '••••••'}
                             </Typography>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setVisibleRowPassword((prev) => ({
+                                  ...prev,
+                                  [row.id || row.username]: !prev[row.id || row.username]
+                                }));
+                              }}
+                            >
+                              {visibleRowPassword[row.id || row.username] ? (
+                                <VisibilityOffIcon fontSize="inherit" />
+                              ) : (
+                                <VisibilityIcon fontSize="inherit" />
+                              )}
+                            </IconButton>
                           </Stack>
                         </Tooltip>
                       </Box>
@@ -293,10 +440,17 @@ export default function LinesLionTv() {
                     <StatusChip enabled={row.enabled} expired={row.expired} t={t} />
                   </TableCell>
                   <TableCell>
-                    <Stack spacing={0.25}>
-                      <Typography variant="body2">{row.packageName || '-'}</Typography>
+                    <Stack spacing={0.5}>
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Avatar sx={{ width: 24, height: 24, bgcolor: 'warning.light', color: 'warning.dark' }}>
+                          <BoltIcon fontSize="inherit" />
+                        </Avatar>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {row.packageName || '-'}
+                        </Typography>
+                      </Stack>
                       <Typography variant="caption" color="text.secondary">
-                        ID: {row.packageId ?? '-'}
+                        {t('common.id', 'ID')}: {row.packageId ?? '-'}
                       </Typography>
                     </Stack>
                   </TableCell>
@@ -308,21 +462,44 @@ export default function LinesLionTv() {
                   </TableCell>
                   <TableCell>{row.maxConnections}</TableCell>
                   <TableCell>{formatDate(row.createdAt)}</TableCell>
-                  <TableCell>{row.ownerName || '-'}</TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={0.75} alignItems="center">
+                      <PersonOutlineIcon fontSize="small" color="action" />
+                      <Typography variant="body2">{row.ownerName || '-'}</Typography>
+                    </Stack>
+                  </TableCell>
                   <TableCell>
                     <Stack spacing={0.25}>
-                      <Typography variant="body2">{row.lastWatchedName || '-'}</Typography>
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <PlayCircleOutlineIcon fontSize="small" color="primary" />
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {row.lastWatchedName || '-'}
+                        </Typography>
+                      </Stack>
                       <Typography variant="caption" color="text.secondary">
                         {formatDate(row.lastWatchedTime)}
                       </Typography>
                     </Stack>
                   </TableCell>
-                  <TableCell>{row.lastWatchedIp || '-'}</TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <PublicIcon fontSize="small" color="action" />
+                      <Typography variant="body2">{row.lastWatchedIp || '-'}</Typography>
+                    </Stack>
+                  </TableCell>
                   <TableCell align="right">
                     <IconButton
                       size="small"
-                      onClick={() => setDetail({ open: true, row })}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDetail({ open: true, row });
+                      }}
                       aria-label={t('lines.detail.title')}
+                      sx={(theme) => ({
+                        bgcolor: theme.palette.primary.lighter,
+                        color: theme.palette.primary.main,
+                        '&:hover': { bgcolor: theme.palette.primary.light }
+                      })}
                     >
                       <InfoOutlinedIcon fontSize="small" />
                     </IconButton>
@@ -333,13 +510,6 @@ export default function LinesLionTv() {
                 <TableRow>
                   <TableCell colSpan={10} align="center">
                     {t('lines.table.empty')}
-                  </TableCell>
-                </TableRow>
-              )}
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={10} align="center">
-                    {t('lines.table.loading')}
                   </TableCell>
                 </TableRow>
               )}
@@ -362,182 +532,271 @@ export default function LinesLionTv() {
       <Dialog
         open={detail.open}
         onClose={() => setDetail({ open: false, row: null })}
-        maxWidth="sm"
         fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 3,
-            boxShadow: 12,
-            overflow: 'hidden',
-            border: '1px solid',
-            borderColor: 'divider'
-          }
-        }}
+        maxWidth="md"
+        fullScreen={isMobile}
+        PaperProps={{ sx: { borderRadius: 3, boxShadow: 18 } }}
       >
         <DialogTitle
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            pr: 1,
-            bgcolor: 'background.default',
-            background: (theme) =>
-              `linear-gradient(120deg, ${theme.palette.primary.light}20 0%, ${theme.palette.primary.main}15 45%, ${theme.palette.background.paper} 100%)`,
-            borderBottom: '1px solid',
-            borderColor: 'divider'
-          }}
+          sx={(theme) => ({
+            pb: 1,
+            background: `linear-gradient(135deg, ${theme.palette.primary.light}36 0%, ${theme.palette.secondary.light}26 40%, ${theme.palette.background.paper} 100%)`
+          })}
         >
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction="row" alignItems="center" spacing={1.5}>
             <Avatar
               sx={{
                 bgcolor: 'primary.main',
                 color: 'primary.contrastText',
                 width: 40,
                 height: 40,
-                boxShadow: 4
+                boxShadow: 3
               }}
             >
               <WifiTetheringIcon fontSize="small" />
             </Avatar>
             <Box>
-              <Typography variant="h6" sx={{ lineHeight: 1 }}>
-                {t('lines.detail.title')}
-              </Typography>
+              <Typography variant="h6">{t('lines.detail.title')}</Typography>
               <Typography variant="caption" color="text.secondary">
                 {detail.row?.username || '-'}
               </Typography>
             </Box>
+            <Chip
+              label={detail.row?.trial ? t('lines.status.trial') : t('lines.status.active')}
+              size="small"
+              color={detail.row?.trial ? 'info' : 'success'}
+              sx={{ ml: 'auto', fontWeight: 700, borderRadius: 1.5 }}
+            />
           </Stack>
-          <IconButton onClick={() => setDetail({ open: false, row: null })} size="small">
-            <CloseIcon fontSize="small" />
-          </IconButton>
         </DialogTitle>
         <DialogContent
           dividers
           sx={{
-            bgcolor: 'background.paper',
-            px: { xs: 2, sm: 3 },
-            py: { xs: 2, sm: 3 }
+            bgcolor: 'background.default',
+            px: { xs: 1.5, sm: 3 },
+            py: { xs: 1.5, sm: 2 },
+            background: (theme) =>
+              theme.palette.mode === 'light'
+                ? `linear-gradient(180deg, ${theme.palette.primary.light}14 0%, ${theme.palette.secondary.light}10 50%, ${theme.palette.background.paper} 80%)`
+                : theme.palette.background.default
           }}
         >
-          <Stack spacing={2}>
-            <Box
-              sx={{
-                p: 2,
-                borderRadius: 2.5,
-                bgcolor: 'primary.lighter',
-                border: '1px solid',
-                borderColor: 'primary.main',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 2,
-                boxShadow: 8,
-                background: (theme) =>
-                  `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.background.paper} 80%)`
-              }}
-            >
-              <Box>
-                <Typography variant="overline" color="text.secondary">
+          <Stack spacing={2.25}>
+            <Box sx={(theme) => heroCardSx(theme)}>
+              <Avatar
+                sx={{
+                  bgcolor: 'primary.main',
+                  color: 'primary.contrastText',
+                  width: 52,
+                  height: 52,
+                  boxShadow: 5
+                }}
+              >
+                <KeyIcon fontSize="medium" />
+              </Avatar>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1 }}>
                   {t('lines.detail.user')}
                 </Typography>
-                <Typography variant="h6" sx={{ lineHeight: 1.1 }}>
+                <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.1 }}>
                   {detail.row?.username || '-'}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {t('lines.detail.password')}: {detail.row?.password || '-'}
-                </Typography>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5, flexWrap: 'wrap' }}>
+                  <Chip
+                    label={`${t('lines.detail.password')}: ${showPassword ? detail.row?.password || '-' : '••••••'}`}
+                    size="small"
+                    variant="outlined"
+                    color="secondary"
+                    sx={{ borderRadius: 2 }}
+                    icon={
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowPassword((v) => !v);
+                        }}
+                      >
+                        {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                      </IconButton>
+                    }
+                  />
+                  {detail.row?.ownerName ? (
+                    <Chip
+                      icon={<PersonOutlineIcon fontSize="small" />}
+                      label={detail.row.ownerName}
+                      size="small"
+                      variant="outlined"
+                      sx={{ borderRadius: 2 }}
+                    />
+                  ) : null}
+                </Stack>
               </Box>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <StatusChip enabled={detail.row?.enabled} expired={detail.row?.expired} t={t} />
-                {detail.row?.trial ? <Chip size="small" color="info" label={t('lines.status.trial')} /> : null}
+              <Stack spacing={1} direction="column" alignItems="flex-end" justifyContent="center">
+                <Chip
+                  label={detail.row?.enabled ? t('lines.status.active') : t('lines.status.inactive')}
+                  color={detail.row?.enabled ? 'success' : 'default'}
+                  size="small"
+                  sx={pillSx}
+                />
+                {detail.row?.trial ? <Chip size="small" color="info" label={t('lines.status.trial')} sx={pillSx} /> : null}
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  startIcon={<ContentCopyIcon fontSize="small" />}
+                  onClick={() => copyCredentials(detail.row)}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                >
+                  {t('lines.detail.copy', 'Copiar')}
+                </Button>
               </Stack>
             </Box>
 
-          
-
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <Box sx={detailCardSx}>
-                  <Stack spacing={0.75}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <BoltIcon color="warning" fontSize="small" />
-                      <Typography variant="caption" color="text.secondary">
+                <Box
+                  sx={(theme) => ({
+                    ...infoCardBase(theme),
+                    background: `linear-gradient(160deg, ${theme.palette.warning.light}22 0%, ${theme.palette.background.paper} 90%)`
+                  })}
+                >
+                  <Stack direction="row" alignItems="center" spacing={1.5} sx={{ width: '100%' }}>
+                    <Avatar sx={{ bgcolor: 'warning.light', color: 'warning.dark', width: 36, height: 36 }}>
+                      <BoltIcon fontSize="small" />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="overline" color="text.secondary">
                         {t('lines.detail.package')}
                       </Typography>
-                    </Stack>
-                    <Typography variant="subtitle2">{detail.row?.packageName || '-'}</Typography>
-                    <Stack spacing={0.5} alignItems="flex-start">
-                      <Typography variant="caption" color="text.secondary">
-                        ID: {detail.row?.packageId ?? '-'}
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                        {detail.row?.packageName || t('lines.detail.noPackage', 'No package')}
                       </Typography>
-                      <Chip size="small" label={`${t('lines.detail.type')}: ${detail.row?.type || '-'}`} variant="outlined" />
-                    </Stack>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5, flexWrap: 'wrap' }}>
+                        <Chip size="small" label={`${t('common.id', 'ID')}: ${detail.row?.packageId ?? '-'}`} variant="outlined" />
+                        <Chip size="small" label={`${t('lines.detail.type')}: ${detail.row?.type || '-'}`} color="primary" variant="outlined" />
+                      </Stack>
+                    </Box>
                   </Stack>
                 </Box>
               </Grid>
+
               <Grid item xs={12} sm={6}>
-                <Box sx={detailCardSx}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <LanIcon color="action" fontSize="small" />
-                    <Typography variant="caption" color="text.secondary">
-                      {t('lines.headers.max')}
-                    </Typography>
+                <Box
+                  sx={(theme) => ({
+                    ...infoCardBase(theme),
+                    background: `linear-gradient(160deg, ${theme.palette.success.light}18 0%, ${theme.palette.background.paper} 92%)`
+                  })}
+                >
+                  <Stack direction="row" alignItems="center" spacing={1.5} sx={{ width: '100%' }}>
+                    <Avatar sx={{ bgcolor: 'success.light', color: 'success.dark', width: 36, height: 36 }}>
+                      <LanIcon fontSize="small" />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="overline" color="text.secondary">
+                        {t('lines.headers.max')}
+                      </Typography>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                        {detail.row?.maxConnections ?? '-'}
+                      </Typography>
+                      <Chip
+                        size="small"
+                        label={`${t('lines.headers.status')}: ${detail.row?.enabledLabel || '-'}`}
+                        variant="outlined"
+                        color={detail.row?.enabled ? 'success' : 'default'}
+                        sx={{ mt: 0.5 }}
+                      />
+                    </Box>
                   </Stack>
-                  <Typography variant="subtitle2">{detail.row?.maxConnections ?? '-'}</Typography>
-                  <Chip size="small" label={`${t('lines.headers.status')}: ${detail.row?.enabledLabel || '-'}`} variant="outlined" />
                 </Box>
               </Grid>
+
               <Grid item xs={12} sm={6}>
-                <Box sx={{ ...detailCardSx, minHeight: 120 }}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <AccessTimeIcon color="action" fontSize="small" />
-                    <Typography variant="caption" color="text.secondary">
-                      {t('lines.detail.expires')}
-                    </Typography>
+                <Box
+                  sx={(theme) => ({
+                    ...infoCardBase(theme),
+                    background: `linear-gradient(160deg, ${theme.palette.info.light}18 0%, ${theme.palette.background.paper} 92%)`
+                  })}
+                >
+                  <Stack direction="row" alignItems="center" spacing={1.5} sx={{ width: '100%' }}>
+                    <Avatar sx={{ bgcolor: 'info.light', color: 'info.dark', width: 36, height: 36 }}>
+                      <AccessTimeIcon fontSize="small" />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="overline" color="text.secondary">
+                        {t('lines.detail.expires')}
+                      </Typography>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                        {formatDate(detail.row?.expDate)}
+                      </Typography>
+                    </Box>
                   </Stack>
-                  <Typography variant="subtitle2">{formatDate(detail.row?.expDate)}</Typography>
                 </Box>
               </Grid>
+
               <Grid item xs={12} sm={6}>
-                <Box sx={{ ...detailCardSx, minHeight: 120 }}>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <CalendarMonthIcon color="action" fontSize="small" />
-                    <Typography variant="caption" color="text.secondary">
-                      {t('lines.detail.created')}
-                    </Typography>
+                <Box
+                  sx={(theme) => ({
+                    ...infoCardBase(theme),
+                    background: `linear-gradient(160deg, ${theme.palette.secondary.light}18 0%, ${theme.palette.background.paper} 92%)`
+                  })}
+                >
+                  <Stack direction="row" alignItems="center" spacing={1.5} sx={{ width: '100%' }}>
+                    <Avatar sx={{ bgcolor: 'secondary.light', color: 'secondary.dark', width: 36, height: 36 }}>
+                      <CalendarMonthIcon fontSize="small" />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="overline" color="text.secondary">
+                        {t('lines.detail.created')}
+                      </Typography>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                        {formatDate(detail.row?.createdAt)}
+                      </Typography>
+                      <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 0.25 }}>
+                        <PersonOutlineIcon fontSize="inherit" color="action" />
+                        <Typography variant="caption" color="text.secondary">
+                          {t('lines.detail.owner')}: {detail.row?.ownerName || '-'}
+                        </Typography>
+                      </Stack>
+                    </Box>
                   </Stack>
-                  <Typography variant="subtitle2">{formatDate(detail.row?.createdAt)}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('lines.detail.owner')}: {detail.row?.ownerName || '-'}
-                  </Typography>
                 </Box>
               </Grid>
             </Grid>
 
             <Box
-              sx={{
+              sx={(theme) => ({
                 ...detailCardSx,
-                borderStyle: 'dashed'
-              }}
+                borderStyle: 'dashed',
+                mt: 2,
+                p: 2.25,
+                background: `linear-gradient(145deg, ${theme.palette.primary.light}10 0%, ${theme.palette.background.paper} 100%)`
+              })}
             >
-              <Typography variant="caption" color="text.secondary">
-                {t('lines.detail.lastStreamLabel')}
-              </Typography>
-              <Typography variant="subtitle2">{detail.row?.lastWatchedName || '-'}</Typography>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems="flex-start">
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                  <AccessTimeIcon fontSize="inherit" color="action" />
-                  <Typography variant="caption" color="text.secondary">
-                    {formatDate(detail.row?.lastWatchedTime)}
+              <Stack direction="row" spacing={1.5} alignItems="center">
+                <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.dark', width: 36, height: 36 }}>
+                  <AccessTimeIcon fontSize="small" />
+                </Avatar>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="overline" color="text.secondary">
+                    {t('lines.detail.lastStreamLabel')}
                   </Typography>
-                </Stack>
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                  <PublicIcon fontSize="inherit" color="action" />
-                  <Typography variant="caption" color="text.secondary">
-                    {detail.row?.lastWatchedIp || '-'}
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                    {detail.row?.lastWatchedName || t('lines.detail.noStream', 'No recent stream')}
                   </Typography>
-                </Stack>
+                  <Stack direction="row" spacing={1.5} sx={{ mt: 0.5, flexWrap: 'wrap' }}>
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <AccessTimeIcon fontSize="inherit" color="action" />
+                      <Typography variant="caption" color="text.secondary">
+                        {formatDate(detail.row?.lastWatchedTime)}
+                      </Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <PublicIcon fontSize="inherit" color="action" />
+                      <Typography variant="caption" color="text.secondary">
+                        {detail.row?.lastWatchedIp || '-'}
+                      </Typography>
+                    </Stack>
+                  </Stack>
+                </Box>
               </Stack>
             </Box>
 
@@ -546,7 +805,8 @@ export default function LinesLionTv() {
                 sx={{
                   ...detailCardSx,
                   borderStyle: 'dashed',
-                  gap: 0.5
+                  gap: 0.5,
+                  mt: 2
                 }}
               >
                 <Typography variant="caption" color="text.secondary">
@@ -557,7 +817,7 @@ export default function LinesLionTv() {
             ) : null}
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button onClick={() => setDetail({ open: false, row: null })} variant="outlined">
             {t('lines.detail.close')}
           </Button>
