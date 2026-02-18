@@ -21,6 +21,7 @@ import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
+import Card from '@mui/material/Card';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -34,6 +35,7 @@ import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import IconButton from '@mui/material/IconButton';
 import { useTheme, useMediaQuery } from '@mui/material';
+import Menu from '@mui/material/Menu';
 
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -43,6 +45,15 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PriceChangeIcon from '@mui/icons-material/PriceChange';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import WifiTetheringIcon from '@mui/icons-material/WifiTethering';
+import BoltIcon from '@mui/icons-material/Bolt';
+import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import Skeleton from '@mui/material/Skeleton';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import CloseIcon from '@mui/icons-material/Close';
+import LinkIcon from '@mui/icons-material/Link';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
@@ -67,6 +78,18 @@ const sectionSx = {
   borderColor: 'divider',
   bgcolor: 'background.paper'
 };
+
+const glassCard = (theme) => ({
+  p: 2,
+  borderRadius: 2.5,
+  border: '1px solid',
+  borderColor: 'divider',
+  boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
+  background:
+    theme.palette.mode === 'light'
+      ? `linear-gradient(135deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}12 45%, #ffffff 100%)`
+      : theme.palette.background.default
+});
 
 function formatDate(value) {
   if (!value) return '-';
@@ -115,6 +138,53 @@ function normalizeSubscription(item = {}) {
     customer_name: item.customer_name ?? '',
     username_line: item.username_line ?? '',
   };
+}
+
+function RowActions({ row, onEdit, onDelete }) {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  return (
+    <>
+      <IconButton
+        size="small"
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        sx={(theme) => ({
+          bgcolor: theme.palette.primary.lighter,
+          color: theme.palette.primary.main,
+          '&:hover': { bgcolor: theme.palette.primary.light },
+          boxShadow: '0 6px 12px rgba(0,0,0,0.12)'
+        })}
+      >
+        <MoreVertIcon fontSize="small" />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            onEdit?.(row);
+          }}
+        >
+          <EditOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#1e88e5' }} />
+          Editar
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            onDelete?.(row);
+          }}
+        >
+          <DeleteOutlineIcon fontSize="small" style={{ marginRight: 8, color: '#e53935' }} />
+          Eliminar
+        </MenuItem>
+      </Menu>
+    </>
+  );
 }
 
 function formatDateInput(value) {
@@ -198,7 +268,7 @@ export default function SubscriptionsLionTv() {
       if (!rawId) return;
       const id = String(rawId);
       map[id] = {
-        name: p.name || p.packageName || `Paquete ${id}`,
+        name: p.name || p.packageName || `Package ${id}`,
         description: p.description || p.packageDescription || ''
       };
     });
@@ -503,49 +573,125 @@ export default function SubscriptionsLionTv() {
         title={t('subscriptions.title')}
         secondary={
           <Stack direction="row" spacing={1}>
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => setRefreshKey((v) => v + 1)}>
-              {t('actions.refresh')}
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={() => setRefreshKey((v) => v + 1)}
+              sx={{
+                borderRadius: 3,
+                borderWidth: 2,
+                textTransform: 'none',
+                fontWeight: 700,
+                px: 2.5
+              }}
+            >
+              {t('actions.refresh', 'Refresh')}
             </Button>
-            <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={() => setOpenModal(true)}>
-              {t('actions.add')}
+            <Button
+              variant="contained"
+              startIcon={<AddCircleOutlineIcon />}
+              onClick={() => setOpenModal(true)}
+              sx={{
+                borderRadius: 3,
+                textTransform: 'none',
+                fontWeight: 700,
+                px: 2.8,
+                boxShadow: '0 12px 24px rgba(0,133,255,0.35)'
+              }}
+            >
+              {t('subscriptions.actions.new', 'New subscription')}
             </Button>
           </Stack>
         }
       >
         <Grid container spacing={gridSpacing}>
-          <Grid item xs={12} sm={4}>
-            <Chip label={`${total} ${t('subscriptions.title').toLowerCase()}`} color="primary" />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Chip label={`ACTIVE: ${rows.filter((r) => r.status === 'ACTIVE').length}`} color="success" />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Chip label={`${t('subscriptions.headers.autopay')}: ${rows.filter((r) => r.automaticPay).length}`} color="secondary" />
-          </Grid>
+          {[
+            { label: `${total} ${t('subscriptions.title').toLowerCase()}`, color: '#1e88ff', icon: <CreditCardIcon fontSize="small" /> },
+            { label: `STATUS: ACTIVE ${rows.filter((r) => r.status === 'ACTIVE').length}`, color: '#00c853', icon: <AutoAwesomeIcon fontSize="small" /> },
+            { label: `${t('subscriptions.headers.autopay')}: ${rows.filter((r) => r.automaticPay).length}`, color: '#ffd54f', icon: <PriceChangeIcon fontSize="small" /> }
+          ].map((item, idx) => (
+            <Grid item xs={12} sm={4} key={idx}>
+              <Card
+                sx={(theme) => ({
+                  ...glassCard(theme),
+                  py: 2.2,
+                  px: 2.8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.75,
+                  background:
+                    theme.palette.mode === 'light'
+                      ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(226,232,255,0.8) 40%, rgba(240,229,255,0.8) 100%)'
+                      : theme.palette.background.paper,
+                  boxShadow: '0 18px 38px rgba(0,0,0,0.12)',
+                  borderRadius: 3,
+                  border: '1px solid',
+                  borderColor: 'divider'
+                })}
+              >
+                <Avatar
+                  sx={(theme) => ({
+                    width: 48,
+                    height: 48,
+                    bgcolor: item.color,
+                    color: '#fff',
+                    boxShadow: '0 10px 20px rgba(0,0,0,0.16)'
+                  })}
+                >
+                  {item.icon}
+                </Avatar>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#2d3748' }}>
+                  {item.label}
+                </Typography>
+              </Card>
+            </Grid>
+          ))}
         </Grid>
       </MainCard>
 
-      <MainCard
-        title={t('subscriptions.title')}
-        secondary={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: { xs: '100%', sm: 480 } }}>
+      <MainCard title={t('subscriptions.title')}>
+        <Box
+          sx={(theme) => ({
+            mb: 2,
+            p: 2,
+            borderRadius: 2.5,
+            border: '1px solid',
+            borderColor: theme.palette.divider,
+            background:
+              theme.palette.mode === 'light'
+                ? `linear-gradient(135deg, ${theme.palette.primary.light}12 0%, ${theme.palette.secondary.light}10 100%)`
+                : theme.palette.background.paper,
+            boxShadow: '0 10px 28px rgba(0,0,0,0.08)'
+          })}
+        >
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
             <TextField
               size="small"
               placeholder={t('subscriptions.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               fullWidth
+              sx={{ '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon />
+                    <SearchIcon color="action" />
                   </InputAdornment>
                 )
               }}
             />
-            <FormControl size="small" sx={{ minWidth: 140 }}>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 200 }, '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}>
               <InputLabel>{t('subscriptions.filters.status')}</InputLabel>
-              <Select value={statusFilter} label={t('subscriptions.filters.status')} onChange={(e) => setStatusFilter(e.target.value)}>
+              <Select
+                value={statusFilter}
+                label={t('subscriptions.filters.status')}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                startAdornment={
+                  <InputAdornment position="start" sx={{ pl: 1 }}>
+                    <FilterAltOutlinedIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                }
+              >
                 <MenuItem value="">
                   <em>{t('subscriptions.filters.all')}</em>
                 </MenuItem>
@@ -556,9 +702,8 @@ export default function SubscriptionsLionTv() {
                 ))}
               </Select>
             </FormControl>
-          </Box>
-        }
-      >
+          </Stack>
+        </Box>
         <TableContainer component={Paper}>
           <Table size="small">
               <TableHead>
@@ -576,76 +721,104 @@ export default function SubscriptionsLionTv() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paginatedRows.map((row) => (
-                  <TableRow key={row.subscriptionId || row.lineId}>
-                    <TableCell>{row.subscriptionId}</TableCell>
-                    <TableCell>{row.customerName || row.customer_name}</TableCell>
-                    <TableCell>
-                      {lineNameMap[String(row.lineId ?? row.username_line ?? '')] ||
-                        row.username_line ||
-                        row.lineId ||
-                        '-'}
+                {loading &&
+                  Array.from({ length: 4 }).map((_, idx) => (
+                    <TableRow key={`sub-skel-${idx}`}>
+                      {Array.from({ length: 10 }).map((__, cidx) => (
+                        <TableCell key={cidx}>
+                          <Skeleton variant="text" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                {!loading &&
+                  paginatedRows.map((row) => (
+                    <TableRow key={row.subscriptionId || row.lineId} hover>
+                      <TableCell>
+                        <Stack direction="row" spacing={0.75} alignItems="center">
+                          <CreditCardIcon fontSize="small" sx={{ color: '#1e88ff' }} />
+                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                            {row.subscriptionId}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={0.75} alignItems="center">
+                          <PersonOutlineIcon fontSize="small" sx={{ color: '#607d8b' }} />
+                          <Typography variant="body2">{row.customerName || row.customer_name || '-'}</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={0.75} alignItems="center">
+                          <WifiTetheringIcon fontSize="small" sx={{ color: '#00c853' }} />
+                          <Typography variant="body2">
+                            {lineNameMap[String(row.lineId ?? row.username_line ?? '')] || row.username_line || row.lineId || '-'}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack spacing={0.25}>
+                          <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Avatar sx={{ width: 22, height: 22, bgcolor: '#ffd54f', color: '#bf8f00' }}>
+                              <BoltIcon fontSize="inherit" />
+                            </Avatar>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {row.packageName || packageMap[String(row.packageId ?? '')]?.name || row.packageId || '-'}
+                            </Typography>
+                          </Stack>
+                          {row.packageDescription || packageMap[String(row.packageId ?? '')]?.description ? (
+                            <Typography variant="caption" color="text.secondary" noWrap>
+                              {row.packageDescription || packageMap[String(row.packageId ?? '')]?.description}
+                            </Typography>
+                          ) : null}
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <StatusChip status={row.status} />
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" alignItems="center" spacing={0.5}>
+                          <PriceChangeIcon fontSize="small" sx={{ color: '#43a047' }} />
+                          <Typography variant="body2">
+                            {Number(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                          <CalendarMonthIcon fontSize="small" color="primary" />
+                          <Typography variant="body2">{row.startDate || '-'}</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                          <CalendarMonthIcon fontSize="small" color="primary" />
+                          <Typography variant="body2">{row.renewalDate || '-'}</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          label={row.automaticPay ? t('common.yes', 'Yes') : t('common.no', 'No')}
+                          color={row.automaticPay ? 'success' : 'default'}
+                          variant={row.automaticPay ? 'filled' : 'outlined'}
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        <RowActions row={row} onEdit={handleEdit} onDelete={handleDelete} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                {!loading && filteredRows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={10} align="center">
+                      No hay suscripciones registradas.
                     </TableCell>
-                    <TableCell>
-                      <Stack spacing={0.25}>
-                        <Typography variant="body2">
-                          {row.packageName ||
-                            packageMap[String(row.packageId ?? '')]?.name ||
-                            row.packageId ||
-                            '-'}
-                        </Typography>
-                        {row.packageDescription ||
-                        packageMap[String(row.packageId ?? '')]?.description ? (
-                        <Typography variant="caption" color="text.secondary" noWrap>
-                          {row.packageDescription ||
-                              packageMap[String(row.packageId ?? '')]?.description}
-                        </Typography>
-                      ) : null}
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                      <StatusChip status={row.status} />
-                    </TableCell>
-                    <TableCell>
-                      <Stack direction="row" alignItems="center" spacing={0.5}>
-                      <PriceChangeIcon fontSize="small" color="action" />
-                      <Typography variant="body2">
-                        {Number(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>{row.startDate}</TableCell>
-                  <TableCell>{row.renewalDate}</TableCell>
-                  <TableCell>{row.automaticPay ? 'Sí' : 'No'}</TableCell>
-                  <TableCell align="right">
-                    <Stack direction="row" spacing={1}>
-                      <IconButton size="small" onClick={() => handleEdit(row)}>
-                        <EditOutlinedIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton size="small" color="error" onClick={() => handleDelete(row)}>
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {!loading && filteredRows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={10} align="center">
-                    No hay suscripciones registradas.
-                  </TableCell>
-                </TableRow>
-              )}
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={10} align="center">
-                    Cargando...
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
 
         <Divider sx={{ my: 1 }} />
 
@@ -659,28 +832,63 @@ export default function SubscriptionsLionTv() {
         />
       </MainCard>
 
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="md" fullScreen={isMobile}>
-        <DialogTitle sx={{ position: 'relative', pr: 5 }}>
+      <Dialog
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        fullWidth
+        maxWidth="md"
+        fullScreen={isMobile}
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            boxShadow: 18,
+            overflow: 'hidden',
+            border: '1px solid',
+            borderColor: 'divider'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={(theme) => ({
+            position: 'relative',
+            pr: 5,
+            background: `linear-gradient(135deg, ${theme.palette.primary.light}28 0%, ${theme.palette.secondary.light}20 45%, ${theme.palette.background.paper} 100%)`,
+            pb: 1
+          })}
+        >
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Avatar
               sx={{
                 bgcolor: form.subscriptionId ? 'warning.main' : 'primary.main',
-                color: 'primary.contrastText',
-                width: 36,
-                height: 36,
-                boxShadow: 3
+                color: '#fff',
+                width: 40,
+                height: 40,
+                boxShadow: 4
               }}
             >
               <CreditCardIcon fontSize="small" />
             </Avatar>
             <Box>
               <Typography variant="h6">
-                {form.subscriptionId ? 'Editar suscripción' : 'Nueva suscripción'}
+                {form.subscriptionId ? t('subscriptions.form.editTitle', 'Edit subscription') : t('subscriptions.actions.new', 'New subscription')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Completa los datos del cliente, paquete y facturación.
+                {t('subscriptions.form.subtitle', 'Complete customer, package and billing details.')}
               </Typography>
             </Box>
+              <Chip
+              label={form.subscriptionId ? t('common.edit', 'Edit') : t('common.new', 'New')}
+              size="small"
+              color={form.subscriptionId ? 'warning' : 'success'}
+              sx={{ ml: 'auto', fontWeight: 700, borderRadius: 1.5 }}
+            />
+            <IconButton
+              size="small"
+              onClick={() => setOpenModal(false)}
+              sx={{ position: 'absolute', right: 12, top: 12 }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
           </Stack>
         </DialogTitle>
         <DialogContent
@@ -688,26 +896,47 @@ export default function SubscriptionsLionTv() {
           sx={{
             bgcolor: 'background.default',
             px: { xs: 1.5, sm: 3 },
-            py: { xs: 1.5, sm: 2 }
+            py: { xs: 1.5, sm: 2 },
+            background: (theme) =>
+              theme.palette.mode === 'light'
+                ? `linear-gradient(180deg, ${theme.palette.primary.light}12 0%, ${theme.palette.secondary.light}10 50%, ${theme.palette.background.paper} 80%)`
+                : theme.palette.background.default
           }}
         >
           <Stack spacing={2}>
-            <SectionCard title="Datos principales" helper="Cliente, paquete y estado.">
+            <SectionCard
+              title={t('subscriptions.form.sections.main', 'Main data')}
+              helper={t('subscriptions.form.sections.mainHelper', 'Customer, package and status.')}
+            >
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl fullWidth required sx={fieldSx} disabled={customersLoading}>
-                    <InputLabel>Cliente</InputLabel>
+                    <InputLabel shrink>{t('subscriptions.form.customer', 'Customer')}</InputLabel>
                     <Select
+                      displayEmpty
                       value={form.customerId}
                       label="Cliente"
                       onChange={handleFormChange('customerId')}
+                      renderValue={(value) => {
+                        const c = customers.find((cust) => (cust.customerId || cust.id) === value);
+                        const label =
+                          c?.customerFullname || c?.fullName || c?.username || c?.customerMail || value || t('common.selectOption', 'Select an option');
+                        return (
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <PersonOutlineIcon fontSize="small" color="primary" />
+                            <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'}>
+                              {label}
+                            </Typography>
+                          </Stack>
+                        );
+                      }}
                     >
                       <MenuItem value="">
-                        <em>Selecciona un cliente</em>
+                        <em>{t('common.selectOption', 'Select an option')}</em>
                       </MenuItem>
                       {customers.length === 0 ? (
                         <MenuItem value="" disabled>
-                          No hay clientes disponibles
+                          {t('subscriptions.form.noCustomers', 'No customers available')}
                         </MenuItem>
                       ) : (
                         customers.map((c) => (
@@ -718,32 +947,52 @@ export default function SubscriptionsLionTv() {
                       )}
                     </Select>
                     <FormHelperText>
-                      {customersLoading ? 'Cargando clientes...' : 'Elige el cliente de la suscripción.'}
+                      {customersLoading
+                        ? t('subscriptions.form.loadingCustomers', 'Loading customers...')
+                        : t('subscriptions.form.customerHint', 'Choose the subscription customer.')}
                     </FormHelperText>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl fullWidth required sx={fieldSx} disabled={packagesLoading}>
-                    <InputLabel>Package</InputLabel>
+                    <InputLabel shrink>{t('subscriptions.form.package', 'Package')}</InputLabel>
                     <Select
+                      displayEmpty
                       value={form.packageId}
                       label="Package"
                       onChange={handleFormChange('packageId')}
+                      renderValue={(value) => {
+                        const pkg = packages.find((p) => p.id === value);
+                        const label = pkg ? pkg.name || `Package ${pkg.id}` : value || t('common.selectOption', 'Select an option');
+                        return (
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <BoltIcon fontSize="small" color="warning" />
+                            <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'}>
+                              {label}
+                            </Typography>
+                          </Stack>
+                        );
+                      }}
                     >
                       <MenuItem value="">
-                        <em>Selecciona un paquete</em>
+                        <em>{t('common.selectOption', 'Select an option')}</em>
                       </MenuItem>
                       {packages.length === 0 ? (
                         <MenuItem value="" disabled>
-                          No hay paquetes disponibles
+                          {t('subscriptions.form.noPackages', 'No packages available')}
                         </MenuItem>
                       ) : (
                         packages.map((p) => (
                           <MenuItem key={p.id} value={p.id}>
                             <Stack spacing={0.25}>
-                              <Typography variant="body2">{p.name || `Paquete ${p.id}`}</Typography>
+                              <Stack direction="row" spacing={0.75} alignItems="center">
+                                <Avatar sx={{ width: 22, height: 22, bgcolor: '#ffd54f', color: '#bf8f00' }}>
+                                  <BoltIcon fontSize="inherit" />
+                                </Avatar>
+                                <Typography variant="body2">{p.name || `Paquete ${p.id}`}</Typography>
+                              </Stack>
                               {p.description ? (
-                                <Typography variant="caption" color="text.secondary" noWrap>
+                                <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'normal' }}>
                                   {p.description}
                                 </Typography>
                               ) : null}
@@ -753,35 +1002,69 @@ export default function SubscriptionsLionTv() {
                       )}
                     </Select>
                     <FormHelperText>
-                      {packagesLoading ? 'Cargando paquetes...' : 'Paquetes (excluye los DEMO)'}
+                      {packagesLoading
+                        ? t('subscriptions.form.loadingPackages', 'Loading packages...')
+                        : t('subscriptions.form.packagesHint', 'Packages (DEMO excluded)')}
                     </FormHelperText>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl fullWidth required sx={fieldSx}>
-                    <InputLabel>Estado</InputLabel>
-                    <Select value={form.status} label="Estado" onChange={handleFormChange('status')}>
-                      <MenuItem value="ACTIVE">Activo</MenuItem>
-                      <MenuItem value="INACTIVE">Inactivo</MenuItem>
-                      <MenuItem value="CANCELLED">Cancelado</MenuItem>
+                    <InputLabel shrink>{t('subscriptions.form.status', 'Status')}</InputLabel>
+                    <Select
+                      displayEmpty
+                      value={form.status}
+                      label={t('subscriptions.form.status', 'Status')}
+                      onChange={handleFormChange('status')}
+                      renderValue={(value) => (
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <AutoAwesomeIcon fontSize="small" color="success" />
+                          <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'}>
+                            {value || t('subscriptions.form.statusPlaceholder', 'Status')}
+                          </Typography>
+                        </Stack>
+                      )}
+                    >
+                      <MenuItem value="ACTIVE">{t('status.active', 'Active')}</MenuItem>
+                      <MenuItem value="INACTIVE">{t('status.inactive', 'Inactive')}</MenuItem>
+                      <MenuItem value="CANCELLED">{t('status.cancelled', 'Cancelled')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
               </Grid>
             </SectionCard>
 
-            <SectionCard title="Facturación" helper="Detalle de línea, billing y montos.">
+            <SectionCard
+              title={t('subscriptions.form.sections.billing', 'Billing')}
+              helper={t('subscriptions.form.sections.billingHelper', 'Line, billing and amounts.')}
+            >
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl fullWidth required sx={fieldSx} disabled={linesLoading}>
-                    <InputLabel>Línea</InputLabel>
-                    <Select value={form.lineId} label="Línea" onChange={handleLineChange}>
+                    <InputLabel shrink>{t('subscriptions.form.line', 'Line')}</InputLabel>
+                    <Select
+                      displayEmpty
+                      value={form.lineId}
+                      label={t('subscriptions.form.line', 'Line')}
+                      onChange={handleLineChange}
+                      renderValue={(value) => {
+                        const lineLabel = lineNameMap[String(value)] || value || t('common.selectOption', 'Select an option');
+                        return (
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <WifiTetheringIcon fontSize="small" color="primary" />
+                            <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'}>
+                              {lineLabel}
+                            </Typography>
+                          </Stack>
+                        );
+                      }}
+                    >
                       <MenuItem value="">
-                        <em>Selecciona una línea</em>
+                        <em>{t('common.selectOption', 'Select an option')}</em>
                       </MenuItem>
                       {lines.length === 0 ? (
                         <MenuItem value="" disabled>
-                          No hay líneas disponibles
+                          {t('subscriptions.form.noLines', 'No lines available')}
                         </MenuItem>
                       ) : (
                         lines.map((l) => (
@@ -792,56 +1075,86 @@ export default function SubscriptionsLionTv() {
                       )}
                     </Select>
                     <FormHelperText>
-                      {linesLoading ? 'Cargando líneas...' : 'Se muestra la descripción con el username'}
-                    </FormHelperText>
+                    {linesLoading
+                        ? t('subscriptions.form.loadingLines', 'Loading lines...')
+                        : t('subscriptions.form.linesHint', 'Description shows username')}
+                  </FormHelperText>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl fullWidth sx={fieldSx}>
-                    <InputLabel>Billing</InputLabel>
-                    <Select value={form.billing} label="Billing" onChange={handleFormChange('billing')}>
+                    <InputLabel shrink>{t('subscriptions.form.billing', 'Billing')}</InputLabel>
+                    <Select
+                      displayEmpty
+                      value={form.billing}
+                      label="Billing"
+                      onChange={handleFormChange('billing')}
+                      renderValue={(value) => (
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <PriceChangeIcon fontSize="small" color="info" />
+                          <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'}>
+                            {value || t('common.selectOption', 'Select an option')}
+                          </Typography>
+                        </Stack>
+                      )}
+                    >
                       <MenuItem value="">
-                        <em>Selecciona</em>
+                        <em>{t('common.selectOption', 'Select an option')}</em>
                       </MenuItem>
-                      <MenuItem value="Monthly">Monthly</MenuItem>
-                      <MenuItem value="Quarterly">Quarterly</MenuItem>
-                      <MenuItem value="Biannual">Biannual</MenuItem>
-                      <MenuItem value="Annual">Annual</MenuItem>
+                      <MenuItem value="Monthly">{t('billing.monthly', 'Monthly')}</MenuItem>
+                      <MenuItem value="Quarterly">{t('billing.quarterly', 'Quarterly')}</MenuItem>
+                      <MenuItem value="Biannual">{t('billing.biannual', 'Biannual')}</MenuItem>
+                      <MenuItem value="Annual">{t('billing.annual', 'Annual')}</MenuItem>
                     </Select>
-                    <FormHelperText>Frecuencia de facturación</FormHelperText>
+                    <FormHelperText>{t('subscriptions.form.billingHint', 'Billing frequency')}</FormHelperText>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={2} md={2}>
                   <TextField
-                    label="Monto"
+                    label={t('subscriptions.form.amount', 'Amount')}
                     type="number"
                     value={form.amount}
                     onChange={handleFormChange('amount')}
                     fullWidth
                     sx={fieldSx}
-                    InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PriceChangeIcon fontSize="small" color="info" />
+                        </InputAdornment>
+                      )
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={2} md={2}>
                   <TextField
-                    label="Descuento"
+                    label={t('subscriptions.form.discount', 'Discount')}
                     type="number"
                     value={form.discount}
                     onChange={handleFormChange('discount')}
                     fullWidth
                     sx={fieldSx}
-                    InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PriceChangeIcon fontSize="small" color="info" />
+                        </InputAdornment>
+                      )
+                    }}
                   />
                 </Grid>
               </Grid>
             </SectionCard>
 
-            <SectionCard title="Fechas" helper="Inicio y renovación de la suscripción.">
+            <SectionCard
+              title={t('subscriptions.form.sections.dates', 'Dates')}
+              helper={t('subscriptions.form.sections.datesHelper', 'Subscription start and renewal.')}
+            >
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6} md={6}>
                   <TextField
                     required
-                    label="Inicio"
+                    label={t('subscriptions.form.start', 'Start')}
                     type="date"
                     value={form.startDate}
                     onChange={handleFormChange('startDate')}
@@ -851,7 +1164,7 @@ export default function SubscriptionsLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <CalendarMonthIcon fontSize="small" />
+                          <CalendarMonthIcon fontSize="small" color="primary" />
                         </InputAdornment>
                       )
                     }}
@@ -859,7 +1172,7 @@ export default function SubscriptionsLionTv() {
                 </Grid>
                 <Grid item xs={12} sm={6} md={6}>
                   <TextField
-                    label="Renovación"
+                    label={t('subscriptions.form.renewal', 'Renewal')}
                     type="date"
                     value={form.renewalDate}
                     onChange={handleFormChange('renewalDate')}
@@ -869,7 +1182,7 @@ export default function SubscriptionsLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <CalendarMonthIcon fontSize="small" />
+                          <CalendarMonthIcon fontSize="small" color="primary" />
                         </InputAdornment>
                       )
                     }}
@@ -878,34 +1191,53 @@ export default function SubscriptionsLionTv() {
               </Grid>
             </SectionCard>
 
-            <SectionCard title="Automatización" helper="Pagos automáticos y enlace de activación.">
+            <SectionCard
+              title={t('subscriptions.form.sections.automation', 'Automation')}
+              helper={t('subscriptions.form.sections.automationHelper', 'Automatic payments and activation link.')}
+            >
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={3} md={3} display="flex" alignItems="center">
                   <FormControlLabel
-                    control={<Switch checked={form.automaticPay} onChange={handleFormChange('automaticPay')} />}
-                    label="Pago automático"
+                    control={<Switch checked={form.automaticPay} onChange={handleFormChange('automaticPay')} color="success" />}
+                    label={t('subscriptions.form.autopay', 'Automatic payment')}
                   />
                 </Grid>
-                <Grid item xs={12} sm={9} md={9}>
+                <Grid item xs={12} sm={12} md={12}>
                   <TextField
-                    label="Link de pago automático"
+                    label={t('subscriptions.form.autopayLink', 'Automatic payment link')}
                     value={form.linkAutomatic}
                     onChange={handleFormChange('linkAutomatic')}
                     fullWidth
                     sx={fieldSx}
                     placeholder="https://..."
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LinkIcon fontSize="small" color="primary" />
+                        </InputAdornment>
+                      )
+                    }}
                   />
                 </Grid>
               </Grid>
             </SectionCard>
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button variant="outlined" onClick={resetForm} disabled={sending}>
-            Limpiar
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button variant="outlined" onClick={resetForm} disabled={sending} sx={{ borderRadius: 2 }}>
+            {t('common.clear', 'Clear')}
           </Button>
-          <Button variant="contained" onClick={handleSave} disabled={sending}>
-            {sending ? 'Guardando...' : form.subscriptionId ? 'Guardar cambios' : 'Crear'}
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={sending}
+            sx={{ borderRadius: 2, boxShadow: '0 10px 20px rgba(0,133,255,0.25)' }}
+          >
+            {sending
+              ? t('common.saving', 'Saving...')
+              : form.subscriptionId
+                ? t('common.saveChanges', 'Save changes')
+                : t('common.create', 'Create')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -917,19 +1249,18 @@ export default function SubscriptionsLionTv() {
         fullWidth
         fullScreen={isMobile}
       >
-        <DialogTitle>Eliminar suscripción</DialogTitle>
+        <DialogTitle>{t('subscriptions.delete.title', 'Eliminar suscripción')}</DialogTitle>
         <DialogContent dividers>
           <Typography>
-            ¿Eliminar la suscripción <strong>{openDelete.row?.subscriptionId ?? ''}</strong>? Esta acción no se puede
-            deshacer.
+            {t('subscriptions.delete.message', 'Delete subscription')} <strong>{openDelete.row?.subscriptionId ?? ''}</strong>? {t('subscriptions.delete.warning', 'This action cannot be undone.')}
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDelete({ open: false, row: null })} disabled={sending}>
-            Cancelar
+            {t('common.cancel', 'Cancel')}
           </Button>
           <Button color="error" variant="contained" onClick={confirmDelete} disabled={sending}>
-            {sending ? 'Eliminando...' : 'Eliminar'}
+            {sending ? t('subscriptions.delete.deleting', 'Deleting...') : t('subscriptions.delete.confirm', 'Delete')}
           </Button>
         </DialogActions>
       </Dialog>
