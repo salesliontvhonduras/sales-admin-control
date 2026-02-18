@@ -34,13 +34,14 @@ import Transitions from 'ui-component/extended/Transitions';
 import useConfig from 'hooks/useConfig';
 import useAuth from 'hooks/useAuth';
 import { useSnackbar } from 'notistack';
-import LanguageSwitcher from 'ui-component/LanguageSwitcher';
 import Tooltip from '@mui/material/Tooltip';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import { authApi } from 'utils/api';
 import IconButton from '@mui/material/IconButton';
+import LanguageIcon from '@mui/icons-material/Language';
+import LanguageSwitcher from 'ui-component/LanguageSwitcher';
 
 // assets
 import User1 from 'assets/images/users/user-round.svg';
@@ -131,27 +132,15 @@ export default function ProfileSection() {
 
   return (
     <>
-      <Chip
-        slotProps={{ label: { sx: { lineHeight: 0 } } }}
-        sx={{ ml: 2, height: '48px', alignItems: 'center', borderRadius: '27px' }}
-        icon={
-          <Avatar
-            src={User1}
-            alt="user-images"
-            sx={{ typography: 'mediumAvatar', margin: '8px 0 8px 8px !important', cursor: 'pointer' }}
-            ref={anchorRef}
-            aria-controls={open ? 'menu-list-grow' : undefined}
-            aria-haspopup="true"
-            color="inherit"
-          />
-        }
-        label={<IconSettings stroke={1.5} size="24px" />}
+      <Avatar
+        src={User1}
+        alt="user-images"
+        sx={{ typography: 'mediumAvatar', marginLeft: 2, cursor: 'pointer', boxShadow: theme.shadows[3] }}
         ref={anchorRef}
         aria-controls={open ? 'menu-list-grow' : undefined}
         aria-haspopup="true"
+        color="inherit"
         onClick={handleToggle}
-        color="primary"
-        aria-label="user-account"
       />
       <Popper
         placement="bottom"
@@ -188,24 +177,6 @@ export default function ProfileSection() {
                             </Typography>
                           </Box>
                           <Box sx={{ flexGrow: 1 }} />
-                          <Tooltip title="Change language">
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                justifyContent: 'flex-end',
-                                alignItems: 'center',
-                                px: 1,
-                                py: 0.5,
-                                bgcolor: 'primary.lighter',
-                                borderRadius: 2,
-                                border: '1px solid',
-                                borderColor: 'primary.light',
-                                boxShadow: theme.shadows[2]
-                              }}
-                            >
-                              <LanguageSwitcher />
-                            </Box>
-                          </Tooltip>
                         </Stack>
                       </Stack>
                       <OutlinedInput
@@ -244,6 +215,40 @@ export default function ProfileSection() {
                           '& .MuiListItemButton-root': { mt: 0.5 }
                         }}
                       >
+                        <ListItemButton
+                          sx={{
+                            borderRadius: `${borderRadius}px`,
+                            px: 1.5,
+                            py: 1
+                          }}
+                        >
+                          <ListItemIcon>
+                            <LanguageIcon fontSize="small" color="primary" />
+                          </ListItemIcon>
+                          <Stack spacing={0.5} sx={{ width: '100%' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              Change language
+                            </Typography>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                p: 0.75,
+                                borderRadius: 1.5,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                bgcolor: 'background.default',
+                                boxShadow: theme.shadows[1]
+                              }}
+                            >
+                              <Typography variant="caption" color="text.secondary">
+                                Current
+                              </Typography>
+                              <LanguageSwitcher overlay />
+                            </Box>
+                          </Stack>
+                        </ListItemButton>
                         <ListItemButton sx={{ borderRadius: `${borderRadius}px` }}>
                           <ListItemIcon>
                             <IconSettings stroke={1.5} size="20px" />

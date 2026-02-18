@@ -261,26 +261,26 @@ export default function LinesLionTv() {
         title={t('lines.title')}
       >
         <Grid container spacing={gridSpacing}>
-          {[
-            { icon: <SpeedIcon fontSize="small" />, label: t('lines.summary.totalLabel', 'Líneas totales'), value: total, color: 'primary.main' },
-            { icon: <CloudDoneIcon fontSize="small" />, label: t('lines.summary.activeLabel', 'Activas'), value: summary.enabled, color: 'success.main' },
-            { icon: <ErrorOutlineIcon fontSize="small" />, label: t('lines.summary.expiredLabel', 'Expiradas'), value: summary.expired, color: 'warning.main' }
-          ].map((item, idx) => (
-            <Grid item xs={12} sm={4} md={4} key={idx}>
-              <Card
-                sx={(theme) => ({
-                  ...glassCard(theme),
-                  py: 1.5,
-                  px: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.5,
-                  background:
-                    theme.palette.mode === 'light'
-                      ? `linear-gradient(155deg, ${theme.palette.primary.main}10 0%, ${theme.palette.secondary.main}14 55%, #ffffff 100%)`
-                      : theme.palette.background.paper
-                })}
-              >
+            {[
+              { icon: <SpeedIcon fontSize="small" />, label: t('lines.summary.totalLabel', 'Líneas totales'), value: total, color: 'primary.main' },
+              { icon: <CloudDoneIcon fontSize="small" />, label: t('lines.summary.activeLabel', 'Activas'), value: summary.enabled, color: 'success.main' },
+              { icon: <ErrorOutlineIcon fontSize="small" />, label: t('lines.summary.expiredLabel', 'Expiradas'), value: summary.expired, color: 'warning.main' }
+            ].map((item, idx) => (
+              <Grid item xs={12} sm={6} md={3} key={idx}>
+                <Card
+                  sx={(theme) => ({
+                    ...glassCard(theme),
+                    py: 1.5,
+                    px: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    background:
+                      theme.palette.mode === 'light'
+                        ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, #ffffff 100%)`
+                        : theme.palette.background.paper
+                  })}
+                >
                 <Avatar
                   sx={(theme) => ({
                     width: 40,
@@ -309,7 +309,7 @@ export default function LinesLionTv() {
         </Grid>
       </MainCard>
 
-      <MainCard title={t('lines.listTitle')}>
+      <MainCard title={null}>
         <Box
           sx={(theme) => ({
             mb: 2,

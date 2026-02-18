@@ -605,37 +605,39 @@ export default function SubscriptionsLionTv() {
         }
       >
         <Grid container spacing={gridSpacing}>
-          {[
-            { label: `${total} ${t('subscriptions.title').toLowerCase()}`, color: '#1e88ff', icon: <CreditCardIcon fontSize="small" /> },
-            { label: `STATUS: ACTIVE ${rows.filter((r) => r.status === 'ACTIVE').length}`, color: '#00c853', icon: <AutoAwesomeIcon fontSize="small" /> },
-            { label: `${t('subscriptions.headers.autopay')}: ${rows.filter((r) => r.automaticPay).length}`, color: '#ffd54f', icon: <PriceChangeIcon fontSize="small" /> }
-          ].map((item, idx) => (
-            <Grid item xs={12} sm={4} key={idx}>
+            {[
+              { label: `${total} ${t('subscriptions.title').toLowerCase()}`, color: '#1e88ff', icon: <CreditCardIcon fontSize="small" /> },
+              { label: `STATUS: ACTIVE ${rows.filter((r) => r.status === 'ACTIVE').length}`, color: '#00c853', icon: <AutoAwesomeIcon fontSize="small" /> },
+              { label: `${t('subscriptions.headers.autopay')}: ${rows.filter((r) => r.automaticPay).length}`, color: '#ffd54f', icon: <PriceChangeIcon fontSize="small" /> }
+            ].map((item, idx) => (
+            <Grid item xs={12} sm={6} md={3} key={idx}>
               <Card
                 sx={(theme) => ({
                   ...glassCard(theme),
-                  py: 2.2,
-                  px: 2.8,
+                  py: 1.5,
+                  px: 2,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 1.75,
+                  gap: 1.5,
                   background:
                     theme.palette.mode === 'light'
-                      ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(226,232,255,0.8) 40%, rgba(240,229,255,0.8) 100%)'
+                      ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, #ffffff 100%)`
                       : theme.palette.background.paper,
-                  boxShadow: '0 18px 38px rgba(0,0,0,0.12)',
-                  borderRadius: 3,
+                  boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
+                  borderRadius: 2.5,
                   border: '1px solid',
                   borderColor: 'divider'
                 })}
               >
                 <Avatar
                   sx={(theme) => ({
-                    width: 48,
-                    height: 48,
+                    width: 40,
+                    height: 40,
                     bgcolor: item.color,
                     color: '#fff',
-                    boxShadow: '0 10px 20px rgba(0,0,0,0.16)'
+                    boxShadow: '0 10px 18px rgba(0,0,0,0.16)',
+                    border: '2px solid',
+                    borderColor: 'background.paper'
                   })}
                 >
                   {item.icon}
@@ -649,7 +651,7 @@ export default function SubscriptionsLionTv() {
         </Grid>
       </MainCard>
 
-      <MainCard title={t('subscriptions.title')}>
+      <MainCard title={null}>
         <Box
           sx={(theme) => ({
             mb: 2,
