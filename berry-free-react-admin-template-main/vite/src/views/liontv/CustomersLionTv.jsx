@@ -48,6 +48,8 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -60,17 +62,13 @@ import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import RouteIcon from '@mui/icons-material/Route';
 import PermContactCalendarIcon from '@mui/icons-material/PermContactCalendar';
 import Diversity1Icon from '@mui/icons-material/Diversity1';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import BlockIcon from '@mui/icons-material/Block';
+import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
-
-const statusColors = {
-  ACTIVE: 'success',
-  INACTIVE: 'error',
-  BLOCKED: 'error',
-  SUSPENDED: 'warning'
-};
 
 const channelOptions = [
   { value: 'red social', label: 'Red social' },
@@ -111,8 +109,57 @@ function formatDate(value) {
 }
 
 function StatusChip({ status }) {
-  const color = statusColors[status] || 'default';
-  return <Chip size="small" color={color} label={status || '-'} />;
+  const theme = useTheme();
+  const map = {
+    ACTIVE: {
+      bg: theme.palette.success.lighter || `${theme.palette.success.main}22`,
+      color: theme.palette.success.darker || theme.palette.success.dark,
+      border: theme.palette.success.main,
+      icon: <CheckCircleOutlineIcon fontSize="small" />
+    },
+    INACTIVE: {
+      bg: theme.palette.error.lighter || `${theme.palette.error.main}18`,
+      color: theme.palette.error.darker || theme.palette.error.dark,
+      border: theme.palette.error.main,
+      icon: <BlockIcon fontSize="small" />
+    },
+    BLOCKED: {
+      bg: theme.palette.error.lighter || `${theme.palette.error.main}18`,
+      color: theme.palette.error.darker || theme.palette.error.dark,
+      border: theme.palette.error.main,
+      icon: <BlockIcon fontSize="small" />
+    },
+    SUSPENDED: {
+      bg: theme.palette.warning.lighter || `${theme.palette.warning.main}18`,
+      color: theme.palette.warning.darker || theme.palette.warning.dark,
+      border: theme.palette.warning.main,
+      icon: <PauseCircleOutlineIcon fontSize="small" />
+    }
+  };
+  const cfg =
+    map[status] || {
+      bg: theme.palette.grey[100],
+      color: theme.palette.text.secondary,
+      border: theme.palette.divider,
+      icon: <PauseCircleOutlineIcon fontSize="small" />
+    };
+
+  return (
+    <Chip
+      size="small"
+      icon={cfg.icon}
+      label={status || '-'}
+      variant="outlined"
+      sx={{
+        fontWeight: 700,
+        bgcolor: cfg.bg,
+        color: cfg.color,
+        borderColor: cfg.border,
+        px: 0.5,
+        letterSpacing: 0.2
+      }}
+    />
+  );
 }
 
 function normalizeCustomer(item = {}) {
@@ -726,8 +773,6 @@ export default function CustomersLionTv() {
                 <TableCell>{t('customers.headers.phone')}</TableCell>
                 <TableCell>{t('customers.headers.gender')}</TableCell>
                 <TableCell>{t('customers.headers.status')}</TableCell>
-                <TableCell>{t('customers.headers.opening')}</TableCell>
-                <TableCell>{t('customers.headers.closing')}</TableCell>
                 <TableCell>{t('customers.headers.referred')}</TableCell>
                 <TableCell>{t('customers.headers.channel')}</TableCell>
                 <TableCell>{t('invoices.headers.actions')}</TableCell>
@@ -770,7 +815,12 @@ export default function CustomersLionTv() {
                       </Box>
                     </Stack>
                   </TableCell>
-                  <TableCell>{row.mail || '-'}</TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={0.75} alignItems="center">
+                      <MailOutlineIcon fontSize="small" color="info" />
+                      <Typography variant="body2">{row.mail || '-'}</Typography>
+                    </Stack>
+                  </TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={0.75} alignItems="center">
                       <Avatar
@@ -819,8 +869,6 @@ export default function CustomersLionTv() {
                   <TableCell>
                     <StatusChip status={row.status} />
                   </TableCell>
-                  <TableCell>{row.openingDate}</TableCell>
-                  <TableCell>{row.closeDate ?? '-'}</TableCell>
                   <TableCell>
                     <Chip
                       size="small"
@@ -852,7 +900,7 @@ export default function CustomersLionTv() {
               ))}
               {!loading && filteredRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
                     <Stack spacing={1} alignItems="center">
                       <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
                         <PeopleAltIcon />
@@ -870,7 +918,7 @@ export default function CustomersLionTv() {
               )}
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                     <Stack spacing={1} alignItems="center">
                       <Skeleton variant="circular" width={40} height={40} />
                       <Typography variant="body2" color="text.secondary">
@@ -902,7 +950,18 @@ export default function CustomersLionTv() {
         fullWidth
         maxWidth="md"
         fullScreen={isMobile}
-        PaperProps={{ sx: { borderRadius: 3, boxShadow: 16 } }}
+        PaperProps={{
+          sx: (theme) => ({
+            borderRadius: 3,
+            boxShadow: '0 18px 40px rgba(0,0,0,0.18)',
+            border: '1px solid',
+            borderColor: theme.palette.primary.light,
+            backgroundImage:
+              theme.palette.mode === 'light'
+                ? `linear-gradient(150deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}08 40%, #ffffff 100%)`
+                : undefined
+          })
+        }}
       >
         <DialogTitle
           sx={(theme) => ({
@@ -943,12 +1002,34 @@ export default function CustomersLionTv() {
             bgcolor: 'background.default',
             px: { xs: 1.5, sm: 3 },
             py: { xs: 1.5, sm: 2 },
+            position: 'relative',
             background: (theme) =>
               theme.palette.mode === 'light'
                 ? `linear-gradient(180deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}10 50%, ${theme.palette.background.paper} 80%)`
-                : theme.palette.background.default
+                : theme.palette.background.default,
+            '&:before': {
+              content: '\"\"',
+              position: 'absolute',
+              inset: 12,
+              zIndex: 0,
+              borderRadius: 20,
+              background:
+                'radial-gradient(circle at 20% 20%, rgba(33,150,243,0.10), transparent 45%), radial-gradient(circle at 80% 0%, rgba(156,39,176,0.10), transparent 35%)'
+            }
           }}
         >
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1, position: 'relative', zIndex: 1 }}>
+            <Chip
+              icon={<AutoAwesomeIcon fontSize="small" color="warning" />}
+              label={t('customers.badge.new')}
+              color="primary"
+              variant="outlined"
+              sx={{ fontWeight: 700, borderRadius: 1.5, boxShadow: 1 }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              {t('customers.form.tone.create', 'Add personality: complete data helps your team.')}
+            </Typography>
+          </Stack>
           <Box
             sx={{
               mb: 2,
@@ -979,8 +1060,8 @@ export default function CustomersLionTv() {
               borderColor: theme.palette.info.main
             })}
           >
-            <InfoOutlinedIcon fontSize="small" />
-            <Typography variant="caption">{t('customers.tips.new')}</Typography>
+              <InfoOutlinedIcon fontSize="small" />
+              <Typography variant="caption">{t('customers.tips.new')}</Typography>
           </Box>
 
           <Stack spacing={2}>
@@ -1201,15 +1282,20 @@ export default function CustomersLionTv() {
             </FormSection>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="outlined" onClick={resetForm} disabled={sending} sx={{ borderRadius: 2 }}>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1, position: 'relative', zIndex: 1 }}>
+          <Button variant="outlined" onClick={resetForm} disabled={sending} sx={{ borderRadius: 2 }} startIcon={<RefreshIcon />}>
             {t('customers.form.buttons.clear')}
           </Button>
           <Button
             variant="contained"
             onClick={handleCreateCustomer}
             disabled={sending}
-            sx={{ borderRadius: 2, boxShadow: '0 10px 24px rgba(0,0,0,0.12)' }}
+            startIcon={<RocketLaunchIcon />}
+            sx={{
+              borderRadius: 2,
+              boxShadow: '0 12px 28px rgba(0,0,0,0.16)',
+              px: 2.4
+            }}
           >
             {sending ? t('customers.form.buttons.creating') : t('customers.form.buttons.create')}
           </Button>
@@ -1222,7 +1308,18 @@ export default function CustomersLionTv() {
         fullWidth
         maxWidth="md"
         fullScreen={isMobile}
-        PaperProps={{ sx: { borderRadius: 3, boxShadow: 16 } }}
+        PaperProps={{
+          sx: (theme) => ({
+            borderRadius: 3,
+            boxShadow: '0 18px 40px rgba(0,0,0,0.18)',
+            border: '1px solid',
+            borderColor: theme.palette.warning.light,
+            backgroundImage:
+              theme.palette.mode === 'light'
+                ? `linear-gradient(155deg, ${theme.palette.warning.light}18 0%, ${theme.palette.secondary.light}08 40%, #ffffff 100%)`
+                : undefined
+          })
+        }}
       >
         <DialogTitle
           sx={(theme) => ({
@@ -1263,12 +1360,34 @@ export default function CustomersLionTv() {
             bgcolor: 'background.default',
             px: { xs: 1.5, sm: 3 },
             py: { xs: 1.5, sm: 2 },
+            position: 'relative',
             background: (theme) =>
               theme.palette.mode === 'light'
                 ? `linear-gradient(180deg, ${theme.palette.warning.light}18 0%, ${theme.palette.secondary.light}12 55%, ${theme.palette.background.paper} 80%)`
-                : theme.palette.background.default
+                : theme.palette.background.default,
+            '&:before': {
+              content: '\"\"',
+              position: 'absolute',
+              inset: 12,
+              zIndex: 0,
+              borderRadius: 20,
+              background:
+                'radial-gradient(circle at 15% 15%, rgba(255,193,7,0.14), transparent 40%), radial-gradient(circle at 90% 5%, rgba(156,39,176,0.10), transparent 35%)'
+            }
           }}
         >
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1, position: 'relative', zIndex: 1 }}>
+            <Chip
+              icon={<AutoAwesomeIcon fontSize="small" color="warning" />}
+              label={t('customers.badge.edit')}
+              color="warning"
+              variant="outlined"
+              sx={{ fontWeight: 700, borderRadius: 1.5, boxShadow: 1 }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              {t('customers.form.tone.edit', 'Adjust key data and confirm before saving.')}
+            </Typography>
+          </Stack>
           <Box
             sx={{
               mb: 2,
@@ -1517,15 +1636,16 @@ export default function CustomersLionTv() {
             </FormSection>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="outlined" onClick={resetForm} disabled={sending} sx={{ borderRadius: 2 }}>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1, position: 'relative', zIndex: 1 }}>
+          <Button variant="outlined" onClick={resetForm} disabled={sending} sx={{ borderRadius: 2 }} startIcon={<RefreshIcon />}>
             {t('customers.form.buttons.clear')}
           </Button>
           <Button
             variant="contained"
             onClick={handleUpdateCustomer}
             disabled={sending}
-            sx={{ borderRadius: 2, boxShadow: '0 10px 24px rgba(0,0,0,0.12)' }}
+            startIcon={<RocketLaunchIcon />}
+            sx={{ borderRadius: 2, boxShadow: '0 12px 28px rgba(0,0,0,0.16)', px: 2.4 }}
           >
             {sending ? t('customers.form.buttons.saving') : t('customers.form.buttons.save')}
           </Button>
@@ -1538,7 +1658,18 @@ export default function CustomersLionTv() {
         maxWidth="xs"
         fullWidth
         fullScreen={isMobile}
-        PaperProps={{ sx: { borderRadius: 3, boxShadow: 16 } }}
+        PaperProps={{
+          sx: (theme) => ({
+            borderRadius: 3,
+            boxShadow: '0 18px 40px rgba(0,0,0,0.2)',
+            border: '1px solid',
+            borderColor: theme.palette.error.light,
+            backgroundImage:
+              theme.palette.mode === 'light'
+                ? `linear-gradient(160deg, ${theme.palette.error.light}20 0%, ${theme.palette.secondary.light}08 50%, #fff 100%)`
+                : undefined
+          })
+        }}
       >
         <DialogTitle
           sx={(theme) => ({
@@ -1559,17 +1690,37 @@ export default function CustomersLionTv() {
           </Box>
         </DialogTitle>
         <DialogContent dividers>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              {t('customers.form.deleteBody', {
-                name: openDelete.row?.fullName || openDelete.row?.username || openDelete.row?.mail || t('customers.form.buttons.delete')
-              })}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {t('customers.form.deleteSubtitle')}
-            </Typography>
+            <Stack spacing={1.25}>
+              <Box
+                sx={(theme) => ({
+                  p: 1.25,
+                  borderRadius: 2,
+                  border: '1px dashed',
+                  borderColor: theme.palette.error.light,
+                  bgcolor: theme.palette.error.lighter,
+                  color: theme.palette.error.dark,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                })}
+              >
+                <WarningAmberIcon fontSize="small" color="error" />
+                <Typography variant="body2" fontWeight={700}>
+                  {t('customers.form.deleteTitle')}
+                </Typography>
+              </Box>
+              <Typography variant="body2">
+                {t('customers.form.deleteBody', {
+                  name: openDelete.row?.fullName || openDelete.row?.username || openDelete.row?.mail || t('customers.form.buttons.delete')
+                })}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t('customers.form.deleteSubtitle')}
+              </Typography>
+            </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button onClick={() => setOpenDelete({ open: false, row: null })} disabled={sending} sx={{ borderRadius: 2 }}>
+          <Button onClick={() => setOpenDelete({ open: false, row: null })} disabled={sending} sx={{ borderRadius: 2 }} startIcon={<RefreshIcon />}>
             {t('customers.form.buttons.cancel')}
           </Button>
           <Button
@@ -1577,7 +1728,8 @@ export default function CustomersLionTv() {
             variant="contained"
             onClick={handleDeleteCustomer}
             disabled={sending}
-            sx={{ borderRadius: 2, boxShadow: '0 10px 24px rgba(0,0,0,0.16)' }}
+            startIcon={<DeleteOutlineIcon />}
+            sx={{ borderRadius: 2, boxShadow: '0 12px 28px rgba(0,0,0,0.18)' }}
           >
             {sending ? t('customers.form.buttons.deleting') : t('customers.form.buttons.delete')}
           </Button>

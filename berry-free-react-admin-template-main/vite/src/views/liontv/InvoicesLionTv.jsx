@@ -58,6 +58,8 @@ import LanIcon from '@mui/icons-material/Lan';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import LinkIcon from '@mui/icons-material/Link';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 
 import MainCard from 'ui-component/cards/MainCard';
@@ -937,7 +939,25 @@ export default function InvoicesLionTv() {
         />
       </MainCard>
 
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="md" fullScreen={isMobile}>
+      <Dialog
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        fullWidth
+        maxWidth="md"
+        fullScreen={isMobile}
+        PaperProps={{
+          sx: (theme) => ({
+            borderRadius: 3,
+            boxShadow: '0 18px 40px rgba(0,0,0,0.18)',
+            border: '1px solid',
+            borderColor: form.invoiceId ? theme.palette.warning.light : theme.palette.primary.light,
+            backgroundImage:
+              theme.palette.mode === 'light'
+                ? `linear-gradient(150deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}10 45%, #ffffff 100%)`
+                : undefined
+          })
+        }}
+      >
         <DialogTitle
           sx={(theme) => ({
             position: 'relative',
@@ -983,9 +1003,32 @@ export default function InvoicesLionTv() {
             background: (theme) =>
               theme.palette.mode === 'light'
                 ? `linear-gradient(180deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}10 60%, ${theme.palette.background.paper} 85%)`
-                : theme.palette.background.default
+                : theme.palette.background.default,
+            position: 'relative',
+            '&:before': {
+              content: '\"\"',
+              position: 'absolute',
+              inset: 12,
+              zIndex: 0,
+              borderRadius: 20,
+              background:
+                'radial-gradient(circle at 18% 18%, rgba(33,150,243,0.10), transparent 45%), radial-gradient(circle at 82% 0%, rgba(156,39,176,0.10), transparent 35%)'
+            }
           }}
         >
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1, position: 'relative', zIndex: 1 }}>
+            <Chip
+              icon={<AutoAwesomeIcon fontSize="small" color={form.invoiceId ? 'warning' : 'primary'} />}
+              label={form.invoiceId ? t('invoices.badge.edit') : t('invoices.badge.new')}
+              color={form.invoiceId ? 'warning' : 'primary'}
+              variant="outlined"
+              sx={{ fontWeight: 700, borderRadius: 1.5, boxShadow: 1 }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              {t('invoices.form.helperTone', 'Revisa montos y fechas antes de guardar.')}
+            </Typography>
+          </Stack>
+
           <Box
             sx={(theme) => ({
               mb: 2,
@@ -1006,7 +1049,7 @@ export default function InvoicesLionTv() {
             </Typography>
           </Box>
 
-          <Stack spacing={2}>
+          <Stack spacing={2} sx={{ position: 'relative', zIndex: 1 }}>
             <FormSection title={t('invoices.form.sections.assignment')} helper={t('invoices.form.sections.assignmentHelper')}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={3} md={3}>
@@ -1299,14 +1342,15 @@ export default function InvoicesLionTv() {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="outlined" onClick={resetForm} disabled={sending} sx={{ borderRadius: 2 }}>
+          <Button variant="outlined" onClick={resetForm} disabled={sending} sx={{ borderRadius: 2 }} startIcon={<RefreshIcon />}>
             {t('invoices.form.buttons.clear')}
           </Button>
           <Button
             variant="contained"
             onClick={handleSave}
             disabled={sending}
-            sx={{ borderRadius: 2, boxShadow: '0 10px 24px rgba(0,0,0,0.12)' }}
+            startIcon={<RocketLaunchIcon />}
+            sx={{ borderRadius: 2, boxShadow: '0 12px 28px rgba(0,0,0,0.16)', px: 2.4 }}
           >
             {sending
               ? t('invoices.form.buttons.saving')

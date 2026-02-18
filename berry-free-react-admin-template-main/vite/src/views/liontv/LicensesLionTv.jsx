@@ -18,7 +18,10 @@ import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
+import Card from '@mui/material/Card';
 import Divider from '@mui/material/Divider';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -27,11 +30,11 @@ import DialogActions from '@mui/material/DialogActions';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Avatar from '@mui/material/Avatar';
 import FormHelperText from '@mui/material/FormHelperText';
 import { useTheme, useMediaQuery } from '@mui/material';
+import Skeleton from '@mui/material/Skeleton';
 
 import RefreshIcon from '@mui/icons-material/Refresh';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -42,16 +45,100 @@ import SecurityIcon from '@mui/icons-material/Security';
 import HistoryIcon from '@mui/icons-material/History';
 import MemoryIcon from '@mui/icons-material/Memory';
 import PersonIcon from '@mui/icons-material/Person';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AppsIcon from '@mui/icons-material/Apps';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import DnsIcon from '@mui/icons-material/Dns';
+import LinkIcon from '@mui/icons-material/Link';
 import ShieldMoonIcon from '@mui/icons-material/ShieldMoon';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
+
+function RowActions({ row, onEdit, onTransfer, onServer, onHistory, onDelete, t }) {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  return (
+    <>
+      <IconButton
+        size="small"
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        sx={(theme) => ({
+          bgcolor: theme.palette.primary.lighter,
+          color: theme.palette.primary.main,
+          '&:hover': { bgcolor: theme.palette.primary.light },
+          boxShadow: '0 6px 12px rgba(0,0,0,0.12)'
+        })}
+      >
+        <MoreVertIcon fontSize="small" />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            onEdit?.(row);
+          }}
+        >
+          <EditOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#1e88e5' }} />
+          {t('actions.edit', 'Edit')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            onTransfer?.(row);
+          }}
+        >
+          <SwapHorizIcon fontSize="small" style={{ marginRight: 8, color: '#6d4c41' }} />
+          {t('licenses.actions.transfer', 'Transfer')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            onServer?.(row);
+          }}
+        >
+          <AppsIcon fontSize="small" style={{ marginRight: 8, color: '#7b1fa2' }} />
+          {t('licenses.actions.server', 'Change server')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            onHistory?.(row);
+          }}
+        >
+          <HistoryIcon fontSize="small" style={{ marginRight: 8, color: '#546e7a' }} />
+          {t('licenses.actions.history', 'History')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            onDelete?.(row);
+          }}
+        >
+          <DeleteOutlineIcon fontSize="small" style={{ marginRight: 8, color: '#e53935' }} />
+          {t('actions.delete', 'Delete')}
+        </MenuItem>
+      </Menu>
+    </>
+  );
+}
 
 const STATUS_OPTIONS = ['ACTIVE', 'EXPIRED', 'AVAILABLE', 'EMERGENCY'];
 const APPS = ['Vivo Player', 'Smart One'];
@@ -61,6 +148,61 @@ const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
   '& .MuiInputLabel-root': { fontWeight: 500 }
 };
+
+function LicenseStatusChip({ status }) {
+  const theme = useTheme();
+  const map = {
+    ACTIVE: {
+      bg: theme.palette.success.lighter || `${theme.palette.success.main}22`,
+      color: theme.palette.success.darker || theme.palette.success.dark,
+      border: theme.palette.success.main,
+      icon: <CheckCircleOutlineIcon fontSize="small" />
+    },
+    EXPIRED: {
+      bg: theme.palette.error.lighter || `${theme.palette.error.main}18`,
+      color: theme.palette.error.darker || theme.palette.error.dark,
+      border: theme.palette.error.main,
+      icon: <ErrorOutlineIcon fontSize="small" />
+    },
+    AVAILABLE: {
+      bg: theme.palette.info.lighter || `${theme.palette.info.main}18`,
+      color: theme.palette.info.darker || theme.palette.info.dark,
+      border: theme.palette.info.main,
+      icon: <PauseCircleOutlineIcon fontSize="small" />
+    },
+    EMERGENCY: {
+      bg: theme.palette.secondary.lighter || `${theme.palette.secondary.main}18`,
+      color: theme.palette.secondary.darker || theme.palette.secondary.dark,
+      border: theme.palette.secondary.main,
+      icon: <ShieldMoonIcon fontSize="small" />
+    }
+  };
+
+  const cfg =
+    map[status] || {
+      bg: theme.palette.grey[100],
+      color: theme.palette.text.secondary,
+      border: theme.palette.divider,
+      icon: <PauseCircleOutlineIcon fontSize="small" />
+    };
+
+  return (
+    <Chip
+      size="small"
+      icon={cfg.icon}
+      label={status || '-'}
+      variant="outlined"
+      sx={{
+        fontWeight: 700,
+        bgcolor: cfg.bg,
+        color: cfg.color,
+        borderColor: cfg.border,
+        px: 0.5,
+        letterSpacing: 0.2
+      }}
+    />
+  );
+}
 
 const sectionSx = {
   p: 2,
@@ -440,13 +582,13 @@ export default function LicensesLionTv() {
           headers: { Authorization: `Bearer ${accessToken}` },
           skipAuthRedirect: true
         });
-        enqueueSnackbar('Licencia actualizada.', { variant: 'success' });
+      enqueueSnackbar(t('licenses.messages.updated', 'License updated.'), { variant: 'success' });
       } else {
         await lionTvApi.post('/licenses/v1', payload, {
           headers: { Authorization: `Bearer ${accessToken}` },
           skipAuthRedirect: true
         });
-        enqueueSnackbar('Licencia creada.', { variant: 'success' });
+      enqueueSnackbar(t('licenses.messages.created', 'License created.'), { variant: 'success' });
       }
       setOpenModal(false);
       resetForm();
@@ -472,7 +614,7 @@ export default function LicensesLionTv() {
         headers: { Authorization: `Bearer ${accessToken}` },
         skipAuthRedirect: true
       });
-      enqueueSnackbar('Licencia eliminada.', { variant: 'success' });
+      enqueueSnackbar(t('licenses.messages.deleted', 'License deleted.'), { variant: 'success' });
       setOpenDelete({ open: false, row: null });
       setRefreshKey((v) => v + 1);
     } catch (err) {
@@ -522,7 +664,7 @@ export default function LicensesLionTv() {
       macAddress: openServerChange.row?.macAddress
     };
     if (!serverKey || !macAddress || !lineId) {
-      enqueueSnackbar('Selecciona servidor y suscripción (línea).', { variant: 'warning' });
+      enqueueSnackbar(t('licenses.server.required', 'Select server and subscription (line).'), { variant: 'warning' });
       return;
     }
     setSending(true);
@@ -547,7 +689,7 @@ export default function LicensesLionTv() {
   const submitTransfer = async () => {
     const { row, toCustomerId, typeLicense } = openTransfer;
     if (!row?.licenseId || !toCustomerId || !typeLicense) {
-      enqueueSnackbar('Selecciona cliente y tipo.', { variant: 'warning' });
+      enqueueSnackbar(t('licenses.transfer.required', 'Select customer and type.'), { variant: 'warning' });
       return;
     }
     setSending(true);
@@ -557,7 +699,7 @@ export default function LicensesLionTv() {
         { toCustomerId: Number(toCustomerId), typeLicense },
         { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
       );
-      enqueueSnackbar('Licencia trasladada.', { variant: 'success' });
+      enqueueSnackbar(t('licenses.transfer.done', 'License transferred.'), { variant: 'success' });
       setOpenTransfer({ open: false, row: null, toCustomerId: '', typeLicense: 'USED' });
       setRefreshKey((v) => v + 1);
     } catch (err) {
@@ -589,8 +731,13 @@ export default function LicensesLionTv() {
         title={t('licenses.title')}
         secondary={
           <Stack direction="row" spacing={1}>
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => setRefreshKey((v) => v + 1)}>
-              {t('actions.refresh')}
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={() => setRefreshKey((v) => v + 1)}
+              sx={{ borderRadius: 3, borderWidth: 2, textTransform: 'none', fontWeight: 700, px: 2.5 }}
+            >
+              {t('actions.refresh', 'Refresh')}
             </Button>
             <Button
               variant="contained"
@@ -599,102 +746,159 @@ export default function LicensesLionTv() {
                 resetForm();
                 setOpenModal(true);
               }}
+              sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700, px: 2.8, boxShadow: '0 12px 24px rgba(0,133,255,0.35)' }}
             >
-              {t('actions.add')}
+              {t('actions.add', 'Add')}
             </Button>
           </Stack>
         }
       >
         <Grid container spacing={gridSpacing}>
-          <Grid item xs={12} sm={4}>
-            <Chip label={`${total} ${t('licenses.title').toLowerCase()}`} color="primary" />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Chip label={`ACTIVE: ${rows.filter((r) => r.status === 'ACTIVE').length}`} color="success" />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Chip label={`EXPIRED: ${rows.filter((r) => r.status === 'EXPIRED').length}`} color="warning" />
-          </Grid>
+          {[
+            { label: `${total} ${t('licenses.title').toLowerCase()}`, color: 'primary.main' },
+            { label: `ACTIVE: ${rows.filter((r) => r.status === 'ACTIVE').length}`, color: 'success.main' },
+            { label: `EXPIRED: ${rows.filter((r) => r.status === 'EXPIRED').length}`, color: 'warning.main' },
+            { label: `AVAILABLE: ${rows.filter((r) => r.status === 'AVAILABLE').length}`, color: 'info.main' },
+            { label: `EMERGENCY: ${rows.filter((r) => r.status === 'EMERGENCY').length}`, color: 'secondary.main' }
+          ].map((item, idx) => (
+            <Grid item xs={12} sm={6} md={3} key={idx}>
+              <Card
+                sx={(theme) => ({
+                  py: 1.5,
+                  px: 2,
+                  borderRadius: 2.5,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  background:
+                    theme.palette.mode === 'light'
+                      ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, #ffffff 100%)`
+                      : theme.palette.background.paper
+                })}
+              >
+                <Avatar
+                  sx={(theme) => ({
+                    width: 40,
+                    height: 40,
+                    bgcolor: item.color,
+                    color: theme.palette.getContrastText(theme.palette.primary.main),
+                    fontWeight: 700,
+                    boxShadow: 3,
+                    border: '2px solid',
+                    borderColor: 'background.paper'
+                  })}
+                >
+                  <SecurityIcon fontSize="small" />
+                </Avatar>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                  {item.label}
+                </Typography>
+              </Card>
+            </Grid>
+          ))}
         </Grid>
       </MainCard>
 
-      <MainCard content={false}>
-        <Box sx={{ p: { xs: 1.5, sm: 2 } }}>
-          <Stack spacing={1.5}>
-            <Stack spacing={0.5}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                {t('licenses.title')}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {t('licenses.title')}
-              </Typography>
-            </Stack>
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              spacing={1}
-              alignItems={{ xs: 'stretch', sm: 'center' }}
-              justifyContent="flex-start"
+      {/* ✅ SEARCH + TABLE (ESTILO CUSTOMERS) */}
+      <MainCard
+        title={t('licenses.search')}
+        secondary={
+          <Paper
+            elevation={0}
+            sx={(theme) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              width: { xs: '100%', sm: 520 },
+              p: 1,
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              background:
+                theme.palette.mode === 'light'
+                  ? `linear-gradient(120deg, ${theme.palette.primary.light}12 0%, ${theme.palette.secondary.light}12 100%)`
+                  : theme.palette.background.paper,
+              boxShadow: '0 8px 18px rgba(0,0,0,0.05)'
+            })}
+          >
+            <TextField
+              size="small"
+              placeholder={t('licenses.search')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              fullWidth
+              variant="outlined"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  backgroundColor: 'background.paper'
+                }
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon color="action" />
+                  </InputAdornment>
+                )
+              }}
+            />
+
+            <FormControl
+              size="small"
+              sx={{
+                minWidth: 160,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  backgroundColor: 'background.paper'
+                }
+              }}
             >
-              <Button
-                variant="contained"
-                color="warning"
-                size="small"
-                startIcon={<ShieldMoonIcon />}
-                onClick={() => handleContingency('create')}
-                disabled={sending}
-                sx={{ borderRadius: 2, boxShadow: 2, textTransform: 'none' }}
+              <InputLabel>{t('licenses.filters.status')}</InputLabel>
+              <Select
+                value={statusFilter}
+                label={t('licenses.filters.status')}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <SecurityIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                }
               >
-                Habilitar contingencia
-              </Button>
-              <Button
-                variant="outlined"
-                color="secondary"
-                size="small"
-                startIcon={<ShieldOutlinedIcon />}
-                onClick={() => handleContingency('remove')}
-                disabled={sending}
-                sx={{ borderRadius: 2, textTransform: 'none' }}
-              >
-                {t('actions.refresh')}
-              </Button>
-            </Stack>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
-              <TextField
-                size="small"
-                placeholder={t('licenses.search')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                fullWidth
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon />
-                    </InputAdornment>
-                  )
-                }}
-              />
-              <FormControl size="small" sx={{ minWidth: 140, '& .MuiOutlinedInput-root': { minHeight: 40 } }}>
-                <InputLabel>{t('licenses.filters.status')}</InputLabel>
-                <Select value={statusFilter} label={t('licenses.filters.status')} onChange={(e) => setStatusFilter(e.target.value)}>
-                  <MenuItem value="">
-                    <em>{t('licenses.filters.all')}</em>
+                <MenuItem value="">
+                  <em>{t('licenses.filters.all')}</em>
+                </MenuItem>
+                {STATUS_OPTIONS.map((s) => (
+                  <MenuItem key={s} value={s}>
+                    {s}
                   </MenuItem>
-                  {STATUS_OPTIONS.map((s) => (
-                    <MenuItem key={s} value={s}>
-                      {s}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Stack>
-          </Stack>
-        </Box>
-        <TableContainer component={Paper}>
+                ))}
+              </Select>
+            </FormControl>
+          </Paper>
+        }
+      >
+        <TableContainer
+          component={Paper}
+          sx={{
+            borderRadius: 3,
+            overflow: 'hidden',
+            boxShadow: '0 12px 24px rgba(0,0,0,0.06)',
+            border: '1px solid',
+            borderColor: 'divider'
+          }}
+        >
           <Table size="small">
             <TableHead>
-              <TableRow>
+              <TableRow
+                sx={(theme) => ({
+                  bgcolor: theme.palette.mode === 'light' ? '#f7f9fc' : theme.palette.background.default,
+                  borderBottom: `1px solid ${theme.palette.divider}`
+                })}
+              >
                 <TableCell>{t('licenses.headers.mac')}</TableCell>
-                <TableCell>{t('licenses.headers.name')}</TableCell>
                 <TableCell>{t('licenses.headers.customer')}</TableCell>
                 <TableCell>{t('licenses.headers.app')}</TableCell>
                 <TableCell>{t('licenses.headers.status')}</TableCell>
@@ -705,66 +909,139 @@ export default function LicensesLionTv() {
                 <TableCell>{t('licenses.headers.actions')}</TableCell>
               </TableRow>
             </TableHead>
+
             <TableBody>
               {paginatedRows.map((row) => (
-                <TableRow key={row.licenseId}>
-                  <TableCell>{row.macAddress}</TableCell>
-                  <TableCell>{row.name}</TableCell>
+                <TableRow
+                  key={row.licenseId}
+                  hover
+                  sx={{
+                    '&:nth-of-type(odd)': { bgcolor: 'background.default' },
+                    transition: 'background 0.2s ease',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <TableCell>
+                    <Stack direction="row" spacing={1.25} alignItems="center">
+                      <Avatar
+                        sx={{
+                          width: 34,
+                          height: 34,
+                          bgcolor: (theme) => theme.palette.secondary.light,
+                          color: (theme) => theme.palette.secondary.dark,
+                          fontWeight: 700,
+                          boxShadow: 2,
+                          border: '1px solid',
+                          borderColor: 'divider'
+                        }}
+                      >
+                        <MemoryIcon fontSize="small" />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="subtitle2">{row.macAddress || '-'}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {row.name || '-'}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </TableCell>
+
                   <TableCell>{row.customerName || customerNameMap[row.customerId] || '-'}</TableCell>
-                  <TableCell>{row.app}</TableCell>
+
                   <TableCell>
                     <Chip
                       size="small"
-                      label={row.status}
-                      color={row.status === 'ACTIVE' ? 'success' : row.status === 'EXPIRED' ? 'warning' : 'default'}
-                      variant="outlined"
+                      icon={<AppsIcon fontSize="small" />}
+                      label={row.app || '-'}
+                      sx={(theme) => ({
+                        bgcolor: theme.palette.mode === 'light' ? theme.palette.info.lighter : theme.palette.info.dark,
+                        color: theme.palette.mode === 'light' ? theme.palette.info.darker : theme.palette.info.contrastText,
+                        fontWeight: 600
+                      })}
                     />
                   </TableCell>
-                  <TableCell>{row.licensePeriod}</TableCell>
+
+                  <TableCell>
+                    <LicenseStatusChip status={row.status} />
+                  </TableCell>
+
+                  <TableCell>
+                    <Stack direction="row" spacing={0.75} alignItems="center">
+                      <AccessTimeIcon fontSize="small" color="action" />
+                      <Typography variant="body2">{row.licensePeriod || '-'}</Typography>
+                    </Stack>
+                  </TableCell>
+
                   <TableCell>
                     <Chip
                       size="small"
-                      label={row.typeLicense}
+                      label={row.typeLicense || '-'}
                       color={row.typeLicense === 'PRIMARY' ? 'primary' : 'secondary'}
                       variant="outlined"
+                      sx={{ fontWeight: 700 }}
                     />
                   </TableCell>
-                  <TableCell>{Number(row.price || 0).toFixed(2)}</TableCell>
-                  <TableCell>{row.expireAt ? String(row.expireAt).slice(0, 10) : '-'}</TableCell>
-                  <TableCell align="right">
-                    <Stack direction="row" spacing={1}>
-                  <IconButton size="small" onClick={() => handleEdit(row)}>
-                    <EditOutlinedIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => handleTransfer(row)}>
-                    <SwapHorizIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => handleOpenServerChange(row)}>
-                    <AppsIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small" onClick={() => openHistory(row)}>
-                    <HistoryIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small" color="error" onClick={() => handleDelete(row)}>
-                    <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
+
+                  <TableCell>
+                    <Stack direction="row" spacing={0.75} alignItems="center">
+                      <AttachMoneyIcon fontSize="small" color="success" />
+                      <Typography variant="body2">{Number(row.price || 0).toFixed(2)}</Typography>
                     </Stack>
+                  </TableCell>
+
+                  <TableCell>
+                    <Stack direction="row" spacing={0.75} alignItems="center">
+                      <CalendarMonthIcon fontSize="small" color="primary" />
+                      <Typography variant="body2">
+                        {row.expireAt ? String(row.expireAt).slice(0, 10) : '-'}
+                      </Typography>
+                    </Stack>
+                  </TableCell>
+
+                  <TableCell align="right">
+                    <RowActions
+                      row={row}
+                      t={t}
+                      onEdit={handleEdit}
+                      onTransfer={handleTransfer}
+                      onServer={handleOpenServerChange}
+                      onHistory={openHistory}
+                      onDelete={handleDelete}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
 
               {!loading && filteredRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} align="center">
-                    No hay licencias registradas.
+                  <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+                    <Stack spacing={1} alignItems="center">
+                      <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                        <SecurityIcon />
+                      </Avatar>
+                      <Typography variant="subtitle1">
+                        {t('licenses.table.emptyTitle', 'No licenses found')}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {t('licenses.table.emptyText', 'Try adjusting filters or add a new license.')}
+                      </Typography>
+                      <Button variant="contained" onClick={() => setOpenModal(true)} size="small">
+                        {t('actions.add', 'Add')}
+                      </Button>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               )}
 
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={10} align="center">
-                    Cargando...
+                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                    <Stack spacing={1} alignItems="center">
+                      <Skeleton variant="circular" width={40} height={40} />
+                      <Typography variant="body2" color="text.secondary">
+                        {t('licenses.table.loading', 'Loading licenses...')}
+                      </Typography>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               )}
@@ -785,7 +1062,25 @@ export default function LicensesLionTv() {
       </MainCard>
 
       {/* MODAL CREATE/EDIT */}
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="md" fullScreen={isMobile}>
+      <Dialog
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        fullWidth
+        maxWidth="md"
+        fullScreen={isMobile}
+        PaperProps={{
+          sx: (theme) => ({
+            borderRadius: 3,
+            boxShadow: '0 18px 40px rgba(0,0,0,0.18)',
+            border: '1px solid',
+            borderColor: form.licenseId ? theme.palette.warning.light : theme.palette.primary.light,
+            backgroundImage:
+              theme.palette.mode === 'light'
+                ? `linear-gradient(150deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}08 40%, #ffffff 100%)`
+                : undefined
+          })
+        }}
+      >
         <DialogTitle sx={{ position: 'relative', pr: 5 }}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Avatar
@@ -801,9 +1096,9 @@ export default function LicensesLionTv() {
             </Avatar>
 
             <Box>
-              <Typography variant="h6">{form.licenseId ? 'Editar licencia' : 'Nueva licencia'}</Typography>
+              <Typography variant="h6">{form.licenseId ? t('licenses.modal.editTitle', 'Edit license') : t('licenses.modal.newTitle', 'New license')}</Typography>
               <Typography variant="caption" color="text.secondary">
-                Ingresa los datos de la licencia y su propiedad.
+                {t('licenses.modal.subtitle', 'Enter license data and ownership.')}
               </Typography>
             </Box>
           </Stack>
@@ -814,16 +1109,43 @@ export default function LicensesLionTv() {
           sx={{
             bgcolor: 'background.default',
             px: { xs: 1.5, sm: 3 },
-            py: { xs: 1.5, sm: 2 }
+            py: { xs: 1.5, sm: 2 },
+            position: 'relative',
+            background: (theme) =>
+              theme.palette.mode === 'light'
+                ? `linear-gradient(180deg, ${theme.palette.primary.light}16 0%, ${theme.palette.secondary.light}10 55%, ${theme.palette.background.paper} 85%)`
+                : theme.palette.background.default,
+            '&:before': {
+              content: '\"\"',
+              position: 'absolute',
+              inset: 12,
+              zIndex: 0,
+              borderRadius: 20,
+              background:
+                'radial-gradient(circle at 18% 18%, rgba(33,150,243,0.10), transparent 40%), radial-gradient(circle at 82% 0%, rgba(156,39,176,0.10), transparent 35%)'
+            }
           }}
         >
-          <Stack spacing={2}>
-            <SectionCard title="Identidad" helper="Mac, nombre y cliente dueño.">
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1, position: 'relative', zIndex: 1 }}>
+            <Chip
+              icon={<AutoAwesomeIcon fontSize="small" color={form.licenseId ? 'warning' : 'primary'} />}
+              label={form.licenseId ? t('licenses.badge.edit', 'Editing') : t('licenses.badge.new', 'New')}
+              color={form.licenseId ? 'warning' : 'primary'}
+              variant="outlined"
+              sx={{ fontWeight: 700, borderRadius: 1.5, boxShadow: 1 }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              {t('licenses.modal.helper', 'Complete key data before saving.')}
+            </Typography>
+          </Stack>
+
+          <Stack spacing={2} sx={{ position: 'relative', zIndex: 1 }}>
+            <SectionCard title={t('licenses.form.identity', 'Identity')} helper={t('licenses.form.identityHelper', 'Mac, name and owner')}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={4}>
                   <TextField
                     required
-                    label="Mac Address"
+                    label={t('licenses.form.mac', 'Mac Address')}
                     value={form.macAddress}
                     onChange={handleFormChange('macAddress')}
                     fullWidth
@@ -831,7 +1153,7 @@ export default function LicensesLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <MemoryIcon fontSize="small" />
+                          <MemoryIcon fontSize="small" color="primary" />
                         </InputAdornment>
                       )
                     }}
@@ -841,7 +1163,7 @@ export default function LicensesLionTv() {
                 <Grid item xs={12} sm={4}>
                   <TextField
                     required
-                    label="Nombre"
+                    label={t('licenses.form.name', 'Name')}
                     value={form.name}
                     onChange={handleFormChange('name')}
                     fullWidth
@@ -849,7 +1171,7 @@ export default function LicensesLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <PersonIcon fontSize="small" />
+                          <PersonIcon fontSize="small" color="secondary" />
                         </InputAdornment>
                       )
                     }}
@@ -858,10 +1180,19 @@ export default function LicensesLionTv() {
 
                 <Grid item xs={12} sm={4}>
                   <FormControl fullWidth required sx={fieldSx} disabled={customersLoading}>
-                    <InputLabel>Cliente</InputLabel>
-                    <Select value={form.customerId} label="Cliente" onChange={handleFormChange('customerId')}>
+                    <InputLabel>{t('licenses.form.customer', 'Customer')}</InputLabel>
+                    <Select
+                      value={form.customerId}
+                      label={t('licenses.form.customer', 'Customer')}
+                      onChange={handleFormChange('customerId')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <PersonIcon fontSize="small" color="secondary" />
+                        </InputAdornment>
+                      }
+                    >
                       <MenuItem value="">
-                        <em>Selecciona un cliente</em>
+                        <em>{t('licenses.form.select', 'Select')}</em>
                       </MenuItem>
                       {(customers || []).map((c) => (
                         <MenuItem key={c.customerId || c.id} value={c.customerId || c.id}>
@@ -869,91 +1200,135 @@ export default function LicensesLionTv() {
                         </MenuItem>
                       ))}
                     </Select>
-                    <FormHelperText>{customersLoading ? 'Cargando clientes...' : 'Cliente asociado a la licencia'}</FormHelperText>
+                    <FormHelperText>
+                      {customersLoading
+                        ? t('licenses.form.loadingCustomers', 'Loading customers...')
+                        : t('licenses.form.customerHelper', 'Customer linked to this license')}
+                    </FormHelperText>
                   </FormControl>
                 </Grid>
               </Grid>
             </SectionCard>
 
-            <SectionCard title="Atributos" helper="App, estado, tipo y periodo.">
+            <SectionCard title={t('licenses.form.attributes', 'Attributes')} helper={t('licenses.form.attributesHelper', 'App, status, type and period')}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={3}>
                   <FormControl fullWidth required sx={fieldSx}>
-                    <InputLabel>Status</InputLabel>
-                    <Select value={form.status} label="Status" onChange={handleFormChange('status')}>
+                    <InputLabel>{t('licenses.form.status', 'Status')}</InputLabel>
+                      <Select
+                      value={form.status}
+                      label={t('licenses.form.status', 'Status')}
+                      onChange={handleFormChange('status')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <SecurityIcon fontSize="small" color="primary" />
+                        </InputAdornment>
+                      }
+                    >
                       {STATUS_OPTIONS.map((s) => (
                         <MenuItem key={s} value={s}>
                           {s}
                         </MenuItem>
                       ))}
                     </Select>
-                    <FormHelperText>Estado actual</FormHelperText>
+                    <FormHelperText>{t('licenses.form.statusHelper', 'Current status')}</FormHelperText>
                   </FormControl>
                 </Grid>
 
                 <Grid item xs={12} sm={3}>
                   <FormControl fullWidth required sx={fieldSx}>
-                    <InputLabel>Tipo</InputLabel>
-                    <Select value={form.typeLicense} label="Tipo" onChange={handleFormChange('typeLicense')}>
+                    <InputLabel>{t('licenses.form.type', 'Type')}</InputLabel>
+                    <Select
+                      value={form.typeLicense}
+                      label={t('licenses.form.type', 'Type')}
+                      onChange={handleFormChange('typeLicense')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <ShieldOutlinedIcon fontSize="small" color="secondary" />
+                        </InputAdornment>
+                      }
+                    >
                       {TYPE_LICENSE.map((s) => (
                         <MenuItem key={s} value={s}>
                           {s}
                         </MenuItem>
                       ))}
                     </Select>
-                    <FormHelperText>PRIMARY / USED</FormHelperText>
+                    <FormHelperText>{t('licenses.form.typeHelper', 'PRIMARY / USED')}</FormHelperText>
                   </FormControl>
                 </Grid>
 
                 <Grid item xs={12} sm={3}>
                   <FormControl fullWidth required sx={fieldSx}>
-                    <InputLabel>App</InputLabel>
-                    <Select value={form.app} label="App" onChange={handleFormChange('app')}>
+                    <InputLabel>{t('licenses.form.app', 'App')}</InputLabel>
+                    <Select
+                      value={form.app}
+                      label={t('licenses.form.app', 'App')}
+                      onChange={handleFormChange('app')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <AppsIcon fontSize="small" color="primary" />
+                        </InputAdornment>
+                      }
+                    >
                       {APPS.map((s) => (
                         <MenuItem key={s} value={s}>
                           {s}
                         </MenuItem>
                       ))}
                     </Select>
-                    <FormHelperText>Aplicación asociada</FormHelperText>
+                    <FormHelperText>{t('licenses.form.appHelper', 'Associated application')}</FormHelperText>
                   </FormControl>
                 </Grid>
 
                 <Grid item xs={12} sm={3}>
                   <FormControl fullWidth required sx={fieldSx}>
-                    <InputLabel>Periodo</InputLabel>
-                    <Select value={form.licensePeriod} label="Periodo" onChange={handleFormChange('licensePeriod')}>
+                    <InputLabel>{t('licenses.form.period', 'Period')}</InputLabel>
+                      <Select
+                      value={form.licensePeriod}
+                      label={t('licenses.form.period', 'Period')}
+                      onChange={handleFormChange('licensePeriod')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <AccessTimeIcon fontSize="small" color="warning" />
+                        </InputAdornment>
+                      }
+                    >
                       {LICENSE_PERIOD.map((s) => (
                         <MenuItem key={s} value={s}>
                           {s}
                         </MenuItem>
                       ))}
                     </Select>
-                    <FormHelperText>Vigencia</FormHelperText>
+                    <FormHelperText>{t('licenses.form.periodHelper', 'Validity')}</FormHelperText>
                   </FormControl>
                 </Grid>
               </Grid>
             </SectionCard>
 
-            <SectionCard title="Precio y expiración" helper="Monto y fecha de vencimiento (si aplica).">
+            <SectionCard title={t('licenses.form.billing', 'Billing & expiration')} helper={t('licenses.form.billingHelper', 'Amount and expiry date')}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <TextField
-                    label="Precio"
+                    label={t('licenses.form.price', 'Price')}
                     type="number"
                     value={form.price}
                     onChange={handleFormChange('price')}
                     fullWidth
                     sx={fieldSx}
                     InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <AttachMoneyIcon fontSize="small" color="success" />
+                        </InputAdornment>
+                      )
                     }}
                   />
                 </Grid>
 
                 <Grid item xs={12} sm={6}>
                   <TextField
-                    label="Expira"
+                    label={t('licenses.form.expire', 'Expire')}
                     type="datetime-local"
                     value={form.expireAt}
                     onChange={handleFormChange('expireAt')}
@@ -963,7 +1338,7 @@ export default function LicensesLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <AccessTimeIcon fontSize="small" />
+                          <AccessTimeIcon fontSize="small" color="info" />
                         </InputAdornment>
                       )
                     }}
@@ -974,12 +1349,22 @@ export default function LicensesLionTv() {
           </Stack>
         </DialogContent>
 
-        <DialogActions>
-          <Button variant="outlined" onClick={resetForm} disabled={sending}>
-            Limpiar
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button variant="outlined" onClick={resetForm} disabled={sending} startIcon={<RefreshIcon />}>
+            {t('actions.clear', 'Clear')}
           </Button>
-          <Button variant="contained" onClick={handleSave} disabled={sending}>
-            {sending ? 'Guardando...' : form.licenseId ? 'Guardar cambios' : 'Crear'}
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={sending}
+            startIcon={<RocketLaunchIcon />}
+            sx={{ borderRadius: 2, boxShadow: '0 12px 28px rgba(0,0,0,0.16)', px: 2.4 }}
+          >
+            {sending
+              ? t('actions.saving', 'Saving...')
+              : form.licenseId
+                ? t('licenses.form.buttons.save', 'Save changes')
+                : t('licenses.form.buttons.create', 'Create')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -992,25 +1377,30 @@ export default function LicensesLionTv() {
         maxWidth="sm"
         fullScreen={isMobile}
       >
-        <DialogTitle>Cambiar servidor</DialogTitle>
+        <DialogTitle>{t('licenses.server.title', 'Change server')}</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2}>
             <Typography variant="body2">
-              Mac: <strong>{openServerChange.row?.macAddress}</strong>
+              {t('licenses.server.mac', 'Mac')}: <strong>{openServerChange.row?.macAddress}</strong>
             </Typography>
             <Typography variant="body2">
-              Cliente: <strong>{customerNameMap[openServerChange.row?.customerId] || '-'}</strong>
+              {t('licenses.server.customer', 'Customer')}: <strong>{customerNameMap[openServerChange.row?.customerId] || '-'}</strong>
             </Typography>
             <Typography variant="body2">
-              País (teléfono): <strong>{serverForm.country}</strong>
+              {t('licenses.server.country', 'Country (phone)')}: <strong>{serverForm.country}</strong>
             </Typography>
 
             <FormControl fullWidth sx={fieldSx}>
-              <InputLabel>Servidor</InputLabel>
+              <InputLabel>{t('licenses.server.server', 'Server')}</InputLabel>
               <Select
                 value={serverForm.serverKey}
-                label="Servidor"
+                label={t('licenses.server.server', 'Server')}
                 onChange={(e) => setServerForm((p) => ({ ...p, serverKey: e.target.value }))}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <DnsIcon fontSize="small" color="primary" />
+                  </InputAdornment>
+                }
               >
                 {serverOptions.map((s) => (
                   <MenuItem key={s.value} value={s.value}>
@@ -1018,34 +1408,39 @@ export default function LicensesLionTv() {
                   </MenuItem>
                 ))}
               </Select>
-              <FormHelperText>Selecciona el servidor destino</FormHelperText>
+              <FormHelperText>{t('licenses.server.helper', 'Select target server')}</FormHelperText>
             </FormControl>
 
             <FormControl fullWidth sx={fieldSx}>
-              <InputLabel>Suscripción</InputLabel>
+              <InputLabel>{t('licenses.server.subscription', 'Subscription')}</InputLabel>
               <Select
                 value={serverForm.subscriptionId}
-                label="Suscripción"
+                label={t('licenses.server.subscription', 'Subscription')}
                 onChange={(e) => handleSubscriptionSelect(e.target.value)}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <LinkIcon fontSize="small" color="secondary" />
+                  </InputAdornment>
+                }
               >
                 <MenuItem value="">
-                  <em>Selecciona</em>
+                  <em>{t('licenses.form.select', 'Select')}</em>
                 </MenuItem>
                 {subscriptions
                   .filter((s) => s.customerId === openServerChange.row?.customerId)
                   .map((s) => (
                     <MenuItem key={s.id} value={s.id}>
                       #{s.id} - Line {s.lineId}
-                    </MenuItem>
-                  ))}
+                  </MenuItem>
+                ))}
               </Select>
-              <FormHelperText>Filtra por suscripciones del cliente</FormHelperText>
+              <FormHelperText>{t('licenses.server.subscriptionHelper', 'Filter by customer subscriptions')}</FormHelperText>
             </FormControl>
 
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Username"
+                  label={t('licenses.server.username', 'Username')}
                   value={serverForm.username}
                   InputProps={{ readOnly: true }}
                   fullWidth
@@ -1054,7 +1449,7 @@ export default function LicensesLionTv() {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Password"
+                  label={t('licenses.server.password', 'Password')}
                   value={serverForm.password}
                   InputProps={{ readOnly: true }}
                   fullWidth
@@ -1064,7 +1459,7 @@ export default function LicensesLionTv() {
             </Grid>
 
             <TextField
-              label="Nombre de playlist"
+              label={t('licenses.server.playlist', 'Playlist name')}
               value={serverForm.playlistName}
               onChange={(e) => setServerForm((p) => ({ ...p, playlistName: e.target.value }))}
               fullWidth
@@ -1072,7 +1467,7 @@ export default function LicensesLionTv() {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <FlagCircleIcon fontSize="small" />
+                    <FlagCircleIcon fontSize="small" color="warning" />
                   </InputAdornment>
                 )
               }}
@@ -1080,9 +1475,11 @@ export default function LicensesLionTv() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenServerChange({ open: false, row: null })}>Cancelar</Button>
+          <Button onClick={() => setOpenServerChange({ open: false, row: null })}>
+            {t('actions.cancel', 'Cancel')}
+          </Button>
           <Button variant="contained" onClick={handleServerSubmit} disabled={sending}>
-            {sending ? 'Enviando...' : 'Cambiar servidor'}
+            {sending ? t('actions.sending', 'Sending...') : t('licenses.server.submit', 'Change server')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1095,18 +1492,20 @@ export default function LicensesLionTv() {
         fullWidth
         fullScreen={isMobile}
       >
-        <DialogTitle>Eliminar licencia</DialogTitle>
+        <DialogTitle>{t('licenses.delete.title', 'Delete license')}</DialogTitle>
         <DialogContent dividers>
           <Typography>
-            ¿Eliminar la licencia <strong>{openDelete.row?.name ?? ''}</strong>? Esta acción no se puede deshacer.
+            {t('licenses.delete.body', 'Delete license {{name}}? This action cannot be undone.', {
+              name: openDelete.row?.name ?? ''
+            })}
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDelete({ open: false, row: null })} disabled={sending}>
-            Cancelar
+            {t('actions.cancel', 'Cancel')}
           </Button>
           <Button onClick={confirmDelete} color="error" variant="contained" disabled={sending}>
-            {sending ? 'Eliminando...' : 'Eliminar'}
+            {sending ? t('actions.deleting', 'Deleting...') : t('actions.delete', 'Delete')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1119,20 +1518,22 @@ export default function LicensesLionTv() {
         maxWidth="sm"
         fullScreen={isMobile}
       >
-        <DialogTitle>Trasladar licencia</DialogTitle>
+        <DialogTitle>{t('licenses.transfer.title', 'Transfer license')}</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2}>
-            <Typography variant="body2">Licencia: {openTransfer.row?.name}</Typography>
+            <Typography variant="body2">
+              {t('licenses.transfer.license', 'License')}: {openTransfer.row?.name}
+            </Typography>
 
             <FormControl fullWidth sx={fieldSx} disabled={customersLoading}>
-              <InputLabel>Nuevo cliente</InputLabel>
+              <InputLabel>{t('licenses.transfer.newCustomer', 'New customer')}</InputLabel>
               <Select
                 value={openTransfer.toCustomerId}
-                label="Nuevo cliente"
+                label={t('licenses.transfer.newCustomer', 'New customer')}
                 onChange={(e) => setOpenTransfer((p) => ({ ...p, toCustomerId: e.target.value }))}
               >
                 <MenuItem value="">
-                  <em>Selecciona un cliente</em>
+                  <em>{t('licenses.form.select', 'Select')}</em>
                 </MenuItem>
                 {(customers || []).map((c) => (
                   <MenuItem key={c.customerId || c.id} value={c.customerId || c.id}>
@@ -1140,14 +1541,18 @@ export default function LicensesLionTv() {
                   </MenuItem>
                 ))}
               </Select>
-              <FormHelperText>{customersLoading ? 'Cargando clientes...' : 'Nuevo dueño de la licencia'}</FormHelperText>
+              <FormHelperText>
+                {customersLoading
+                  ? t('licenses.transfer.loadingCustomers', 'Loading customers...')
+                  : t('licenses.transfer.helperCustomer', 'New license owner')}
+              </FormHelperText>
             </FormControl>
 
             <FormControl fullWidth sx={fieldSx}>
-              <InputLabel>Tipo</InputLabel>
+              <InputLabel>{t('licenses.transfer.type', 'Type')}</InputLabel>
               <Select
                 value={openTransfer.typeLicense}
-                label="Tipo"
+                label={t('licenses.transfer.type', 'Type')}
                 onChange={(e) => setOpenTransfer((p) => ({ ...p, typeLicense: e.target.value }))}
               >
                 {TYPE_LICENSE.map((s) => (
@@ -1156,16 +1561,16 @@ export default function LicensesLionTv() {
                   </MenuItem>
                 ))}
               </Select>
-              <FormHelperText>Tipo a asignar en el nuevo cliente</FormHelperText>
+              <FormHelperText>{t('licenses.transfer.typeHelper', 'Type to assign in new customer')}</FormHelperText>
             </FormControl>
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenTransfer({ open: false, row: null, toCustomerId: '', typeLicense: 'USED' })} disabled={sending}>
-            Cancelar
+            {t('actions.cancel', 'Cancel')}
           </Button>
           <Button variant="contained" onClick={submitTransfer} disabled={sending}>
-            {sending ? 'Trasladando...' : 'Trasladar'}
+            {sending ? t('licenses.transfer.sending', 'Transferring...') : t('licenses.transfer.submit', 'Transfer')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1193,9 +1598,9 @@ export default function LicensesLionTv() {
             </Avatar>
 
             <Box>
-              <Typography variant="h6">Historial de movimientos</Typography>
+              <Typography variant="h6">{t('licenses.history.title', 'License history')}</Typography>
               <Typography variant="caption" color="text.secondary">
-                Cambios de dueño y tipo de licencia.
+                {t('licenses.history.subtitle', 'Owner and type changes.')}
               </Typography>
             </Box>
           </Stack>
@@ -1223,7 +1628,7 @@ export default function LicensesLionTv() {
               <Grid container spacing={2} alignItems="center">
                 <Grid item xs={12} md={4}>
                   <Typography variant="caption" color="text.secondary">
-                    Licencia
+                    {t('licenses.history.license', 'License')}
                   </Typography>
                   <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                     {historyOpen.row?.name || '-'}
@@ -1235,7 +1640,7 @@ export default function LicensesLionTv() {
 
                 <Grid item xs={12} md={4}>
                   <Typography variant="caption" color="text.secondary">
-                    Cliente actual
+                    {t('licenses.history.currentCustomer', 'Current customer')}
                   </Typography>
                   <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                     {historyOpen.row?.customerName ||
@@ -1251,13 +1656,13 @@ export default function LicensesLionTv() {
                   <Stack direction="row" spacing={1} justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
                     <Chip
                       size="small"
-                      label={`Total movimientos: ${history?.length || 0}`}
+                      label={`${t('licenses.history.total', 'Total moves')}: ${history?.length || 0}`}
                       color="info"
                       variant="outlined"
                     />
                     <Chip
                       size="small"
-                      label={`Tipo actual: ${historyOpen.row?.typeLicense || '-'}`}
+                      label={`${t('licenses.history.currentType', 'Current type')}: ${historyOpen.row?.typeLicense || '-'}`}
                       color="primary"
                       variant="outlined"
                     />
@@ -1278,16 +1683,16 @@ export default function LicensesLionTv() {
             >
               <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                  Movimientos
+                  {t('licenses.history.movements', 'Movements')}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  El más reciente aparece arriba.
+                  {t('licenses.history.helper', 'Most recent on top.')}
                 </Typography>
               </Box>
 
               {(!history || history.length === 0) && (
                 <Box sx={{ p: 2 }}>
-                  <Typography variant="body2">Sin movimientos registrados.</Typography>
+                  <Typography variant="body2">{t('licenses.history.empty', 'No movements recorded.')}</Typography>
                 </Box>
               )}
 
@@ -1350,9 +1755,9 @@ export default function LicensesLionTv() {
                                 <Chip
                                   size="small"
                                   color={String(h.typeLicense || '').toUpperCase() === 'PRIMARY' ? 'success' : 'warning'}
-                                  label={`Tipo: ${h.typeLicense || '-'}`}
+                                  label={`${t('licenses.history.type', 'Type')}: ${h.typeLicense || '-'}`}
                                 />
-                                <Chip size="small" variant="outlined" icon={<AccessTimeIcon />} label={dateLabel} />
+                                <Chip size="small" variant="outlined" icon={<AccessTimeIcon color="info" />} label={dateLabel} />
                               </Stack>
                             </Grid>
                           </Grid>
@@ -1366,16 +1771,17 @@ export default function LicensesLionTv() {
             {/* Nota */}
             <Box sx={{ px: 0.5 }}>
               <Typography variant="caption" color="text.secondary">
-                Tip: si quieres mostrar nombres exactos en “De/A”, tu API puede enviar{' '}
-                <code>fromCustomerName</code> y <code>toCustomerName</code>. Si no, se usa el mapa local de clientes
-                cuando coincide el ID.
+                {t(
+                  'licenses.history.tip',
+                  'Tip: API can send fromCustomerName/toCustomerName to show exact names; otherwise local map is used.'
+                )}
               </Typography>
             </Box>
           </Stack>
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={() => setHistoryOpen({ open: false, row: null })}>Cerrar</Button>
+          <Button onClick={() => setHistoryOpen({ open: false, row: null })}>{t('actions.close', 'Close')}</Button>
         </DialogActions>
       </Dialog>
     </Box>

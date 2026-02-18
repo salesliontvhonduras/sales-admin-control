@@ -50,6 +50,7 @@ import WifiTetheringIcon from '@mui/icons-material/WifiTethering';
 import BoltIcon from '@mui/icons-material/Bolt';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import Skeleton from '@mui/material/Skeleton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CloseIcon from '@mui/icons-material/Close';
@@ -143,6 +144,7 @@ function normalizeSubscription(item = {}) {
 function RowActions({ row, onEdit, onDelete }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const { t } = useTranslation();
   return (
     <>
       <IconButton
@@ -171,7 +173,7 @@ function RowActions({ row, onEdit, onDelete }) {
           }}
         >
           <EditOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#1e88e5' }} />
-          Editar
+          {t('actions.edit', 'Edit')}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -180,7 +182,7 @@ function RowActions({ row, onEdit, onDelete }) {
           }}
         >
           <DeleteOutlineIcon fontSize="small" style={{ marginRight: 8, color: '#e53935' }} />
-          Eliminar
+          {t('actions.delete', 'Delete')}
         </MenuItem>
       </Menu>
     </>
@@ -841,13 +843,17 @@ export default function SubscriptionsLionTv() {
         maxWidth="md"
         fullScreen={isMobile}
         PaperProps={{
-          sx: {
+          sx: (theme) => ({
             borderRadius: 3,
-            boxShadow: 18,
+            boxShadow: '0 18px 40px rgba(0,0,0,0.18)',
             overflow: 'hidden',
             border: '1px solid',
-            borderColor: 'divider'
-          }
+            borderColor: form.subscriptionId ? theme.palette.warning.light : theme.palette.primary.light,
+            backgroundImage:
+              theme.palette.mode === 'light'
+                ? `linear-gradient(150deg, ${theme.palette.primary.light}16 0%, ${theme.palette.secondary.light}10 45%, #ffffff 100%)`
+                : undefined
+          })
         }}
       >
         <DialogTitle
@@ -901,11 +907,34 @@ export default function SubscriptionsLionTv() {
             py: { xs: 1.5, sm: 2 },
             background: (theme) =>
               theme.palette.mode === 'light'
-                ? `linear-gradient(180deg, ${theme.palette.primary.light}12 0%, ${theme.palette.secondary.light}10 50%, ${theme.palette.background.paper} 80%)`
-                : theme.palette.background.default
+                ? `linear-gradient(180deg, ${theme.palette.primary.light}14 0%, ${theme.palette.secondary.light}10 50%, ${theme.palette.background.paper} 82%)`
+                : theme.palette.background.default,
+            position: 'relative',
+            '&:before': {
+              content: '\"\"',
+              position: 'absolute',
+              inset: 12,
+              zIndex: 0,
+              borderRadius: 20,
+              background:
+                'radial-gradient(circle at 20% 20%, rgba(33,150,243,0.10), transparent 45%), radial-gradient(circle at 78% 0%, rgba(156,39,176,0.10), transparent 35%)'
+            }
           }}
         >
-          <Stack spacing={2}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1, position: 'relative', zIndex: 1 }}>
+            <Chip
+              icon={<AutoAwesomeIcon fontSize="small" color={form.subscriptionId ? 'warning' : 'primary'} />}
+              label={form.subscriptionId ? t('subscriptions.badge.edit', 'Editing') : t('subscriptions.badge.new', 'New')}
+              color={form.subscriptionId ? 'warning' : 'primary'}
+              variant="outlined"
+              sx={{ fontWeight: 700, borderRadius: 1.5, boxShadow: 1 }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              {t('subscriptions.form.helperTone', 'Complete the key fields before saving.')}
+            </Typography>
+          </Stack>
+
+          <Stack spacing={2} sx={{ position: 'relative', zIndex: 1 }}>
             <SectionCard
               title={t('subscriptions.form.sections.main', 'Main data')}
               helper={t('subscriptions.form.sections.mainHelper', 'Customer, package and status.')}
@@ -917,7 +946,7 @@ export default function SubscriptionsLionTv() {
                     <Select
                       displayEmpty
                       value={form.customerId}
-                      label="Cliente"
+                      label={t('subscriptions.form.customer', 'Customer')}
                       onChange={handleFormChange('customerId')}
                       renderValue={(value) => {
                         const c = customers.find((cust) => (cust.customerId || cust.id) === value);
@@ -1226,14 +1255,15 @@ export default function SubscriptionsLionTv() {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button variant="outlined" onClick={resetForm} disabled={sending} sx={{ borderRadius: 2 }}>
+          <Button variant="outlined" onClick={resetForm} disabled={sending} sx={{ borderRadius: 2 }} startIcon={<RefreshIcon />}>
             {t('common.clear', 'Clear')}
           </Button>
           <Button
             variant="contained"
             onClick={handleSave}
             disabled={sending}
-            sx={{ borderRadius: 2, boxShadow: '0 10px 20px rgba(0,133,255,0.25)' }}
+            startIcon={<RocketLaunchIcon />}
+            sx={{ borderRadius: 2, boxShadow: '0 12px 28px rgba(0,0,0,0.16)', px: 2.4 }}
           >
             {sending
               ? t('common.saving', 'Saving...')
@@ -1251,7 +1281,7 @@ export default function SubscriptionsLionTv() {
         fullWidth
         fullScreen={isMobile}
       >
-        <DialogTitle>{t('subscriptions.delete.title', 'Eliminar suscripción')}</DialogTitle>
+        <DialogTitle>{t('subscriptions.delete.title', 'Delete subscription')}</DialogTitle>
         <DialogContent dividers>
           <Typography>
             {t('subscriptions.delete.message', 'Delete subscription')} <strong>{openDelete.row?.subscriptionId ?? ''}</strong>? {t('subscriptions.delete.warning', 'This action cannot be undone.')}

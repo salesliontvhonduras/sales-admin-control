@@ -535,7 +535,18 @@ export default function LinesLionTv() {
         fullWidth
         maxWidth="md"
         fullScreen={isMobile}
-        PaperProps={{ sx: { borderRadius: 3, boxShadow: 18 } }}
+        PaperProps={{
+          sx: (theme) => ({
+            borderRadius: 3,
+            boxShadow: '0 18px 40px rgba(0,0,0,0.18)',
+            border: '1px solid',
+            borderColor: theme.palette.primary.light,
+            backgroundImage:
+              theme.palette.mode === 'light'
+                ? `linear-gradient(150deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}08 45%, #ffffff 100%)`
+                : undefined
+          })
+        }}
       >
         <DialogTitle
           sx={(theme) => ({
@@ -578,10 +589,20 @@ export default function LinesLionTv() {
             background: (theme) =>
               theme.palette.mode === 'light'
                 ? `linear-gradient(180deg, ${theme.palette.primary.light}14 0%, ${theme.palette.secondary.light}10 50%, ${theme.palette.background.paper} 80%)`
-                : theme.palette.background.default
+                : theme.palette.background.default,
+            position: 'relative',
+            '&:before': {
+              content: '\"\"',
+              position: 'absolute',
+              inset: 12,
+              zIndex: 0,
+              borderRadius: 20,
+              background:
+                'radial-gradient(circle at 20% 20%, rgba(33,150,243,0.10), transparent 45%), radial-gradient(circle at 82% 0%, rgba(156,39,176,0.10), transparent 35%)'
+            }
           }}
         >
-          <Stack spacing={2.25}>
+          <Stack spacing={2.25} sx={{ position: 'relative', zIndex: 1 }}>
             <Box sx={(theme) => heroCardSx(theme)}>
               <Avatar
                 sx={{
@@ -818,7 +839,7 @@ export default function LinesLionTv() {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button onClick={() => setDetail({ open: false, row: null })} variant="outlined">
+          <Button onClick={() => setDetail({ open: false, row: null })} variant="outlined" startIcon={<CloseIcon />}>
             {t('lines.detail.close')}
           </Button>
         </DialogActions>
