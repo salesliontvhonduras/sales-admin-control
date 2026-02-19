@@ -339,6 +339,133 @@ const resources = {
           deleted: 'Customer deleted successfully.'
         }
       },
+      crm: {
+        title: 'Customer CRM',
+        search: { label: 'Search customer', placeholder: 'Name, email or user' },
+        empty: {
+          title: 'Pick a customer to see their 360° view',
+          subtitle: 'You will find their subscriptions, billing, licenses and key metrics.'
+        },
+        stats: {
+          billed: 'Total billed',
+          invoices: 'Invoices: {{val}}',
+          subscriptions: 'Subscriptions',
+          subscriptionsActive: 'Active: {{val}}',
+          licenses: 'Licenses',
+          licensesActive: 'Active: {{val}}',
+          nextRenewal: 'Next renewal',
+          none: 'Not defined',
+          closest: 'Closest date',
+          lastPayment: 'Last payment',
+          noPayments: 'No payments',
+          lastInvoice: 'Last invoice date',
+          referredBy: 'Referred by',
+          noRef: 'No reference',
+          opening: 'Opening: {{date}}'
+        },
+        contact: { call: 'Call', email: 'Email' },
+        tables: {
+          subscriptions: { title: 'All subscriptions', desc: 'Full view of lines, packages, billing and dates for the customer.' },
+          licenses: { title: 'All licenses', desc: 'License detail: app, type, validity and status.' },
+          invoices: { title: 'All invoices', desc: 'Full billing history in Lempiras with method and status.' }
+        },
+        headers: {
+          line: 'Line',
+          renewal: 'Renewal',
+          method: 'Method',
+          package: 'Package',
+          status: 'Status',
+          start: 'Start',
+          date: 'Date',
+          total: 'Total',
+          billing: 'Billing',
+          mac: 'MAC',
+          app: 'App',
+          type: 'Type',
+          expire: 'Expire'
+        },
+        modules: {
+          title: 'Detailed modules',
+          subtitle: 'Open dedicated submodules with context, icons and colors for each entity.',
+          subscriptions: 'View subscriptions',
+          invoices: 'View billing',
+          licenses: 'View licenses'
+        },
+        detail: {
+          subscription: 'Subscription detail',
+          invoice: 'Invoice detail',
+          license: 'License detail',
+          helper: 'Enriched view with icons and descriptions.',
+          summary: {
+            subscription: 'Subscription summary',
+            license: 'License summary',
+            invoice: 'Invoice summary',
+            subscriptionHelper: 'See line, package, dates and auto-pay state of the selected subscription.',
+            licenseHelper: 'Key license info: app, type, cycle, validity and current owner.',
+            invoiceHelper: 'Amount paid in Lps, method, bank and notes for the selected invoice.'
+          }
+        },
+        subscription: {
+          block: {
+            line: { title: 'Line & charge', helper: 'Line identifier and related amounts.' },
+            dates: { title: 'Dates & billing', helper: 'Current cycle and next renewal.' },
+            status: { title: 'Status & package', helper: 'Status, package and auto payment.' }
+          },
+          line: 'Line: {{line}}',
+          user: 'User: {{user}}',
+          amount: 'Amount: {{amount}}',
+          discount: 'Discount: {{discount}}',
+          start: 'Start: {{date}}',
+          renewal: 'Renewal: {{date}}',
+          billing: 'Billing: {{billing}}',
+          package: 'Package: {{pkg}}',
+          autoPay: 'Auto pay: {{val}}'
+        },
+        license: {
+          block: {
+            app: { title: 'App & plan', helper: 'Selected license overview.' },
+            details: { title: 'License details', helper: 'Status, dates and owner.' }
+          },
+          app: 'App: {{app}}',
+          type: 'Type: {{type}}',
+          price: 'Price: {{price}}',
+          period: 'Period: {{period}}',
+          mac: 'MAC: {{mac}}',
+          name: 'Name: {{name}}',
+          created: 'Created: {{date}}',
+          expires: 'Expires: {{date}}',
+          ownerSince: 'Owner since: {{date}}'
+        },
+        invoice: {
+          block: {
+            amount: { title: 'Charge & status', helper: 'Total amount and payment method.' },
+            info: { title: 'Invoice info', helper: 'Service, package, bank and notes.' }
+          },
+          totalPaid: 'Total paid: {{amount}}',
+          discount: 'Discount: {{discount}}',
+          method: 'Method: {{method}}',
+          status: 'Status: {{status}}',
+          date: 'Date: {{date}}',
+          service: 'Service: {{service}}',
+          package: 'Package: {{pkg}}',
+          bank: 'Bank: {{bank}}',
+          notes: 'Notes: {{notes}}',
+          noNotes: 'No notes'
+        },
+        datasets: {
+          customers: 'Loaded customers: {{count}}',
+          label: 'Datasets: {{state}}',
+          loading: 'Loading...',
+          ready: 'Ready'
+        },
+        errors: {
+          load: 'Could not load information.',
+          banks: 'Could not load banks.',
+          services: 'Could not load services.'
+        },
+        table: { detail: 'Detail', empty: 'No data' }
+      },
+      common: { close: 'Close', yes: 'Yes', no: 'No' },
       sms: {
         title: 'SMS Management',
         enqueue: 'Enqueue SMS',
@@ -725,6 +852,133 @@ const resources = {
           deleted: 'Cliente eliminado correctamente.'
         }
       },
+      crm: {
+        title: 'CRM Clientes',
+        search: { label: 'Buscar cliente', placeholder: 'Nombre, correo o usuario' },
+        empty: {
+          title: 'Selecciona un cliente para ver su panorama 360°',
+          subtitle: 'Encontrarás sus suscripciones, facturación, licencias y métricas clave.'
+        },
+        stats: {
+          billed: 'Total facturado',
+          invoices: 'Facturas: {{val}}',
+          subscriptions: 'Suscripciones',
+          subscriptionsActive: 'Activas: {{val}}',
+          licenses: 'Licencias',
+          licensesActive: 'Activas: {{val}}',
+          nextRenewal: 'Próxima renovación',
+          none: 'Sin definir',
+          closest: 'Fecha más cercana',
+          lastPayment: 'Último pago',
+          noPayments: 'No hay pagos',
+          lastInvoice: 'Fecha de la última factura',
+          referredBy: 'Referido por',
+          noRef: 'Sin referencia',
+          opening: 'Alta: {{date}}'
+        },
+        contact: { call: 'Llamar', email: 'Email' },
+        tables: {
+          subscriptions: { title: 'Todas las suscripciones', desc: 'Vista completa de líneas, paquetes, billing y fechas del cliente.' },
+          licenses: { title: 'Todas las licencias', desc: 'Detalle de licencias: app, tipo, vigencia y estado actual.' },
+          invoices: { title: 'Todas las facturas', desc: 'Historial completo de facturación en Lempiras con método y estado.' }
+        },
+        headers: {
+          line: 'Línea',
+          renewal: 'Renovación',
+          method: 'Método',
+          package: 'Paquete',
+          status: 'Estado',
+          start: 'Inicio',
+          date: 'Fecha',
+          total: 'Total',
+          billing: 'Billing',
+          mac: 'MAC',
+          app: 'App',
+          type: 'Tipo',
+          expire: 'Expira'
+        },
+        modules: {
+          title: 'Módulos detallados',
+          subtitle: 'Abre submódulos dedicados con contexto, iconos y colores para identificar cada entidad.',
+          subscriptions: 'Ver suscripciones',
+          invoices: 'Ver facturación',
+          licenses: 'Ver licencias'
+        },
+        detail: {
+          subscription: 'Detalle de suscripción',
+          invoice: 'Detalle de factura',
+          license: 'Detalle de licencia',
+          helper: 'Visualización enriquecida con íconos y descripciones.',
+          summary: {
+            subscription: 'Resumen de la suscripción',
+            license: 'Resumen de la licencia',
+            invoice: 'Resumen de la factura',
+            subscriptionHelper: 'Visualiza línea, paquete, fechas y estado de pago automático de la suscripción seleccionada.',
+            licenseHelper: 'Información clave de la licencia: aplicación, tipo, ciclo, vigencia y propietario actual.',
+            invoiceHelper: 'Monto pagado en Lps, método, banco y notas relevantes para la factura elegida.'
+          }
+        },
+        subscription: {
+          block: {
+            line: { title: 'Línea y cobro', helper: 'Identificador de línea y montos asociados.' },
+            dates: { title: 'Fechas y billing', helper: 'Ciclo actual y próxima renovación.' },
+            status: { title: 'Estado y paquete', helper: 'Estado, paquete y pago automático.' }
+          },
+          line: 'Línea: {{line}}',
+          user: 'Usuario: {{user}}',
+          amount: 'Monto: {{amount}}',
+          discount: 'Descuento: {{discount}}',
+          start: 'Inicio: {{date}}',
+          renewal: 'Renovación: {{date}}',
+          billing: 'Billing: {{billing}}',
+          package: 'Paquete: {{pkg}}',
+          autoPay: 'Pago automático: {{val}}'
+        },
+        license: {
+          block: {
+            app: { title: 'Aplicación y plan', helper: 'Resumen de la licencia seleccionada.' },
+            details: { title: 'Detalles de licencia', helper: 'Estado, fechas y propietario.' }
+          },
+          app: 'Aplicación: {{app}}',
+          type: 'Tipo: {{type}}',
+          price: 'Precio: {{price}}',
+          period: 'Periodo: {{period}}',
+          mac: 'MAC: {{mac}}',
+          name: 'Nombre: {{name}}',
+          created: 'Creada: {{date}}',
+          expires: 'Expira: {{date}}',
+          ownerSince: 'Propietario desde: {{date}}'
+        },
+        invoice: {
+          block: {
+            amount: { title: 'Cobro y estado', helper: 'Importe total y método de pago.' },
+            info: { title: 'Información de factura', helper: 'Servicio, paquete, banco y notas.' }
+          },
+          totalPaid: 'Total pagado: {{amount}}',
+          discount: 'Descuento: {{discount}}',
+          method: 'Método: {{method}}',
+          status: 'Estado: {{status}}',
+          date: 'Fecha: {{date}}',
+          service: 'Servicio: {{service}}',
+          package: 'Paquete: {{pkg}}',
+          bank: 'Banco: {{bank}}',
+          notes: 'Notas: {{notes}}',
+          noNotes: 'Sin notas'
+        },
+        datasets: {
+          customers: 'Clientes cargados: {{count}}',
+          label: 'Datasets: {{state}}',
+          loading: 'Cargando...',
+          ready: 'Listos'
+        },
+        errors: {
+          load: 'No se pudo cargar la información.',
+          banks: 'No se pudieron cargar los bancos.',
+          services: 'No se pudieron cargar los servicios.'
+        },
+        table: { detail: 'Detalle', empty: 'No hay datos' }
+      },
+      common: { close: 'Cerrar', yes: 'Sí', no: 'No' },
       sms: {
         title: 'Gestión de SMS',
         enqueue: 'Encolar SMS',
