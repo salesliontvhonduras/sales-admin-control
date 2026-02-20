@@ -521,6 +521,18 @@ export default function LicensesLionTv() {
     if (page > maxPage) setPage(0);
   }, [filteredRows.length, page, rowsPerPage]);
 
+  const computeExpireDate = (period) => {
+    const today = new Date();
+    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+    if (period === 'LIFETIME') return '2199-12-31';
+    if (period === 'ANNUAL') {
+      const next = new Date(today);
+      next.setFullYear(next.getFullYear() + 1);
+      return next.toISOString().slice(0, 10);
+    }
+    return '';
+  };
+
   const resetForm = () =>
     setForm({
       licenseId: null,
@@ -529,14 +541,24 @@ export default function LicensesLionTv() {
       customerId: '',
       status: 'ACTIVE',
       app: 'Vivo Player',
-      price: '',
-      expireAt: '',
+      price: 125,
+      expireAt: computeExpireDate('ANNUAL'),
       licensePeriod: 'ANNUAL',
       typeLicense: 'PRIMARY'
     });
 
   const handleFormChange = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    const value = e.target.value;
+    if (field === 'licensePeriod') {
+      setForm((prev) => ({
+        ...prev,
+        licensePeriod: value,
+        expireAt: computeExpireDate(value),
+        price: 125
+      }));
+      return;
+    }
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleEdit = (row) => {
@@ -548,7 +570,7 @@ export default function LicensesLionTv() {
       status: row.status,
       app: row.app,
       price: row.price,
-      expireAt: row.expireAt ? String(row.expireAt).slice(0, 16) : '',
+      expireAt: row.expireAt ? String(row.expireAt).slice(0, 10) : '',
       licensePeriod: row.licensePeriod,
       typeLicense: row.typeLicense
     });

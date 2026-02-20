@@ -243,18 +243,23 @@ function normalizeInvoice(item = {}) {
   };
 }
 
-const defaultForm = {
-  invoiceId: null,
-  serviceId: '',
-  paymentDate: '',
-  amountPaid: '',
-  amountDiscount: '',
-  status: 'PENDING',
-  packageId: '',
-  customerId: '',
-  paymentMethod: '',
-  bankId: '',
-  notes: ''
+const createDefaultForm = () => {
+  const today = new Date();
+  today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+  const todayStr = today.toISOString().slice(0, 10);
+  return {
+    invoiceId: null,
+    serviceId: '',
+    paymentDate: todayStr,
+    amountPaid: '',
+    amountDiscount: '',
+    status: 'PENDING',
+    packageId: '',
+    customerId: '',
+    paymentMethod: '',
+    bankId: '',
+    notes: ''
+  };
 };
 
 export default function InvoicesLionTv() {
@@ -274,7 +279,7 @@ export default function InvoicesLionTv() {
 
   const [openModal, setOpenModal] = useState(false);
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
-  const [form, setForm] = useState(defaultForm);
+  const [form, setForm] = useState(() => createDefaultForm());
   const [sending, setSending] = useState(false);
 
   const [customers, setCustomers] = useState([]);
@@ -496,7 +501,7 @@ export default function InvoicesLionTv() {
     [rows]
   );
 
-  const resetForm = () => setForm(defaultForm);
+  const resetForm = () => setForm(createDefaultForm());
 
   const handleFormChange = (field) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;

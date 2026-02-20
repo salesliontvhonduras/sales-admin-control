@@ -295,18 +295,23 @@ export default function CustomersLionTv() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const defaultForm = {
-    customerId: null,
-    customerFullname: '',
-    gender: 'M',
-    openingDate: '',
-    closeDate: '',
-    isReferered: false,
-    refererBy: '',
-    customerPhone: '',
-    customerMail: '',
-    customerStatus: 'INACTIVE',
-    channel: 'red social'
+  const createDefaultForm = () => {
+    const today = new Date();
+    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+    const todayStr = today.toISOString().slice(0, 10);
+    return {
+      customerId: null,
+      customerFullname: '',
+      gender: 'M',
+      openingDate: todayStr,
+      closeDate: '',
+      isReferered: false,
+      refererBy: '',
+      customerPhone: '',
+      customerMail: '',
+      customerStatus: 'INACTIVE',
+      channel: 'red social'
+    };
   };
 
   const [rows, setRows] = useState([]);
@@ -320,7 +325,7 @@ export default function CustomersLionTv() {
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
-  const [form, setForm] = useState(defaultForm);
+  const [form, setForm] = useState(() => createDefaultForm());
   const [sending, setSending] = useState(false);
   const [referers, setReferers] = useState([]);
   const [referersLoading, setReferersLoading] = useState(false);
@@ -461,10 +466,22 @@ export default function CustomersLionTv() {
 
   const handleFormChange = (field) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => {
+      // If status changes to INACTIVE, set closing date to today (local timezone)
+      if (field === 'customerStatus') {
+        if (value === 'INACTIVE') {
+          const today = new Date();
+          today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+          return { ...prev, [field]: value, closeDate: today.toISOString().slice(0, 10) };
+        }
+        // if goes back to ACTIVE, keep closeDate as-is (could clear if desired)
+        return { ...prev, [field]: value };
+      }
+      return { ...prev, [field]: value };
+    });
   };
 
-  const resetForm = () => setForm(defaultForm);
+  const resetForm = () => setForm(createDefaultForm());
 
   const handleCreateCustomer = async () => {
     if (!form.customerFullname || !form.gender || !form.customerPhone || !form.customerMail || !form.channel) {
