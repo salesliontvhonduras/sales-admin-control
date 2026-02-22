@@ -585,6 +585,12 @@ export default function LicensesLionTv() {
       return;
     }
 
+    const normalizeExpireAt = (val) => {
+      if (!val) return null;
+      // si viene solo YYYY-MM-DD, agrega T00:00:00 para satisfacer LocalDateTime en backend
+      return val.includes('T') ? val : `${val}T00:00:00`;
+    };
+
     const payload = {
       macAddress: form.macAddress,
       name: form.name,
@@ -592,7 +598,7 @@ export default function LicensesLionTv() {
       status: form.status,
       app: form.app,
       price: form.price ? Number(form.price) : 0,
-      expireAt: form.expireAt || null,
+      expireAt: normalizeExpireAt(form.expireAt),
       licensePeriod: form.licensePeriod,
       typeLicense: form.typeLicense
     };
