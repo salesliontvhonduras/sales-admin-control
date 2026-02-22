@@ -1351,8 +1351,8 @@ export default function LicensesLionTv() {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     label={t('licenses.form.expire', 'Expire')}
-                    type="datetime-local"
-                    value={form.expireAt}
+                    type="date"
+                    value={form.expireAt || ''}
                     onChange={handleFormChange('expireAt')}
                     fullWidth
                     sx={fieldSx}
