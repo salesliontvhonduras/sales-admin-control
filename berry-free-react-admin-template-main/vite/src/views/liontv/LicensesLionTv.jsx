@@ -681,7 +681,7 @@ export default function LicensesLionTv() {
   };
 
   const handleServerSubmit = async () => {
-    const { serverKey, macAddress = openServerChange.row?.macAddress, lineId, playlistName } = {
+    const { serverKey, macAddress = openServerChange.row?.macAddress, lineId, playlistName, username, password } = {
       ...serverForm,
       macAddress: openServerChange.row?.macAddress
     };
@@ -693,7 +693,7 @@ export default function LicensesLionTv() {
     try {
       const res = await lionTvApi.post(
         '/licenses/v1/change-server',
-        { serverKey, macAddress, lineId, playlistName },
+        { serverKey, macAddress, lineId, playlistName, username, password },
         { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
       );
       const msg = res?.data?.data?.message || res?.data?.message || 'Servidor actualizado.';
@@ -1464,7 +1464,7 @@ export default function LicensesLionTv() {
                 <TextField
                   label={t('licenses.server.username', 'Username')}
                   value={serverForm.username}
-                  InputProps={{ readOnly: true }}
+                  onChange={(e) => setServerForm((p) => ({ ...p, username: e.target.value }))}
                   fullWidth
                   sx={fieldSx}
                 />
@@ -1473,7 +1473,7 @@ export default function LicensesLionTv() {
                 <TextField
                   label={t('licenses.server.password', 'Password')}
                   value={serverForm.password}
-                  InputProps={{ readOnly: true }}
+                  onChange={(e) => setServerForm((p) => ({ ...p, password: e.target.value }))}
                   fullWidth
                   sx={fieldSx}
                 />
