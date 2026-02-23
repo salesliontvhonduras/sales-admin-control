@@ -211,6 +211,15 @@ function formatDateInput(value) {
   return '';
 }
 
+function normalizeDateOnly(value) {
+  const iso = formatDateInput(value);
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
 const defaultForm = {
   subscriptionId: null,
   customerId: '',
@@ -241,6 +250,8 @@ export default function SubscriptionsLionTv() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [renewalFilter, setRenewalFilter] = useState(''); // '', 'today', 'tomorrow'
+  const [renewalSort, setRenewalSort] = useState('asc'); // asc | desc
 
   const [openModal, setOpenModal] = useState(false);
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
@@ -426,20 +437,42 @@ export default function SubscriptionsLionTv() {
   }, [customerNameMap]);
 
   const filteredRows = useMemo(() => {
-    if (!search && !statusFilter) return rows;
     const term = search.toLowerCase();
-    return rows.filter((row) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const filtered = rows.filter((row) => {
       if (statusFilter && (row.status || '').toLowerCase() !== statusFilter.toLowerCase()) return false;
-      return (
+      const matchesSearch =
+        !term ||
         String(row.customerId || '').toLowerCase().includes(term) ||
         (row.customerName || row.customer_name || '').toLowerCase().includes(term) ||
         (row.lineId || '').toLowerCase().includes(term) ||
         (row.billing || '').toLowerCase().includes(term) ||
         (row.status || '').toLowerCase().includes(term) ||
-        String(row.packageId || '').toLowerCase().includes(term)
-      );
+        String(row.packageId || '').toLowerCase().includes(term);
+      if (!matchesSearch) return false;
+
+      if (!renewalFilter) return true;
+      const d = normalizeDateOnly(row.renewalDate);
+      if (!d) return false;
+      if (renewalFilter === 'today') return d.getTime() === today.getTime();
+      if (renewalFilter === 'tomorrow') return d.getTime() === tomorrow.getTime();
+      return true;
     });
-  }, [rows, search, statusFilter]);
+
+    const sorted = [...filtered].sort((a, b) => {
+      const da = normalizeDateOnly(a.renewalDate);
+      const db = normalizeDateOnly(b.renewalDate);
+      const ta = da ? da.getTime() : Number.POSITIVE_INFINITY;
+      const tb = db ? db.getTime() : Number.POSITIVE_INFINITY;
+      return renewalSort === 'asc' ? ta - tb : tb - ta;
+    });
+
+    return sorted;
+  }, [rows, search, statusFilter, renewalFilter, renewalSort]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -706,6 +739,42 @@ export default function SubscriptionsLionTv() {
                 ))}
               </Select>
             </FormControl>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} flexShrink={0}>
+              <Button
+                variant={renewalFilter === 'today' ? 'contained' : 'outlined'}
+                color="error"
+                onClick={() => setRenewalFilter((v) => (v === 'today' ? '' : 'today'))}
+                startIcon={<CalendarMonthIcon />}
+                sx={{ minHeight: 46, borderRadius: 2, textTransform: 'none' }}
+              >
+                {t('subscriptions.filters.today', 'Vence hoy')}
+              </Button>
+              <Button
+                variant={renewalFilter === 'tomorrow' ? 'contained' : 'outlined'}
+                color="warning"
+                onClick={() => setRenewalFilter((v) => (v === 'tomorrow' ? '' : 'tomorrow'))}
+                startIcon={<CalendarMonthIcon />}
+                sx={{ minHeight: 46, borderRadius: 2, textTransform: 'none' }}
+              >
+                {t('subscriptions.filters.tomorrow', 'Vence mañana')}
+              </Button>
+              <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 160 }, '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}>
+                <InputLabel>{t('subscriptions.filters.sortRenewal', 'Orden fecha')}</InputLabel>
+                <Select
+                  value={renewalSort}
+                  label={t('subscriptions.filters.sortRenewal', 'Orden fecha')}
+                  onChange={(e) => setRenewalSort(e.target.value)}
+                  startAdornment={
+                    <InputAdornment position="start" sx={{ pl: 1 }}>
+                      <CalendarMonthIcon fontSize="small" color="action" />
+                    </InputAdornment>
+                  }
+                >
+                  <MenuItem value="asc">{t('subscriptions.filters.asc', 'Más cercanas')}</MenuItem>
+                  <MenuItem value="desc">{t('subscriptions.filters.desc', 'Más lejanas')}</MenuItem>
+                </Select>
+              </FormControl>
+            </Stack>
           </Stack>
         </Box>
         <TableContainer component={Paper}>
