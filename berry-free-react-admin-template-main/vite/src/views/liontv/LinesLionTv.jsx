@@ -60,6 +60,11 @@ import { lionTvApi } from 'utils/api';
 import SpeedIcon from '@mui/icons-material/Speed';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 
 const detailCardSx = {
   p: 2,
@@ -148,6 +153,19 @@ function StatusChip({ enabled, expired, t }) {
   return <Chip size="small" color={color} label={label} />;
 }
 
+const defaultForm = {
+  lineId: '',
+  username: '',
+  password: '',
+  packageId: '',
+  packageName: '',
+  expDate: '',
+  enabled: true,
+  maxConnections: '',
+  resellerNotes: '',
+  _isEdit: false
+};
+
 export default function LinesLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
@@ -166,6 +184,10 @@ export default function LinesLionTv() {
   const [detail, setDetail] = useState({ open: false, row: null });
   const [showPassword, setShowPassword] = useState(false);
   const [visibleRowPassword, setVisibleRowPassword] = useState({});
+  const [openModal, setOpenModal] = useState(false);
+  const [openDelete, setOpenDelete] = useState({ open: false, row: null });
+  const [form, setForm] = useState(defaultForm);
+  const [saving, setSaving] = useState(false);
 
   const copyCredentials = useCallback(
     (row) => {
@@ -180,6 +202,87 @@ export default function LinesLionTv() {
     },
     [enqueueSnackbar, t]
   );
+
+  const resetForm = () => setForm(defaultForm);
+
+  const handleOpenCreate = () => {
+    resetForm();
+    setOpenModal(true);
+  };
+
+  const handleOpenEdit = (row) => {
+    setForm({
+      lineId: row.id || '',
+      username: row.username || '',
+      password: row.password || '',
+      packageId: row.packageId || row.package_id || '',
+      packageName: row.packageName || row.package_name || '',
+      expDate: row.expDate ? String(row.expDate).slice(0, 10) : '',
+      enabled: Boolean(row.enabled),
+      maxConnections: row.maxConnections || '',
+      resellerNotes: row.resellerNotes || '',
+      _isEdit: true
+    });
+    setOpenModal(true);
+  };
+
+  const handleSave = async () => {
+    if (!form.lineId || !form.username || !form.password) {
+      enqueueSnackbar(t('lines.form.required', 'Completa id, usuario y contraseña'), { variant: 'warning' });
+      return;
+    }
+    setSaving(true);
+    const payload = {
+      lineId: form.lineId,
+      username: form.username,
+      password: form.password,
+      packageId: form.packageId ? Number(form.packageId) : null,
+      packageName: form.packageName,
+      expDate: form.expDate || null,
+      enabled: Boolean(form.enabled),
+      maxConnections: form.maxConnections ? Number(form.maxConnections) : null,
+      resellerNotes: form.resellerNotes
+    };
+    try {
+      if (form._isEdit || rows.some((r) => r.id === form.lineId)) {
+        await lionTvApi.put(`/lines/v1/${form.lineId}`, payload, { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true });
+      } else {
+        await lionTvApi.post('/lines/v1', payload, { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true });
+      }
+      enqueueSnackbar(t('lines.form.saved', 'Línea guardada'), { variant: 'success' });
+      setOpenModal(false);
+      resetForm();
+      setRefreshKey((v) => v + 1);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('lines.errors.save', 'No se pudo guardar la línea'), { variant: 'error' });
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!openDelete.row?.id) {
+      setOpenDelete({ open: false, row: null });
+      return;
+    }
+    setSaving(true);
+    try {
+      await lionTvApi.delete(`/lines/v1/${openDelete.row.id}`, { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true });
+      enqueueSnackbar(t('lines.delete.done', 'Línea eliminada'), { variant: 'success' });
+      setRefreshKey((v) => v + 1);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('lines.errors.delete', 'No se pudo eliminar la línea'), {
+          variant: 'error'
+        });
+      }
+    } finally {
+      setSaving(false);
+      setOpenDelete({ open: false, row: null });
+    }
+  };
 
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
@@ -363,6 +466,14 @@ export default function LinesLionTv() {
               </Select>
             </FormControl>
             <Button
+              variant="contained"
+              startIcon={<AddCircleOutlineIcon />}
+              onClick={handleOpenCreate}
+              sx={{ minWidth: isMobile ? '100%' : 150, borderRadius: 2, textTransform: 'none' }}
+            >
+              {t('lines.actions.new', 'Nueva línea')}
+            </Button>
+            <Button
               variant="outlined"
               color="secondary"
               startIcon={<RefreshIcon />}
@@ -488,21 +599,43 @@ export default function LinesLionTv() {
                     </Stack>
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDetail({ open: true, row });
-                      }}
-                      aria-label={t('lines.detail.title')}
-                      sx={(theme) => ({
-                        bgcolor: theme.palette.primary.lighter,
-                        color: theme.palette.primary.main,
-                        '&:hover': { bgcolor: theme.palette.primary.light }
-                      })}
-                    >
-                      <InfoOutlinedIcon fontSize="small" />
-                    </IconButton>
+                    <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenEdit(row);
+                        }}
+                        aria-label={t('actions.edit')}
+                      >
+                        <EditOutlinedIcon fontSize="small" color="info" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenDelete({ open: true, row });
+                        }}
+                        aria-label={t('actions.delete')}
+                      >
+                        <DeleteOutlineIcon fontSize="small" color="error" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDetail({ open: true, row });
+                        }}
+                        aria-label={t('lines.detail.title')}
+                        sx={(theme) => ({
+                          bgcolor: theme.palette.primary.lighter,
+                          color: theme.palette.primary.main,
+                          '&:hover': { bgcolor: theme.palette.primary.light }
+                        })}
+                      >
+                        <InfoOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))}
@@ -841,6 +974,149 @@ export default function LinesLionTv() {
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button onClick={() => setDetail({ open: false, row: null })} variant="outlined" startIcon={<CloseIcon />}>
             {t('lines.detail.close')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* CREATE / EDIT LINE */}
+      <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="sm" fullScreen={isMobile}>
+        <DialogTitle>{form._isEdit ? t('lines.actions.edit', 'Editar línea') : t('lines.actions.new', 'Nueva línea')}</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2} mt={1}>
+            <TextField
+              label={t('lines.form.id', 'Line ID')}
+              value={form.lineId}
+              onChange={(e) => setForm((p) => ({ ...p, lineId: e.target.value }))}
+              fullWidth
+              required
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LanIcon color="primary" />
+                  </InputAdornment>
+                )
+              }}
+            />
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label={t('lines.form.username', 'Username')}
+                  value={form.username}
+                  onChange={(e) => setForm((p) => ({ ...p, username: e.target.value }))}
+                  fullWidth
+                  required
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PersonOutlineIcon color="action" />
+                      </InputAdornment>
+                    )
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label={t('lines.form.password', 'Password')}
+                  value={form.password}
+                  onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+                  fullWidth
+                  required
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <KeyIcon color="action" />
+                      </InputAdornment>
+                    )
+                  }}
+                />
+              </Grid>
+            </Grid>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label={t('lines.form.packageId', 'Package ID')}
+                  value={form.packageId}
+                  onChange={(e) => setForm((p) => ({ ...p, packageId: e.target.value }))}
+                  fullWidth
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SpeedIcon color="secondary" />
+                      </InputAdornment>
+                    )
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label={t('lines.form.packageName', 'Package name')}
+                  value={form.packageName}
+                  onChange={(e) => setForm((p) => ({ ...p, packageName: e.target.value }))}
+                  fullWidth
+                />
+              </Grid>
+            </Grid>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label={t('lines.form.expDate', 'Expire date')}
+                  type="date"
+                  value={form.expDate}
+                  onChange={(e) => setForm((p) => ({ ...p, expDate: e.target.value }))}
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <CalendarMonthIcon color="action" />
+                      </InputAdornment>
+                    )
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label={t('lines.form.maxConnections', 'Max connections')}
+                  type="number"
+                  value={form.maxConnections}
+                  onChange={(e) => setForm((p) => ({ ...p, maxConnections: e.target.value }))}
+                  fullWidth
+                />
+              </Grid>
+            </Grid>
+            <TextField
+              label={t('lines.form.notes', 'Reseller notes')}
+              value={form.resellerNotes}
+              onChange={(e) => setForm((p) => ({ ...p, resellerNotes: e.target.value }))}
+              fullWidth
+              multiline
+              minRows={2}
+            />
+            <FormControlLabel
+              control={<Switch checked={form.enabled} onChange={(e) => setForm((p) => ({ ...p, enabled: e.target.checked }))} color="success" />}
+              label={t('lines.form.enabled', 'Enabled')}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button onClick={() => setOpenModal(false)} startIcon={<CloseIcon />} disabled={saving}>
+            {t('actions.cancel')}
+          </Button>
+          <Button variant="contained" onClick={handleSave} startIcon={<CloudDoneIcon />} disabled={saving}>
+            {saving ? t('actions.saving') : t('actions.save')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={openDelete.open} onClose={() => setOpenDelete({ open: false, row: null })} maxWidth="xs" fullWidth>
+        <DialogTitle>{t('lines.delete.title', 'Eliminar línea')}</DialogTitle>
+        <DialogContent dividers>
+          <Typography>{t('lines.delete.body', '¿Eliminar la línea {{id}}?', { id: openDelete.row?.id })}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDelete({ open: false, row: null })}>{t('actions.cancel')}</Button>
+          <Button color="error" variant="contained" onClick={handleDelete} disabled={saving}>
+            {saving ? t('actions.deleting', 'Eliminando...') : t('actions.delete')}
           </Button>
         </DialogActions>
       </Dialog>
