@@ -28,9 +28,9 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import IconButton from '@mui/material/IconButton';
 import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
+// duplicate removed
+// duplicate removed
+// duplicate removed
 import Card from '@mui/material/Card';
 import Skeleton from '@mui/material/Skeleton';
 import { useTheme } from '@mui/material/styles';
@@ -65,6 +65,14 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import NoteAltIcon from '@mui/icons-material/NoteAlt';
+import ShieldMoonIcon from '@mui/icons-material/ShieldMoon';
+import FormHelperText from '@mui/material/FormHelperText';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 
 const detailCardSx = {
   p: 2,
@@ -114,6 +122,37 @@ const glassCard = (theme) => ({
     ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.primary.light}15 60%, #fff 100%)`
     : `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.primary.dark}30 100%)`
 });
+
+const fieldSx = {
+  '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
+  '& .MuiInputLabel-root': { fontWeight: 500 }
+};
+
+const sectionSx = {
+  p: 2,
+  borderRadius: 2,
+  border: '1px solid',
+  borderColor: 'divider',
+  bgcolor: 'background.paper'
+};
+
+function SectionCard({ title, helper, children }) {
+  return (
+    <Box sx={sectionSx}>
+      <Stack spacing={1.5}>
+        <Box>
+          <Typography variant="subtitle2">{title}</Typography>
+          {helper ? (
+            <Typography variant="caption" color="text.secondary">
+              {helper}
+            </Typography>
+          ) : null}
+        </Box>
+        {children}
+      </Stack>
+    </Box>
+  );
+}
 
 function formatDate(value) {
   if (!value) return '-';
@@ -188,6 +227,8 @@ export default function LinesLionTv() {
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
   const [form, setForm] = useState(defaultForm);
   const [saving, setSaving] = useState(false);
+  const [packages, setPackages] = useState([]);
+  const [packagesLoading, setPackagesLoading] = useState(false);
 
   const copyCredentials = useCallback(
     (row) => {
@@ -315,9 +356,32 @@ export default function LinesLionTv() {
     }
   }, [accessToken, enqueueSnackbar]);
 
+  const loadPackages = useCallback(async () => {
+    setPackagesLoading(true);
+    try {
+      const response = await lionTvApi.get('/packages/v1/list-packages', {
+        params: { index: 0, size: 200, start: 0, filters: '', sorting: '' },
+        headers: { Authorization: `Bearer ${accessToken}` },
+        skipAuthRedirect: true
+      });
+      const list = response?.data?.data?.data || [];
+      const filtered = (Array.isArray(list) ? list : []).filter(
+        (pkg) => !String(pkg?.name || '').trim().toUpperCase().startsWith('DEMO')
+      );
+      setPackages(filtered);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(t('packages.error', 'No se pudieron cargar paquetes'), { variant: 'warning' });
+      }
+    } finally {
+      setPackagesLoading(false);
+    }
+  }, [accessToken, enqueueSnackbar, t]);
+
   useEffect(() => {
     loadLines();
-  }, [loadLines, refreshKey]);
+    loadPackages();
+  }, [loadLines, loadPackages, refreshKey]);
 
   const filteredRows = useMemo(() => {
     if (!search && !statusFilter) return rows;
@@ -362,6 +426,38 @@ export default function LinesLionTv() {
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
       <MainCard
         title={t('lines.title')}
+        secondary={
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={() => setRefreshKey((v) => v + 1)}
+              sx={{
+                borderRadius: 3,
+                borderWidth: 2,
+                textTransform: 'none',
+                fontWeight: 700,
+                px: 2.5
+              }}
+            >
+              {t('actions.refresh', 'Refresh')}
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddCircleOutlineIcon />}
+              onClick={handleOpenCreate}
+              sx={{
+                borderRadius: 3,
+                textTransform: 'none',
+                fontWeight: 700,
+                px: 2.8,
+                boxShadow: '0 12px 24px rgba(0,133,255,0.35)'
+              }}
+            >
+              {t('lines.actions.new', 'Nueva línea')}
+            </Button>
+          </Stack>
+        }
       >
         <Grid container spacing={gridSpacing}>
             {[
@@ -465,23 +561,6 @@ export default function LinesLionTv() {
               ))}
               </Select>
             </FormControl>
-            <Button
-              variant="contained"
-              startIcon={<AddCircleOutlineIcon />}
-              onClick={handleOpenCreate}
-              sx={{ minWidth: isMobile ? '100%' : 150, borderRadius: 2, textTransform: 'none' }}
-            >
-              {t('lines.actions.new', 'Nueva línea')}
-            </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              startIcon={<RefreshIcon />}
-              onClick={() => setRefreshKey((v) => v + 1)}
-              sx={{ minWidth: isMobile ? '100%' : 140, borderRadius: 2, textTransform: 'none' }}
-            >
-              {t('actions.refresh')}
-            </Button>
           </Stack>
         </Box>
         <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: '0 14px 32px rgba(0,0,0,0.08)' }}>
@@ -979,131 +1058,328 @@ export default function LinesLionTv() {
       </Dialog>
 
       {/* CREATE / EDIT LINE */}
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="sm" fullScreen={isMobile}>
-        <DialogTitle>{form._isEdit ? t('lines.actions.edit', 'Editar línea') : t('lines.actions.new', 'Nueva línea')}</DialogTitle>
-        <DialogContent dividers>
-          <Stack spacing={2} mt={1}>
-            <TextField
-              label={t('lines.form.id', 'Line ID')}
-              value={form.lineId}
-              onChange={(e) => setForm((p) => ({ ...p, lineId: e.target.value }))}
-              fullWidth
-              required
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LanIcon color="primary" />
-                  </InputAdornment>
-                )
+      <Dialog
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        fullWidth
+        maxWidth="md"
+        fullScreen={isMobile}
+        PaperProps={{
+          sx: (theme) => ({
+            borderRadius: 3,
+            boxShadow: '0 18px 40px rgba(0,0,0,0.18)',
+            overflow: 'hidden',
+            border: '1px solid',
+            borderColor: form._isEdit ? theme.palette.warning.light : theme.palette.primary.light,
+            backgroundImage:
+              theme.palette.mode === 'light'
+                ? `linear-gradient(150deg, ${theme.palette.primary.light}16 0%, ${theme.palette.secondary.light}10 45%, #ffffff 100%)`
+                : undefined
+          })
+        }}
+      >
+        <DialogTitle
+          sx={(theme) => ({
+            position: 'relative',
+            pr: 5,
+            background: `linear-gradient(135deg, ${theme.palette.primary.light}28 0%, ${theme.palette.secondary.light}20 45%, ${theme.palette.background.paper} 100%)`,
+            pb: 1
+          })}
+        >
+          <Stack direction="row" alignItems="center" spacing={1.5}>
+            <Avatar
+              sx={{
+                bgcolor: form._isEdit ? 'warning.main' : 'primary.main',
+                color: '#fff',
+                width: 40,
+                height: 40,
+                boxShadow: 4
               }}
+            >
+              <LanIcon fontSize="small" />
+            </Avatar>
+            <Box>
+              <Typography variant="h6">
+                {form._isEdit ? t('lines.actions.edit', 'Editar línea') : t('lines.actions.new', 'Nueva línea')}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {t('lines.form.helper', 'Credenciales y paquete de la línea')}
+              </Typography>
+            </Box>
+            <Chip
+              label={form._isEdit ? t('common.edit', 'Edit') : t('common.new', 'New')}
+              size="small"
+              color={form._isEdit ? 'warning' : 'success'}
+              sx={{ ml: 'auto', fontWeight: 700, borderRadius: 1.5 }}
             />
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label={t('lines.form.username', 'Username')}
-                  value={form.username}
-                  onChange={(e) => setForm((p) => ({ ...p, username: e.target.value }))}
-                  fullWidth
-                  required
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PersonOutlineIcon color="action" />
-                      </InputAdornment>
-                    )
-                  }}
-                />
+            <IconButton
+              size="small"
+              onClick={() => setOpenModal(false)}
+              sx={{ position: 'absolute', right: 12, top: 12 }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent
+          dividers
+          sx={{
+            bgcolor: 'background.default',
+            px: { xs: 1.5, sm: 3 },
+            py: { xs: 1.5, sm: 2 },
+            background: (theme) =>
+              theme.palette.mode === 'light'
+                ? `linear-gradient(180deg, ${theme.palette.primary.light}14 0%, ${theme.palette.secondary.light}10 50%, ${theme.palette.background.paper} 82%)`
+                : theme.palette.background.default,
+            position: 'relative',
+            '&:before': {
+              content: '\"\"',
+              position: 'absolute',
+              inset: 12,
+              zIndex: 0,
+              borderRadius: 20,
+              background:
+                'radial-gradient(circle at 20% 20%, rgba(33,150,243,0.10), transparent 45%), radial-gradient(circle at 82% 0%, rgba(156,39,176,0.10), transparent 35%)'
+            }
+          }}
+        >
+          <Stack spacing={2} sx={{ position: 'relative', zIndex: 1 }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Chip
+                icon={<AutoAwesomeIcon fontSize="small" color={form._isEdit ? 'warning' : 'primary'} />}
+                label={form._isEdit ? t('subscriptions.badge.edit', 'Editing') : t('subscriptions.badge.new', 'New')}
+                color={form._isEdit ? 'warning' : 'primary'}
+                variant="outlined"
+                sx={{ fontWeight: 700, borderRadius: 1.5, boxShadow: 1 }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                {t('lines.form.helper', 'Credenciales y paquete de la línea')}
+              </Typography>
+            </Stack>
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} flexWrap="wrap">
+              <Chip
+                icon={<LanIcon fontSize="small" />}
+                label={form.lineId || t('lines.form.id', 'Line ID')}
+                variant="outlined"
+                color={form.lineId ? 'primary' : 'default'}
+              />
+              <Chip
+                icon={<BoltIcon fontSize="small" />}
+                label={form.packageId ? form.packageName || form.packageId : t('lines.form.packageId', 'Package')}
+                variant="outlined"
+                color={form.packageId ? 'warning' : 'default'}
+              />
+              <Chip
+                icon={<ShieldMoonIcon fontSize="small" />}
+                label={form.enabled ? t('lines.status.active') : t('lines.status.inactive')}
+                variant="outlined"
+                color={form.enabled ? 'success' : 'default'}
+              />
+            </Stack>
+
+            <SectionCard
+              title={t('lines.form.access', 'Acceso')}
+              helper={t('lines.form.accessHelper', 'ID, usuario, contraseña y estado')}
+            >
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={6}>
+                  <TextField
+                    label={t('lines.form.id', 'Line ID')}
+                    value={form.lineId}
+                    onChange={(e) => setForm((p) => ({ ...p, lineId: e.target.value }))}
+                    fullWidth
+                    required
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LanIcon color="primary" />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={6} display="flex" alignItems="center">
+                  <FormControlLabel
+                    control={<Switch checked={form.enabled} onChange={(e) => setForm((p) => ({ ...p, enabled: e.target.checked }))} color="success" />}
+                    label={form.enabled ? t('lines.status.active') : t('lines.status.inactive')}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={6}>
+                  <TextField
+                    label={t('lines.form.username', 'Username')}
+                    value={form.username}
+                    onChange={(e) => setForm((p) => ({ ...p, username: e.target.value }))}
+                    fullWidth
+                    required
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PersonOutlineIcon color="action" />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={6}>
+                  <TextField
+                    label={t('lines.form.password', 'Password')}
+                    value={form.password}
+                    onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+                    fullWidth
+                    required
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <KeyIcon color="action" />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label={t('lines.form.password', 'Password')}
-                  value={form.password}
-                  onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
-                  fullWidth
-                  required
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <KeyIcon color="action" />
-                      </InputAdornment>
-                    )
-                  }}
-                />
+            </SectionCard>
+
+            <SectionCard
+              title={t('lines.form.packageId', 'Paquete')}
+              helper={t('lines.form.packageHelper', 'Selecciona el paquete y conexiones máximas')}
+            >
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={6}>
+                  <FormControl fullWidth required sx={fieldSx} disabled={packagesLoading}>
+                    <InputLabel shrink>{t('lines.form.packageId', 'Package')}</InputLabel>
+                    <Select
+                      displayEmpty
+                      value={form.packageId}
+                      label={t('lines.form.packageId', 'Package')}
+                      onChange={(e) => {
+                        const pkg = packages.find((p) => String(p.id ?? p.packageId ?? p.package_id) === String(e.target.value));
+                        setForm((p) => ({
+                          ...p,
+                          packageId: e.target.value,
+                          packageName: pkg?.name || pkg?.packageName || pkg?.package_name || p.packageName
+                        }));
+                      }}
+                      renderValue={(value) => {
+                        const pkg = packages.find((p) => String(p.id ?? p.packageId ?? p.package_id) === String(value));
+                        const label = pkg ? pkg.name || `Package ${pkg.id}` : value || t('common.selectOption', 'Select an option');
+                        return (
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <BoltIcon fontSize="small" color="warning" />
+                            <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'}>
+                              {label}
+                            </Typography>
+                          </Stack>
+                        );
+                      }}
+                    >
+                      <MenuItem value="">
+                        <em>{t('common.selectOption', 'Select an option')}</em>
+                      </MenuItem>
+                      {packages.map((pkg) => {
+                        const id = pkg.id ?? pkg.packageId ?? pkg.package_id;
+                        const name = pkg.name ?? pkg.packageName ?? pkg.package_name ?? `Package ${id}`;
+                        return (
+                          <MenuItem key={id} value={String(id)}>
+                            <Stack direction="row" spacing={0.75} alignItems="center">
+                              <Avatar sx={{ width: 22, height: 22, bgcolor: '#ffd54f', color: '#bf8f00' }}>
+                                <BoltIcon fontSize="inherit" />
+                              </Avatar>
+                              <Typography variant="body2">{name}</Typography>
+                            </Stack>
+                          </MenuItem>
+                        );
+                      })}
+                    </Select>
+                    <FormHelperText>
+                      {packagesLoading
+                        ? t('subscriptions.form.loadingPackages', 'Loading packages...')
+                        : t('subscriptions.form.packagesHint', 'Packages (DEMO excluded)')}
+                    </FormHelperText>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6} md={6}>
+                  <TextField
+                    label={t('lines.form.maxConnections', 'Max connections')}
+                    type="number"
+                    value={form.maxConnections}
+                    onChange={(e) => setForm((p) => ({ ...p, maxConnections: e.target.value }))}
+                    fullWidth
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SpeedIcon color="secondary" />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
               </Grid>
-            </Grid>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label={t('lines.form.packageId', 'Package ID')}
-                  value={form.packageId}
-                  onChange={(e) => setForm((p) => ({ ...p, packageId: e.target.value }))}
-                  fullWidth
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SpeedIcon color="secondary" />
-                      </InputAdornment>
-                    )
-                  }}
-                />
+            </SectionCard>
+
+            <SectionCard
+              title={t('lines.form.meta', 'Vigencia y notas')}
+              helper={t('lines.form.metaHelper', 'Fecha de expiración y notas internas')}
+            >
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={6}>
+                  <TextField
+                    label={t('lines.form.expDate', 'Expire date')}
+                    type="date"
+                    value={form.expDate}
+                    onChange={(e) => setForm((p) => ({ ...p, expDate: e.target.value }))}
+                    fullWidth
+                    sx={fieldSx}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <CalendarMonthIcon color="action" />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label={t('lines.form.packageName', 'Package name')}
-                  value={form.packageName}
-                  onChange={(e) => setForm((p) => ({ ...p, packageName: e.target.value }))}
-                  fullWidth
-                />
-              </Grid>
-            </Grid>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label={t('lines.form.expDate', 'Expire date')}
-                  type="date"
-                  value={form.expDate}
-                  onChange={(e) => setForm((p) => ({ ...p, expDate: e.target.value }))}
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <CalendarMonthIcon color="action" />
-                      </InputAdornment>
-                    )
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label={t('lines.form.maxConnections', 'Max connections')}
-                  type="number"
-                  value={form.maxConnections}
-                  onChange={(e) => setForm((p) => ({ ...p, maxConnections: e.target.value }))}
-                  fullWidth
-                />
-              </Grid>
-            </Grid>
-            <TextField
-              label={t('lines.form.notes', 'Reseller notes')}
-              value={form.resellerNotes}
-              onChange={(e) => setForm((p) => ({ ...p, resellerNotes: e.target.value }))}
-              fullWidth
-              multiline
-              minRows={2}
-            />
-            <FormControlLabel
-              control={<Switch checked={form.enabled} onChange={(e) => setForm((p) => ({ ...p, enabled: e.target.checked }))} color="success" />}
-              label={t('lines.form.enabled', 'Enabled')}
-            />
+              <TextField
+                label={t('lines.form.notes', 'Reseller notes')}
+                value={form.resellerNotes}
+                onChange={(e) => setForm((p) => ({ ...p, resellerNotes: e.target.value }))}
+                fullWidth
+                multiline
+                minRows={2}
+                sx={{ mt: 2, ...fieldSx }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <NoteAltIcon color="primary" />
+                    </InputAdornment>
+                  )
+                }}
+              />
+            </SectionCard>
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button onClick={() => setOpenModal(false)} startIcon={<CloseIcon />} disabled={saving}>
-            {t('actions.cancel')}
+          <Button variant="outlined" onClick={resetForm} disabled={saving} sx={{ borderRadius: 2 }} startIcon={<RefreshIcon />}>
+            {t('common.clear', 'Clear')}
           </Button>
-          <Button variant="contained" onClick={handleSave} startIcon={<CloudDoneIcon />} disabled={saving}>
-            {saving ? t('actions.saving') : t('actions.save')}
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={saving}
+            startIcon={<RocketLaunchIcon />}
+            sx={{ borderRadius: 2, boxShadow: '0 12px 28px rgba(0,0,0,0.16)', px: 2.4 }}
+          >
+            {saving
+              ? t('common.saving', 'Saving...')
+              : form._isEdit
+                ? t('common.saveChanges', 'Save changes')
+                : t('common.create', 'Create')}
           </Button>
         </DialogActions>
       </Dialog>

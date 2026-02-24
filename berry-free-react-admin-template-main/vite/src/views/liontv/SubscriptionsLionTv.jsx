@@ -30,6 +30,7 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
 import FormHelperText from '@mui/material/FormHelperText';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -1004,6 +1005,35 @@ export default function SubscriptionsLionTv() {
           </Stack>
 
           <Stack spacing={2} sx={{ position: 'relative', zIndex: 1 }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} flexWrap="wrap">
+              <Chip
+                icon={<PersonOutlineIcon fontSize="small" />}
+                label={
+                  form.customerId
+                    ? customerNameMap[form.customerId] || form.customerId
+                    : t('subscriptions.form.customer', 'Customer')
+                }
+                variant="outlined"
+                color={form.customerId ? 'primary' : 'default'}
+              />
+              <Chip
+                icon={<WifiTetheringIcon fontSize="small" />}
+                label={form.lineId || t('subscriptions.form.line', 'Line')}
+                variant="outlined"
+                color={form.lineId ? 'success' : 'default'}
+              />
+              <Chip
+                icon={<BoltIcon fontSize="small" />}
+                label={
+                  form.packageId
+                    ? packageMap[String(form.packageId)]?.name || form.packageId
+                    : t('subscriptions.form.package', 'Package')
+                }
+                variant="outlined"
+                color={form.packageId ? 'warning' : 'default'}
+              />
+            </Stack>
+
             <SectionCard
               title={t('subscriptions.form.sections.main', 'Main data')}
               helper={t('subscriptions.form.sections.mainHelper', 'Customer, package and status.')}
@@ -1041,7 +1071,12 @@ export default function SubscriptionsLionTv() {
                       ) : (
                         customers.map((c) => (
                           <MenuItem key={c.customerId || c.id} value={c.customerId || c.id}>
-                            {c.customerFullname || c.fullName || c.username || c.customerMail}
+                            <ListItemIcon>
+                              <PersonOutlineIcon fontSize="small" color="primary" />
+                            </ListItemIcon>
+                            <Typography variant="body2">
+                              {c.customerFullname || c.fullName || c.username || c.customerMail}
+                            </Typography>
                           </MenuItem>
                         ))
                       )}
@@ -1089,7 +1124,9 @@ export default function SubscriptionsLionTv() {
                                 <Avatar sx={{ width: 22, height: 22, bgcolor: '#ffd54f', color: '#bf8f00' }}>
                                   <BoltIcon fontSize="inherit" />
                                 </Avatar>
-                                <Typography variant="body2">{p.name || `Paquete ${p.id}`}</Typography>
+                                <Typography variant="body2" color="text.primary">
+                                  {p.name || `Paquete ${p.id}`}
+                                </Typography>
                               </Stack>
                               {p.description ? (
                                 <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'normal' }}>
@@ -1125,9 +1162,24 @@ export default function SubscriptionsLionTv() {
                         </Stack>
                       )}
                     >
-                      <MenuItem value="ACTIVE">{t('status.active', 'Active')}</MenuItem>
-                      <MenuItem value="INACTIVE">{t('status.inactive', 'Inactive')}</MenuItem>
-                      <MenuItem value="CANCELLED">{t('status.cancelled', 'Cancelled')}</MenuItem>
+                      <MenuItem value="ACTIVE">
+                        <ListItemIcon>
+                          <AutoAwesomeIcon fontSize="small" color="success" />
+                        </ListItemIcon>
+                        <Typography variant="body2">{t('status.active', 'Active')}</Typography>
+                      </MenuItem>
+                      <MenuItem value="INACTIVE">
+                        <ListItemIcon>
+                          <AutoAwesomeIcon fontSize="small" color="disabled" />
+                        </ListItemIcon>
+                        <Typography variant="body2">{t('status.inactive', 'Inactive')}</Typography>
+                      </MenuItem>
+                      <MenuItem value="CANCELLED">
+                        <ListItemIcon>
+                          <DeleteOutlineIcon fontSize="small" color="error" />
+                        </ListItemIcon>
+                        <Typography variant="body2">{t('status.cancelled', 'Cancelled')}</Typography>
+                      </MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -1169,7 +1221,10 @@ export default function SubscriptionsLionTv() {
                       ) : (
                         lines.map((l) => (
                           <MenuItem key={l.id} value={l.id}>
-                            {l.username || l.user_name || l.id}
+                            <ListItemIcon>
+                              <WifiTetheringIcon fontSize="small" color="primary" />
+                            </ListItemIcon>
+                            <Typography variant="body2">{l.username || l.user_name || l.id}</Typography>
                           </MenuItem>
                         ))
                       )}
@@ -1201,10 +1256,30 @@ export default function SubscriptionsLionTv() {
                       <MenuItem value="">
                         <em>{t('common.selectOption', 'Select an option')}</em>
                       </MenuItem>
-                      <MenuItem value="Monthly">{t('billing.monthly', 'Monthly')}</MenuItem>
-                      <MenuItem value="Quarterly">{t('billing.quarterly', 'Quarterly')}</MenuItem>
-                      <MenuItem value="Biannual">{t('billing.biannual', 'Biannual')}</MenuItem>
-                      <MenuItem value="Annual">{t('billing.annual', 'Annual')}</MenuItem>
+                      <MenuItem value="Monthly">
+                        <ListItemIcon>
+                          <CalendarMonthIcon fontSize="small" color="primary" />
+                        </ListItemIcon>
+                        <Typography variant="body2">{t('billing.monthly', 'Monthly')}</Typography>
+                      </MenuItem>
+                      <MenuItem value="Quarterly">
+                        <ListItemIcon>
+                          <CalendarMonthIcon fontSize="small" color="info" />
+                        </ListItemIcon>
+                        <Typography variant="body2">{t('billing.quarterly', 'Quarterly')}</Typography>
+                      </MenuItem>
+                      <MenuItem value="Biannual">
+                        <ListItemIcon>
+                          <CalendarMonthIcon fontSize="small" color="warning" />
+                        </ListItemIcon>
+                        <Typography variant="body2">{t('billing.biannual', 'Biannual')}</Typography>
+                      </MenuItem>
+                      <MenuItem value="Annual">
+                        <ListItemIcon>
+                          <CalendarMonthIcon fontSize="small" color="success" />
+                        </ListItemIcon>
+                        <Typography variant="body2">{t('billing.annual', 'Annual')}</Typography>
+                      </MenuItem>
                     </Select>
                     <FormHelperText>{t('subscriptions.form.billingHint', 'Billing frequency')}</FormHelperText>
                   </FormControl>
