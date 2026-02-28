@@ -127,6 +127,7 @@ function normalizeSubscription(item = {}) {
     subscriptionId: item.subscriptionId ?? item.id ?? null,
     customerId: item.customerId ?? null,
     lineId: item.lineId ?? '',
+    linePlusId: item.linePlusId ?? item.line_plus_id ?? '',
     billing: item.billing ?? '',
     amount: item.amount ?? item.totalAmount ?? 0,
     discount: item.discount ?? 0,
@@ -225,6 +226,7 @@ const defaultForm = {
   subscriptionId: null,
   customerId: '',
   lineId: '',
+  linePlusId: '',
   billing: '',
   amount: '',
   discount: '',
@@ -511,6 +513,7 @@ export default function SubscriptionsLionTv() {
       subscriptionId: row.subscriptionId,
       customerId: row.customerId ?? '',
       lineId: row.lineId ?? '',
+      linePlusId: row.linePlusId ?? '',
       billing: row.billing ?? '',
       amount: row.amount ?? '',
       discount: row.discount ?? '',
@@ -537,6 +540,7 @@ export default function SubscriptionsLionTv() {
     const payload = {
       customerId: Number(form.customerId),
       lineId: form.lineId,
+      linePlusId: form.linePlusId || null,
       billing: form.billing,
       amount: form.amount ? Number(form.amount) : 0,
       discount: form.discount ? Number(form.discount) : 0,
@@ -785,7 +789,9 @@ export default function SubscriptionsLionTv() {
                   <TableCell>{t('subscriptions.headers.id')}</TableCell>
                   <TableCell>{t('subscriptions.headers.customer')}</TableCell>
                   <TableCell>{t('subscriptions.headers.line')}</TableCell>
+                  <TableCell>{t('subscriptions.headers.linePlus', 'Line plus')}</TableCell>
                   <TableCell>{t('subscriptions.headers.package')}</TableCell>
+                  <TableCell>{t('subscriptions.headers.provider', 'Provider')}</TableCell>
                   <TableCell>{t('subscriptions.headers.status')}</TableCell>
                   <TableCell>{t('subscriptions.headers.amount')}</TableCell>
                   <TableCell>{t('subscriptions.headers.start')}</TableCell>
@@ -798,7 +804,7 @@ export default function SubscriptionsLionTv() {
                 {loading &&
                   Array.from({ length: 4 }).map((_, idx) => (
                     <TableRow key={`sub-skel-${idx}`}>
-                      {Array.from({ length: 10 }).map((__, cidx) => (
+                      {Array.from({ length: 12 }).map((__, cidx) => (
                         <TableCell key={cidx}>
                           <Skeleton variant="text" />
                         </TableCell>
@@ -831,6 +837,14 @@ export default function SubscriptionsLionTv() {
                         </Stack>
                       </TableCell>
                       <TableCell>
+                        <Stack direction="row" spacing={0.75} alignItems="center">
+                          <WifiTetheringIcon fontSize="small" sx={{ color: '#8e24aa' }} />
+                          <Typography variant="body2">
+                            {lineNameMap[String(row.linePlusId ?? '')] || row.linePlusId || '-'}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
                         <Stack spacing={0.25}>
                           <Stack direction="row" spacing={0.5} alignItems="center">
                             <Avatar sx={{ width: 22, height: 22, bgcolor: '#ffd54f', color: '#bf8f00' }}>
@@ -846,6 +860,15 @@ export default function SubscriptionsLionTv() {
                             </Typography>
                           ) : null}
                         </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          label={row.provider || 'LION_TV'}
+                          color="info"
+                          variant="outlined"
+                          sx={{ fontWeight: 700, borderRadius: 1.5 }}
+                        />
                       </TableCell>
                       <TableCell>
                         <StatusChip status={row.status} />
@@ -885,7 +908,7 @@ export default function SubscriptionsLionTv() {
                   ))}
                 {!loading && filteredRows.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={10} align="center">
+                  <TableCell colSpan={12} align="center">
                       No hay suscripciones registradas.
                     </TableCell>
                   </TableRow>
@@ -1200,13 +1223,24 @@ export default function SubscriptionsLionTv() {
                       label={t('subscriptions.form.line', 'Line')}
                       onChange={handleLineChange}
                       renderValue={(value) => {
-                        const lineLabel = lineNameMap[String(value)] || value || t('common.selectOption', 'Select an option');
+                        const found = lines.find((l) => (l.id ?? l.lineId) === value);
+                        const lineLabel = found?.username || lineNameMap[String(value)] || value || t('common.selectOption', 'Select an option');
+                        const provider = found?.provider || 'LION_TV';
                         return (
                           <Stack direction="row" spacing={1} alignItems="center">
                             <WifiTetheringIcon fontSize="small" color="primary" />
-                            <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'}>
-                              {lineLabel}
-                            </Typography>
+                            <Stack spacing={0.35}>
+                              <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'} sx={{ fontWeight: 700 }}>
+                                {lineLabel}
+                              </Typography>
+                              <Chip
+                                size="small"
+                                label={provider}
+                                color="info"
+                                variant="outlined"
+                                sx={{ height: 22, fontWeight: 700, letterSpacing: 0.3, borderRadius: 1.5 }}
+                              />
+                            </Stack>
                           </Stack>
                         );
                       }}
@@ -1220,11 +1254,24 @@ export default function SubscriptionsLionTv() {
                         </MenuItem>
                       ) : (
                         lines.map((l) => (
-                          <MenuItem key={l.id} value={l.id}>
-                            <ListItemIcon>
-                              <WifiTetheringIcon fontSize="small" color="primary" />
-                            </ListItemIcon>
-                            <Typography variant="body2">{l.username || l.user_name || l.id}</Typography>
+                          <MenuItem key={l.id} value={l.id} sx={{ py: 1 }}>
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Avatar sx={{ width: 28, height: 28, bgcolor: 'primary.lighter', color: 'primary.main', fontSize: 13 }}>
+                                <WifiTetheringIcon fontSize="inherit" />
+                              </Avatar>
+                              <Stack spacing={0.35}>
+                                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                  {l.username || l.user_name || l.id}
+                                </Typography>
+                                <Chip
+                                  size="small"
+                                  label={l.provider || 'LION_TV'}
+                                  color="info"
+                                  variant="outlined"
+                                  sx={{ height: 20, fontWeight: 700, letterSpacing: 0.3, borderRadius: 1.5, width: 'fit-content' }}
+                                />
+                              </Stack>
+                            </Stack>
                           </MenuItem>
                         ))
                       )}
@@ -1234,6 +1281,73 @@ export default function SubscriptionsLionTv() {
                         ? t('subscriptions.form.loadingLines', 'Loading lines...')
                         : t('subscriptions.form.linesHint', 'Description shows username')}
                   </FormHelperText>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
+                  <FormControl fullWidth sx={fieldSx} disabled={linesLoading}>
+                    <InputLabel shrink>{t('subscriptions.form.linePlus', 'Line plus')}</InputLabel>
+                    <Select
+                      displayEmpty
+                      value={form.linePlusId}
+                      label={t('subscriptions.form.linePlus', 'Line plus')}
+                      onChange={(e) => setForm((p) => ({ ...p, linePlusId: e.target.value }))}
+                      renderValue={(value) => {
+                        const found = lines.find((l) => l.id === value);
+                        const lineLabel = found?.username || lineNameMap[String(value)] || value || t('common.selectOption', 'Select an option');
+                        const provider = found?.provider || 'LION_TV';
+                        return (
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <WifiTetheringIcon fontSize="small" color="primary" />
+                            <Stack spacing={0.35}>
+                              <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'} sx={{ fontWeight: 700 }}>
+                                {lineLabel}
+                              </Typography>
+                              <Chip
+                                size="small"
+                                label={provider}
+                                color="info"
+                                variant="outlined"
+                                sx={{ height: 22, fontWeight: 700, letterSpacing: 0.3, borderRadius: 1.5 }}
+                              />
+                            </Stack>
+                          </Stack>
+                        );
+                      }}
+                    >
+                      <MenuItem value="">
+                        <em>{t('common.selectOption', 'Select an option')}</em>
+                      </MenuItem>
+                      {lines.length === 0 ? (
+                        <MenuItem value="" disabled>
+                          {t('subscriptions.form.noLines', 'No lines available')}
+                        </MenuItem>
+                      ) : (
+                        lines.map((l) => (
+                          <MenuItem key={l.id} value={l.id} sx={{ py: 1 }}>
+                            <Stack direction="row" spacing={1} alignItems="center">
+                              <Avatar sx={{ width: 28, height: 28, bgcolor: 'primary.lighter', color: 'primary.main', fontSize: 13 }}>
+                                <WifiTetheringIcon fontSize="inherit" />
+                              </Avatar>
+                              <Stack spacing={0.35}>
+                                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                  {l.username || l.user_name || l.id}
+                                </Typography>
+                                <Chip
+                                  size="small"
+                                  label={l.provider || 'LION_TV'}
+                                  color="info"
+                                  variant="outlined"
+                                  sx={{ height: 20, fontWeight: 700, letterSpacing: 0.3, borderRadius: 1.5, width: 'fit-content' }}
+                                />
+                              </Stack>
+                            </Stack>
+                          </MenuItem>
+                        ))
+                      )}
+                    </Select>
+                    <FormHelperText>
+                      {t('subscriptions.form.linesPlusHint', 'Secondary line (optional)')}
+                    </FormHelperText>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={4} md={4}>
