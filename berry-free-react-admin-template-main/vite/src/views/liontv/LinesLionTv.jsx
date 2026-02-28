@@ -166,6 +166,7 @@ function normalizeLine(item = {}) {
     id: item.id ?? '',
     username: item.username ?? '',
     password: item.password ?? '',
+    provider: item.provider ?? 'LION_TV',
     usernameEncode: item.username_encode ?? '',
     passwordEncode: item.password_encode ?? '',
     expDate: item.exp_date ?? '',
@@ -202,6 +203,7 @@ const defaultForm = {
   enabled: true,
   maxConnections: '',
   resellerNotes: '',
+  provider: 'LION_TV',
   _isEdit: false
 };
 
@@ -256,6 +258,7 @@ export default function LinesLionTv() {
       lineId: row.id || '',
       username: row.username || '',
       password: row.password || '',
+      provider: row.provider || 'LION_TV',
       packageId: row.packageId || row.package_id || '',
       packageName: row.packageName || row.package_name || '',
       expDate: row.expDate ? String(row.expDate).slice(0, 10) : '',
@@ -277,6 +280,7 @@ export default function LinesLionTv() {
       lineId: form.lineId,
       username: form.username,
       password: form.password,
+      provider: form.provider || 'LION_TV',
       packageId: form.packageId ? Number(form.packageId) : null,
       packageName: form.packageName,
       expDate: form.expDate || null,
@@ -568,6 +572,7 @@ export default function LinesLionTv() {
             <TableHead>
               <TableRow>
                 <TableCell>{t('lines.headers.user')}</TableCell>
+                <TableCell>{t('lines.headers.provider', 'Provider')}</TableCell>
                 <TableCell>{t('lines.headers.status')}</TableCell>
                 <TableCell>{t('lines.headers.package')}</TableCell>
                 <TableCell>{t('lines.headers.expires')}</TableCell>
@@ -583,7 +588,7 @@ export default function LinesLionTv() {
               {loading &&
                 Array.from({ length: 4 }).map((_, idx) => (
                   <TableRow key={`skeleton-${idx}`}>
-                    {Array.from({ length: 10 }).map((__, cidx) => (
+                    {Array.from({ length: 11 }).map((__, cidx) => (
                       <TableCell key={cidx}>
                         <Skeleton variant="text" />
                       </TableCell>
@@ -625,6 +630,9 @@ export default function LinesLionTv() {
                         </Tooltip>
                       </Box>
                     </Stack>
+                  </TableCell>
+                  <TableCell>
+                    <Chip size="small" label={row.provider || 'LION_TV'} color="info" variant="outlined" />
                   </TableCell>
                   <TableCell>
                     <StatusChip enabled={row.enabled} expired={row.expired} t={t} />
@@ -720,7 +728,7 @@ export default function LinesLionTv() {
               ))}
               {!loading && paginatedRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} align="center">
+                  <TableCell colSpan={11} align="center">
                     {t('lines.table.empty')}
                   </TableCell>
                 </TableRow>
@@ -1176,6 +1184,12 @@ export default function LinesLionTv() {
                 variant="outlined"
                 color={form.enabled ? 'success' : 'default'}
               />
+              <Chip
+                icon={<LanIcon fontSize="small" />}
+                label={form.provider || 'LION_TV'}
+                variant="outlined"
+                color="info"
+              />
             </Stack>
 
             <SectionCard
@@ -1183,6 +1197,28 @@ export default function LinesLionTv() {
               helper={t('lines.form.accessHelper', 'ID, usuario, contraseña y estado')}
             >
               <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={6}>
+                  <FormControl fullWidth required sx={fieldSx}>
+                    <InputLabel shrink>{t('lines.form.provider', 'Provider')}</InputLabel>
+                    <Select
+                      displayEmpty
+                      value={form.provider}
+                      label={t('lines.form.provider', 'Provider')}
+                      onChange={(e) => setForm((p) => ({ ...p, provider: e.target.value }))}
+                      renderValue={(value) => (
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <LanIcon fontSize="small" color="info" />
+                          <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'}>
+                            {value || 'LION_TV'}
+                          </Typography>
+                        </Stack>
+                      )}
+                    >
+                      <MenuItem value="LION_TV">LION_TV</MenuItem>
+                      <MenuItem value="TITAN">TITAN</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
                 <Grid item xs={12} sm={6} md={6}>
                   <TextField
                     label={t('lines.form.id', 'Line ID')}
