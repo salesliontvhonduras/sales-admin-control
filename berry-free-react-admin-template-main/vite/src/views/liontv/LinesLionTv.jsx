@@ -163,6 +163,26 @@ function formatDate(value) {
   return value;
 }
 
+function formatDateInput(value) {
+  if (!value) return '';
+  const native = new Date(value);
+  if (!Number.isNaN(native.getTime())) return native.toISOString().slice(0, 10);
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    const match = trimmed.match(/^(\d{4})[-/](\d{2})[-/](\d{2})/);
+    if (match) {
+      const [, yyyy, MM, dd] = match;
+      return `${yyyy}-${MM}-${dd}`;
+    }
+    const alt = trimmed.match(/^(\d{2})[-/](\d{2})[-/](\d{4})/);
+    if (alt) {
+      const [, dd, MM, yyyy] = alt;
+      return `${yyyy}-${MM}-${dd}`;
+    }
+  }
+  return '';
+}
+
 function normalizeLine(item = {}) {
   return {
     id: item.id ?? '',
@@ -328,7 +348,7 @@ export default function LinesLionTv() {
       provider: row.provider || 'LION_TV',
       packageId: row.packageId || row.package_id || '',
       packageName: row.packageName || row.package_name || '',
-      expDate: row.expDate ? String(row.expDate).slice(0, 10) : '',
+      expDate: formatDateInput(row.expDate || row.exp_date),
       enabled: Boolean(row.enabled),
       maxConnections: row.maxConnections || '',
       resellerNotes: row.resellerNotes || '',
