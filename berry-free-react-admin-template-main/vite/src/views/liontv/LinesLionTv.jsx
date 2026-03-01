@@ -68,8 +68,10 @@ import Switch from '@mui/material/Switch';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import Menu from '@mui/material/Menu';
 import NoteAltIcon from '@mui/icons-material/NoteAlt';
 import ShieldMoonIcon from '@mui/icons-material/ShieldMoon';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FormHelperText from '@mui/material/FormHelperText';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
@@ -191,6 +193,71 @@ function StatusChip({ enabled, expired, t }) {
   const color = enabled ? (expired ? 'warning' : 'success') : 'default';
   const label = expired ? t('lines.status.expired') : enabled ? t('lines.status.active') : t('lines.status.inactive');
   return <Chip size="small" color={color} label={label} />;
+}
+
+function LineRowActions({ row, onEdit, onDelete, onDetail }) {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  const { t } = useTranslation();
+  return (
+    <>
+      <IconButton
+        size="small"
+        onClick={(e) => {
+          e.stopPropagation();
+          setAnchorEl(e.currentTarget);
+        }}
+        sx={(theme) => ({
+          bgcolor: theme.palette.primary.lighter,
+          color: theme.palette.primary.main,
+          '&:hover': { bgcolor: theme.palette.primary.light },
+          boxShadow: '0 6px 14px rgba(0,0,0,0.12)'
+        })}
+      >
+        <MoreVertIcon fontSize="small" />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            setAnchorEl(null);
+            onEdit?.(row);
+          }}
+        >
+          <EditOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#1e88e5' }} />
+          {t('actions.edit', 'Edit')}
+        </MenuItem>
+        {onDetail ? (
+          <MenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              setAnchorEl(null);
+              onDetail?.(row);
+            }}
+          >
+            <InfoOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#6d4c41' }} />
+            {t('lines.detail.title', 'Detail')}
+          </MenuItem>
+        ) : null}
+        <MenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            setAnchorEl(null);
+            onDelete?.(row);
+          }}
+        >
+          <DeleteOutlineIcon fontSize="small" style={{ marginRight: 8, color: '#e53935' }} />
+          {t('actions.delete', 'Delete')}
+        </MenuItem>
+      </Menu>
+    </>
+  );
 }
 
 const defaultForm = {
@@ -574,13 +641,9 @@ export default function LinesLionTv() {
                 <TableCell>{t('lines.headers.user')}</TableCell>
                 <TableCell>{t('lines.headers.provider', 'Provider')}</TableCell>
                 <TableCell>{t('lines.headers.status')}</TableCell>
-                <TableCell>{t('lines.headers.package')}</TableCell>
                 <TableCell>{t('lines.headers.expires')}</TableCell>
                 <TableCell>{t('lines.headers.max')}</TableCell>
                 <TableCell>{t('lines.headers.created')}</TableCell>
-                <TableCell>{t('lines.headers.owner')}</TableCell>
-                <TableCell>{t('lines.headers.lastWatch')}</TableCell>
-                <TableCell>{t('lines.headers.lastIp')}</TableCell>
                 <TableCell>{t('lines.headers.actions')}</TableCell>
               </TableRow>
             </TableHead>
@@ -588,7 +651,7 @@ export default function LinesLionTv() {
               {loading &&
                 Array.from({ length: 4 }).map((_, idx) => (
                   <TableRow key={`skeleton-${idx}`}>
-                    {Array.from({ length: 11 }).map((__, cidx) => (
+                    {Array.from({ length: 7 }).map((__, cidx) => (
                       <TableCell key={cidx}>
                         <Skeleton variant="text" />
                       </TableCell>
@@ -632,103 +695,57 @@ export default function LinesLionTv() {
                     </Stack>
                   </TableCell>
                   <TableCell>
-                    <Chip size="small" label={row.provider || 'LION_TV'} color="info" variant="outlined" />
+                    <Chip
+                      size="small"
+                      label={row.provider || 'LION_TV'}
+                      variant="outlined"
+                      sx={(theme) => ({
+                        fontWeight: 700,
+                        letterSpacing: 0.35,
+                        textTransform: 'uppercase',
+                        borderRadius: 1.5,
+                        borderColor: theme.palette.info.main,
+                        color: theme.palette.info.main,
+                        background: theme.palette.mode === 'light' ? theme.palette.info.light + '1f' : theme.palette.background.paper,
+                        height: 22,
+                        px: 0.9
+                      })}
+                    />
                   </TableCell>
                   <TableCell>
                     <StatusChip enabled={row.enabled} expired={row.expired} t={t} />
                   </TableCell>
                   <TableCell>
-                    <Stack spacing={0.5}>
-                      <Stack direction="row" spacing={0.5} alignItems="center">
-                        <Avatar sx={{ width: 24, height: 24, bgcolor: 'warning.light', color: 'warning.dark' }}>
-                          <BoltIcon fontSize="inherit" />
-                        </Avatar>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {row.packageName || '-'}
-                        </Typography>
-                      </Stack>
-                      <Typography variant="caption" color="text.secondary">
-                        {t('common.id', 'ID')}: {row.packageId ?? '-'}
-                      </Typography>
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <CalendarMonthIcon fontSize="small" color="error" />
+                      <Typography variant="body2">{formatDate(row.expDate)}</Typography>
+                    </Stack>
+                  </TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={0.5} alignItems="center">
+                      <SpeedIcon fontSize="small" color="secondary" />
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>{row.maxConnections ?? '-'}</Typography>
                     </Stack>
                   </TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={0.5} alignItems="center">
                       <CalendarMonthIcon fontSize="small" color="action" />
-                      <Typography variant="body2">{formatDate(row.expDate)}</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>{row.maxConnections}</TableCell>
-                  <TableCell>{formatDate(row.createdAt)}</TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.75} alignItems="center">
-                      <PersonOutlineIcon fontSize="small" color="action" />
-                      <Typography variant="body2">{row.ownerName || '-'}</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Stack spacing={0.25}>
-                      <Stack direction="row" spacing={0.5} alignItems="center">
-                        <PlayCircleOutlineIcon fontSize="small" color="primary" />
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {row.lastWatchedName || '-'}
-                        </Typography>
-                      </Stack>
-                      <Typography variant="caption" color="text.secondary">
-                        {formatDate(row.lastWatchedTime)}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.5} alignItems="center">
-                      <PublicIcon fontSize="small" color="action" />
-                      <Typography variant="body2">{row.lastWatchedIp || '-'}</Typography>
+                      <Typography variant="body2">{formatDate(row.createdAt)}</Typography>
                     </Stack>
                   </TableCell>
                   <TableCell align="right">
-                    <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenEdit(row);
-                        }}
-                        aria-label={t('actions.edit')}
-                      >
-                        <EditOutlinedIcon fontSize="small" color="info" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenDelete({ open: true, row });
-                        }}
-                        aria-label={t('actions.delete')}
-                      >
-                        <DeleteOutlineIcon fontSize="small" color="error" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDetail({ open: true, row });
-                        }}
-                        aria-label={t('lines.detail.title')}
-                        sx={(theme) => ({
-                          bgcolor: theme.palette.primary.lighter,
-                          color: theme.palette.primary.main,
-                          '&:hover': { bgcolor: theme.palette.primary.light }
-                        })}
-                      >
-                        <InfoOutlinedIcon fontSize="small" />
-                      </IconButton>
-                    </Stack>
+                    <LineRowActions
+                      row={row}
+                      onEdit={() => handleOpenEdit(row)}
+                      onDelete={() => setOpenDelete({ open: true, row })}
+                      onDetail={() => setDetail({ open: true, row })}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
               {!loading && paginatedRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={11} align="center">
+                  <TableCell colSpan={7} align="center">
                     {t('lines.table.empty')}
                   </TableCell>
                 </TableRow>
