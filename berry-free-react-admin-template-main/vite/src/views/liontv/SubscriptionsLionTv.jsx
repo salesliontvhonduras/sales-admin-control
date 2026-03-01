@@ -1225,22 +1225,12 @@ export default function SubscriptionsLionTv() {
                       renderValue={(value) => {
                         const found = lines.find((l) => (l.id ?? l.lineId) === value);
                         const lineLabel = found?.username || lineNameMap[String(value)] || value || t('common.selectOption', 'Select an option');
-                        const provider = found?.provider || 'LION_TV';
                         return (
                           <Stack direction="row" spacing={1} alignItems="center">
                             <WifiTetheringIcon fontSize="small" color="primary" />
-                            <Stack spacing={0.35}>
-                              <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'} sx={{ fontWeight: 700 }}>
-                                {lineLabel}
-                              </Typography>
-                              <Chip
-                                size="small"
-                                label={provider}
-                                color="info"
-                                variant="outlined"
-                                sx={{ height: 22, fontWeight: 700, letterSpacing: 0.3, borderRadius: 1.5 }}
-                              />
-                            </Stack>
+                            <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'} sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                              {lineLabel}
+                            </Typography>
                           </Stack>
                         );
                       }}
@@ -1254,13 +1244,13 @@ export default function SubscriptionsLionTv() {
                         </MenuItem>
                       ) : (
                         lines.map((l) => (
-                          <MenuItem key={l.id} value={l.id} sx={{ py: 1 }}>
-                            <Stack direction="row" spacing={1} alignItems="center">
-                              <Avatar sx={{ width: 28, height: 28, bgcolor: 'primary.lighter', color: 'primary.main', fontSize: 13 }}>
+                          <MenuItem key={l.id} value={l.id} sx={{ py: 0.7 }}>
+                            <Stack direction="row" spacing={0.8} alignItems="center">
+                              <Avatar sx={{ width: 24, height: 24, bgcolor: 'primary.lighter', color: 'primary.main', fontSize: 12 }}>
                                 <WifiTetheringIcon fontSize="inherit" />
                               </Avatar>
-                              <Stack spacing={0.35}>
-                                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                              <Stack spacing={0.2}>
+                                <Typography variant="body2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
                                   {l.username || l.user_name || l.id}
                                 </Typography>
                                 <Chip
@@ -1268,7 +1258,7 @@ export default function SubscriptionsLionTv() {
                                   label={l.provider || 'LION_TV'}
                                   color="info"
                                   variant="outlined"
-                                  sx={{ height: 20, fontWeight: 700, letterSpacing: 0.3, borderRadius: 1.5, width: 'fit-content' }}
+                                  sx={{ height: 18, fontWeight: 700, letterSpacing: 0.25, borderRadius: 1.2, fontSize: 11, px: 0.6, width: 'fit-content' }}
                                 />
                               </Stack>
                             </Stack>
@@ -1294,22 +1284,12 @@ export default function SubscriptionsLionTv() {
                       renderValue={(value) => {
                         const found = lines.find((l) => l.id === value);
                         const lineLabel = found?.username || lineNameMap[String(value)] || value || t('common.selectOption', 'Select an option');
-                        const provider = found?.provider || 'LION_TV';
                         return (
                           <Stack direction="row" spacing={1} alignItems="center">
                             <WifiTetheringIcon fontSize="small" color="primary" />
-                            <Stack spacing={0.35}>
-                              <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'} sx={{ fontWeight: 700 }}>
-                                {lineLabel}
-                              </Typography>
-                              <Chip
-                                size="small"
-                                label={provider}
-                                color="info"
-                                variant="outlined"
-                                sx={{ height: 22, fontWeight: 700, letterSpacing: 0.3, borderRadius: 1.5 }}
-                              />
-                            </Stack>
+                            <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'} sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                              {lineLabel}
+                            </Typography>
                           </Stack>
                         );
                       }}
@@ -1323,13 +1303,13 @@ export default function SubscriptionsLionTv() {
                         </MenuItem>
                       ) : (
                         lines.map((l) => (
-                          <MenuItem key={l.id} value={l.id} sx={{ py: 1 }}>
-                            <Stack direction="row" spacing={1} alignItems="center">
-                              <Avatar sx={{ width: 28, height: 28, bgcolor: 'primary.lighter', color: 'primary.main', fontSize: 13 }}>
+                          <MenuItem key={l.id} value={l.id} sx={{ py: 0.7 }}>
+                            <Stack direction="row" spacing={0.8} alignItems="center">
+                              <Avatar sx={{ width: 24, height: 24, bgcolor: 'primary.lighter', color: 'primary.main', fontSize: 12 }}>
                                 <WifiTetheringIcon fontSize="inherit" />
                               </Avatar>
-                              <Stack spacing={0.35}>
-                                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                              <Stack spacing={0.2}>
+                                <Typography variant="body2" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
                                   {l.username || l.user_name || l.id}
                                 </Typography>
                                 <Chip
@@ -1337,7 +1317,7 @@ export default function SubscriptionsLionTv() {
                                   label={l.provider || 'LION_TV'}
                                   color="info"
                                   variant="outlined"
-                                  sx={{ height: 20, fontWeight: 700, letterSpacing: 0.3, borderRadius: 1.5, width: 'fit-content' }}
+                                  sx={{ height: 18, fontWeight: 700, letterSpacing: 0.25, borderRadius: 1.2, fontSize: 11, px: 0.6, width: 'fit-content' }}
                                 />
                               </Stack>
                             </Stack>
