@@ -254,7 +254,7 @@ export default function SubscriptionsLionTv() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [renewalFilter, setRenewalFilter] = useState(''); // '', 'today', 'tomorrow'
+  const [renewalFilter, setRenewalFilter] = useState(''); // '', 'yesterday', 'today', 'tomorrow'
   const [renewalSort, setRenewalSort] = useState('asc'); // asc | desc
 
   const [openModal, setOpenModal] = useState(false);
@@ -444,6 +444,8 @@ export default function SubscriptionsLionTv() {
     const term = search.toLowerCase();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -462,6 +464,7 @@ export default function SubscriptionsLionTv() {
       if (!renewalFilter) return true;
       const d = normalizeDateOnly(row.renewalDate);
       if (!d) return false;
+      if (renewalFilter === 'yesterday') return d.getTime() === yesterday.getTime();
       if (renewalFilter === 'today') return d.getTime() === today.getTime();
       if (renewalFilter === 'tomorrow') return d.getTime() === tomorrow.getTime();
       return true;
@@ -746,6 +749,15 @@ export default function SubscriptionsLionTv() {
               </Select>
             </FormControl>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} flexShrink={0}>
+              <Button
+                variant={renewalFilter === 'yesterday' ? 'contained' : 'outlined'}
+                color="info"
+                onClick={() => setRenewalFilter((v) => (v === 'yesterday' ? '' : 'yesterday'))}
+                startIcon={<CalendarMonthIcon />}
+                sx={{ minHeight: 46, borderRadius: 2, textTransform: 'none' }}
+              >
+                {t('subscriptions.filters.yesterday', 'Venció ayer')}
+              </Button>
               <Button
                 variant={renewalFilter === 'today' ? 'contained' : 'outlined'}
                 color="error"
