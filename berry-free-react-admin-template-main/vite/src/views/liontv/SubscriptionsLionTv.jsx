@@ -140,6 +140,7 @@ function normalizeSubscription(item = {}) {
     username: item.username ?? '',
     customer_name: item.customer_name ?? '',
     username_line: item.username_line ?? '',
+    provider: item.provider ?? item.lineProvider ?? item.line_provider ?? '',
   };
 }
 

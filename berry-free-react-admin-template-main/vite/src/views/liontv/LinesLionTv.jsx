@@ -1253,6 +1253,7 @@ export default function LinesLionTv() {
                     >
                       <MenuItem value="LION_TV">LION_TV</MenuItem>
                       <MenuItem value="TITAN">TITAN</MenuItem>
+                      <MenuItem value="LION_PLUS+">LION_PLUS+</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
