@@ -309,6 +309,7 @@ export default function LinesLionTv() {
   const [search, setSearch] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
+  const [providerFilter, setProviderFilter] = useState('');
   const [detail, setDetail] = useState({ open: false, row: null });
   const [showPassword, setShowPassword] = useState(false);
   const [visibleRowPassword, setVisibleRowPassword] = useState({});
@@ -475,11 +476,12 @@ export default function LinesLionTv() {
   }, [loadLines, loadPackages, refreshKey]);
 
   const filteredRows = useMemo(() => {
-    if (!search && !statusFilter) return rows;
+    if (!search && !statusFilter && !providerFilter) return rows;
     const term = search.toLowerCase();
     return rows.filter((row) => {
       const statusValue = row.enabled ? (row.expired ? 'EXPIRED' : 'ACTIVE') : 'INACTIVE';
       if (statusFilter && statusValue.toLowerCase() !== statusFilter.toLowerCase()) return false;
+      if (providerFilter && (row.provider || '').toLowerCase() !== providerFilter.toLowerCase()) return false;
       return (
         (row.username || '').toLowerCase().includes(term) ||
         (row.packageName || '').toLowerCase().includes(term) ||
@@ -488,7 +490,7 @@ export default function LinesLionTv() {
         (row.enabledLabel || '').toLowerCase().includes(term)
       );
     });
-  }, [rows, search, statusFilter]);
+  }, [rows, search, statusFilter, providerFilter]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -650,6 +652,28 @@ export default function LinesLionTv() {
                   {t(`lines.status.${opt.toLowerCase()}`, opt)}
                 </MenuItem>
               ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: isMobile ? '100%' : 200, '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}>
+              <InputLabel>{t('lines.filters.provider', 'Provider')}</InputLabel>
+              <Select
+                value={providerFilter}
+                label={t('lines.filters.provider', 'Provider')}
+                onChange={(e) => setProviderFilter(e.target.value)}
+                startAdornment={
+                  <InputAdornment position="start" sx={{ pl: 1 }}>
+                    <FilterAltOutlinedIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                }
+              >
+                <MenuItem value="">
+                  <em>{t('lines.filters.all')}</em>
+                </MenuItem>
+                {[...new Set(rows.map((r) => r.provider).filter(Boolean))].map((p) => (
+                  <MenuItem key={p} value={p}>
+                    {p}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Stack>
