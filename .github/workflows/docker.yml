@@ -21,14 +21,14 @@ jobs:
 
     env:
       VITE_APP_BASE_NAME: ${{ vars.VITE_APP_BASE_NAME || '/liontvpremium' }}
-      VITE_API_AUTH: ${{ secrets.VITE_API_AUTH || vars.VITE_API_AUTH || 'http://192.168.1.150:8000/sales/auth' }}
-      VITE_API_USERS: ${{ secrets.VITE_API_USERS || vars.VITE_API_USERS || 'http://192.168.1.150:8000/v1' }}
+      VITE_API_AUTH: ${{ secrets.VITE_API_AUTH || vars.VITE_API_AUTH || 'https://api.liontvplus.com/sales/auth' }}
+      VITE_API_USERS: ${{ secrets.VITE_API_USERS || vars.VITE_API_USERS || 'https://api.liontvplus.com/v1' }}
       VITE_API_PRODUCTS: ${{ secrets.VITE_API_PRODUCTS || vars.VITE_API_PRODUCTS || 'http://192.168.1.150:8083/v1' }}
       VITE_API_RESERVATIONS: ${{ secrets.VITE_API_RESERVATIONS || vars.VITE_API_RESERVATIONS || 'http://192.168.1.150:8084/v1' }}
-      VITE_API_CATALOGS: ${{ secrets.VITE_API_CATALOGS || vars.VITE_API_CATALOGS || 'http://192.168.1.150:8000/sales/catalogs' }}
-      VITE_API_LIONTV: ${{ secrets.VITE_API_LIONTV || vars.VITE_API_LIONTV || 'http://192.168.1.150:8000/sales/panel-lion-tv' }}
-      VITE_API_SAGA: ${{ secrets.VITE_API_SAGA || vars.VITE_API_SAGA || 'http://192.168.1.150:8000/sales/event-bus' }}
-      VITE_API_SMS: ${{ secrets.VITE_API_SMS || vars.VITE_API_SMS || 'http://192.168.1.150:8000/sales/sms' }}
+      VITE_API_CATALOGS: ${{ secrets.VITE_API_CATALOGS || vars.VITE_API_CATALOGS || 'https://api.liontvplus.com/sales/catalogs' }}
+      VITE_API_LIONTV: ${{ secrets.VITE_API_LIONTV || vars.VITE_API_LIONTV || 'https://api.liontvplus.com/sales/panel-lion-tv' }}
+      VITE_API_SAGA: ${{ secrets.VITE_API_SAGA || vars.VITE_API_SAGA || 'https://api.liontvplus.com/sales/event-bus' }}
+      VITE_API_SMS: ${{ secrets.VITE_API_SMS || vars.VITE_API_SMS || 'https://api.liontvplus.com/sales/sms' }}
       VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID || vars.VITE_GOOGLE_CLIENT_ID || '881879419726-dviv75rgbqofnh33288jr5loriie72ot.apps.googleusercontent.com' }}
 
     steps:
