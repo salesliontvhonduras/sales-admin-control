@@ -41,6 +41,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import NoteAltOutlinedIcon from '@mui/icons-material/NoteAltOutlined';
 import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
 import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined';
+import PersonIcon from '@mui/icons-material/Person';
 import DevicesOtherOutlinedIcon from '@mui/icons-material/DevicesOtherOutlined';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
 
