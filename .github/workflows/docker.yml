@@ -18,7 +18,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-
+  
     env:
       VITE_APP_BASE_NAME: ${{ vars.VITE_APP_BASE_NAME || '/liontvpremium' }}
       VITE_API_AUTH: ${{ secrets.VITE_API_AUTH || vars.VITE_API_AUTH || 'https://api.liontvplus.com/sales/auth' }}
