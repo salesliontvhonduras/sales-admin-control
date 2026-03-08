@@ -46,28 +46,33 @@ import QueueMusicIcon from '@mui/icons-material/QueueMusic';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
-import { catalogsApi,sagaApi, lionTvApi } from 'utils/api';
+import { catalogsApi, sagaApi, lionTvApi, shopifyDemosApi } from 'utils/api';
 
 const statusColors = {
   ACTIVE: 'success',
   EXPIRED: 'warning',
-  CANCELLED: 'error'
+  CANCELLED: 'error',
+  PENDING: 'info'
 };
 
 const defaultForm = {
-  cellphone: '50494350587',
+  cellphone: '',
+  email: '',
+  name: '',
   packageId: '',
-  deviceName: 'Patu|Honduras|Alejandro Rosales',
-  playlistName: 'Alejandro',
+  deviceName: '',
+  playlistName: '',
   countryCode: '504',
-  macAddress: '2b:10:79:3c:d3:e2',
+  macAddress: '',
   appCode: '1',
-  note: 'nada'
+  note: '',
+  otp: ''
 };
 
 const APP_CODE_STATIC = [
-  { value: '1', label: '1 - Vivo Player' },
-  { value: '2', label: '2 - Smart One IPTV' }
+  { value: 'VIVO_PLAYER', label: 'Vivo Player' },
+  { value: 'SMART_ONE', label: 'Smart One IPTV' },
+  { value: 'IBO_PRO', label: 'IboPro Player' }
 ];
 
 const fieldSx = {
@@ -165,41 +170,22 @@ export default function DemosLionTv() {
   };
 
   const loadPackages = useCallback(async () => {
-  setPackagesLoading(true);
-
-  try {
-    const response = await lionTvApi.get('/packages/v1/list-packages', {
-      params: {
-        index: 0,
-        size: 50,
-        start: 0,
-        filters: '',
-        sorting: ''
-      }
-    });
-
-    // Response: { success: true, data: { rowCount, rowTotal, data: [...] } }
-    const list = response?.data?.data?.data || [];
-
-    // Filtra SOLO los que empiezan con "DEMO" (case-insensitive)
-    const filtered = (Array.isArray(list) ? list : []).filter((pkg) =>
-      String(pkg?.name || '')
-        .trim()
-        .toUpperCase()
-        .startsWith('DEMO')
-    );
-
-    // Lo que usa tu Select: { id, name }
-    setPackages(filtered.map((pkg) => ({ id: pkg.id, name: pkg.name })));
-  } catch (err) {
-    enqueueSnackbar(
-      err?.response?.data?.message || err?.message || 'No se pudieron cargar los paquetes.',
-      { variant: 'error' }
-    );
-  } finally {
-    setPackagesLoading(false);
-  }
-}, [enqueueSnackbar]);
+    setPackagesLoading(true);
+    try {
+      const response = await lionTvApi.get('/packages/v1/list-packages', {
+        params: { index: 0, size: 50, start: 0, filters: '', sorting: '' }
+      });
+      const list = response?.data?.data?.data || [];
+      const filtered = (Array.isArray(list) ? list : []).filter((pkg) =>
+        String(pkg?.name || '').trim().toUpperCase().startsWith('DEMO')
+      );
+      setPackages(filtered.map((pkg) => ({ id: pkg.id, name: pkg.name })));
+    } catch (err) {
+      enqueueSnackbar(err?.response?.data?.message || err?.message || 'No se pudieron cargar los paquetes.', { variant: 'error' });
+    } finally {
+      setPackagesLoading(false);
+    }
+  }, [enqueueSnackbar]);
 
  const loadCountries = useCallback(async () => {
   setCountriesLoading(true);
@@ -238,31 +224,22 @@ export default function DemosLionTv() {
   }, []);
 
   const loadDemos = useCallback(async () => {
-    if (!accessToken) return;
     setLoading(true);
-
     try {
-      const response = await sagaApi.get('/demos/v1/list-all', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: { page, size: rowsPerPage },
-        skipAuthRedirect: true
-      });
-
-      const payload = response?.data?.data ?? response?.data ?? {};
-      const rawItems = payload.data ?? payload.content ?? payload.items ?? payload ?? [];
-      const items = Array.isArray(rawItems) ? rawItems : [];
-      const normalized = items.map(normalizeDemo);
-
+      const response = await shopifyDemosApi.get('/demos', { params: {} });
+      const list = response?.data ?? [];
+      const normalized = (Array.isArray(list) ? list : []).map((item) => ({
+        ...item,
+        status: (item.status || '').toUpperCase()
+      }));
       setRows(normalized);
-      setTotal(payload.total ?? payload.totalElements ?? normalized.length);
+      setTotal(normalized.length);
     } catch (err) {
-      if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message, { variant: 'error' });
-      }
+      enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudieron cargar las demos.', { variant: 'error' });
     } finally {
       setLoading(false);
     }
-  }, [accessToken, page, rowsPerPage]);
+  }, []);
 
   const filteredRows = useMemo(() => {
     if (!search) return rows;
@@ -270,8 +247,9 @@ export default function DemosLionTv() {
     return rows.filter((row) => {
       return (
         (row.cellphone || '').toLowerCase().includes(term) ||
-        (row.username || '').toLowerCase().includes(term) ||
-        (row.packageId || '').toLowerCase().includes(term) ||
+        (row.customerName || '').toLowerCase().includes(term) ||
+        (row.macAddress || '').toLowerCase().includes(term) ||
+        (row.status || '').toLowerCase().includes(term) ||
         (row.appCode || '').toLowerCase().includes(term)
       );
     });
@@ -311,29 +289,48 @@ export default function DemosLionTv() {
     });
   };
 
+  const sendOtp = async () => {
+    if (!form.cellphone || !form.macAddress || !form.name || !form.email) {
+      enqueueSnackbar('Completa celular, MAC, nombre y correo para enviar OTP.', { variant: 'warning' });
+      return;
+    }
+    setSending(true);
+    try {
+      const params = new URLSearchParams();
+      params.append('phone', form.cellphone);
+      params.append('mac', form.macAddress);
+      params.append('name', form.name);
+      params.append('email', form.email);
+      await shopifyDemosApi.post('/proxy/lion-demo/send-otp', params, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
+      enqueueSnackbar('OTP enviado. Revisa tu correo.', { variant: 'success' });
+    } catch (err) {
+      enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo enviar el OTP.', { variant: 'error' });
+    } finally {
+      setSending(false);
+    }
+  };
+
   const handleCreateDemo = async () => {
-    if (!form.cellphone || !form.packageId || !form.deviceName || !form.playlistName || !form.countryCode || !form.macAddress) {
-      enqueueSnackbar('Completa los campos requeridos.', { variant: 'warning' });
+    if (!form.cellphone || !form.macAddress || !form.name || !form.email || !form.otp) {
+      enqueueSnackbar('Completa celular, MAC, nombre, correo y OTP.', { variant: 'warning' });
       return;
     }
 
-    const payload = {
-      cellphone: form.cellphone,
-      packageId: String(form.packageId),
-      deviceName: form.deviceName,
-      playlistName: form.playlistName,
-      countryCode: form.countryCode,
-      macAddress: form.macAddress,
-      appCode: form.appCode,
-      note: form.note
-    };
+    const params = new URLSearchParams();
+    params.append('phone', form.cellphone);
+    params.append('mac', form.macAddress);
+    params.append('name', form.name);
+    params.append('email', form.email);
+    params.append('otp', form.otp);
+    params.append('shop', 'SHOPIFY');
 
     setSending(true);
 
     try {
-      await sagaApi.post('/saga/v1/create-demo', payload, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        skipAuthRedirect: true
+      await shopifyDemosApi.post('/proxy/lion-demo/submit', params, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       });
 
       enqueueSnackbar('Demo creada correctamente.', { variant: 'success' });
@@ -341,9 +338,7 @@ export default function DemosLionTv() {
       resetForm();
       setRefreshKey((x) => x + 1);
     } catch (err) {
-      if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message, { variant: 'error' });
-      }
+      enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo crear la demo.', { variant: 'error' });
     } finally {
       setSending(false);
     }
@@ -421,10 +416,10 @@ export default function DemosLionTv() {
             </TableHead>
             <TableBody>
               {filteredRows.map((row) => (
-                <TableRow key={row.id || row.cellphone}>
+                <TableRow key={row.macAddress || row.cellphone}>
                   <TableCell>{row.cellphone}</TableCell>
                   <TableCell>{row.countryCode}</TableCell>
-                  <TableCell>{row.packageId}</TableCell>
+                  <TableCell>{row.macAddress}</TableCell>
                   <TableCell>{row.appCode}</TableCell>
                   <TableCell><StatusChip status={row.status} /></TableCell>
                   <TableCell>{formatDate(row.createdAt)}</TableCell>
@@ -513,9 +508,9 @@ export default function DemosLionTv() {
           </Box>
 
           <Stack spacing={2}>
-            <SectionCard title="Cliente y app" helper="Celular, país y aplicación a asignar.">
+            <SectionCard title="Cliente y app" helper="Celular, país, correo y aplicación.">
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={4} md={4}>
+                <Grid item xs={12} sm={6} md={3}>
                   <TextField
                     required
                     label="Celular"
@@ -532,7 +527,7 @@ export default function DemosLionTv() {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={4} md={4}>
+                <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth required sx={fieldSx}>
                     <InputLabel>País</InputLabel>
                     <Select value={form.countryCode} onChange={handleFormChange('countryCode')} disabled={countriesLoading} label="País">
@@ -545,7 +540,41 @@ export default function DemosLionTv() {
                     {countriesLoading && <FormHelperText>Cargando países...</FormHelperText>}
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={4} md={4}>
+                <Grid item xs={12} sm={6} md={3}>
+                  <TextField
+                    required
+                    label="Nombre"
+                    value={form.name}
+                    onChange={handleFormChange('name')}
+                    fullWidth
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PersonIcon />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <TextField
+                    required
+                    label="Correo"
+                    value={form.email}
+                    onChange={handleFormChange('email')}
+                    fullWidth
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PublicOutlinedIcon />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth required sx={fieldSx}>
                     <InputLabel>Aplicación</InputLabel>
                     <Select value={form.appCode} onChange={handleAppCodeChange} disabled={appCodesLoading} label="Aplicación">
@@ -562,6 +591,16 @@ export default function DemosLionTv() {
                       </FormHelperText>
                     )}
                   </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <TextField
+                    label="OTP"
+                    value={form.otp}
+                    onChange={handleFormChange('otp')}
+                    fullWidth
+                    sx={fieldSx}
+                    placeholder="123456"
+                  />
                 </Grid>
               </Grid>
             </SectionCard>
@@ -653,8 +692,13 @@ export default function DemosLionTv() {
         </DialogContent>
 
         {/* BOTONES */}
-        <DialogActions>
-          <Button variant="outlined" onClick={resetForm}>Limpiar</Button>
+        <DialogActions sx={{ gap: 1 }}>
+          <Button variant="outlined" onClick={resetForm} disabled={sending}>
+            Limpiar
+          </Button>
+          <Button variant="outlined" color="secondary" onClick={sendOtp} disabled={sending}>
+            {sending ? 'Enviando OTP...' : 'Enviar OTP'}
+          </Button>
           <Button variant="contained" onClick={handleCreateDemo} disabled={sending}>
             {sending ? 'Creando...' : 'Crear Demo'}
           </Button>
