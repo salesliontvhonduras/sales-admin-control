@@ -227,8 +227,8 @@ export default function DemosLionTv() {
   const loadDemos = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await shopifyDemosApi.get('/demos', { params: {} });
-      const list = response?.data ?? [];
+      const response = await shopifyDemosApi.get('/demos/all', { params: {} });
+      const list = response?.data?.data ?? [];
       const normalized = (Array.isArray(list) ? list : []).map((item) => ({
         ...item,
         status: (item.status || '').toUpperCase()
@@ -290,49 +290,25 @@ export default function DemosLionTv() {
     });
   };
 
-  const sendOtp = async () => {
-    if (!form.cellphone || !form.macAddress || !form.name || !form.email) {
-      enqueueSnackbar('Completa celular, MAC, nombre y correo para enviar OTP.', { variant: 'warning' });
-      return;
-    }
-    setSending(true);
-    try {
-      const params = new URLSearchParams();
-      params.append('phone', form.cellphone);
-      params.append('mac', form.macAddress);
-      params.append('name', form.name);
-      params.append('email', form.email);
-      await shopifyDemosApi.post('/proxy/lion-demo/send-otp', params, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-      });
-      enqueueSnackbar('OTP enviado. Revisa tu correo.', { variant: 'success' });
-    } catch (err) {
-      enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo enviar el OTP.', { variant: 'error' });
-    } finally {
-      setSending(false);
-    }
-  };
-
   const handleCreateDemo = async () => {
-    if (!form.cellphone || !form.macAddress || !form.name || !form.email || !form.otp) {
-      enqueueSnackbar('Completa celular, MAC, nombre, correo y OTP.', { variant: 'warning' });
+    if (!form.cellphone || !form.macAddress || !form.name || !form.email) {
+      enqueueSnackbar('Completa celular, MAC, nombre y correo.', { variant: 'warning' });
       return;
     }
 
-    const params = new URLSearchParams();
-    params.append('phone', form.cellphone);
-    params.append('mac', form.macAddress);
-    params.append('name', form.name);
-    params.append('email', form.email);
-    params.append('otp', form.otp);
-    params.append('shop', 'SHOPIFY');
+    const payload = {
+      cellphone: form.cellphone,
+      macAddress: form.macAddress,
+      customerName: form.name,
+      email: form.email,
+      appCode: form.appCode || 'VIVO_PLAYER',
+      note: form.note
+    };
 
     setSending(true);
 
     try {
-      await shopifyDemosApi.post('/proxy/lion-demo/submit', params, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-      });
+      await shopifyDemosApi.post('/demos/create-direct', payload);
 
       enqueueSnackbar('Demo creada correctamente.', { variant: 'success' });
       setOpenModal(false);
@@ -694,12 +670,7 @@ export default function DemosLionTv() {
 
         {/* BOTONES */}
         <DialogActions sx={{ gap: 1 }}>
-          <Button variant="outlined" onClick={resetForm} disabled={sending}>
-            Limpiar
-          </Button>
-          <Button variant="outlined" color="secondary" onClick={sendOtp} disabled={sending}>
-            {sending ? 'Enviando OTP...' : 'Enviar OTP'}
-          </Button>
+          <Button variant="outlined" onClick={resetForm} disabled={sending}>Limpiar</Button>
           <Button variant="contained" onClick={handleCreateDemo} disabled={sending}>
             {sending ? 'Creando...' : 'Crear Demo'}
           </Button>
