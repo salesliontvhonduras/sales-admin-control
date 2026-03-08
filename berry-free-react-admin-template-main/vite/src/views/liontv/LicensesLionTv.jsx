@@ -141,7 +141,7 @@ function RowActions({ row, onEdit, onTransfer, onServer, onHistory, onDelete, t 
 }
 
 const STATUS_OPTIONS = ['ACTIVE', 'EXPIRED', 'AVAILABLE', 'EMERGENCY'];
-const APPS = ['Vivo Player', 'Smart One'];
+const APPS = ['Vivo Player', 'Smart One', 'IboPro Player'];
 const LICENSE_PERIOD = ['ANNUAL', 'LIFETIME'];
 const TYPE_LICENSE = ['PRIMARY', 'USED'];
 const fieldSx = {
