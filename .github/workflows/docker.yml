@@ -78,4 +78,5 @@ jobs:
             VITE_API_CATALOGS=${{ env.VITE_API_CATALOGS }}
             VITE_API_LIONTV=${{ env.VITE_API_LIONTV }}
             VITE_API_SAGA=${{ env.VITE_API_SAGA }}
+            VITE_API_SHOPIFY_DEMOS=${{ env.VITE_API_SHOPIFY_DEMOS }}
             VITE_GOOGLE_CLIENT_ID=${{ env.VITE_GOOGLE_CLIENT_ID }}
