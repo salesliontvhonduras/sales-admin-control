@@ -29,7 +29,7 @@ jobs:
       VITE_API_LIONTV: ${{ secrets.VITE_API_LIONTV || vars.VITE_API_LIONTV || 'https://api.liontvplus.com/sales/panel-lion-tv' }}
       VITE_API_SAGA: ${{ secrets.VITE_API_SAGA || vars.VITE_API_SAGA || 'https://api.liontvplus.com/sales/event-bus' }}
       VITE_API_SMS: ${{ secrets.VITE_API_SMS || vars.VITE_API_SMS || 'https://api.liontvplus.com/sales/sms' }}
-      VITE_API_SHOPIFY_DEMOS: ${{ secrets.VITE_API_SHOPIFY_DEMOS || vars.VITE_API_SHOPIFY_DEMOS || 'https://api.liontvplus.com/sales/demos' }}
+      VITE_API_SHOPIFY_DEMOS: ${{ 'https://api.liontvplus.com/sales/demos' }}
       VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID || vars.VITE_GOOGLE_CLIENT_ID || '881879419726-dviv75rgbqofnh33288jr5loriie72ot.apps.googleusercontent.com' }}
 
     steps:
