@@ -89,6 +89,12 @@ const statusTokens = (theme) => ({
     border: theme.palette.success.main,
     icon: <CheckCircleOutlineIcon fontSize="small" />
   },
+  ACTIVATED: {
+    bg: theme.palette.success.lighter,
+    color: theme.palette.success.darker,
+    border: theme.palette.success.main,
+    icon: <CheckCircleOutlineIcon fontSize="small" />
+  },
   PENDING: {
     bg: theme.palette.info.lighter,
     color: theme.palette.info.darker,
@@ -637,7 +643,7 @@ export default function DemosLionTv() {
                 <MenuItem value="">
                   <em>{t('invoices.filters.all', 'Todos')}</em>
                 </MenuItem>
-                {['ACTIVE', 'PENDING', 'EXPIRED', 'CANCELLED']
+                {['ACTIVE', 'ACTIVATED', 'PENDING', 'EXPIRED', 'CANCELLED']
                   .filter((status) => rows.some((r) => r.status === status))
                   .map((s) => (
                     <MenuItem key={s} value={s}>
