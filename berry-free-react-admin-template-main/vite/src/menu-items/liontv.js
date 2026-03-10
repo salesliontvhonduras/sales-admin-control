@@ -67,7 +67,7 @@ const liontv = {
     },
     {
       id: 'liontv-plus-lines',
-      title: 'menu.plusLines',
+      title: 'Plus lines',
       type: 'item',
       url: '/liontv/plus-lines',
       icon: icons.IconLink,
