@@ -30,6 +30,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import LanIcon from '@mui/icons-material/Lan';
 import PersonIcon from '@mui/icons-material/Person';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
@@ -440,6 +441,11 @@ function SubscriptionsInline({ linePlusId }) {
             <Typography variant="caption" color="text.secondary">
               {sub.startDate || '-'}
             </Typography>
+            {sub.primaryMaxConnections ? (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                Max conexiones línea primaria: {sub.primaryMaxConnections}
+              </Typography>
+            ) : null}
           </Box>
           <Chip
             size="small"
