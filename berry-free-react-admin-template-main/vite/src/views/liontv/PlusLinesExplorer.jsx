@@ -31,6 +31,7 @@ import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import LanIcon from '@mui/icons-material/Lan';
 import PersonIcon from '@mui/icons-material/Person';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import TrafficIcon from '@mui/icons-material/Traffic';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
@@ -81,6 +82,15 @@ const formatDate = (val) => {
   const d = new Date(val.replace(' ', 'T'));
   return Number.isNaN(d.getTime()) ? val : d.toLocaleDateString();
 };
+
+function semaphoreColor(maxConnections, potentialConnections) {
+  const max = maxConnections || 1;
+  const potential = potentialConnections || 0;
+  const pct = Math.min(100, Math.round((potential / max) * 100));
+  if (pct <= 30) return { color: 'success', label: `Verde · ${pct}%` };
+  if (pct <= 60) return { color: 'warning', label: `Amarillo · ${pct}%` };
+  return { color: 'error', label: `Rojo · ${pct}%` };
+}
 
 export default function PlusLinesExplorer() {
   const { enqueueSnackbar } = useSnackbar();
@@ -363,6 +373,19 @@ export default function PlusLinesExplorer() {
                         variant="outlined"
                       />
                     ) : null}
+                    {(() => {
+                      const s = semaphoreColor(line.maxConnections, line.potentialConnections);
+                      return (
+                        <Chip
+                          size="small"
+                          icon={<TrafficIcon fontSize="small" />}
+                          label={s.label}
+                          color={s.color}
+                          variant="outlined"
+                          sx={{ fontWeight: 700 }}
+                        />
+                      );
+                    })()}
                   </Stack>
 
                   <Divider sx={{ my: 1 }} />
