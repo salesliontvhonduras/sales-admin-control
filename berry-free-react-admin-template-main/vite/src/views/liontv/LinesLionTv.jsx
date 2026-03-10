@@ -45,10 +45,10 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LanIcon from '@mui/icons-material/Lan';
-import PublicIcon from '@mui/icons-material/Public';
 import BoltIcon from '@mui/icons-material/Bolt';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import PublicIcon from '@mui/icons-material/Public';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
@@ -71,6 +71,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
 import NoteAltIcon from '@mui/icons-material/NoteAlt';
 import ShieldMoonIcon from '@mui/icons-material/ShieldMoon';
+import PublicIcon from '@mui/icons-material/Public';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FormHelperText from '@mui/material/FormHelperText';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
@@ -113,6 +114,8 @@ const pillSx = {
   fontWeight: 700,
   letterSpacing: 0.2
 };
+
+const countryOptions = ['GLOBAL', 'US', 'HN', 'MX', 'ES', 'CO', 'AR', 'VE'];
 
 const glassCard = (theme) => ({
   p: 2.5,
@@ -201,6 +204,7 @@ function normalizeLine(item = {}) {
     packageName: item.package_name ?? '',
     createdAt: item.created_at ?? '',
     ownerName: item.owner_name ?? '',
+    lineCountry: item.line_country ?? item.lineCountry ?? 'GLOBAL',
     lastWatchedIp: item.last_watched_from_ip ?? '',
     lastWatchedTime: item.last_watched_stream_time ?? '',
     lastWatchedName: item.last_watched_stream_name ?? '',
@@ -288,6 +292,7 @@ const defaultForm = {
   packageName: '',
   expDate: '',
   enabled: true,
+  lineCountry: 'GLOBAL',
   maxConnections: '',
   resellerNotes: '',
   provider: 'LION_TV',
@@ -351,6 +356,7 @@ export default function LinesLionTv() {
       packageName: row.packageName || row.package_name || '',
       expDate: formatDateInput(row.expDate || row.exp_date),
       enabled: Boolean(row.enabled),
+      lineCountry: row.lineCountry || 'GLOBAL',
       maxConnections: row.maxConnections || '',
       resellerNotes: row.resellerNotes || '',
       _isEdit: true
@@ -369,6 +375,7 @@ export default function LinesLionTv() {
       username: form.username,
       password: form.password,
       provider: form.provider || 'LION_TV',
+      lineCountry: form.lineCountry || 'GLOBAL',
       packageId: form.packageId ? Number(form.packageId) : null,
       packageName: form.packageName,
       expDate: form.expDate || null,
@@ -487,6 +494,7 @@ export default function LinesLionTv() {
         (row.packageName || '').toLowerCase().includes(term) ||
         (row.ownerName || '').toLowerCase().includes(term) ||
         (row.lastWatchedIp || '').toLowerCase().includes(term) ||
+        (row.lineCountry || '').toLowerCase().includes(term) ||
         (row.enabledLabel || '').toLowerCase().includes(term)
       );
     });
@@ -684,6 +692,7 @@ export default function LinesLionTv() {
               <TableRow>
                 <TableCell>{t('lines.headers.user')}</TableCell>
                 <TableCell>{t('lines.headers.provider', 'Provider')}</TableCell>
+                <TableCell>{t('lines.headers.country', 'País')}</TableCell>
                 <TableCell>{t('lines.headers.status')}</TableCell>
                 <TableCell>{t('lines.headers.expires')}</TableCell>
                 <TableCell>{t('lines.headers.max')}</TableCell>
@@ -695,7 +704,7 @@ export default function LinesLionTv() {
               {loading &&
                 Array.from({ length: 4 }).map((_, idx) => (
                   <TableRow key={`skeleton-${idx}`}>
-                    {Array.from({ length: 7 }).map((__, cidx) => (
+                    {Array.from({ length: 8 }).map((__, cidx) => (
                       <TableCell key={cidx}>
                         <Skeleton variant="text" />
                       </TableCell>
@@ -753,6 +762,19 @@ export default function LinesLionTv() {
                         background: theme.palette.mode === 'light' ? theme.palette.info.light + '1f' : theme.palette.background.paper,
                         height: 22,
                         px: 0.9
+                      })}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      icon={<PublicIcon fontSize="inherit" />}
+                      label={row.lineCountry || 'GLOBAL'}
+                      sx={(theme) => ({
+                        fontWeight: 700,
+                        borderRadius: 1.5,
+                        bgcolor: theme.palette.success.lighter,
+                        color: theme.palette.success.darker
                       })}
                     />
                   </TableCell>
@@ -1303,6 +1325,31 @@ export default function LinesLionTv() {
                     control={<Switch checked={form.enabled} onChange={(e) => setForm((p) => ({ ...p, enabled: e.target.checked }))} color="success" />}
                     label={form.enabled ? t('lines.status.active') : t('lines.status.inactive')}
                   />
+                </Grid>
+                <Grid item xs={12} sm={6} md={6}>
+                  <FormControl fullWidth sx={fieldSx}>
+                    <InputLabel shrink>{t('lines.form.country', 'País')}</InputLabel>
+                    <Select
+                      displayEmpty
+                      value={form.lineCountry}
+                      label={t('lines.form.country', 'País')}
+                      onChange={(e) => setForm((p) => ({ ...p, lineCountry: e.target.value }))}
+                      renderValue={(value) => (
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <PublicIcon fontSize="small" color="primary" />
+                          <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'}>
+                            {value || 'GLOBAL'}
+                          </Typography>
+                        </Stack>
+                      )}
+                    >
+                      {countryOptions.map((opt) => (
+                        <MenuItem key={opt} value={opt}>
+                          {opt}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={6} md={6}>
                   <TextField
