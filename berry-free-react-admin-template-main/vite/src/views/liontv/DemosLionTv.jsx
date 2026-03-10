@@ -386,7 +386,7 @@ export default function DemosLionTv() {
     () =>
       rows.reduce(
         (acc, row) => {
-          if (row.status === 'ACTIVE') acc.active += 1;
+          if (row.status === 'ACTIVE' || row.status === 'ACTIVATED') acc.active += 1;
           if (row.status === 'PENDING') acc.pending += 1;
           if (row.status === 'EXPIRED') acc.expired += 1;
           return acc;
@@ -1010,7 +1010,7 @@ export default function DemosLionTv() {
                       label={t('demos.headers.status', 'Estado')}
                       onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
                     >
-                      {['ACTIVE', 'PENDING', 'EXPIRED', 'CANCELLED'].map((s) => (
+                      {['ACTIVE', 'ACTIVATED', 'PENDING', 'EXPIRED', 'CANCELLED'].map((s) => (
                         <MenuItem key={s} value={s}>
                           {s}
                         </MenuItem>
