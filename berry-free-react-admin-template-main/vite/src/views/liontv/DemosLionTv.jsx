@@ -181,10 +181,19 @@ function StatusChip({ status }) {
   );
 }
 
-function RowActions({ row, onEdit, onDelete }) {
+function RowActions({ row, onEdit, onDelete, onEmail }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const { t } = useTranslation();
   const open = Boolean(anchorEl);
+
+  const openWhatsApp = () => {
+    const digits = (row.cellphone || '').replace(/\D/g, '');
+    if (!digits) return;
+    const message =
+      '¡Hola! Soy del equipo Lion TV Premium. Tu demo ha finalizado. ¿Te gustaría activar un plan completo y seguir disfrutando del contenido? Responde este mensaje y te ayudamos a elegir la mejor opción.';
+    const url = `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <>
@@ -215,6 +224,24 @@ function RowActions({ row, onEdit, onDelete }) {
         >
           <EditOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#1e88e5' }} />
           {t('actions.edit')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            onEmail?.(row);
+          }}
+        >
+          <MailOutlineIcon fontSize="small" style={{ marginRight: 8, color: '#0284c7' }} />
+          {t('actions.sendEmail', 'Enviar email')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            openWhatsApp();
+          }}
+        >
+          <PhoneIphoneIcon fontSize="small" style={{ marginRight: 8, color: '#25D366' }} />
+          WhatsApp
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -450,6 +477,26 @@ export default function DemosLionTv() {
       }
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleSendEmail = async (row) => {
+    const email = row?.email || '';
+    if (!email) {
+      enqueueSnackbar(t('demos.messages.emailMissing', 'Esta demo no tiene email'), { variant: 'warning' });
+      return;
+    }
+    try {
+      await shopifyDemosApi.post(
+        '/demos/send-end-email',
+        null,
+        { params: { email }, headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      enqueueSnackbar(t('demos.messages.emailSent', 'Correo enviado'), { variant: 'success' });
+    } catch (err) {
+      enqueueSnackbar(err?.response?.data?.message || err.message || t('demos.messages.emailError', 'No se pudo enviar el correo'), {
+        variant: 'error'
+      });
     }
   };
 
@@ -708,17 +755,22 @@ export default function DemosLionTv() {
                       <Typography variant="body2">{formatDate(row.createdAt)}</Typography>
                     </Stack>
                   </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.5} alignItems="center">
-                      <AccessTimeIcon fontSize="inherit" color="warning" />
-                      <Typography variant="body2">{formatDate(row.expiresAt)}</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell align="right">
-                    <RowActions row={row} onEdit={openEditModal} onDelete={(r) => setOpenDelete({ open: true, row: r })} />
-                  </TableCell>
-                </TableRow>
-              ))}
+          <TableCell>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <AccessTimeIcon fontSize="inherit" color="warning" />
+              <Typography variant="body2">{formatDate(row.expiresAt)}</Typography>
+            </Stack>
+          </TableCell>
+          <TableCell align="right">
+                    <RowActions
+                      row={row}
+                      onEdit={openEditModal}
+                      onDelete={(r) => setOpenDelete({ open: true, row: r })}
+                      onEmail={(r) => handleSendEmail(r)}
+                    />
+          </TableCell>
+        </TableRow>
+      ))}
               {!loading && filteredRows.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
