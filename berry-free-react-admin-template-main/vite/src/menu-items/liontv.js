@@ -1,4 +1,4 @@
-import { IconDeviceTv, IconUsers, IconReceipt2, IconFileInvoice, IconRouter } from '@tabler/icons-react';
+import { IconDeviceTv, IconUsers, IconReceipt2, IconFileInvoice, IconRouter, IconLink } from '@tabler/icons-react';
 import { IconKey, IconUserSearch } from '@tabler/icons-react';
 
 const icons = {
@@ -8,7 +8,8 @@ const icons = {
   IconFileInvoice,
   IconRouter,
   IconKey,
-  IconUserSearch
+  IconUserSearch,
+  IconLink
 };
 
 const liontv = {
@@ -62,6 +63,14 @@ const liontv = {
       type: 'item',
       url: '/liontv/lines',
       icon: icons.IconRouter,
+      breadcrumbs: true
+    },
+    {
+      id: 'liontv-plus-lines',
+      title: 'menu.plusLines',
+      type: 'item',
+      url: '/liontv/plus-lines',
+      icon: icons.IconLink,
       breadcrumbs: true
     },
     {
