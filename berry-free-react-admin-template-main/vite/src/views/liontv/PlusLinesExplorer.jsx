@@ -83,10 +83,12 @@ const formatDate = (val) => {
   return Number.isNaN(d.getTime()) ? val : d.toLocaleDateString();
 };
 
-function semaphoreColor(maxConnections, potentialConnections) {
-  const max = maxConnections || 1;
-  const potential = potentialConnections || 0;
-  const pct = Math.min(100, Math.round((potential / max) * 100));
+// Semáforo: estima uso real aplicando 30% de concurrencia sobre la suma de primarias.
+function semaphoreColor(maxConnectionsPlus, sumPrimaryConnections) {
+  const plus = maxConnectionsPlus || 1; // evita /0
+  const primaries = sumPrimaryConnections || 0;
+  const estimatedActive = primaries * 0.3; // 30% concurrencia
+  const pct = Math.min(100, Math.round((estimatedActive / plus) * 100));
   if (pct <= 30) return { color: 'success', label: `Verde · ${pct}%` };
   if (pct <= 60) return { color: 'warning', label: `Amarillo · ${pct}%` };
   return { color: 'error', label: `Rojo · ${pct}%` };
@@ -376,16 +378,17 @@ export default function PlusLinesExplorer() {
                     {(() => {
                       const s = semaphoreColor(line.maxConnections, line.potentialConnections);
                       return (
-                        <Chip
-                          size="small"
-                          icon={<TrafficIcon fontSize="small" />}
-                          label={s.label}
-                          color={s.color}
-                          variant="outlined"
-                          sx={{ fontWeight: 700 }}
-                        />
-                      );
-                    })()}
+                    <Chip
+                      size="small"
+                      icon={<TrafficIcon fontSize="small" />}
+                      label={s.label}
+                      color={s.color}
+                      variant="outlined"
+                      sx={{ fontWeight: 700 }}
+                      title={`Primarias: ${line.potentialConnections ?? 0} · Est. activo 30% · Máx plus: ${line.maxConnections ?? 1}`}
+                    />
+                  );
+                })()}
                   </Stack>
 
                   <Divider sx={{ my: 1 }} />
