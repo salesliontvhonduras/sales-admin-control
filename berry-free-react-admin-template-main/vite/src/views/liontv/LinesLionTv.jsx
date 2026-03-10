@@ -202,6 +202,26 @@ function formatDateInput(value) {
   return '';
 }
 
+function flagFromCountry(code = '') {
+  const c = (code || '').toUpperCase();
+  const map = {
+    HN: '🇭🇳',
+    SV: '🇸🇻',
+    GT: '🇬🇹',
+    NI: '🇳🇮',
+    BZ: '🇧🇿',
+    PA: '🇵🇦',
+    CR: '🇨🇷',
+    MX: '🇲🇽',
+    AR: '🇦🇷',
+    CA: '🇨🇦',
+    US: '🇺🇸',
+    ES: '🇪🇸',
+    CO: '🇨🇴'
+  };
+  return map[c] || '🌐';
+}
+
 function normalizeLine(item = {}) {
   return {
     id: item.id ?? '',
@@ -782,17 +802,21 @@ export default function LinesLionTv() {
                     />
                   </TableCell>
                   <TableCell>
-                    <Chip
-                      size="small"
-                      icon={<PublicIcon fontSize="inherit" />}
-                      label={countryLabel(row.lineCountry || 'GLOBAL')}
-                      sx={(theme) => ({
-                        fontWeight: 700,
-                        borderRadius: 1.5,
-                        bgcolor: theme.palette.success.lighter,
-                        color: theme.palette.success.darker
-                      })}
-                    />
+                    <Stack direction="row" spacing={0.75} alignItems="center">
+                      <Avatar
+                        sx={{
+                          width: 26,
+                          height: 26,
+                          bgcolor: 'grey.100',
+                          color: 'text.secondary',
+                          fontSize: 14,
+                          fontWeight: 700
+                        }}
+                      >
+                        {flagFromCountry(row.lineCountry)}
+                      </Avatar>
+                      <Typography variant="body2">{countryLabel(row.lineCountry || 'GLOBAL')}</Typography>
+                    </Stack>
                   </TableCell>
                   <TableCell>
                     <StatusChip enabled={row.enabled} expired={row.expired} t={t} />
