@@ -114,7 +114,24 @@ const pillSx = {
   letterSpacing: 0.2
 };
 
-const countryOptions = ['GLOBAL', 'US', 'HN', 'MX', 'ES', 'CO', 'AR', 'VE'];
+const countryOptions = [
+  { code: 'GLOBAL', label: 'Global' },
+  { code: 'HN', label: 'Honduras' },
+  { code: 'SV', label: 'El Salvador' },
+  { code: 'GT', label: 'Guatemala' },
+  { code: 'NI', label: 'Nicaragua' },
+  { code: 'BZ', label: 'Belice' },
+  { code: 'PA', label: 'Panamá' },
+  { code: 'CR', label: 'Costa Rica' },
+  { code: 'MX', label: 'México' },
+  { code: 'AR', label: 'Argentina' },
+  { code: 'CA', label: 'Canadá' },
+  { code: 'US', label: 'Estados Unidos' },
+  { code: 'ES', label: 'España' },
+  { code: 'CO', label: 'Colombia' }
+];
+
+const countryLabel = (code) => countryOptions.find((c) => c.code === code)?.label || code || 'Global';
 
 const glassCard = (theme) => ({
   p: 2.5,
@@ -768,7 +785,7 @@ export default function LinesLionTv() {
                     <Chip
                       size="small"
                       icon={<PublicIcon fontSize="inherit" />}
-                      label={row.lineCountry || 'GLOBAL'}
+                      label={countryLabel(row.lineCountry || 'GLOBAL')}
                       sx={(theme) => ({
                         fontWeight: 700,
                         borderRadius: 1.5,
@@ -1337,14 +1354,14 @@ export default function LinesLionTv() {
                         <Stack direction="row" spacing={1} alignItems="center">
                           <PublicIcon fontSize="small" color="primary" />
                           <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'}>
-                            {value || 'GLOBAL'}
+                            {countryLabel(value || 'GLOBAL')}
                           </Typography>
                         </Stack>
                       )}
                     >
                       {countryOptions.map((opt) => (
-                        <MenuItem key={opt} value={opt}>
-                          {opt}
+                        <MenuItem key={opt.code} value={opt.code}>
+                          {opt.label}
                         </MenuItem>
                       ))}
                     </Select>
