@@ -51,6 +51,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
