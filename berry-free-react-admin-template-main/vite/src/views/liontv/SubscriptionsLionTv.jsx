@@ -56,6 +56,7 @@ import Skeleton from '@mui/material/Skeleton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CloseIcon from '@mui/icons-material/Close';
 import LinkIcon from '@mui/icons-material/Link';
+import EmailIcon from '@mui/icons-material/Email';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
@@ -144,7 +145,7 @@ function normalizeSubscription(item = {}) {
   };
 }
 
-function RowActions({ row, onEdit, onDelete }) {
+function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengage, busy }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { t } = useTranslation();
@@ -177,6 +178,26 @@ function RowActions({ row, onEdit, onDelete }) {
         >
           <EditOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#1e88e5' }} />
           {t('actions.edit', 'Edit')}
+        </MenuItem>
+        <MenuItem
+          disabled={busy}
+          onClick={() => {
+            setAnchorEl(null);
+            onNotifyExpiration?.(row);
+          }}
+        >
+          <EmailIcon fontSize="small" style={{ marginRight: 8, color: '#ff9800' }} />
+          {t('subscriptions.actions.notifyExpiration', 'Enviar aviso vencimiento')}
+        </MenuItem>
+        <MenuItem
+          disabled={busy}
+          onClick={() => {
+            setAnchorEl(null);
+            onNotifyReengage?.(row);
+          }}
+        >
+          <EmailIcon fontSize="small" style={{ marginRight: 8, color: '#7b1fa2' }} />
+          {t('subscriptions.actions.notifyReengage', 'Notificar reenganche')}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -267,6 +288,7 @@ export default function SubscriptionsLionTv() {
   const [packagesLoading, setPackagesLoading] = useState(false);
   const [lines, setLines] = useState([]);
   const [linesLoading, setLinesLoading] = useState(false);
+  const [notifLoadingId, setNotifLoadingId] = useState(null);
 
   const customerNameMap = useMemo(() => {
     const map = {};
@@ -274,6 +296,16 @@ export default function SubscriptionsLionTv() {
       const id = c.customerId ?? c.id;
       if (!id) return;
       map[id] = c.customerFullname ?? c.fullName ?? c.username ?? c.customerMail ?? '';
+    });
+    return map;
+  }, [customers]);
+
+  const customerEmailMap = useMemo(() => {
+    const map = {};
+    customers.forEach((c) => {
+      const id = c.customerId ?? c.id;
+      if (!id) return;
+      map[id] = c.customerMail || c.email || c.mail || '';
     });
     return map;
   }, [customers]);
@@ -409,6 +441,34 @@ export default function SubscriptionsLionTv() {
     loadLines();
   }, [loadSubscriptions, loadCustomers, loadPackages, loadLines, refreshKey]);
 
+  const fetchCustomerContact = useCallback(
+    async (customerId) => {
+      if (!customerId) return { email: '', name: '' };
+      const cachedEmail = customerEmailMap[customerId] || '';
+      const cachedName = customerNameMap[customerId] || '';
+      if (cachedEmail || cachedName) return { email: cachedEmail, name: cachedName };
+
+      if (!accessToken) return { email: '', name: '' };
+      try {
+        const res = await lionTvApi.get(`/customers/v1/${customerId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          skipAuthRedirect: true
+        });
+        const data = res?.data?.data ?? res?.data ?? {};
+        return {
+          email: data.customerMail || data.email || data.mail || '',
+          name: data.customerFullname || data.fullName || data.username || ''
+        };
+      } catch (err) {
+        if (!handleUnauthorized(err)) {
+          enqueueSnackbar('No se pudo obtener el correo del cliente.', { variant: 'warning' });
+        }
+        return { email: '', name: '' };
+      }
+    },
+    [accessToken, customerEmailMap, customerNameMap, enqueueSnackbar]
+  );
+
   // enriquecer filas con nombres de línea y paquete cuando lleguen los catálogos
   useEffect(() => {
     if ((!lineNameMap || Object.keys(lineNameMap).length === 0) && (!packageMap || Object.keys(packageMap).length === 0)) return;
@@ -533,6 +593,57 @@ export default function SubscriptionsLionTv() {
 
   const handleDelete = (row) => {
     setOpenDelete({ open: true, row });
+  };
+
+  const handleNotifyExpiration = async (row) => {
+    if (!row?.subscriptionId) return;
+    setNotifLoadingId(row.subscriptionId);
+    try {
+      const { email, name } = await fetchCustomerContact(row.customerId);
+      const emailNormalized = (email || '').trim().toLowerCase();
+      if (!emailNormalized || emailNormalized === 'nomail@gmail.com') {
+        enqueueSnackbar('Actualiza el correo válido del cliente antes de enviar la notificación.', { variant: 'error' });
+        return;
+      }
+      const expirationDate = row.renewalDate || row.startDate || null;
+      await lionTvApi.post(
+        '/notifications/line-expiration',
+        { email, expirationDate },
+        { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
+      );
+      enqueueSnackbar('Notificación de vencimiento enviada.', { variant: 'success' });
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || 'No se pudo enviar la notificación.', { variant: 'error' });
+      }
+    } finally {
+      setNotifLoadingId(null);
+    }
+  };
+
+  const handleNotifyReengage = async (row) => {
+    if (!row?.subscriptionId) return;
+    setNotifLoadingId(row.subscriptionId);
+    try {
+      const { email, name } = await fetchCustomerContact(row.customerId);
+      const emailNormalized = (email || '').trim().toLowerCase();
+      if (!emailNormalized || emailNormalized === 'nomail@gmail.com') {
+        enqueueSnackbar('Actualiza el correo válido del cliente antes de enviar la notificación.', { variant: 'error' });
+        return;
+      }
+      await lionTvApi.post(
+        '/notifications/reengage',
+        { email, customerName: name || row.customerName || row.customer_name || '' },
+        { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
+      );
+      enqueueSnackbar('Correo de reenganche enviado.', { variant: 'success' });
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || 'No se pudo enviar la notificación.', { variant: 'error' });
+      }
+    } finally {
+      setNotifLoadingId(null);
+    }
   };
 
   const handleSave = async () => {
@@ -915,7 +1026,14 @@ export default function SubscriptionsLionTv() {
                         />
                       </TableCell>
                       <TableCell align="right">
-                        <RowActions row={row} onEdit={handleEdit} onDelete={handleDelete} />
+                        <RowActions
+                          row={row}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          onNotifyExpiration={handleNotifyExpiration}
+                          onNotifyReengage={handleNotifyReengage}
+                          busy={notifLoadingId === row.subscriptionId}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
