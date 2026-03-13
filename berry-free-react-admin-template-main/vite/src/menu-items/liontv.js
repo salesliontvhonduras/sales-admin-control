@@ -42,6 +42,14 @@ const liontv = {
       breadcrumbs: true
     },
     {
+      id: 'liontv-business-purchases',
+      title: 'menu.businessPurchases',
+      type: 'item',
+      url: '/liontv/business-purchases',
+      icon: icons.IconFileInvoice,
+      breadcrumbs: true
+    },
+    {
       id: 'liontv-customers',
       title: 'menu.customers',
       type: 'item',

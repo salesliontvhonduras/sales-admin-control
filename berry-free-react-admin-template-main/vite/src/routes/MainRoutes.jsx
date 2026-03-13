@@ -8,6 +8,7 @@ import DemosLionTv from 'views/liontv/DemosLionTv';
 import CustomersLionTv from 'views/liontv/CustomersLionTv';
 import SubscriptionsLionTv from 'views/liontv/SubscriptionsLionTv';
 import InvoicesLionTv from 'views/liontv/InvoicesLionTv';
+import BusinessPurchasesLionTv from 'views/liontv/BusinessPurchasesLionTv';
 import LinesLionTv from 'views/liontv/LinesLionTv';
 import LicensesLionTv from 'views/liontv/LicensesLionTv';
 import CustomerCrmLionTv from 'views/liontv/CustomerCrmLionTv';
@@ -57,6 +58,10 @@ const MainRoutes = {
         {
           path: '/liontv/invoices',
           element: <InvoicesLionTv />
+        },
+        {
+          path: '/liontv/business-purchases',
+          element: <BusinessPurchasesLionTv />
         },
         {
           path: '/liontv/licenses',
