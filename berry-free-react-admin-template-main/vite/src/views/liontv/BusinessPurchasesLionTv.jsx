@@ -55,6 +55,19 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import BusinessIcon from '@mui/icons-material/Business';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import TagIcon from '@mui/icons-material/Tag';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import DescriptionIcon from '@mui/icons-material/Description';
+import NumbersIcon from '@mui/icons-material/Numbers';
+import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
+import EventBusyIcon from '@mui/icons-material/EventBusy';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import PaymentIcon from '@mui/icons-material/Payment';
+import PinIcon from '@mui/icons-material/Pin';
+import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
+import RepeatIcon from '@mui/icons-material/Repeat';
+import NoteAltIcon from '@mui/icons-material/NoteAlt';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
@@ -93,25 +106,80 @@ const sectionSx = {
 };
 
 const purchaseTypeOptions = [
-  'VIVO_PLAYER_CREDITS',
-  'IBO_PLAYER_CREDITS',
-  'SMART_ONE_CREDITS',
-  'PANEL_TITAN_CREDITS',
-  'LION_TV_CREDITS',
-  'SHOPIFY_PAYMENT',
-  'BANRURAL_POS_PAYMENT',
-  'DOMAIN_PAYMENT',
-  'DEMO_LICENSE_PAYMENT',
-  'HOUSE_MONTHLY_LICENSE',
-  'OTHER'
+  { value: 'VIVO_PLAYER_CREDITS', label: 'Vivo Player Credits' },
+  { value: 'IBO_PLAYER_CREDITS', label: 'Ibo Player Credits' },
+  { value: 'SMART_ONE_CREDITS', label: 'Smart One Credits' },
+  { value: 'PANEL_TITAN_CREDITS', label: 'Panel Titan Credits' },
+  { value: 'LION_TV_CREDITS', label: 'Lion TV Credits' },
+  { value: 'SHOPIFY_PAYMENT', label: 'Shopify Payment' },
+  { value: 'BANRURAL_POS_PAYMENT', label: 'Banrural POS Payment' },
+  { value: 'DOMAIN_PAYMENT', label: 'Domain Payment' },
+  { value: 'DEMO_LICENSE_PAYMENT', label: 'Demo License Payment' },
+  { value: 'HOUSE_MONTHLY_LICENSE', label: 'House Monthly License' },
+  { value: 'OTHER', label: 'Other' }
 ];
 
-const categoryOptions = ['CREDITS', 'PLATFORM_PAYMENT', 'DOMAIN', 'LICENSE', 'POS', 'OTHER'];
-const currencyOptions = ['HNL', 'USD', 'GTQ', 'EUR'];
-const paymentMethodOptions = ['CASH', 'BANK_TRANSFER', 'CARD', 'PAYPAL', 'BANRURAL_POS', 'SHOPIFY', 'CRYPTO', 'OTHER'];
-const businessAreaOptions = ['IPTV', 'WEB', 'BILLING', 'MARKETING', 'OPERATIONS', 'OTHER'];
-const statusOptions = ['PENDING', 'PAID', 'PARTIAL', 'CANCELLED'];
-const recurrenceOptions = ['NONE', 'MONTHLY', 'YEARLY', 'WEEKLY'];
+const categoryOptions = [
+  { value: 'CREDITS', label: 'Credits' },
+  { value: 'PLATFORM_PAYMENT', label: 'Platform Payment' },
+  { value: 'DOMAIN', label: 'Domain' },
+  { value: 'LICENSE', label: 'License' },
+  { value: 'POS', label: 'POS' },
+  { value: 'OTHER', label: 'Other' }
+];
+const currencyOptions = [
+  { value: 'HNL', label: 'HNL' },
+  { value: 'USD', label: 'USD' },
+  { value: 'GTQ', label: 'GTQ' },
+  { value: 'EUR', label: 'EUR' }
+];
+const paymentMethodOptions = [
+  { value: 'CASH', label: 'Cash' },
+  { value: 'BANK_TRANSFER', label: 'Bank transfer' },
+  { value: 'CARD', label: 'Card' },
+  { value: 'PAYPAL', label: 'PayPal' },
+  { value: 'BANRURAL_POS', label: 'Banrural POS' },
+  { value: 'SHOPIFY', label: 'Shopify' },
+  { value: 'CRYPTO', label: 'Crypto' },
+  { value: 'OTHER', label: 'Other' }
+];
+const businessAreaOptions = [
+  { value: 'IPTV', label: 'IPTV' },
+  { value: 'WEB', label: 'Web' },
+  { value: 'BILLING', label: 'Billing' },
+  { value: 'MARKETING', label: 'Marketing' },
+  { value: 'OPERATIONS', label: 'Operations' },
+  { value: 'OTHER', label: 'Other' }
+];
+const statusOptions = [
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'PAID', label: 'Paid' },
+  { value: 'PARTIAL', label: 'Partial' },
+  { value: 'CANCELLED', label: 'Cancelled' }
+];
+const recurrenceOptions = [
+  { value: 'NONE', label: 'None' },
+  { value: 'MONTHLY', label: 'Monthly' },
+  { value: 'YEARLY', label: 'Yearly' },
+  { value: 'WEEKLY', label: 'Weekly' }
+];
+
+const paymentMethodChipColors = {
+  CASH: 'success',
+  BANK_TRANSFER: 'info',
+  CARD: 'secondary',
+  PAYPAL: 'primary',
+  BANRURAL_POS: 'warning',
+  SHOPIFY: 'info',
+  CRYPTO: 'secondary',
+  OTHER: 'default'
+};
+
+function optionLabel(options, value, fallback = '-') {
+  if (!value) return fallback;
+  const item = options.find((opt) => opt.value === value);
+  return item?.label || value;
+}
 
 function formatDate(value) {
   if (!value) return '-';
@@ -137,10 +205,10 @@ function formatDateTimeInput(value) {
 
 function StatusChip({ status }) {
   const color = statusColors[status] || 'default';
-  return <Chip size="small" color={color} label={status || '-'} />;
+  return <Chip size="small" color={color} label={optionLabel(statusOptions, status, '-')} />;
 }
 
-function FormSection({ title, helper, children }) {
+function FormSection({ title, helper, icon: Icon, children }) {
   return (
     <Box
       sx={(theme) => ({
@@ -156,7 +224,14 @@ function FormSection({ title, helper, children }) {
     >
       <Stack spacing={1.5}>
         <Box>
-          <Typography variant="subtitle2">{title}</Typography>
+          <Stack direction="row" spacing={1} alignItems="center">
+            {Icon ? (
+              <Avatar sx={{ width: 24, height: 24, bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                <Icon fontSize="small" />
+              </Avatar>
+            ) : null}
+            <Typography variant="subtitle2">{title}</Typography>
+          </Stack>
           {helper ? (
             <Typography variant="caption" color="text.secondary">
               {helper}
@@ -296,6 +371,7 @@ export default function BusinessPurchasesLionTv() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [purchaseTypeFilter, setPurchaseTypeFilter] = useState('');
 
   const [openModal, setOpenModal] = useState(false);
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
@@ -336,11 +412,12 @@ export default function BusinessPurchasesLionTv() {
   }, [loadBusinessPurchases, refreshKey]);
 
   const filteredRows = useMemo(() => {
-    if (!search && !statusFilter && !categoryFilter) return rows;
+    if (!search && !statusFilter && !categoryFilter && !purchaseTypeFilter) return rows;
     const term = search.toLowerCase();
     return rows.filter((row) => {
       if (statusFilter && (row.status || '').toUpperCase() !== statusFilter.toUpperCase()) return false;
       if (categoryFilter && (row.category || '').toUpperCase() !== categoryFilter.toUpperCase()) return false;
+      if (purchaseTypeFilter && (row.purchaseType || '').toUpperCase() !== purchaseTypeFilter.toUpperCase()) return false;
       return (
         (row.purchaseCode || '').toLowerCase().includes(term) ||
         (row.itemName || '').toLowerCase().includes(term) ||
@@ -351,7 +428,7 @@ export default function BusinessPurchasesLionTv() {
         (row.invoiceNumber || '').toLowerCase().includes(term)
       );
     });
-  }, [rows, search, statusFilter, categoryFilter]);
+  }, [rows, search, statusFilter, categoryFilter, purchaseTypeFilter]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -368,10 +445,13 @@ export default function BusinessPurchasesLionTv() {
       total: rows.length,
       paid: rows.filter((r) => r.status === 'PAID').length,
       pending: rows.filter((r) => r.status === 'PENDING').length,
+      recurring: rows.filter((r) => r.isRecurring).length,
       totalAmount: rows.reduce((acc, row) => acc + Number(row.totalAmount || 0), 0)
     }),
     [rows]
   );
+
+  const hasFilters = Boolean(search || statusFilter || categoryFilter || purchaseTypeFilter);
 
   const resetForm = () => setForm(createDefaultForm());
 
@@ -551,7 +631,11 @@ export default function BusinessPurchasesLionTv() {
               color: 'success.main'
             },
             {
-              label: t('businessPurchases.summary.pending', { defaultValue: 'Pending: {{count}}', count: summary.pending }),
+              label: t('businessPurchases.summary.pending', {
+                defaultValue: 'Pending: {{count}} · Recurring: {{recurring}}',
+                count: summary.pending,
+                recurring: summary.recurring
+              }),
               icon: PendingActionsIcon,
               color: 'warning.main'
             },
@@ -605,85 +689,134 @@ export default function BusinessPurchasesLionTv() {
       <MainCard
         title={t('businessPurchases.searchTitle', 'Search purchases')}
         secondary={
-          <Paper
-            elevation={0}
-            sx={(muiTheme) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              width: { xs: '100%', sm: 760 },
-              p: 1,
-              borderRadius: 2,
-              border: '1px solid',
-              borderColor: 'divider',
-              background:
-                muiTheme.palette.mode === 'light'
-                  ? `linear-gradient(120deg, ${muiTheme.palette.primary.light}12 0%, ${muiTheme.palette.secondary.light}12 100%)`
-                  : muiTheme.palette.background.paper,
-              boxShadow: '0 8px 18px rgba(0,0,0,0.05)'
-            })}
-          >
-            <TextField
-              size="small"
-              placeholder={t('businessPurchases.search', 'Search by code, item, provider, reference')}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              fullWidth
-              variant="outlined"
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: 'background.paper' } }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon color="action" />
-                  </InputAdornment>
-                )
-              }}
-            />
-            <FormControl size="small" sx={{ minWidth: 170, '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: 'background.paper' } }}>
-              <InputLabel>{t('businessPurchases.filters.category', 'Category')}</InputLabel>
-              <Select
-                value={categoryFilter}
-                label={t('businessPurchases.filters.category', 'Category')}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <CategoryIcon fontSize="small" />
-                  </InputAdornment>
-                }
-              >
-                <MenuItem value="">
-                  <em>{t('businessPurchases.filters.all', 'All')}</em>
-                </MenuItem>
-                {categoryOptions.map((opt) => (
-                  <MenuItem key={opt} value={opt}>
-                    {opt}
+          <Stack spacing={1.25} sx={{ width: { xs: '100%', md: 900 } }}>
+            <Paper
+              elevation={0}
+              sx={(muiTheme) => ({
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                width: '100%',
+                p: 1,
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: 'divider',
+                background:
+                  muiTheme.palette.mode === 'light'
+                    ? `linear-gradient(120deg, ${muiTheme.palette.primary.light}12 0%, ${muiTheme.palette.secondary.light}12 100%)`
+                    : muiTheme.palette.background.paper,
+                boxShadow: '0 8px 18px rgba(0,0,0,0.05)'
+              })}
+            >
+              <TextField
+                size="small"
+                placeholder={t('businessPurchases.search', 'Search by code, item, provider, reference')}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+                variant="outlined"
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: 'background.paper' } }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon color="action" />
+                    </InputAdornment>
+                  )
+                }}
+              />
+              <FormControl size="small" sx={{ minWidth: 160, '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: 'background.paper' } }}>
+                <InputLabel>{t('businessPurchases.filters.category', 'Category')}</InputLabel>
+                <Select
+                  value={categoryFilter}
+                  label={t('businessPurchases.filters.category', 'Category')}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  startAdornment={
+                    <InputAdornment position="start">
+                      <CategoryIcon fontSize="small" />
+                    </InputAdornment>
+                  }
+                >
+                  <MenuItem value="">
+                    <em>{t('businessPurchases.filters.all', 'All')}</em>
                   </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 150, '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: 'background.paper' } }}>
-              <InputLabel>{t('businessPurchases.filters.status', 'Status')}</InputLabel>
-              <Select
-                value={statusFilter}
-                label={t('businessPurchases.filters.status', 'Status')}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <PaidOutlinedIcon fontSize="small" />
-                  </InputAdornment>
-                }
-              >
-                <MenuItem value="">
-                  <em>{t('businessPurchases.filters.all', 'All')}</em>
-                </MenuItem>
-                {statusOptions.map((opt) => (
-                  <MenuItem key={opt} value={opt}>
-                    {opt}
+                  {categoryOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 160, '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: 'background.paper' } }}>
+                <InputLabel>{t('businessPurchases.filters.type', 'Type')}</InputLabel>
+                <Select
+                  value={purchaseTypeFilter}
+                  label={t('businessPurchases.filters.type', 'Type')}
+                  onChange={(e) => setPurchaseTypeFilter(e.target.value)}
+                >
+                  <MenuItem value="">
+                    <em>{t('businessPurchases.filters.all', 'All')}</em>
                   </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Paper>
+                  {purchaseTypeOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 150, '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: 'background.paper' } }}>
+                <InputLabel>{t('businessPurchases.filters.status', 'Status')}</InputLabel>
+                <Select
+                  value={statusFilter}
+                  label={t('businessPurchases.filters.status', 'Status')}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  startAdornment={
+                    <InputAdornment position="start">
+                      <PaidOutlinedIcon fontSize="small" />
+                    </InputAdornment>
+                  }
+                >
+                  <MenuItem value="">
+                    <em>{t('businessPurchases.filters.all', 'All')}</em>
+                  </MenuItem>
+                  {statusOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => {
+                  setSearch('');
+                  setCategoryFilter('');
+                  setStatusFilter('');
+                  setPurchaseTypeFilter('');
+                }}
+                startIcon={<RestartAltIcon />}
+                disabled={!hasFilters}
+                sx={{ borderRadius: 2, textTransform: 'none', whiteSpace: 'nowrap' }}
+              >
+                {t('businessPurchases.filters.clear', 'Clear')}
+              </Button>
+            </Paper>
+
+            {hasFilters ? (
+              <Stack direction="row" spacing={0.75} flexWrap="wrap">
+                {search ? <Chip size="small" label={`Search: ${search}`} color="primary" variant="outlined" /> : null}
+                {categoryFilter ? (
+                  <Chip size="small" label={`Category: ${optionLabel(categoryOptions, categoryFilter)}`} color="primary" variant="outlined" />
+                ) : null}
+                {purchaseTypeFilter ? (
+                  <Chip size="small" label={`Type: ${optionLabel(purchaseTypeOptions, purchaseTypeFilter)}`} color="primary" variant="outlined" />
+                ) : null}
+                {statusFilter ? (
+                  <Chip size="small" label={`Status: ${optionLabel(statusOptions, statusFilter)}`} color="primary" variant="outlined" />
+                ) : null}
+              </Stack>
+            ) : null}
+          </Stack>
         }
       >
         <TableContainer
@@ -735,28 +868,52 @@ export default function BusinessPurchasesLionTv() {
                       </Typography>
                     </Stack>
                   </TableCell>
-                  <TableCell>{row.purchaseType || '-'}</TableCell>
-                  <TableCell>
-                    <Chip size="small" label={row.category || '-'} variant="outlined" />
-                  </TableCell>
                   <TableCell>
                     <Chip
                       size="small"
                       variant="outlined"
-                      icon={<AccountBalanceWalletIcon fontSize="small" color="success" />}
-                      label={`${row.currency || 'HNL'} ${Number(row.totalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-                      sx={{ fontWeight: 600 }}
+                      icon={<ShoppingCartIcon fontSize="small" />}
+                      label={optionLabel(purchaseTypeOptions, row.purchaseType)}
+                      sx={{ maxWidth: 240, '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }}
                     />
+                  </TableCell>
+                  <TableCell>
+                    <Chip size="small" label={optionLabel(categoryOptions, row.category)} variant="outlined" />
+                  </TableCell>
+                  <TableCell>
+                    <Stack spacing={0.25}>
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        icon={<AccountBalanceWalletIcon fontSize="small" color="success" />}
+                        label={`${row.currency || 'HNL'} ${Number(row.totalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                        sx={{ fontWeight: 600 }}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        {Number(row.quantity || 0).toLocaleString()} x {Number(row.unitCost || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </Typography>
+                    </Stack>
                   </TableCell>
                   <TableCell>
                     <Stack spacing={0.25}>
                       <Typography variant="body2">{formatDate(row.purchaseDate)}</Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {row.dueDate ? `${t('businessPurchases.labels.due', 'Due')}: ${formatDate(row.dueDate)}` : '-'}
+                        {row.paidAt
+                          ? `${t('businessPurchases.labels.paidAt', 'Paid')}: ${formatDate(row.paidAt)}`
+                          : row.dueDate
+                            ? `${t('businessPurchases.labels.due', 'Due')}: ${formatDate(row.dueDate)}`
+                            : '-'}
                       </Typography>
                     </Stack>
                   </TableCell>
-                  <TableCell>{row.paymentMethod || '-'}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      color={paymentMethodChipColors[row.paymentMethod] || 'default'}
+                      label={optionLabel(paymentMethodOptions, row.paymentMethod)}
+                    />
+                  </TableCell>
                   <TableCell>
                     <StatusChip status={row.status} />
                   </TableCell>
@@ -917,10 +1074,48 @@ export default function BusinessPurchasesLionTv() {
             </Typography>
           </Box>
 
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} flexWrap="wrap" sx={{ mb: 2 }}>
+            <Chip
+              size="small"
+              color={form.purchaseCode ? 'primary' : 'default'}
+              variant="outlined"
+              icon={<TagIcon fontSize="small" />}
+              label={`${t('businessPurchases.form.purchaseCode', 'Purchase code')}: ${form.purchaseCode || '-'}`}
+              sx={{ bgcolor: 'background.paper' }}
+            />
+            <Chip
+              size="small"
+              color="default"
+              variant="outlined"
+              icon={<ReceiptLongIcon fontSize="small" color="info" />}
+              label={`${t('businessPurchases.form.purchaseType', 'Purchase type')}: ${optionLabel(purchaseTypeOptions, form.purchaseType, '-')}`}
+              sx={{ bgcolor: 'background.paper' }}
+            />
+            <Chip
+              size="small"
+              color="default"
+              variant="outlined"
+              icon={<CategoryIcon fontSize="small" color="secondary" />}
+              label={`${t('businessPurchases.form.category', 'Category')}: ${optionLabel(categoryOptions, form.category, '-')}`}
+              sx={{ bgcolor: 'background.paper' }}
+            />
+            <Chip
+              size="small"
+              color={statusColors[form.status] || 'default'}
+              icon={<PaidOutlinedIcon fontSize="small" />}
+              label={`${t('businessPurchases.form.status', 'Status')}: ${optionLabel(statusOptions, form.status, '-')}`}
+              sx={{ bgcolor: 'background.paper' }}
+            />
+          </Stack>
+
           <Stack spacing={2} sx={{ position: 'relative', zIndex: 1 }}>
-            <FormSection title={t('businessPurchases.sections.classification', 'Classification')} helper={t('businessPurchases.sections.classificationHelper', 'Identify the purchase and accounting context.') }>
+            <FormSection
+              title={t('businessPurchases.sections.classification', 'Classification')}
+              helper={t('businessPurchases.sections.classificationHelper', 'Identify the purchase and accounting context.')}
+              icon={CategoryIcon}
+            >
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} sm={6} md={3}>
                   <TextField
                     required
                     label={t('businessPurchases.form.purchaseCode', 'Purchase code')}
@@ -931,48 +1126,92 @@ export default function BusinessPurchasesLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <ReceiptLongIcon fontSize="small" color="primary" />
+                          <TagIcon fontSize="small" color="primary" />
                         </InputAdornment>
                       )
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth required sx={fieldSx}>
                     <InputLabel>{t('businessPurchases.form.purchaseType', 'Purchase type')}</InputLabel>
-                    <Select value={form.purchaseType} label={t('businessPurchases.form.purchaseType', 'Purchase type')} onChange={handleFormChange('purchaseType')}>
+                    <Select
+                      value={form.purchaseType}
+                      label={t('businessPurchases.form.purchaseType', 'Purchase type')}
+                      onChange={handleFormChange('purchaseType')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <ReceiptLongIcon fontSize="small" color="info" />
+                        </InputAdornment>
+                      }
+                    >
                       {purchaseTypeOptions.map((opt) => (
-                        <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                        <MenuItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={2}>
+                <Grid item xs={12} sm={6} md={2}>
                   <FormControl fullWidth required sx={fieldSx}>
                     <InputLabel>{t('businessPurchases.form.category', 'Category')}</InputLabel>
-                    <Select value={form.category} label={t('businessPurchases.form.category', 'Category')} onChange={handleFormChange('category')}>
+                    <Select
+                      value={form.category}
+                      label={t('businessPurchases.form.category', 'Category')}
+                      onChange={handleFormChange('category')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <CategoryIcon fontSize="small" color="secondary" />
+                        </InputAdornment>
+                      }
+                    >
                       {categoryOptions.map((opt) => (
-                        <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                        <MenuItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={2}>
+                <Grid item xs={12} sm={6} md={2}>
                   <FormControl fullWidth sx={fieldSx}>
                     <InputLabel>{t('businessPurchases.form.status', 'Status')}</InputLabel>
-                    <Select value={form.status} label={t('businessPurchases.form.status', 'Status')} onChange={handleFormChange('status')}>
+                    <Select
+                      value={form.status}
+                      label={t('businessPurchases.form.status', 'Status')}
+                      onChange={handleFormChange('status')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <PaidOutlinedIcon fontSize="small" color="success" />
+                        </InputAdornment>
+                      }
+                    >
                       {statusOptions.map((opt) => (
-                        <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                        <MenuItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={2}>
+                <Grid item xs={12} sm={6} md={2}>
                   <FormControl fullWidth sx={fieldSx}>
                     <InputLabel>{t('businessPurchases.form.businessArea', 'Business area')}</InputLabel>
-                    <Select value={form.businessArea} label={t('businessPurchases.form.businessArea', 'Business area')} onChange={handleFormChange('businessArea')}>
+                    <Select
+                      value={form.businessArea}
+                      label={t('businessPurchases.form.businessArea', 'Business area')}
+                      onChange={handleFormChange('businessArea')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <BusinessIcon fontSize="small" color="primary" />
+                        </InputAdornment>
+                      }
+                    >
                       {businessAreaOptions.map((opt) => (
-                        <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                        <MenuItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -980,9 +1219,13 @@ export default function BusinessPurchasesLionTv() {
               </Grid>
             </FormSection>
 
-            <FormSection title={t('businessPurchases.sections.item', 'Item & amount')} helper={t('businessPurchases.sections.itemHelper', 'Cost detail and provider information.') }>
+            <FormSection
+              title={t('businessPurchases.sections.item', 'Item & amount')}
+              helper={t('businessPurchases.sections.itemHelper', 'Cost detail and provider information.')}
+              icon={AccountBalanceWalletIcon}
+            >
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={6} md={4}>
                   <TextField
                     label={t('businessPurchases.form.providerName', 'Provider')}
                     value={form.providerName}
@@ -992,13 +1235,13 @@ export default function BusinessPurchasesLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <BusinessIcon fontSize="small" color="action" />
+                          <BusinessIcon fontSize="small" color="info" />
                         </InputAdornment>
                       )
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={8}>
+                <Grid item xs={12} sm={6} md={8}>
                   <TextField
                     required
                     label={t('businessPurchases.form.itemName', 'Item name')}
@@ -1006,6 +1249,13 @@ export default function BusinessPurchasesLionTv() {
                     onChange={handleFormChange('itemName')}
                     fullWidth
                     sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Inventory2Icon fontSize="small" color="primary" />
+                        </InputAdornment>
+                      )
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -1015,36 +1265,114 @@ export default function BusinessPurchasesLionTv() {
                     onChange={handleFormChange('description')}
                     fullWidth
                     sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <DescriptionIcon fontSize="small" color="secondary" />
+                        </InputAdornment>
+                      )
+                    }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={2}>
-                  <TextField label={t('businessPurchases.form.quantity', 'Quantity')} type="number" value={form.quantity} onChange={handleFormChange('quantity')} fullWidth sx={fieldSx} />
+                <Grid item xs={12} sm={6} md={2}>
+                  <TextField
+                    label={t('businessPurchases.form.quantity', 'Quantity')}
+                    type="number"
+                    value={form.quantity}
+                    onChange={handleFormChange('quantity')}
+                    fullWidth
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <NumbersIcon fontSize="small" color="info" />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
                 </Grid>
-                <Grid item xs={12} sm={2}>
-                  <TextField label={t('businessPurchases.form.unitCost', 'Unit cost')} type="number" value={form.unitCost} onChange={handleFormChange('unitCost')} fullWidth sx={fieldSx} />
+                <Grid item xs={12} sm={6} md={2}>
+                  <TextField
+                    label={t('businessPurchases.form.unitCost', 'Unit cost')}
+                    type="number"
+                    value={form.unitCost}
+                    onChange={handleFormChange('unitCost')}
+                    fullWidth
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LocalAtmIcon fontSize="small" color="warning" />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
                 </Grid>
-                <Grid item xs={12} sm={2}>
-                  <TextField label={t('businessPurchases.form.totalAmount', 'Total amount')} type="number" value={form.totalAmount} onChange={handleFormChange('totalAmount')} fullWidth sx={fieldSx} />
+                <Grid item xs={12} sm={6} md={2}>
+                  <TextField
+                    label={t('businessPurchases.form.totalAmount', 'Total amount')}
+                    type="number"
+                    value={form.totalAmount}
+                    onChange={handleFormChange('totalAmount')}
+                    fullWidth
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <AccountBalanceWalletIcon fontSize="small" color="success" />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
                 </Grid>
-                <Grid item xs={12} sm={2}>
+                <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth sx={fieldSx}>
                     <InputLabel>{t('businessPurchases.form.currency', 'Currency')}</InputLabel>
-                    <Select value={form.currency} label={t('businessPurchases.form.currency', 'Currency')} onChange={handleFormChange('currency')}>
+                    <Select
+                      value={form.currency}
+                      label={t('businessPurchases.form.currency', 'Currency')}
+                      onChange={handleFormChange('currency')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <PaidOutlinedIcon fontSize="small" color="success" />
+                        </InputAdornment>
+                      }
+                    >
                       {currencyOptions.map((opt) => (
-                        <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                        <MenuItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={2}>
-                  <TextField label={t('businessPurchases.form.exchangeRate', 'Exchange rate')} type="number" value={form.exchangeRate} onChange={handleFormChange('exchangeRate')} fullWidth sx={fieldSx} />
+                <Grid item xs={12} sm={6} md={3}>
+                  <TextField
+                    label={t('businessPurchases.form.exchangeRate', 'Exchange rate')}
+                    type="number"
+                    value={form.exchangeRate}
+                    onChange={handleFormChange('exchangeRate')}
+                    fullWidth
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <CurrencyExchangeIcon fontSize="small" color="info" />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
                 </Grid>
               </Grid>
             </FormSection>
 
-            <FormSection title={t('businessPurchases.sections.payment', 'Dates & payment')} helper={t('businessPurchases.sections.paymentHelper', 'Purchase lifecycle, due date and references.') }>
+            <FormSection
+              title={t('businessPurchases.sections.payment', 'Dates & payment')}
+              helper={t('businessPurchases.sections.paymentHelper', 'Purchase lifecycle, due date and references.')}
+              icon={EventAvailableIcon}
+            >
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} sm={6} md={3}>
                   <TextField
                     required
                     label={t('businessPurchases.form.purchaseDate', 'Purchase date')}
@@ -1063,7 +1391,7 @@ export default function BusinessPurchasesLionTv() {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} sm={6} md={3}>
                   <TextField
                     label={t('businessPurchases.form.dueDate', 'Due date')}
                     type="date"
@@ -1072,9 +1400,16 @@ export default function BusinessPurchasesLionTv() {
                     fullWidth
                     sx={fieldSx}
                     InputLabelProps={{ shrink: true }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <EventBusyIcon fontSize="small" color="warning" />
+                        </InputAdornment>
+                      )
+                    }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} sm={6} md={3}>
                   <TextField
                     label={t('businessPurchases.form.paidAt', 'Paid at')}
                     type="datetime-local"
@@ -1083,44 +1418,108 @@ export default function BusinessPurchasesLionTv() {
                     fullWidth
                     sx={fieldSx}
                     InputLabelProps={{ shrink: true }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <AccessTimeIcon fontSize="small" color="info" />
+                        </InputAdornment>
+                      )
+                    }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} sm={6} md={3}>
                   <FormControl fullWidth sx={fieldSx}>
                     <InputLabel>{t('businessPurchases.form.paymentMethod', 'Payment method')}</InputLabel>
-                    <Select value={form.paymentMethod} label={t('businessPurchases.form.paymentMethod', 'Payment method')} onChange={handleFormChange('paymentMethod')}>
+                    <Select
+                      value={form.paymentMethod}
+                      label={t('businessPurchases.form.paymentMethod', 'Payment method')}
+                      onChange={handleFormChange('paymentMethod')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <PaymentIcon fontSize="small" color="success" />
+                        </InputAdornment>
+                      }
+                    >
                       <MenuItem value="">
                         <em>{t('businessPurchases.form.none', 'None')}</em>
                       </MenuItem>
                       {paymentMethodOptions.map((opt) => (
-                        <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                        <MenuItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField label={t('businessPurchases.form.paymentReference', 'Payment reference')} value={form.paymentReference} onChange={handleFormChange('paymentReference')} fullWidth sx={fieldSx} />
+                  <TextField
+                    label={t('businessPurchases.form.paymentReference', 'Payment reference')}
+                    value={form.paymentReference}
+                    onChange={handleFormChange('paymentReference')}
+                    fullWidth
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PinIcon fontSize="small" color="secondary" />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField label={t('businessPurchases.form.invoiceNumber', 'Invoice number')} value={form.invoiceNumber} onChange={handleFormChange('invoiceNumber')} fullWidth sx={fieldSx} />
+                  <TextField
+                    label={t('businessPurchases.form.invoiceNumber', 'Invoice number')}
+                    value={form.invoiceNumber}
+                    onChange={handleFormChange('invoiceNumber')}
+                    fullWidth
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <ConfirmationNumberIcon fontSize="small" color="primary" />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
                 </Grid>
               </Grid>
             </FormSection>
 
-            <FormSection title={t('businessPurchases.sections.recurring', 'Recurring setup')} helper={t('businessPurchases.sections.recurringHelper', 'Monthly/yearly recurring purchase flags.') }>
+            <FormSection
+              title={t('businessPurchases.sections.recurring', 'Recurring setup')}
+              helper={t('businessPurchases.sections.recurringHelper', 'Monthly/yearly recurring purchase flags.')}
+              icon={RepeatIcon}
+            >
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={4}>
                   <FormControlLabel
                     control={<Switch checked={form.isRecurring} onChange={handleFormChange('isRecurring')} color="success" />}
-                    label={t('businessPurchases.form.isRecurring', 'Recurring purchase')}
+                    label={
+                      <Stack direction="row" spacing={0.75} alignItems="center">
+                        <RepeatIcon fontSize="small" color="secondary" />
+                        <Typography variant="body2">{t('businessPurchases.form.isRecurring', 'Recurring purchase')}</Typography>
+                      </Stack>
+                    }
                   />
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={8}>
                   <FormControl fullWidth sx={fieldSx} disabled={!form.isRecurring}>
                     <InputLabel>{t('businessPurchases.form.recurrenceType', 'Recurrence')}</InputLabel>
-                    <Select value={form.recurrenceType} label={t('businessPurchases.form.recurrenceType', 'Recurrence')} onChange={handleFormChange('recurrenceType')}>
+                    <Select
+                      value={form.recurrenceType}
+                      label={t('businessPurchases.form.recurrenceType', 'Recurrence')}
+                      onChange={handleFormChange('recurrenceType')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <RepeatIcon fontSize="small" color="secondary" />
+                        </InputAdornment>
+                      }
+                    >
                       {recurrenceOptions.map((opt) => (
-                        <MenuItem key={opt} value={opt}>{opt}</MenuItem>
+                        <MenuItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </MenuItem>
                       ))}
                     </Select>
                     <FormHelperText>{t('businessPurchases.form.recurrenceHelper', 'Use NONE for one-time purchases.')}</FormHelperText>
@@ -1135,6 +1534,13 @@ export default function BusinessPurchasesLionTv() {
                     multiline
                     minRows={3}
                     sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <NoteAltIcon fontSize="small" color="info" />
+                        </InputAdornment>
+                      )
+                    }}
                   />
                 </Grid>
               </Grid>
