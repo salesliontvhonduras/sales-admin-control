@@ -206,7 +206,7 @@ function flagFromPhone(phone = '') {
   return null;
 }
 
-function RowActions({ row, onEdit, onDelete }) {
+function RowActions({ row, onEdit, onDelete, onWelcome, welcomeLoading }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { t } = useTranslation();
@@ -242,6 +242,18 @@ function RowActions({ row, onEdit, onDelete }) {
         >
           <EditOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#1e88e5' }} />
           {t('actions.edit')}
+        </MenuItem>
+        <MenuItem
+          disabled={welcomeLoading}
+          onClick={() => {
+            setAnchorEl(null);
+            onWelcome?.(row);
+          }}
+        >
+          <AutoAwesomeIcon fontSize="small" style={{ marginRight: 8, color: '#43a047' }} />
+          {welcomeLoading
+            ? t('customers.actions.sendingWelcome', 'Enviando bienvenida...')
+            : t('customers.actions.sendWelcome', 'Enviar bienvenida')}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -327,6 +339,7 @@ export default function CustomersLionTv() {
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
   const [form, setForm] = useState(() => createDefaultForm());
   const [sending, setSending] = useState(false);
+  const [sendingWelcomeId, setSendingWelcomeId] = useState(null);
   const [referers, setReferers] = useState([]);
   const [referersLoading, setReferersLoading] = useState(false);
   const [referersFetched, setReferersFetched] = useState(false);
@@ -462,6 +475,40 @@ export default function CustomersLionTv() {
 
   const handleDelete = (row) => {
     setOpenDelete({ open: true, row });
+  };
+
+  const handleSendWelcome = async (row) => {
+    const customerId = row?.customerId || row?.id;
+    const email = row?.mail;
+
+    if (!customerId || !email) {
+      enqueueSnackbar(t('customers.messages.missingEmail', 'El cliente no tiene correo registrado.'), { variant: 'warning' });
+      return;
+    }
+
+    setSendingWelcomeId(customerId);
+    try {
+      await lionTvApi.post(
+        '/notifications/welcome',
+        {
+          email,
+          customerName: row?.fullName || ''
+        },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          skipAuthRedirect: true
+        }
+      );
+      enqueueSnackbar(t('customers.messages.welcomeSent', 'Correo de bienvenida enviado.'), { variant: 'success' });
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('customers.messages.welcomeError', 'No se pudo enviar la bienvenida.'), {
+          variant: 'error'
+        });
+      }
+    } finally {
+      setSendingWelcomeId(null);
+    }
   };
 
   const handleFormChange = (field) => (event) => {
@@ -911,7 +958,13 @@ export default function CustomersLionTv() {
                     />
                   </TableCell>
                   <TableCell align="right">
-                    <RowActions row={row} onEdit={handleEdit} onDelete={handleDelete} />
+                    <RowActions
+                      row={row}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onWelcome={handleSendWelcome}
+                      welcomeLoading={sendingWelcomeId === (row.customerId || row.id)}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

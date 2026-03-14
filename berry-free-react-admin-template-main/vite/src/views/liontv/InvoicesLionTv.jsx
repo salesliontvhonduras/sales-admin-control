@@ -61,6 +61,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
+import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
@@ -172,7 +173,7 @@ function FormSection({ title, helper, children }) {
   );
 }
 
-function RowActions({ row, onEdit, onDelete }) {
+function RowActions({ row, onEdit, onDelete, onSendInvoice, sendingInvoice }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { t } = useTranslation();
@@ -208,6 +209,16 @@ function RowActions({ row, onEdit, onDelete }) {
         >
           <EditOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#1e88e5' }} />
           {t('actions.edit')}
+        </MenuItem>
+        <MenuItem
+          disabled={sendingInvoice}
+          onClick={() => {
+            setAnchorEl(null);
+            onSendInvoice?.(row);
+          }}
+        >
+          <MarkEmailReadIcon fontSize="small" style={{ marginRight: 8, color: '#2e7d32' }} />
+          {sendingInvoice ? t('invoices.actions.sendingInvoice', 'Enviando factura...') : t('invoices.actions.sendInvoice', 'Enviar factura')}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -281,6 +292,7 @@ export default function InvoicesLionTv() {
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
   const [form, setForm] = useState(() => createDefaultForm());
   const [sending, setSending] = useState(false);
+  const [sendingInvoiceId, setSendingInvoiceId] = useState(null);
 
   const [customers, setCustomers] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(false);
@@ -527,6 +539,35 @@ export default function InvoicesLionTv() {
 
   const handleDelete = (row) => {
     setOpenDelete({ open: true, row });
+  };
+
+  const handleSendInvoice = async (row) => {
+    const invoiceId = row?.invoiceId;
+    if (!invoiceId) {
+      enqueueSnackbar(t('invoices.actions.sendInvoiceError', 'No se pudo identificar la factura.'), { variant: 'error' });
+      return;
+    }
+
+    setSendingInvoiceId(invoiceId);
+    try {
+      await lionTvApi.post(
+        `/invoices/v1/${invoiceId}/send-invoice`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          skipAuthRedirect: true
+        }
+      );
+      enqueueSnackbar(t('invoices.actions.sendInvoiceSuccess', 'Factura enviada por correo.'), { variant: 'success' });
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('invoices.actions.sendInvoiceError', 'No se pudo enviar la factura.'), {
+          variant: 'error'
+        });
+      }
+    } finally {
+      setSendingInvoiceId(null);
+    }
   };
 
   const handleSave = async () => {
@@ -892,7 +933,13 @@ export default function InvoicesLionTv() {
                   </TableCell>
                   <TableCell>{formatDate(row.paymentDate)}</TableCell>
                   <TableCell align="right">
-                    <RowActions row={row} onEdit={handleEdit} onDelete={handleDelete} />
+                    <RowActions
+                      row={row}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      onSendInvoice={handleSendInvoice}
+                      sendingInvoice={sendingInvoiceId === row.invoiceId}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
