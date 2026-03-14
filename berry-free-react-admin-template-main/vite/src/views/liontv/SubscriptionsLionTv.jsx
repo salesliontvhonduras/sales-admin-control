@@ -145,7 +145,7 @@ function normalizeSubscription(item = {}) {
   };
 }
 
-function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengage, busy }) {
+function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengage, onNotifyRenewed, busy }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { t } = useTranslation();
@@ -198,6 +198,16 @@ function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengag
         >
           <EmailIcon fontSize="small" style={{ marginRight: 8, color: '#7b1fa2' }} />
           {t('subscriptions.actions.notifyReengage', 'Notificar reenganche')}
+        </MenuItem>
+        <MenuItem
+          disabled={busy}
+          onClick={() => {
+            setAnchorEl(null);
+            onNotifyRenewed?.(row);
+          }}
+        >
+          <EmailIcon fontSize="small" style={{ marginRight: 8, color: '#2e7d32' }} />
+          {t('subscriptions.actions.notifyRenewed', 'Notificar renovación exitosa')}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -646,6 +656,31 @@ export default function SubscriptionsLionTv() {
     }
   };
 
+  const handleNotifyRenewed = async (row) => {
+    if (!row?.subscriptionId) return;
+    setNotifLoadingId(row.subscriptionId);
+    try {
+      const { email } = await fetchCustomerContact(row.customerId);
+      const emailNormalized = (email || '').trim().toLowerCase();
+      if (!emailNormalized || emailNormalized === 'nomail@gmail.com') {
+        enqueueSnackbar('Actualiza el correo válido del cliente antes de enviar la notificación.', { variant: 'error' });
+        return;
+      }
+      await lionTvApi.post(
+        `/subscriptions/v1/${row.subscriptionId}/notify-renewed`,
+        {},
+        { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
+      );
+      enqueueSnackbar('Notificación de renovación enviada.', { variant: 'success' });
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || 'No se pudo enviar la notificación.', { variant: 'error' });
+      }
+    } finally {
+      setNotifLoadingId(null);
+    }
+  };
+
   const handleSave = async () => {
     if (!form.customerId || !form.lineId || !form.packageId || !form.status || !form.startDate) {
       enqueueSnackbar('Completa los campos requeridos.', { variant: 'warning' });
@@ -1032,6 +1067,7 @@ export default function SubscriptionsLionTv() {
                           onDelete={handleDelete}
                           onNotifyExpiration={handleNotifyExpiration}
                           onNotifyReengage={handleNotifyReengage}
+                          onNotifyRenewed={handleNotifyRenewed}
                           busy={notifLoadingId === row.subscriptionId}
                         />
                       </TableCell>
