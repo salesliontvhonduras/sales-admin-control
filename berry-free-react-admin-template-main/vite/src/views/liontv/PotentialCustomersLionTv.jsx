@@ -265,7 +265,7 @@ function StatusChip({ status }) {
   return <Chip size="small" color={map[status] || 'default'} label={status || '-'} />;
 }
 
-function RowActions({ row, onEdit, onDelete, onWhatsApp }) {
+function RowActions({ row, onEdit, onDelete, onWhatsApp, onMarkContacted }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { t } = useTranslation();
@@ -310,6 +310,15 @@ function RowActions({ row, onEdit, onDelete, onWhatsApp }) {
         >
           <WhatsAppIcon fontSize="small" style={{ marginRight: 8, color: '#25D366' }} />
           {t('actions.whatsapp', 'WhatsApp')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            onMarkContacted?.(row);
+          }}
+        >
+          <CheckCircleOutlineIcon fontSize="small" style={{ marginRight: 8, color: '#2e7d32' }} />
+          {t('potentialCustomers.actions.markContacted', 'Mark as Contacted')}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -484,6 +493,50 @@ export default function PotentialCustomersLionTv() {
 
   const handleDelete = (row) => {
     setOpenDelete({ open: true, row });
+  };
+
+  const buildPayload = (source) => ({
+    fullName: source?.fullName?.trim() || '',
+    email: source?.email?.trim() || EMAIL_FALLBACK,
+    phone: source?.phone?.trim() || null,
+    country: (source?.country || '').toUpperCase() || null,
+    category: source?.category || 'GENERAL',
+    status: source?.status || 'NEW'
+  });
+
+  const handleMarkContacted = async (row) => {
+    const id = row?.potentialCustomerId;
+    if (!id) return;
+
+    if ((row?.status || '').toUpperCase() === 'CONTACTED') {
+      enqueueSnackbar('Este prospecto ya está en Contacted.', { variant: 'info' });
+      return;
+    }
+
+    setSending(true);
+    try {
+      await lionTvApi.put(
+        `/potential-customers/v1/${id}`,
+        {
+          ...buildPayload(row),
+          status: 'CONTACTED'
+        },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          skipAuthRedirect: true
+        }
+      );
+      enqueueSnackbar('Estado actualizado a Contacted.', { variant: 'success' });
+      setRefreshKey((v) => v + 1);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo actualizar el estado.', {
+          variant: 'error'
+        });
+      }
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleWhatsApp = (row) => {
@@ -768,7 +821,13 @@ export default function PotentialCustomersLionTv() {
                       </Stack>
                     </TableCell>
                     <TableCell align="right">
-                      <RowActions row={row} onEdit={handleEdit} onDelete={handleDelete} onWhatsApp={handleWhatsApp} />
+                      <RowActions
+                        row={row}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        onWhatsApp={handleWhatsApp}
+                        onMarkContacted={handleMarkContacted}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
