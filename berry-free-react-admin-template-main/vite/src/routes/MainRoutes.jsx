@@ -13,6 +13,7 @@ import LinesLionTv from 'views/liontv/LinesLionTv';
 import LicensesLionTv from 'views/liontv/LicensesLionTv';
 import CustomerCrmLionTv from 'views/liontv/CustomerCrmLionTv';
 import PlusLinesExplorer from 'views/liontv/PlusLinesExplorer';
+import PotentialCustomersLionTv from 'views/liontv/PotentialCustomersLionTv';
 
 
 // dashboard routing
@@ -46,6 +47,10 @@ const MainRoutes = {
         {
           path: '/liontv/customers',
           element: <CustomersLionTv />
+        },
+        {
+          path: '/liontv/potential-customers',
+          element: <PotentialCustomersLionTv />
         },
         {
           path: '/liontv/crm',
