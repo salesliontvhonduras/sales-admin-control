@@ -67,6 +67,22 @@ const liontv = {
       breadcrumbs: true
     },
     {
+      id: 'liontv-movies-feed',
+      title: 'Movies Feed',
+      type: 'item',
+      url: '/liontv/movies-feed',
+      icon: icons.IconDeviceTv,
+      breadcrumbs: true
+    },
+    {
+      id: 'liontv-series-feed',
+      title: 'Series Feed',
+      type: 'item',
+      url: '/liontv/series-feed',
+      icon: icons.IconLink,
+      breadcrumbs: true
+    },
+    {
       id: 'liontv-crm',
       title: 'menu.crm',
       type: 'item',
