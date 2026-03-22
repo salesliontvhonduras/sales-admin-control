@@ -83,6 +83,14 @@ const liontv = {
       breadcrumbs: true
     },
     {
+      id: 'liontv-futbol-events-feed',
+      title: 'Futbol Events Feed',
+      type: 'item',
+      url: '/liontv/futbol-events-feed',
+      icon: icons.IconDeviceTv,
+      breadcrumbs: true
+    },
+    {
       id: 'liontv-crm',
       title: 'menu.crm',
       type: 'item',

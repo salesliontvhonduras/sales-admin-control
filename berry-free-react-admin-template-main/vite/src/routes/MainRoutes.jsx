@@ -16,6 +16,7 @@ import PlusLinesExplorer from 'views/liontv/PlusLinesExplorer';
 import PotentialCustomersLionTv from 'views/liontv/PotentialCustomersLionTv';
 import MoviesFeedLionTv from 'views/liontv/MoviesFeedLionTv';
 import SeriesFeedLionTv from 'views/liontv/SeriesFeedLionTv';
+import FutbolEventsFeedLionTv from 'views/liontv/FutbolEventsFeedLionTv';
 
 
 // dashboard routing
@@ -61,6 +62,10 @@ const MainRoutes = {
         {
           path: '/liontv/series-feed',
           element: <SeriesFeedLionTv />
+        },
+        {
+          path: '/liontv/futbol-events-feed',
+          element: <FutbolEventsFeedLionTv />
         },
         {
           path: '/liontv/crm',
