@@ -14,6 +14,7 @@ import LicensesLionTv from 'views/liontv/LicensesLionTv';
 import CustomerCrmLionTv from 'views/liontv/CustomerCrmLionTv';
 import PlusLinesExplorer from 'views/liontv/PlusLinesExplorer';
 import PotentialCustomersLionTv from 'views/liontv/PotentialCustomersLionTv';
+import PaymentCommitmentsLionTv from 'views/liontv/PaymentCommitmentsLionTv';
 import MoviesFeedLionTv from 'views/liontv/MoviesFeedLionTv';
 import SeriesFeedLionTv from 'views/liontv/SeriesFeedLionTv';
 import FutbolEventsFeedLionTv from 'views/liontv/FutbolEventsFeedLionTv';
@@ -54,6 +55,10 @@ const MainRoutes = {
         {
           path: '/liontv/potential-customers',
           element: <PotentialCustomersLionTv />
+        },
+        {
+          path: '/liontv/payment-commitments',
+          element: <PaymentCommitmentsLionTv />
         },
         {
           path: '/liontv/movies-feed',

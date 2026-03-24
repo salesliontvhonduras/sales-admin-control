@@ -67,6 +67,14 @@ const liontv = {
       breadcrumbs: true
     },
     {
+      id: 'liontv-payment-commitments',
+      title: 'menu.paymentCommitments',
+      type: 'item',
+      url: '/liontv/payment-commitments',
+      icon: icons.IconFileInvoice,
+      breadcrumbs: true
+    },
+    {
       id: 'liontv-movies-feed',
       title: 'Movies Feed',
       type: 'item',
