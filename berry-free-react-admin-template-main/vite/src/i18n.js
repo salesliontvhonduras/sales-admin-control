@@ -194,13 +194,15 @@ const resources = {
       licenses: {
         title: 'Licenses',
         search: 'Search (MAC, customer, status)',
-        filters: { status: 'Status', all: 'All' },
+        filters: { status: 'Status', payment: 'Payment', all: 'All' },
+        paid: { paid: 'Paid', pending: 'Pending' },
         headers: {
           id: 'ID',
           mac: 'MAC',
           name: 'Name',
           customer: 'Customer',
           status: 'Status',
+          paid: 'Paid',
           app: 'App',
           price: 'Price',
           created: 'Created',
@@ -209,6 +211,10 @@ const resources = {
           type: 'Type',
           ownerSince: 'Owner since',
           actions: 'Actions'
+        },
+        form: {
+          paid: 'Payment status',
+          paidHelper: 'Track if this license was already paid'
         }
       },
       demos: {
@@ -710,13 +716,15 @@ const resources = {
       licenses: {
         title: 'Licencias',
         search: 'Buscar (MAC, cliente, estado)',
-        filters: { status: 'Estado', all: 'Todos' },
+        filters: { status: 'Estado', payment: 'Pago', all: 'Todos' },
+        paid: { paid: 'Pagada', pending: 'Pendiente' },
         headers: {
           id: 'ID',
           mac: 'MAC',
           name: 'Nombre',
           customer: 'Cliente',
           status: 'Estado',
+          paid: 'Pagada',
           app: 'App',
           price: 'Precio',
           created: 'Creada',
@@ -725,6 +733,10 @@ const resources = {
           type: 'Tipo',
           ownerSince: 'Desde',
           actions: 'Acciones'
+        },
+        form: {
+          paid: 'Estado de pago',
+          paidHelper: 'Indica si esta licencia ya fue pagada'
         }
       },
       demos: {

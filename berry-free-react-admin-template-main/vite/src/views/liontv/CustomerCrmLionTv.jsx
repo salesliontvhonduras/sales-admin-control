@@ -57,6 +57,7 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import HomeRepairServiceIcon from '@mui/icons-material/HomeRepairService';
 import MemoryIcon from '@mui/icons-material/Memory';
 import NoteAltIcon from '@mui/icons-material/NoteAlt';
+import PaidIcon from '@mui/icons-material/Paid';
 import { useTranslation } from 'react-i18next';
 
 import MainCard from 'ui-component/cards/MainCard';
@@ -195,6 +196,12 @@ function normalizeInvoice(item = {}) {
   };
 }
 
+function parsePaidFlag(value) {
+  if (value === true || value === 1 || value === '1') return true;
+  if (typeof value === 'string' && value.trim().toLowerCase() === 'true') return true;
+  return false;
+}
+
 function normalizeLicense(item = {}) {
   return {
     licenseId: item.licenseId ?? item.license_id ?? null,
@@ -208,7 +215,8 @@ function normalizeLicense(item = {}) {
     createdAt: item.createdAt ?? item.created_at ?? null,
     licensePeriod: item.licensePeriod ?? item.license_period ?? '',
     name: item.name ?? '',
-    currentOwnerSince: item.currentOwnerSince ?? item.current_owner_since ?? null
+    currentOwnerSince: item.currentOwnerSince ?? item.current_owner_since ?? null,
+    isPaid: parsePaidFlag(item.isPaid ?? item.is_paid ?? item.paid)
   };
 }
 
@@ -573,6 +581,7 @@ export default function CustomerCrmLionTv() {
           { field: 'app', title: t('crm.headers.app', 'App'), render: (row) => <LabelWithIcon icon={<AppsIcon fontSize="small" />} label={row.app || '-'} color="primary" /> },
           { field: 'typeLicense', title: t('crm.headers.type', 'Tipo'), render: (row) => <LabelWithIcon icon={<LayersIcon fontSize="small" />} label={row.typeLicense || '-'} color="secondary" /> },
           { field: 'status', title: t('crm.headers.status', 'Estado'), render: (row) => <StatusChip status={row.status} /> },
+          { field: 'isPaid', title: t('licenses.headers.paid', 'Pagada'), render: (row) => <StatusChip status={row.isPaid ? 'PAID' : 'PENDING'} /> },
           { field: 'expireAt', title: t('crm.headers.expire', 'Expira'), render: (row) => formatDate(row.expireAt) }
         ],
         onDetail: (row) => setDetail({ open: true, type: 'license', row })
@@ -1131,6 +1140,11 @@ export default function CustomerCrmLionTv() {
                         icon={<CalendarMonthIcon fontSize="small" color="primary" />}
                         label={t('crm.license.period', { defaultValue: 'Periodo: {{period}}', period: detail.row.licensePeriod || '-' })}
                         color="primary"
+                      />
+                      <LabelWithIcon
+                        icon={<PaidIcon fontSize="small" color={detail.row.isPaid ? 'success' : 'warning'} />}
+                        label={t('crm.license.paid', { defaultValue: 'Pago: {{status}}', status: detail.row.isPaid ? 'PAGADA' : 'PENDIENTE' })}
+                        color={detail.row.isPaid ? 'success' : 'warning'}
                       />
                     </Stack>
                   </Grid>

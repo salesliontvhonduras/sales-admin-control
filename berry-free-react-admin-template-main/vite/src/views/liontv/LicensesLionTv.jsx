@@ -56,6 +56,7 @@ import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import PaidIcon from '@mui/icons-material/Paid';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -144,10 +145,17 @@ const STATUS_OPTIONS = ['ACTIVE', 'EXPIRED', 'AVAILABLE', 'EMERGENCY', 'NOT_TRAN
 const APPS = ['Vivo Player', 'Smart One', 'IboPro Player'];
 const LICENSE_PERIOD = ['ANNUAL', 'LIFETIME'];
 const TYPE_LICENSE = ['PRIMARY', 'USED'];
+const PAYMENT_FILTER_OPTIONS = ['PAID', 'PENDING'];
 const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
   '& .MuiInputLabel-root': { fontWeight: 500 }
 };
+
+function parsePaidValue(value) {
+  if (value === true || value === 1 || value === '1') return true;
+  if (typeof value === 'string' && value.trim().toLowerCase() === 'true') return true;
+  return false;
+}
 
 function LicenseStatusChip({ status }) {
   const theme = useTheme();
@@ -239,6 +247,7 @@ function normalizeLicense(item = {}) {
     status: (item.status ?? '').toUpperCase(),
     app: item.app ?? '',
     price: item.price ?? 0,
+    isPaid: parsePaidValue(item.isPaid ?? item.is_paid ?? item.paid),
     createdAt: item.createdAt ?? item.created_at ?? null,
     expireAt: item.expireAt ?? item.expire_at ?? null,
     licensePeriod: item.licensePeriod ?? item.license_period ?? '',
@@ -247,6 +256,19 @@ function normalizeLicense(item = {}) {
     currentOwnerSince: item.currentOwnerSince ?? item.current_owner_since ?? null,
     customerName: item.customerFullname ?? item.customer_fullname ?? ''
   };
+}
+
+function LicensePaidChip({ isPaid, t }) {
+  return (
+    <Chip
+      size="small"
+      icon={<PaidIcon fontSize="small" />}
+      label={isPaid ? t('licenses.paid.paid', 'Paid') : t('licenses.paid.pending', 'Pending')}
+      color={isPaid ? 'success' : 'warning'}
+      variant={isPaid ? 'filled' : 'outlined'}
+      sx={{ fontWeight: 700 }}
+    />
+  );
 }
 
 export default function LicensesLionTv() {
@@ -264,6 +286,7 @@ export default function LicensesLionTv() {
   const [search, setSearch] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
+  const [paymentFilter, setPaymentFilter] = useState('');
 
   const [customers, setCustomers] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -278,6 +301,7 @@ export default function LicensesLionTv() {
     status: 'ACTIVE',
     app: 'Vivo Player',
     price: '',
+    isPaid: false,
     expireAt: '',
     licensePeriod: 'ANNUAL',
     typeLicense: 'PRIMARY'
@@ -494,22 +518,26 @@ export default function LicensesLionTv() {
     return map;
   }, [customers]);
 
-  // Nota: busca en todas las licencias cargadas, incluye filtro por status
+  // Nota: busca en todas las licencias cargadas, incluye filtro por status y pago
   const filteredRows = useMemo(() => {
-    if (!search && !statusFilter) return rows;
+    if (!search && !statusFilter && !paymentFilter) return rows;
     const term = search.toLowerCase();
     return rows.filter((row) => {
       if (statusFilter && (row.status || '').toLowerCase() !== statusFilter.toLowerCase()) return false;
+      if (paymentFilter === 'PAID' && !row.isPaid) return false;
+      if (paymentFilter === 'PENDING' && row.isPaid) return false;
+      const paidLabel = row.isPaid ? 'paid pagada' : 'pending pendiente no pagada';
       return (
         (row.macAddress || '').toLowerCase().includes(term) ||
         (row.name || '').toLowerCase().includes(term) ||
         (row.app || '').toLowerCase().includes(term) ||
         (row.status || '').toLowerCase().includes(term) ||
         (row.typeLicense || '').toLowerCase().includes(term) ||
+        paidLabel.includes(term) ||
         (row.customerName || customerNameMap[row.customerId] || '').toLowerCase().includes(term)
       );
     });
-  }, [rows, search, customerNameMap, statusFilter]);
+  }, [rows, search, customerNameMap, statusFilter, paymentFilter]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -542,6 +570,7 @@ export default function LicensesLionTv() {
       status: 'ACTIVE',
       app: 'Vivo Player',
       price: 125,
+      isPaid: false,
       expireAt: computeExpireDate('ANNUAL'),
       licensePeriod: 'ANNUAL',
       typeLicense: 'PRIMARY'
@@ -558,6 +587,10 @@ export default function LicensesLionTv() {
       }));
       return;
     }
+    if (field === 'isPaid') {
+      setForm((prev) => ({ ...prev, isPaid: parsePaidValue(value) }));
+      return;
+    }
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -570,6 +603,7 @@ export default function LicensesLionTv() {
       status: row.status,
       app: row.app,
       price: row.price,
+      isPaid: Boolean(row.isPaid),
       expireAt: row.expireAt ? String(row.expireAt).slice(0, 10) : '',
       licensePeriod: row.licensePeriod,
       typeLicense: row.typeLicense
@@ -598,6 +632,7 @@ export default function LicensesLionTv() {
       status: form.status,
       app: form.app,
       price: form.price ? Number(form.price) : 0,
+      isPaid: Boolean(form.isPaid),
       expireAt: normalizeExpireAt(form.expireAt),
       licensePeriod: form.licensePeriod,
       typeLicense: form.typeLicense
@@ -840,7 +875,7 @@ export default function LicensesLionTv() {
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              width: { xs: '100%', sm: 520 },
+              width: { xs: '100%', sm: 760 },
               p: 1,
               borderRadius: 2,
               border: '1px solid',
@@ -905,6 +940,38 @@ export default function LicensesLionTv() {
                 ))}
               </Select>
             </FormControl>
+
+            <FormControl
+              size="small"
+              sx={{
+                minWidth: 170,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  backgroundColor: 'background.paper'
+                }
+              }}
+            >
+              <InputLabel>{t('licenses.filters.payment', 'Payment')}</InputLabel>
+              <Select
+                value={paymentFilter}
+                label={t('licenses.filters.payment', 'Payment')}
+                onChange={(e) => setPaymentFilter(e.target.value)}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <PaidIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                }
+              >
+                <MenuItem value="">
+                  <em>{t('licenses.filters.all')}</em>
+                </MenuItem>
+                {PAYMENT_FILTER_OPTIONS.map((value) => (
+                  <MenuItem key={value} value={value}>
+                    {value === 'PAID' ? t('licenses.paid.paid', 'Paid') : t('licenses.paid.pending', 'Pending')}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Paper>
         }
       >
@@ -930,6 +997,7 @@ export default function LicensesLionTv() {
                 <TableCell>{t('licenses.headers.customer')}</TableCell>
                 <TableCell>{t('licenses.headers.app')}</TableCell>
                 <TableCell>{t('licenses.headers.status')}</TableCell>
+                <TableCell>{t('licenses.headers.paid', 'Paid')}</TableCell>
                 <TableCell>{t('licenses.headers.period')}</TableCell>
                 <TableCell>{t('licenses.headers.type')}</TableCell>
                 <TableCell>{t('licenses.headers.price')}</TableCell>
@@ -994,6 +1062,10 @@ export default function LicensesLionTv() {
                   </TableCell>
 
                   <TableCell>
+                    <LicensePaidChip isPaid={row.isPaid} t={t} />
+                  </TableCell>
+
+                  <TableCell>
                     <Stack direction="row" spacing={0.75} alignItems="center">
                       <AccessTimeIcon fontSize="small" color="action" />
                       <Typography variant="body2">{row.licensePeriod || '-'}</Typography>
@@ -1042,7 +1114,7 @@ export default function LicensesLionTv() {
 
               {!loading && filteredRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
                     <Stack spacing={1} alignItems="center">
                       <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
                         <SecurityIcon />
@@ -1063,7 +1135,7 @@ export default function LicensesLionTv() {
 
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                     <Stack spacing={1} alignItems="center">
                       <Skeleton variant="circular" width={40} height={40} />
                       <Typography variant="body2" color="text.secondary">
@@ -1336,7 +1408,7 @@ export default function LicensesLionTv() {
 
             <SectionCard title={t('licenses.form.billing', 'Billing & expiration')} helper={t('licenses.form.billingHelper', 'Amount and expiry date')}>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={4}>
                   <TextField
                     label={t('licenses.form.price', 'Price')}
                     type="number"
@@ -1354,7 +1426,7 @@ export default function LicensesLionTv() {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={4}>
                   <TextField
                     label={t('licenses.form.expire', 'Expire')}
                     type="date"
@@ -1371,6 +1443,26 @@ export default function LicensesLionTv() {
                       )
                     }}
                   />
+                </Grid>
+
+                <Grid item xs={12} sm={4}>
+                  <FormControl fullWidth sx={fieldSx}>
+                    <InputLabel>{t('licenses.form.paid', 'Payment status')}</InputLabel>
+                    <Select
+                      value={Boolean(form.isPaid)}
+                      label={t('licenses.form.paid', 'Payment status')}
+                      onChange={handleFormChange('isPaid')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <PaidIcon fontSize="small" color={form.isPaid ? 'success' : 'warning'} />
+                        </InputAdornment>
+                      }
+                    >
+                      <MenuItem value={true}>{t('licenses.paid.paid', 'Paid')}</MenuItem>
+                      <MenuItem value={false}>{t('licenses.paid.pending', 'Pending')}</MenuItem>
+                    </Select>
+                    <FormHelperText>{t('licenses.form.paidHelper', 'Track if this license was already paid')}</FormHelperText>
+                  </FormControl>
                 </Grid>
               </Grid>
             </SectionCard>
