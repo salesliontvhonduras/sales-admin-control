@@ -243,6 +243,7 @@ function normalizeLicense(item = {}) {
     licenseId: item.licenseId ?? item.license_id ?? null,
     macAddress: item.macAddress ?? item.mac_address ?? '',
     name: item.name ?? '',
+    deviceKey: item.deviceKey ?? item.device_key ?? '',
     customerId: item.customerId ?? item.customer_id ?? null,
     status: (item.status ?? '').toUpperCase(),
     app: item.app ?? '',
@@ -297,6 +298,7 @@ export default function LicensesLionTv() {
     licenseId: null,
     macAddress: '',
     name: '',
+    deviceKey: '',
     customerId: '',
     status: 'ACTIVE',
     app: 'Vivo Player',
@@ -530,6 +532,7 @@ export default function LicensesLionTv() {
       return (
         (row.macAddress || '').toLowerCase().includes(term) ||
         (row.name || '').toLowerCase().includes(term) ||
+        (row.deviceKey || '').toLowerCase().includes(term) ||
         (row.app || '').toLowerCase().includes(term) ||
         (row.status || '').toLowerCase().includes(term) ||
         (row.typeLicense || '').toLowerCase().includes(term) ||
@@ -566,6 +569,7 @@ export default function LicensesLionTv() {
       licenseId: null,
       macAddress: '',
       name: '',
+      deviceKey: '',
       customerId: '',
       status: 'ACTIVE',
       app: 'Vivo Player',
@@ -599,6 +603,7 @@ export default function LicensesLionTv() {
       licenseId: row.licenseId,
       macAddress: row.macAddress,
       name: row.name,
+      deviceKey: row.deviceKey || '',
       customerId: row.customerId,
       status: row.status,
       app: row.app,
@@ -628,6 +633,7 @@ export default function LicensesLionTv() {
     const payload = {
       macAddress: form.macAddress,
       name: form.name,
+      deviceKey: form.deviceKey?.trim() || null,
       customerId: Number(form.customerId),
       status: form.status,
       app: form.app,
@@ -994,6 +1000,7 @@ export default function LicensesLionTv() {
                 })}
               >
                 <TableCell>{t('licenses.headers.mac')}</TableCell>
+                <TableCell>{t('licenses.headers.deviceKey', 'Device Key')}</TableCell>
                 <TableCell>{t('licenses.headers.customer')}</TableCell>
                 <TableCell>{t('licenses.headers.app')}</TableCell>
                 <TableCell>{t('licenses.headers.status')}</TableCell>
@@ -1041,6 +1048,8 @@ export default function LicensesLionTv() {
                       </Box>
                     </Stack>
                   </TableCell>
+
+                  <TableCell>{row.deviceKey || '-'}</TableCell>
 
                   <TableCell>{row.customerName || customerNameMap[row.customerId] || '-'}</TableCell>
 
@@ -1114,7 +1123,7 @@ export default function LicensesLionTv() {
 
               {!loading && filteredRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
                     <Stack spacing={1} alignItems="center">
                       <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
                         <SecurityIcon />
@@ -1135,7 +1144,7 @@ export default function LicensesLionTv() {
 
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
                     <Stack spacing={1} alignItems="center">
                       <Skeleton variant="circular" width={40} height={40} />
                       <Typography variant="body2" color="text.secondary">
@@ -1242,7 +1251,7 @@ export default function LicensesLionTv() {
           <Stack spacing={2} sx={{ position: 'relative', zIndex: 1 }}>
             <SectionCard title={t('licenses.form.identity', 'Identity')} helper={t('licenses.form.identityHelper', 'Mac, name and owner')}>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={3}>
                   <TextField
                     required
                     label={t('licenses.form.mac', 'Mac Address')}
@@ -1260,7 +1269,7 @@ export default function LicensesLionTv() {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={3}>
                   <TextField
                     required
                     label={t('licenses.form.name', 'Name')}
@@ -1278,7 +1287,25 @@ export default function LicensesLionTv() {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    label={t('licenses.form.deviceKey', 'Device key')}
+                    value={form.deviceKey || ''}
+                    onChange={handleFormChange('deviceKey')}
+                    fullWidth
+                    sx={fieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <LinkIcon fontSize="small" color="info" />
+                        </InputAdornment>
+                      )
+                    }}
+                    helperText={t('licenses.form.deviceKeyHelper', 'Optional key for this device')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={3}>
                   <FormControl fullWidth required sx={fieldSx} disabled={customersLoading}>
                     <InputLabel>{t('licenses.form.customer', 'Customer')}</InputLabel>
                     <Select

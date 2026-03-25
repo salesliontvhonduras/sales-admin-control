@@ -193,12 +193,13 @@ const resources = {
       },
       licenses: {
         title: 'Licenses',
-        search: 'Search (MAC, customer, status)',
+        search: 'Search (MAC, device key, customer, status)',
         filters: { status: 'Status', payment: 'Payment', all: 'All' },
         paid: { paid: 'Paid', pending: 'Pending' },
         headers: {
           id: 'ID',
           mac: 'MAC',
+          deviceKey: 'Device key',
           name: 'Name',
           customer: 'Customer',
           status: 'Status',
@@ -213,6 +214,8 @@ const resources = {
           actions: 'Actions'
         },
         form: {
+          deviceKey: 'Device key',
+          deviceKeyHelper: 'Optional key for this device',
           paid: 'Payment status',
           paidHelper: 'Track if this license was already paid'
         }
@@ -436,11 +439,13 @@ const resources = {
             details: { title: 'License details', helper: 'Status, dates and owner.' }
           },
           app: 'App: {{app}}',
+          deviceKey: 'Device key: {{value}}',
           type: 'Type: {{type}}',
           price: 'Price: {{price}}',
           period: 'Period: {{period}}',
           mac: 'MAC: {{mac}}',
           name: 'Name: {{name}}',
+          paid: 'Payment: {{status}}',
           created: 'Created: {{date}}',
           expires: 'Expires: {{date}}',
           ownerSince: 'Owner since: {{date}}'
@@ -715,12 +720,13 @@ const resources = {
       },
       licenses: {
         title: 'Licencias',
-        search: 'Buscar (MAC, cliente, estado)',
+        search: 'Buscar (MAC, device key, cliente, estado)',
         filters: { status: 'Estado', payment: 'Pago', all: 'Todos' },
         paid: { paid: 'Pagada', pending: 'Pendiente' },
         headers: {
           id: 'ID',
           mac: 'MAC',
+          deviceKey: 'Device key',
           name: 'Nombre',
           customer: 'Cliente',
           status: 'Estado',
@@ -735,6 +741,8 @@ const resources = {
           actions: 'Acciones'
         },
         form: {
+          deviceKey: 'Device key',
+          deviceKeyHelper: 'Llave opcional para este dispositivo',
           paid: 'Estado de pago',
           paidHelper: 'Indica si esta licencia ya fue pagada'
         }
@@ -958,11 +966,13 @@ const resources = {
             details: { title: 'Detalles de licencia', helper: 'Estado, fechas y propietario.' }
           },
           app: 'Aplicación: {{app}}',
+          deviceKey: 'Device key: {{value}}',
           type: 'Tipo: {{type}}',
           price: 'Precio: {{price}}',
           period: 'Periodo: {{period}}',
           mac: 'MAC: {{mac}}',
           name: 'Nombre: {{name}}',
+          paid: 'Pago: {{status}}',
           created: 'Creada: {{date}}',
           expires: 'Expira: {{date}}',
           ownerSince: 'Propietario desde: {{date}}'

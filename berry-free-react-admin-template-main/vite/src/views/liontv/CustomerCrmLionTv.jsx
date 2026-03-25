@@ -207,6 +207,7 @@ function normalizeLicense(item = {}) {
     licenseId: item.licenseId ?? item.license_id ?? null,
     customerId: item.customerId ?? item.customer_id ?? null,
     macAddress: item.macAddress ?? item.mac_address ?? '',
+    deviceKey: item.deviceKey ?? item.device_key ?? '',
     app: item.app ?? '',
     status: (item.status ?? '').toUpperCase(),
     typeLicense: (item.typeLicense ?? item.type_license ?? '').toUpperCase(),
@@ -578,6 +579,7 @@ export default function CustomerCrmLionTv() {
         rows: customerLicenses,
         columns: [
           { field: 'macAddress', title: t('crm.headers.mac', 'MAC'), render: (row) => <LabelWithIcon icon={<SmartDisplayIcon fontSize="small" />} label={row.macAddress || '-'} color="info" /> },
+          { field: 'deviceKey', title: t('licenses.headers.deviceKey', 'Device key'), render: (row) => <LabelWithIcon icon={<LinkIcon fontSize="small" />} label={row.deviceKey || '-'} color="info" /> },
           { field: 'app', title: t('crm.headers.app', 'App'), render: (row) => <LabelWithIcon icon={<AppsIcon fontSize="small" />} label={row.app || '-'} color="primary" /> },
           { field: 'typeLicense', title: t('crm.headers.type', 'Tipo'), render: (row) => <LabelWithIcon icon={<LayersIcon fontSize="small" />} label={row.typeLicense || '-'} color="secondary" /> },
           { field: 'status', title: t('crm.headers.status', 'Estado'), render: (row) => <StatusChip status={row.status} /> },
@@ -1120,6 +1122,11 @@ export default function CustomerCrmLionTv() {
                       <LabelWithIcon
                         icon={<SmartDisplayIcon fontSize="small" color="info" />}
                         label={t('crm.license.app', { defaultValue: 'Aplicación: {{app}}', app: detail.row.app || '-' })}
+                        color="info"
+                      />
+                      <LabelWithIcon
+                        icon={<LinkIcon fontSize="small" color="info" />}
+                        label={t('crm.license.deviceKey', { defaultValue: 'Device Key: {{value}}', value: detail.row.deviceKey || '-' })}
                         color="info"
                       />
                       <LabelWithIcon
