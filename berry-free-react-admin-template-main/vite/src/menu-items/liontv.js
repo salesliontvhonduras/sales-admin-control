@@ -1,4 +1,4 @@
-import { IconDeviceTv, IconUsers, IconReceipt2, IconFileInvoice, IconRouter, IconLink, IconUserPlus } from '@tabler/icons-react';
+import { IconDeviceTv, IconUsers, IconReceipt2, IconFileInvoice, IconRouter, IconLink, IconUserPlus, IconMailCog } from '@tabler/icons-react';
 import { IconKey, IconUserSearch } from '@tabler/icons-react';
 
 const icons = {
@@ -10,7 +10,8 @@ const icons = {
   IconKey,
   IconUserSearch,
   IconLink,
-  IconUserPlus
+  IconUserPlus,
+  IconMailCog
 };
 
 const liontv = {
@@ -96,6 +97,14 @@ const liontv = {
       type: 'item',
       url: '/liontv/futbol-events-feed',
       icon: icons.IconDeviceTv,
+      breadcrumbs: true
+    },
+    {
+      id: 'liontv-managed-accounts',
+      title: 'Managed Accounts',
+      type: 'item',
+      url: '/liontv/managed-accounts',
+      icon: icons.IconMailCog,
       breadcrumbs: true
     },
     {

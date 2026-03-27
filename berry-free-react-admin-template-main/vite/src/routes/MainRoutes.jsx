@@ -18,6 +18,7 @@ import PaymentCommitmentsLionTv from 'views/liontv/PaymentCommitmentsLionTv';
 import MoviesFeedLionTv from 'views/liontv/MoviesFeedLionTv';
 import SeriesFeedLionTv from 'views/liontv/SeriesFeedLionTv';
 import FutbolEventsFeedLionTv from 'views/liontv/FutbolEventsFeedLionTv';
+import ManagedAccountsLionTv from 'views/liontv/ManagedAccountsLionTv';
 
 
 // dashboard routing
@@ -71,6 +72,10 @@ const MainRoutes = {
         {
           path: '/liontv/futbol-events-feed',
           element: <FutbolEventsFeedLionTv />
+        },
+        {
+          path: '/liontv/managed-accounts',
+          element: <ManagedAccountsLionTv />
         },
         {
           path: '/liontv/crm',
