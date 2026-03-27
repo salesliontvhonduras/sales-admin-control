@@ -32,6 +32,7 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import { alpha } from '@mui/material/styles';
 
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
@@ -85,12 +86,60 @@ const cardGlassSx = (theme) => ({
   borderRadius: 2.5,
   border: '1px solid',
   borderColor: 'divider',
-  boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
+  boxShadow: '0 10px 26px rgba(18, 38, 63, 0.08)',
   background:
     theme.palette.mode === 'light'
-      ? `linear-gradient(135deg, ${theme.palette.primary.light}20 0%, ${theme.palette.secondary.light}14 45%, #ffffff 100%)`
+      ? `linear-gradient(145deg, #ffffff 0%, ${alpha(theme.palette.primary.light, 0.11)} 46%, ${alpha(theme.palette.success.light, 0.08)} 100%)`
       : theme.palette.background.default
 });
+
+const modalPaperSx = (theme) => ({
+  borderRadius: 3,
+  border: `1px solid ${theme.palette.divider}`,
+  boxShadow: '0 24px 60px rgba(16, 24, 40, 0.2)',
+  overflow: 'hidden'
+});
+
+const modalHeaderSx = (theme) => ({
+  px: 3,
+  py: 2.2,
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  background:
+    theme.palette.mode === 'light'
+      ? `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.2)} 0%, ${alpha(theme.palette.info.light, 0.1)} 100%)`
+      : alpha(theme.palette.background.paper, 0.9)
+});
+
+const modalContentSx = {
+  px: 3,
+  py: 2.5
+};
+
+const modalActionsSx = (theme) => ({
+  px: 3,
+  py: 2,
+  borderTop: `1px solid ${theme.palette.divider}`,
+  backgroundColor: alpha(theme.palette.background.default, 0.6)
+});
+
+const modalSectionSx = (theme) => ({
+  p: 2,
+  borderRadius: 2,
+  border: `1px solid ${theme.palette.divider}`,
+  background:
+    theme.palette.mode === 'light'
+      ? `linear-gradient(180deg, ${alpha(theme.palette.primary.light, 0.06)} 0%, ${alpha(theme.palette.background.paper, 0.9)} 100%)`
+      : alpha(theme.palette.background.paper, 0.5)
+});
+
+const fieldSx = {
+  '& .MuiInputBase-root': {
+    borderRadius: 1.8
+  },
+  '& .MuiInputLabel-root': {
+    fontWeight: 500
+  }
+};
 
 function unwrap(res) {
   return res?.data?.data ?? res?.data ?? null;
@@ -650,10 +699,15 @@ export default function ManagedAccountsLionTv() {
                 eventos fallidos.
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                <Chip color="warning" icon={<WarningAmberIcon />} label={`Vencen en 7 días: ${accountMetrics.dueIn7}`} />
-                <Chip color="error" icon={<ReportProblemOutlinedIcon />} label={`Vencidas: ${accountMetrics.expired}`} />
-                <Chip color="success" icon={<CheckCircleOutlineIcon />} label={`Distribución ON: ${accountMetrics.distributionOn}`} />
-                <Chip color="info" icon={<EmailOutlinedIcon />} label={`Eventos inbound: ${eventMetrics.total}`} />
+                <Chip variant="outlined" color="warning" icon={<WarningAmberIcon />} label={`Vencen en 7 días: ${accountMetrics.dueIn7}`} />
+                <Chip variant="outlined" color="error" icon={<ReportProblemOutlinedIcon />} label={`Vencidas: ${accountMetrics.expired}`} />
+                <Chip
+                  variant="outlined"
+                  color="success"
+                  icon={<CheckCircleOutlineIcon />}
+                  label={`Distribución ON: ${accountMetrics.distributionOn}`}
+                />
+                <Chip variant="outlined" color="info" icon={<EmailOutlinedIcon />} label={`Eventos inbound: ${eventMetrics.total}`} />
               </Stack>
             </Stack>
           </CardContent>
@@ -942,8 +996,8 @@ export default function ManagedAccountsLionTv() {
                           sx={(theme) => ({
                             bgcolor: rowAlert
                               ? exp.chipColor === 'error'
-                                ? theme.palette.error.lighter
-                                : theme.palette.warning.lighter
+                                ? alpha(theme.palette.error.main, 0.09)
+                                : alpha(theme.palette.warning.main, 0.1)
                               : 'transparent'
                           })}
                         >
@@ -1464,165 +1518,242 @@ export default function ManagedAccountsLionTv() {
         ) : null}
       </Stack>
 
-      <Dialog open={providerModalOpen} onClose={() => setProviderModalOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>{providerForm.id ? 'Editar Provider' : 'Nuevo Provider'}</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} mt={0.5}>
-            <TextField
-              label="Code"
-              value={providerForm.code}
-              onChange={(event) => setProviderForm((prev) => ({ ...prev, code: event.target.value }))}
-            />
-            <TextField
-              label="Name"
-              value={providerForm.name}
-              onChange={(event) => setProviderForm((prev) => ({ ...prev, name: event.target.value }))}
-            />
-            <TextField
-              label="Description"
-              multiline
-              minRows={3}
-              value={providerForm.description}
-              onChange={(event) => setProviderForm((prev) => ({ ...prev, description: event.target.value }))}
-            />
+      <Dialog
+        open={providerModalOpen}
+        onClose={() => setProviderModalOpen(false)}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{ sx: modalPaperSx }}
+      >
+        <DialogTitle sx={modalHeaderSx}>
+          <Stack spacing={0.5}>
+            <Typography variant="h4">{providerForm.id ? 'Editar Provider' : 'Nuevo Provider'}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Define el proveedor que agrupará cuentas y aliases.
+            </Typography>
           </Stack>
+        </DialogTitle>
+        <DialogContent sx={modalContentSx}>
+          <Box sx={modalSectionSx}>
+            <Stack spacing={1.6}>
+              <TextField
+                size="small"
+                label="Code"
+                sx={fieldSx}
+                value={providerForm.code}
+                onChange={(event) => setProviderForm((prev) => ({ ...prev, code: event.target.value }))}
+              />
+              <TextField
+                size="small"
+                label="Name"
+                sx={fieldSx}
+                value={providerForm.name}
+                onChange={(event) => setProviderForm((prev) => ({ ...prev, name: event.target.value }))}
+              />
+              <TextField
+                size="small"
+                label="Description"
+                multiline
+                minRows={3}
+                sx={fieldSx}
+                value={providerForm.description}
+                onChange={(event) => setProviderForm((prev) => ({ ...prev, description: event.target.value }))}
+              />
+            </Stack>
+          </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setProviderModalOpen(false)}>Cancelar</Button>
+        <DialogActions sx={modalActionsSx}>
+          <Button color="inherit" onClick={() => setProviderModalOpen(false)}>
+            Cancelar
+          </Button>
           <Button variant="contained" onClick={saveProvider} disabled={providerSaving}>
-            {providerSaving ? 'Guardando...' : 'Guardar'}
+            {providerSaving ? 'Guardando...' : 'Guardar Provider'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={accountModalOpen} onClose={() => setAccountModalOpen(false)} fullWidth maxWidth="md">
-        <DialogTitle>{accountForm.id ? 'Editar Cuenta Gestionada' : 'Nueva Cuenta Gestionada'}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} mt={0.2}>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Account Code"
-                value={accountForm.accountCode}
-                onChange={(event) => setAccountForm((prev) => ({ ...prev, accountCode: event.target.value }))}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Display Name"
-                value={accountForm.displayName}
-                onChange={(event) => setAccountForm((prev) => ({ ...prev, displayName: event.target.value }))}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                select
-                label="Provider"
-                value={accountForm.providerId}
-                onChange={(event) => setAccountForm((prev) => ({ ...prev, providerId: event.target.value }))}
-              >
-                {providers.map((p) => (
-                  <MenuItem key={p.id} value={p.id}>
-                    {p.code} - {p.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Principal Reference"
-                value={accountForm.principalReference}
-                onChange={(event) => setAccountForm((prev) => ({ ...prev, principalReference: event.target.value }))}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                select
-                label="Customer"
-                value={accountForm.customerId}
-                onChange={(event) => setAccountForm((prev) => ({ ...prev, customerId: event.target.value }))}
-              >
-                {customers.map((c) => (
-                  <MenuItem key={c.customerId} value={c.customerId}>
-                    {c.customerId} - {c.customerFullname}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Alias Email"
-                value={accountForm.aliasEmail}
-                onChange={(event) => setAccountForm((prev) => ({ ...prev, aliasEmail: event.target.value }))}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                select
-                label="Status"
-                value={accountForm.accountStatus}
-                onChange={(event) => setAccountForm((prev) => ({ ...prev, accountStatus: event.target.value }))}
-              >
-                {accountStatusOptions.map((it) => (
-                  <MenuItem key={it} value={it}>
-                    {it}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                type="date"
-                label="Expiration Date"
-                InputLabelProps={{ shrink: true }}
-                value={accountForm.expirationDate}
-                onChange={(event) => setAccountForm((prev) => ({ ...prev, expirationDate: event.target.value }))}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                type="date"
-                label="Renewal Date"
-                InputLabelProps={{ shrink: true }}
-                value={accountForm.renewalDate}
-                onChange={(event) => setAccountForm((prev) => ({ ...prev, renewalDate: event.target.value }))}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={Boolean(accountForm.allowDistribution)}
-                    onChange={(_, checked) => setAccountForm((prev) => ({ ...prev, allowDistribution: checked }))}
-                  />
-                }
-                label="Allow Distribution"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                multiline
-                minRows={3}
-                label="Notes"
-                value={accountForm.notes}
-                onChange={(event) => setAccountForm((prev) => ({ ...prev, notes: event.target.value }))}
-              />
-            </Grid>
-          </Grid>
+      <Dialog open={accountModalOpen} onClose={() => setAccountModalOpen(false)} fullWidth maxWidth="md" PaperProps={{ sx: modalPaperSx }}>
+        <DialogTitle sx={modalHeaderSx}>
+          <Stack spacing={0.5}>
+            <Typography variant="h4">{accountForm.id ? 'Editar Cuenta Gestionada' : 'Nueva Cuenta Gestionada'}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Configura identidad, vencimiento y reglas de distribución del alias.
+            </Typography>
+          </Stack>
+        </DialogTitle>
+        <DialogContent sx={modalContentSx}>
+          <Stack spacing={2}>
+            <Box sx={modalSectionSx}>
+              <Stack spacing={1.6}>
+                <Typography variant="subtitle2">Identidad y Relación</Typography>
+                <Grid container spacing={1.6}>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Account Code"
+                      sx={fieldSx}
+                      value={accountForm.accountCode}
+                      onChange={(event) => setAccountForm((prev) => ({ ...prev, accountCode: event.target.value }))}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Display Name"
+                      sx={fieldSx}
+                      value={accountForm.displayName}
+                      onChange={(event) => setAccountForm((prev) => ({ ...prev, displayName: event.target.value }))}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      select
+                      label="Provider"
+                      sx={fieldSx}
+                      value={accountForm.providerId}
+                      onChange={(event) => setAccountForm((prev) => ({ ...prev, providerId: event.target.value }))}
+                    >
+                      {providers.map((p) => (
+                        <MenuItem key={p.id} value={p.id}>
+                          {p.code} - {p.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      select
+                      label="Customer"
+                      sx={fieldSx}
+                      value={accountForm.customerId}
+                      onChange={(event) => setAccountForm((prev) => ({ ...prev, customerId: event.target.value }))}
+                    >
+                      {customers.map((c) => (
+                        <MenuItem key={c.customerId} value={c.customerId}>
+                          {c.customerId} - {c.customerFullname}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Alias Email"
+                      sx={fieldSx}
+                      value={accountForm.aliasEmail}
+                      onChange={(event) => setAccountForm((prev) => ({ ...prev, aliasEmail: event.target.value }))}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Principal Reference"
+                      sx={fieldSx}
+                      value={accountForm.principalReference}
+                      onChange={(event) => setAccountForm((prev) => ({ ...prev, principalReference: event.target.value }))}
+                    />
+                  </Grid>
+                </Grid>
+              </Stack>
+            </Box>
+
+            <Box sx={modalSectionSx}>
+              <Stack spacing={1.6}>
+                <Typography variant="subtitle2">Vigencia y Operación</Typography>
+                <Grid container spacing={1.6}>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      select
+                      label="Status"
+                      sx={fieldSx}
+                      value={accountForm.accountStatus}
+                      onChange={(event) => setAccountForm((prev) => ({ ...prev, accountStatus: event.target.value }))}
+                    >
+                      {accountStatusOptions.map((it) => (
+                        <MenuItem key={it} value={it}>
+                          {it}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      type="date"
+                      label="Expiration Date"
+                      sx={fieldSx}
+                      InputLabelProps={{ shrink: true }}
+                      value={accountForm.expirationDate}
+                      onChange={(event) => setAccountForm((prev) => ({ ...prev, expirationDate: event.target.value }))}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      type="date"
+                      label="Renewal Date"
+                      sx={fieldSx}
+                      InputLabelProps={{ shrink: true }}
+                      value={accountForm.renewalDate}
+                      onChange={(event) => setAccountForm((prev) => ({ ...prev, renewalDate: event.target.value }))}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Box
+                      sx={(theme) => ({
+                        px: 1.5,
+                        py: 1,
+                        borderRadius: 1.5,
+                        border: `1px dashed ${theme.palette.divider}`,
+                        backgroundColor: alpha(theme.palette.success.main, 0.04)
+                      })}
+                    >
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={Boolean(accountForm.allowDistribution)}
+                            onChange={(_, checked) => setAccountForm((prev) => ({ ...prev, allowDistribution: checked }))}
+                          />
+                        }
+                        label="Allow Distribution"
+                      />
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      multiline
+                      minRows={3}
+                      label="Notes"
+                      sx={fieldSx}
+                      value={accountForm.notes}
+                      onChange={(event) => setAccountForm((prev) => ({ ...prev, notes: event.target.value }))}
+                    />
+                  </Grid>
+                </Grid>
+              </Stack>
+            </Box>
+          </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAccountModalOpen(false)}>Cancelar</Button>
+        <DialogActions sx={modalActionsSx}>
+          <Button color="inherit" onClick={() => setAccountModalOpen(false)}>
+            Cancelar
+          </Button>
           <Button variant="contained" onClick={saveAccount} disabled={accountSaving}>
-            {accountSaving ? 'Guardando...' : 'Guardar'}
+            {accountSaving ? 'Guardando...' : 'Guardar Cuenta'}
           </Button>
         </DialogActions>
       </Dialog>
