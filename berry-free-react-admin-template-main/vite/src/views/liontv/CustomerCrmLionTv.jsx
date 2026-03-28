@@ -58,6 +58,8 @@ import HomeRepairServiceIcon from '@mui/icons-material/HomeRepairService';
 import MemoryIcon from '@mui/icons-material/Memory';
 import NoteAltIcon from '@mui/icons-material/NoteAlt';
 import PaidIcon from '@mui/icons-material/Paid';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
 import { useTranslation } from 'react-i18next';
 
 import MainCard from 'ui-component/cards/MainCard';
@@ -103,17 +105,10 @@ function ContactActions({ phone, mail }) {
   return (
     <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
       {phone ? (
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<CallIcon />}
-        component="a"
-        href={`tel:${cleanPhone}`}
-        sx={{ borderRadius: 2 }}
-      >
+        <Button size="small" variant="outlined" startIcon={<CallIcon />} component="a" href={`tel:${cleanPhone}`} sx={{ borderRadius: 2 }}>
           {t('crm.contact.call', 'Llamar')}
-      </Button>
-    ) : null}
+        </Button>
+      ) : null}
       {phone ? (
         <Button
           size="small"
@@ -129,19 +124,12 @@ function ContactActions({ phone, mail }) {
         </Button>
       ) : null}
       {mail ? (
-        <Button
-          size="small"
-          variant="text"
-          startIcon={<MailOutlineIcon />}
-        component="a"
-        href={`mailto:${mail}`}
-        sx={{ borderRadius: 2 }}
-      >
+        <Button size="small" variant="text" startIcon={<MailOutlineIcon />} component="a" href={`mailto:${mail}`} sx={{ borderRadius: 2 }}>
           {t('crm.contact.email', 'Email')}
-      </Button>
-    ) : null}
-  </Stack>
-);
+        </Button>
+      ) : null}
+    </Stack>
+  );
 }
 
 function normalizeCustomer(item = {}) {
@@ -221,6 +209,25 @@ function normalizeLicense(item = {}) {
   };
 }
 
+function normalizeManagedAccount(item = {}) {
+  return {
+    managedAccountId: item.id ?? item.managedAccountId ?? null,
+    customerId: item.customerId ?? item.customer_id ?? null,
+    accountCode: item.accountCode ?? item.account_code ?? '',
+    displayName: item.displayName ?? item.display_name ?? '',
+    providerCode: item.providerCode ?? item.provider_code ?? '',
+    providerName: item.providerName ?? item.provider_name ?? '',
+    aliasEmail: item.aliasEmail ?? item.alias_email ?? '',
+    expirationDate: item.expirationDate ?? item.expiration_date ?? null,
+    renewalDate: item.renewalDate ?? item.renewal_date ?? null,
+    accountStatus: (item.accountStatus ?? item.account_status ?? '').toUpperCase(),
+    allowDistribution: Boolean(item.allowDistribution ?? item.allow_distribution),
+    lastEmailReceivedAt: item.lastEmailReceivedAt ?? item.last_email_received_at ?? null,
+    createdBy: item.createdBy ?? item.created_by ?? '',
+    notes: item.notes ?? ''
+  };
+}
+
 function initials(name = '') {
   const parts = name.trim().split(' ').filter(Boolean);
   if (!parts.length) return '?';
@@ -234,7 +241,7 @@ function StatCard({ icon, title, value, helper, color = 'primary' }) {
       sx={{
         p: 2,
         borderRadius: 2,
-        bgcolor: (theme) => `${(theme.palette[color]?.main ?? theme.palette.grey[500])}10`,
+        bgcolor: (theme) => `${theme.palette[color]?.main ?? theme.palette.grey[500]}10`,
         border: '1px solid',
         borderColor: 'divider',
         boxShadow: 2,
@@ -344,6 +351,7 @@ export default function CustomerCrmLionTv() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [licenses, setLicenses] = useState([]);
+  const [managedAccounts, setManagedAccounts] = useState([]);
   const [packages, setPackages] = useState([]);
   const [lines, setLines] = useState([]);
   const [banks, setBanks] = useState([]);
@@ -353,6 +361,7 @@ export default function CustomerCrmLionTv() {
     subscriptions: false,
     invoices: false,
     licenses: false,
+    managedAccounts: false,
     packages: false,
     lines: false,
     banks: false,
@@ -393,16 +402,13 @@ export default function CustomerCrmLionTv() {
         setter(normalized);
       } catch (err) {
         if (!handleUnauthorized(err)) {
-          enqueueSnackbar(
-            err?.response?.data?.message || t('crm.errors.load', 'No se pudo cargar la información.'),
-            { variant: 'error' }
-          );
+          enqueueSnackbar(err?.response?.data?.message || t('crm.errors.load', 'No se pudo cargar la información.'), { variant: 'error' });
         }
       } finally {
         setLoading((prev) => ({ ...prev, [key]: false }));
       }
     },
-    [accessToken, enqueueSnackbar]
+    [accessToken, enqueueSnackbar, t]
   );
 
   useEffect(() => {
@@ -410,6 +416,7 @@ export default function CustomerCrmLionTv() {
     fetchCollection('/subscriptions/v1', setSubscriptions, normalizeSubscription, 'subscriptions');
     fetchCollection('/invoices/v1', setInvoices, normalizeInvoice, 'invoices');
     fetchCollection('/licenses/v1', setLicenses, normalizeLicense, 'licenses');
+    fetchCollection('/managed-accounts/v1', setManagedAccounts, normalizeManagedAccount, 'managedAccounts');
     fetchCollection('/packages/v1/list-packages', setPackages, (p) => p, 'packages', {
       start: 0,
       filters: '',
@@ -427,12 +434,12 @@ export default function CustomerCrmLionTv() {
       const res = await catalogsApi.get('/banks/v1', { headers: { Authorization: `Bearer ${accessToken}` } });
       const payload = res?.data?.data ?? res?.data ?? [];
       setBanks(Array.isArray(payload) ? payload : []);
-    } catch (err) {
+    } catch {
       enqueueSnackbar(t('crm.errors.banks', 'No se pudieron cargar los bancos.'), { variant: 'warning' });
     } finally {
       setLoading((prev) => ({ ...prev, banks: false }));
     }
-  }, [accessToken, enqueueSnackbar]);
+  }, [accessToken, enqueueSnackbar, t]);
 
   const loadServices = useCallback(async () => {
     if (!accessToken) return;
@@ -441,12 +448,12 @@ export default function CustomerCrmLionTv() {
       const res = await catalogsApi.get('/services/v1', { headers: { Authorization: `Bearer ${accessToken}` } });
       const payload = res?.data?.data ?? res?.data ?? [];
       setServices(Array.isArray(payload) ? payload : []);
-    } catch (err) {
+    } catch {
       enqueueSnackbar(t('crm.errors.services', 'No se pudieron cargar los servicios.'), { variant: 'warning' });
     } finally {
       setLoading((prev) => ({ ...prev, services: false }));
     }
-  }, [accessToken, enqueueSnackbar]);
+  }, [accessToken, enqueueSnackbar, t]);
 
   useEffect(() => {
     loadBanks();
@@ -505,8 +512,7 @@ export default function CustomerCrmLionTv() {
       subscriptions
         .filter((s) => (s.customerId || s.customer_id) === customerId)
         .map((s) => {
-          const lineLabel =
-            lineNameMap[String(s.lineId ?? s.username_line ?? '')] || s.username_line || s.lineId || '';
+          const lineLabel = lineNameMap[String(s.lineId ?? s.username_line ?? '')] || s.username_line || s.lineId || '';
           const pkg = packageMap[String(s.packageId ?? '')] || {};
           return {
             ...s,
@@ -528,13 +534,20 @@ export default function CustomerCrmLionTv() {
     [licenses, customerId]
   );
 
+  const customerManagedAccounts = useMemo(
+    () => managedAccounts.filter((account) => (account.customerId || account.customer_id) === customerId),
+    [managedAccounts, customerId]
+  );
+
   const totals = useMemo(() => {
-    const billed = customerInvoices.reduce(
-      (acc, inv) => acc + Number(inv.amountPaid || 0) - Number(inv.amountDiscount || 0),
-      0
-    );
+    const billed = customerInvoices.reduce((acc, inv) => acc + Number(inv.amountPaid || 0) - Number(inv.amountDiscount || 0), 0);
     const activeSubs = customerSubscriptions.filter((s) => s.status === 'ACTIVE').length;
     const activeLicenses = customerLicenses.filter((l) => l.status === 'ACTIVE').length;
+    const activeManagedAccounts = customerManagedAccounts.filter((a) => a.accountStatus === 'ACTIVE').length;
+    const nextManagedExpiration = customerManagedAccounts
+      .map((a) => a.expirationDate)
+      .filter(Boolean)
+      .sort((a, b) => new Date(a) - new Date(b))[0];
     const nextRenewal = customerSubscriptions
       .map((s) => s.renewalDate)
       .filter(Boolean)
@@ -547,11 +560,14 @@ export default function CustomerCrmLionTv() {
       billed,
       activeSubs,
       activeLicenses,
+      activeManagedAccounts,
       totalInvoices: customerInvoices.length,
+      totalManagedAccounts: customerManagedAccounts.length,
       nextRenewal,
+      nextManagedExpiration,
       lastInvoice
     };
-  }, [customerSubscriptions, customerLicenses, customerInvoices]);
+  }, [customerSubscriptions, customerLicenses, customerInvoices, customerManagedAccounts]);
 
   const openFullModule = (type) => {
     if (type === 'subscriptions') {
@@ -561,9 +577,21 @@ export default function CustomerCrmLionTv() {
         description: t('crm.tables.subscriptions.desc', 'Vista completa de líneas, paquetes, billing y fechas del cliente.'),
         rows: customerSubscriptions,
         columns: [
-          { field: 'lineLabel', title: t('crm.headers.line', 'Línea'), render: (row) => <LabelWithIcon icon={<WifiTetheringIcon fontSize="small" />} label={row.lineLabel || '-'} color="info" /> },
-          { field: 'packageName', title: t('crm.headers.package', 'Paquete'), render: (row) => <LabelWithIcon icon={<Inventory2Icon fontSize="small" />} label={row.packageName || '-'} color="secondary" /> },
-          { field: 'billing', title: t('crm.headers.billing', 'Billing'), render: (row) => <LabelWithIcon icon={<ChecklistIcon fontSize="small" />} label={row.billing || '-'} color="warning" /> },
+          {
+            field: 'lineLabel',
+            title: t('crm.headers.line', 'Línea'),
+            render: (row) => <LabelWithIcon icon={<WifiTetheringIcon fontSize="small" />} label={row.lineLabel || '-'} color="info" />
+          },
+          {
+            field: 'packageName',
+            title: t('crm.headers.package', 'Paquete'),
+            render: (row) => <LabelWithIcon icon={<Inventory2Icon fontSize="small" />} label={row.packageName || '-'} color="secondary" />
+          },
+          {
+            field: 'billing',
+            title: t('crm.headers.billing', 'Billing'),
+            render: (row) => <LabelWithIcon icon={<ChecklistIcon fontSize="small" />} label={row.billing || '-'} color="warning" />
+          },
           { field: 'status', title: t('crm.headers.status', 'Estado'), render: (row) => <StatusChip status={row.status} /> },
           { field: 'startDate', title: t('crm.headers.start', 'Inicio'), render: (row) => formatDate(row.startDate) },
           { field: 'renewalDate', title: t('crm.headers.renewal', 'Renovación'), render: (row) => formatDate(row.renewalDate) }
@@ -578,15 +606,77 @@ export default function CustomerCrmLionTv() {
         description: t('crm.tables.licenses.desc', 'Detalle de licencias: app, tipo, vigencia y estado actual.'),
         rows: customerLicenses,
         columns: [
-          { field: 'macAddress', title: t('crm.headers.mac', 'MAC'), render: (row) => <LabelWithIcon icon={<SmartDisplayIcon fontSize="small" />} label={row.macAddress || '-'} color="info" /> },
-          { field: 'deviceKey', title: t('licenses.headers.deviceKey', 'Device key'), render: (row) => <LabelWithIcon icon={<LinkIcon fontSize="small" />} label={row.deviceKey || '-'} color="info" /> },
-          { field: 'app', title: t('crm.headers.app', 'App'), render: (row) => <LabelWithIcon icon={<AppsIcon fontSize="small" />} label={row.app || '-'} color="primary" /> },
-          { field: 'typeLicense', title: t('crm.headers.type', 'Tipo'), render: (row) => <LabelWithIcon icon={<LayersIcon fontSize="small" />} label={row.typeLicense || '-'} color="secondary" /> },
+          {
+            field: 'macAddress',
+            title: t('crm.headers.mac', 'MAC'),
+            render: (row) => <LabelWithIcon icon={<SmartDisplayIcon fontSize="small" />} label={row.macAddress || '-'} color="info" />
+          },
+          {
+            field: 'deviceKey',
+            title: t('licenses.headers.deviceKey', 'Device key'),
+            render: (row) => <LabelWithIcon icon={<LinkIcon fontSize="small" />} label={row.deviceKey || '-'} color="info" />
+          },
+          {
+            field: 'app',
+            title: t('crm.headers.app', 'App'),
+            render: (row) => <LabelWithIcon icon={<AppsIcon fontSize="small" />} label={row.app || '-'} color="primary" />
+          },
+          {
+            field: 'typeLicense',
+            title: t('crm.headers.type', 'Tipo'),
+            render: (row) => <LabelWithIcon icon={<LayersIcon fontSize="small" />} label={row.typeLicense || '-'} color="secondary" />
+          },
           { field: 'status', title: t('crm.headers.status', 'Estado'), render: (row) => <StatusChip status={row.status} /> },
-          { field: 'isPaid', title: t('licenses.headers.paid', 'Pagada'), render: (row) => <StatusChip status={row.isPaid ? 'PAID' : 'PENDING'} /> },
+          {
+            field: 'isPaid',
+            title: t('licenses.headers.paid', 'Pagada'),
+            render: (row) => <StatusChip status={row.isPaid ? 'PAID' : 'PENDING'} />
+          },
           { field: 'expireAt', title: t('crm.headers.expire', 'Expira'), render: (row) => formatDate(row.expireAt) }
         ],
         onDetail: (row) => setDetail({ open: true, type: 'license', row })
+      });
+    }
+    if (type === 'managedAccounts') {
+      setTableDialog({
+        open: true,
+        title: t('crm.tables.managedAccounts.title', 'Cuentas gestionadas'),
+        description: t(
+          'crm.tables.managedAccounts.desc',
+          'Vista completa de aliases, provider, vigencia, estado y distribución de cuentas gestionadas.'
+        ),
+        rows: customerManagedAccounts,
+        columns: [
+          {
+            field: 'accountCode',
+            title: t('crm.headers.accountCode', 'Account'),
+            render: (row) => (
+              <LabelWithIcon
+                icon={<ManageAccountsIcon fontSize="small" />}
+                label={`${row.accountCode || '-'} ${row.displayName ? `• ${row.displayName}` : ''}`}
+                color="primary"
+              />
+            )
+          },
+          {
+            field: 'aliasEmail',
+            title: t('crm.headers.alias', 'Alias'),
+            render: (row) => <LabelWithIcon icon={<AlternateEmailIcon fontSize="small" />} label={row.aliasEmail || '-'} color="info" />
+          },
+          {
+            field: 'provider',
+            title: t('crm.headers.provider', 'Provider'),
+            render: (row) => row.providerCode || row.providerName || '-'
+          },
+          { field: 'accountStatus', title: t('crm.headers.status', 'Estado'), render: (row) => <StatusChip status={row.accountStatus} /> },
+          {
+            field: 'allowDistribution',
+            title: t('crm.headers.distribution', 'Distribución'),
+            render: (row) => <StatusChip status={row.allowDistribution ? 'ACTIVE' : 'INACTIVE'} />
+          },
+          { field: 'expirationDate', title: t('crm.headers.expire', 'Expira'), render: (row) => formatDate(row.expirationDate) }
+        ],
+        onDetail: (row) => setDetail({ open: true, type: 'managedAccount', row })
       });
     }
     if (type === 'invoices') {
@@ -597,7 +687,11 @@ export default function CustomerCrmLionTv() {
         rows: customerInvoices,
         columns: [
           { field: 'paymentDate', title: t('crm.headers.date', 'Fecha'), render: (row) => formatDate(row.paymentDate) },
-          { field: 'paymentMethod', title: t('crm.headers.method', 'Método'), render: (row) => <LabelWithIcon icon={<CreditCardIcon fontSize="small" />} label={row.paymentMethod || '-'} color="info" /> },
+          {
+            field: 'paymentMethod',
+            title: t('crm.headers.method', 'Método'),
+            render: (row) => <LabelWithIcon icon={<CreditCardIcon fontSize="small" />} label={row.paymentMethod || '-'} color="info" />
+          },
           { field: 'status', title: t('crm.headers.status', 'Estado'), render: (row) => <StatusChip status={row.status} /> },
           {
             field: 'amountPaid',
@@ -621,9 +715,7 @@ export default function CustomerCrmLionTv() {
               options={customers}
               value={selectedCustomer}
               onChange={(e, value) => setSelectedCustomer(value)}
-              getOptionLabel={(option) =>
-                option?.fullName || option?.mail || option?.username || option?.id?.toString() || ''
-              }
+              getOptionLabel={(option) => option?.fullName || option?.mail || option?.username || option?.id?.toString() || ''}
               isOptionEqualToValue={(opt, val) => (opt?.id ?? opt?.customerId) === (val?.id ?? val?.customerId)}
               renderInput={(params) => (
                 <TextField
@@ -673,7 +765,7 @@ export default function CustomerCrmLionTv() {
               {t('crm.empty.title', 'Selecciona un cliente para ver su panorama 360°')}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            {t('crm.empty.subtitle', 'Encontrarás sus suscripciones, facturación, licencias y métricas clave.')}
+              {t('crm.empty.subtitle', 'Encontrarás sus suscripciones, managed accounts, facturación, licencias y métricas clave.')}
             </Typography>
           </Box>
         ) : loading.customers ? (
@@ -740,7 +832,7 @@ export default function CustomerCrmLionTv() {
                   </Grid>
                   <Grid item xs={12} md={8}>
                     <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6} md={4}>
+                      <Grid item xs={12} sm={6} md={4}>
                         <StatCard
                           icon={<CreditCardIcon />}
                           title={t('crm.stats.billed', 'Total facturado')}
@@ -775,6 +867,18 @@ export default function CustomerCrmLionTv() {
                       </Grid>
                       <Grid item xs={12} sm={6} md={4}>
                         <StatCard
+                          icon={<ManageAccountsIcon />}
+                          title={t('crm.stats.managedAccounts', 'Managed Accounts')}
+                          value={`${totals.totalManagedAccounts}`}
+                          helper={t('crm.stats.managedAccountsActive', {
+                            defaultValue: 'Activas: {{val}}',
+                            val: totals.activeManagedAccounts
+                          })}
+                          color="secondary"
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <StatCard
                           icon={<CalendarMonthIcon />}
                           title={t('crm.stats.nextRenewal', 'Próxima renovación')}
                           value={totals.nextRenewal ? formatDate(totals.nextRenewal) : t('crm.stats.none', 'Sin definir')}
@@ -784,13 +888,20 @@ export default function CustomerCrmLionTv() {
                       </Grid>
                       <Grid item xs={12} sm={6} md={4}>
                         <StatCard
+                          icon={<AlternateEmailIcon />}
+                          title={t('crm.stats.nextManagedExpiration', 'Próx. vencimiento account')}
+                          value={
+                            totals.nextManagedExpiration ? formatDate(totals.nextManagedExpiration) : t('crm.stats.none', 'Sin definir')
+                          }
+                          helper={t('crm.stats.managedAccountsAlias', 'Basado en alias gestionados')}
+                          color="info"
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={4}>
+                        <StatCard
                           icon={<MonetizationOnIcon />}
                           title={t('crm.stats.lastPayment', 'Último pago')}
-                          value={
-                            totals.lastInvoice
-                              ? formatDate(totals.lastInvoice)
-                              : t('crm.stats.noPayments', 'No hay pagos')
-                          }
+                          value={totals.lastInvoice ? formatDate(totals.lastInvoice) : t('crm.stats.noPayments', 'No hay pagos')}
                           helper={t('crm.stats.lastInvoice', 'Fecha de la última factura')}
                           color="secondary"
                         />
@@ -817,13 +928,10 @@ export default function CustomerCrmLionTv() {
               </Box>
             </MainCard>
 
-            
-
             <MainCard
               sx={{
                 borderRadius: 2,
-                background: (theme) =>
-                  `linear-gradient(135deg, ${theme.palette.primary.light}26, ${theme.palette.secondary.light}1F)`
+                background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.light}26, ${theme.palette.secondary.light}1F)`
               }}
             >
               <Stack spacing={2}>
@@ -834,10 +942,7 @@ export default function CustomerCrmLionTv() {
                   </Typography>
                 </Stack>
                 <Typography variant="body2" color="text.secondary">
-                  {t(
-                    'crm.modules.subtitle',
-                    'Abre submódulos dedicados con contexto, iconos y colores para identificar cada entidad.'
-                  )}
+                  {t('crm.modules.subtitle', 'Abre submódulos dedicados con contexto, iconos y colores para identificar cada entidad.')}
                 </Typography>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                   <Button
@@ -863,6 +968,21 @@ export default function CustomerCrmLionTv() {
                     }}
                   >
                     {t('crm.modules.invoices', 'Ver facturación')}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="info"
+                    startIcon={<ManageAccountsIcon />}
+                    onClick={() => openFullModule('managedAccounts')}
+                    sx={{
+                      flex: 1,
+                      borderRadius: 2,
+                      boxShadow: 2,
+                      textTransform: 'none',
+                      backgroundColor: (theme) => `${theme.palette.info.light}16`
+                    }}
+                  >
+                    {t('crm.modules.managedAccounts', 'Ver managed accounts')}
                   </Button>
                   <Button
                     variant="outlined"
@@ -894,14 +1014,27 @@ export default function CustomerCrmLionTv() {
           size="small"
         />
         <Chip
+          label={t('crm.datasets.managedAccounts', {
+            defaultValue: 'Managed accounts: {{count}}',
+            count: managedAccounts.length
+          })}
+          color="info"
+          variant="outlined"
+          size="small"
+        />
+        <Chip
           label={t('crm.datasets.label', {
             defaultValue: 'Datasets: {{state}}',
             state:
-              loading.customers || loading.subscriptions || loading.invoices || loading.licenses
+              loading.customers || loading.subscriptions || loading.invoices || loading.licenses || loading.managedAccounts
                 ? t('crm.datasets.loading', 'Cargando...')
                 : t('crm.datasets.ready', 'Listos')
           })}
-          color={(loading.customers || loading.subscriptions || loading.invoices || loading.licenses) ? 'warning' : 'success'}
+          color={
+            loading.customers || loading.subscriptions || loading.invoices || loading.licenses || loading.managedAccounts
+              ? 'warning'
+              : 'success'
+          }
           variant="outlined"
           size="small"
         />
@@ -930,9 +1063,10 @@ export default function CustomerCrmLionTv() {
             gap: 1,
             py: 2,
             px: 2.5,
-            background: theme.palette.mode === 'light'
-              ? `linear-gradient(135deg, ${theme.palette.primary.light}30 0%, ${theme.palette.secondary.light}25 60%, ${theme.palette.background.paper} 100%)`
-              : `linear-gradient(135deg, ${theme.palette.primary.dark}60 0%, ${theme.palette.secondary.dark}40 70%, ${theme.palette.background.default} 100%)`,
+            background:
+              theme.palette.mode === 'light'
+                ? `linear-gradient(135deg, ${theme.palette.primary.light}30 0%, ${theme.palette.secondary.light}25 60%, ${theme.palette.background.paper} 100%)`
+                : `linear-gradient(135deg, ${theme.palette.primary.dark}60 0%, ${theme.palette.secondary.dark}40 70%, ${theme.palette.background.default} 100%)`,
             borderBottom: `1px solid ${theme.palette.divider}`
           })}
         >
@@ -950,6 +1084,7 @@ export default function CustomerCrmLionTv() {
           <Stack spacing={0.2}>
             <Typography variant="subtitle1" sx={{ fontWeight: 800, letterSpacing: 0.2 }}>
               {detail.type === 'subscription' && t('crm.detail.subscription', 'Detalle de suscripción')}
+              {detail.type === 'managedAccount' && t('crm.detail.managedAccount', 'Detalle de managed account')}
               {detail.type === 'invoice' && t('crm.detail.invoice', 'Detalle de factura')}
               {detail.type === 'license' && t('crm.detail.license', 'Detalle de licencia')}
             </Typography>
@@ -958,30 +1093,167 @@ export default function CustomerCrmLionTv() {
             </Typography>
           </Stack>
         </DialogTitle>
-      <DialogContent
-        dividers
-        sx={{
-          bgcolor: 'background.default'
-        }}
-      >
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
-            {detail.type === 'subscription' && t('crm.detail.summary.subscription', 'Resumen de la suscripción')}
-            {detail.type === 'license' && t('crm.detail.summary.license', 'Resumen de la licencia')}
-            {detail.type === 'invoice' && t('crm.detail.summary.invoice', 'Resumen de la factura')}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {detail.type === 'subscription' &&
-              t(
-                'crm.detail.summary.subscriptionHelper',
-                'Visualiza línea, paquete, fechas y estado de pago automático de la suscripción seleccionada.'
-              )}
-            {detail.type === 'license' &&
-              t('crm.detail.summary.licenseHelper', 'Información clave de la licencia: aplicación, tipo, ciclo, vigencia y propietario actual.')}
-            {detail.type === 'invoice' &&
-              t('crm.detail.summary.invoiceHelper', 'Monto pagado en Lps, método, banco y notas relevantes para la factura elegida.')}
-          </Typography>
-        </Box>
+        <DialogContent
+          dividers
+          sx={{
+            bgcolor: 'background.default'
+          }}
+        >
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
+              {detail.type === 'subscription' && t('crm.detail.summary.subscription', 'Resumen de la suscripción')}
+              {detail.type === 'managedAccount' && t('crm.detail.summary.managedAccount', 'Resumen de la cuenta gestionada')}
+              {detail.type === 'license' && t('crm.detail.summary.license', 'Resumen de la licencia')}
+              {detail.type === 'invoice' && t('crm.detail.summary.invoice', 'Resumen de la factura')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {detail.type === 'subscription' &&
+                t(
+                  'crm.detail.summary.subscriptionHelper',
+                  'Visualiza línea, paquete, fechas y estado de pago automático de la suscripción seleccionada.'
+                )}
+              {detail.type === 'managedAccount' &&
+                t(
+                  'crm.detail.summary.managedAccountHelper',
+                  'Visualiza alias, proveedor, vigencia y reglas de distribución de la cuenta gestionada seleccionada.'
+                )}
+              {detail.type === 'license' &&
+                t(
+                  'crm.detail.summary.licenseHelper',
+                  'Información clave de la licencia: aplicación, tipo, ciclo, vigencia y propietario actual.'
+                )}
+              {detail.type === 'invoice' &&
+                t('crm.detail.summary.invoiceHelper', 'Monto pagado en Lps, método, banco y notas relevantes para la factura elegida.')}
+            </Typography>
+          </Box>
+
+          {detail.type === 'managedAccount' && detail.row ? (
+            <Stack spacing={2}>
+              <InfoBlock
+                title={t('crm.managedAccount.block.identity.title', 'Identidad de la cuenta')}
+                icon={<ManageAccountsIcon />}
+                color="info"
+                helper={t('crm.managedAccount.block.identity.helper', 'Código interno, alias y proveedor asociado.')}
+              >
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Stack spacing={0.75}>
+                      <LabelWithIcon
+                        icon={<ManageAccountsIcon fontSize="small" color="info" />}
+                        label={t('crm.managedAccount.accountCode', {
+                          defaultValue: 'Account code: {{value}}',
+                          value: detail.row.accountCode || '-'
+                        })}
+                        color="info"
+                      />
+                      <LabelWithIcon
+                        icon={<PersonIcon fontSize="small" color="primary" />}
+                        label={t('crm.managedAccount.displayName', {
+                          defaultValue: 'Nombre: {{value}}',
+                          value: detail.row.displayName || '-'
+                        })}
+                        color="primary"
+                      />
+                    </Stack>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Stack spacing={0.75}>
+                      <LabelWithIcon
+                        icon={<AlternateEmailIcon fontSize="small" color="secondary" />}
+                        label={t('crm.managedAccount.alias', {
+                          defaultValue: 'Alias: {{value}}',
+                          value: detail.row.aliasEmail || '-'
+                        })}
+                        color="secondary"
+                      />
+                      <LabelWithIcon
+                        icon={<Inventory2Icon fontSize="small" color="warning" />}
+                        label={t('crm.managedAccount.provider', {
+                          defaultValue: 'Provider: {{value}}',
+                          value: detail.row.providerCode || detail.row.providerName || '-'
+                        })}
+                        color="warning"
+                      />
+                    </Stack>
+                  </Grid>
+                </Grid>
+              </InfoBlock>
+
+              <InfoBlock
+                title={t('crm.managedAccount.block.status.title', 'Estado y vigencia')}
+                icon={<CalendarMonthIcon />}
+                color="secondary"
+                helper={t('crm.managedAccount.block.status.helper', 'Control de vencimiento y distribución por alias.')}
+              >
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Stack spacing={0.9}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <ChecklistIcon fontSize="small" color="action" />
+                        <StatusChip status={detail.row.accountStatus} />
+                      </Stack>
+                      <LabelWithIcon
+                        icon={<CalendarMonthIcon fontSize="small" color="warning" />}
+                        label={t('crm.managedAccount.expirationDate', {
+                          defaultValue: 'Expira: {{value}}',
+                          value: formatDate(detail.row.expirationDate)
+                        })}
+                        color="warning"
+                      />
+                      <LabelWithIcon
+                        icon={<CalendarMonthIcon fontSize="small" color="primary" />}
+                        label={t('crm.managedAccount.renewalDate', {
+                          defaultValue: 'Renueva: {{value}}',
+                          value: formatDate(detail.row.renewalDate)
+                        })}
+                        color="primary"
+                      />
+                    </Stack>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Stack spacing={0.9}>
+                      <LabelWithIcon
+                        icon={<ChecklistIcon fontSize="small" color={detail.row.allowDistribution ? 'success' : 'error'} />}
+                        label={t('crm.managedAccount.allowDistribution', {
+                          defaultValue: 'Distribución: {{value}}',
+                          value: detail.row.allowDistribution ? t('common.enabled', 'Habilitada') : t('common.disabled', 'Deshabilitada')
+                        })}
+                        color={detail.row.allowDistribution ? 'success' : 'error'}
+                      />
+                      <LabelWithIcon
+                        icon={<MailOutlineIcon fontSize="small" color="info" />}
+                        label={t('crm.managedAccount.lastEmail', {
+                          defaultValue: 'Último correo: {{value}}',
+                          value: formatDate(detail.row.lastEmailReceivedAt)
+                        })}
+                        color="info"
+                      />
+                      <LabelWithIcon
+                        icon={<PersonIcon fontSize="small" color="secondary" />}
+                        label={t('crm.managedAccount.createdBy', {
+                          defaultValue: 'Creada por: {{value}}',
+                          value: detail.row.createdBy || '-'
+                        })}
+                        color="secondary"
+                      />
+                    </Stack>
+                  </Grid>
+                  {detail.row.notes ? (
+                    <Grid item xs={12}>
+                      <LabelWithIcon
+                        icon={<NoteAltIcon fontSize="small" color="secondary" />}
+                        label={t('crm.managedAccount.notes', {
+                          defaultValue: 'Notas: {{value}}',
+                          value: detail.row.notes
+                        })}
+                        color="secondary"
+                      />
+                    </Grid>
+                  ) : null}
+                </Grid>
+              </InfoBlock>
+            </Stack>
+          ) : null}
 
           {detail.type === 'subscription' && detail.row ? (
             <Stack spacing={2}>
@@ -1033,8 +1305,8 @@ export default function CustomerCrmLionTv() {
               </InfoBlock>
 
               <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <InfoBlock
+                <Grid item xs={12} sm={6}>
+                  <InfoBlock
                     title={t('crm.subscription.block.dates.title', 'Fechas y billing')}
                     icon={<CalendarMonthIcon />}
                     color="primary"
@@ -1150,7 +1422,10 @@ export default function CustomerCrmLionTv() {
                       />
                       <LabelWithIcon
                         icon={<PaidIcon fontSize="small" color={detail.row.isPaid ? 'success' : 'warning'} />}
-                        label={t('crm.license.paid', { defaultValue: 'Pago: {{status}}', status: detail.row.isPaid ? 'PAGADA' : 'PENDIENTE' })}
+                        label={t('crm.license.paid', {
+                          defaultValue: 'Pago: {{status}}',
+                          status: detail.row.isPaid ? 'PAGADA' : 'PENDIENTE'
+                        })}
                         color={detail.row.isPaid ? 'success' : 'warning'}
                       />
                     </Stack>
@@ -1197,7 +1472,10 @@ export default function CustomerCrmLionTv() {
                       />
                       <LabelWithIcon
                         icon={<CalendarMonthIcon fontSize="small" color="secondary" />}
-                        label={t('crm.license.ownerSince', { defaultValue: 'Owner desde: {{date}}', date: formatDate(detail.row.currentOwnerSince) })}
+                        label={t('crm.license.ownerSince', {
+                          defaultValue: 'Owner desde: {{date}}',
+                          date: formatDate(detail.row.currentOwnerSince)
+                        })}
                         color="secondary"
                       />
                     </Stack>
@@ -1271,11 +1549,7 @@ export default function CustomerCrmLionTv() {
                         icon={<HomeRepairServiceIcon fontSize="small" color="info" />}
                         label={t('crm.invoice.service', {
                           defaultValue: 'Servicio: {{service}}',
-                          service:
-                            serviceMap[String(detail.row.serviceId ?? '')] ||
-                            detail.row.serviceName ||
-                            detail.row.serviceId ||
-                            '-'
+                          service: serviceMap[String(detail.row.serviceId ?? '')] || detail.row.serviceName || detail.row.serviceId || '-'
                         })}
                         color="info"
                       />
@@ -1288,9 +1562,7 @@ export default function CustomerCrmLionTv() {
                         color="secondary"
                       />
                       {packageMap[String(detail.row.packageId ?? '')]?.description ? (
-                        <FormHelperText sx={{ m: 0 }}>
-                          {packageMap[String(detail.row.packageId ?? '')].description}
-                        </FormHelperText>
+                        <FormHelperText sx={{ m: 0 }}>{packageMap[String(detail.row.packageId ?? '')].description}</FormHelperText>
                       ) : null}
                     </Stack>
                   </Grid>
@@ -1300,11 +1572,7 @@ export default function CustomerCrmLionTv() {
                         icon={<AccountBalanceIcon fontSize="small" color="success" />}
                         label={t('crm.invoice.bank', {
                           defaultValue: 'Banco: {{bank}}',
-                          bank:
-                            bankMap[String(detail.row.bankId ?? '')] ||
-                            detail.row.bankName ||
-                            detail.row.bankId ||
-                            '-'
+                          bank: bankMap[String(detail.row.bankId ?? '')] || detail.row.bankName || detail.row.bankId || '-'
                         })}
                         color="success"
                       />
@@ -1324,9 +1592,7 @@ export default function CustomerCrmLionTv() {
           ) : null}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDetail({ open: false, type: null, row: null })}>
-            {t('common.close', 'Cerrar')}
-          </Button>
+          <Button onClick={() => setDetail({ open: false, type: null, row: null })}>{t('common.close', 'Cerrar')}</Button>
         </DialogActions>
       </Dialog>
 
@@ -1357,9 +1623,10 @@ export default function CustomerCrmLionTv() {
             gap: 1,
             py: 2,
             px: 2.5,
-            background: theme.palette.mode === 'light'
-              ? `linear-gradient(135deg, ${theme.palette.secondary.light}35, ${theme.palette.primary.light}25)`
-              : `linear-gradient(135deg, ${theme.palette.secondary.dark}45, ${theme.palette.primary.dark}35)`,
+            background:
+              theme.palette.mode === 'light'
+                ? `linear-gradient(135deg, ${theme.palette.secondary.light}35, ${theme.palette.primary.light}25)`
+                : `linear-gradient(135deg, ${theme.palette.secondary.dark}45, ${theme.palette.primary.dark}35)`,
             color: theme.palette.getContrastText(theme.palette.secondary.main),
             borderBottom: `1px solid ${theme.palette.divider}`
           })}
@@ -1412,35 +1679,25 @@ export default function CustomerCrmLionTv() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {tableDialog.rows
-                  .slice(tablePage * tableRpp, tablePage * tableRpp + tableRpp)
-                  .map((row) => (
-                    <TableRow key={row.id || row.subscriptionId || row.invoiceId || row.licenseId}>
-                      {tableDialog.columns.map((col) => (
-                        <TableCell key={col.field}>
-                          {typeof col.render === 'function' ? col.render(row) : row[col.field] ?? '-'}
-                        </TableCell>
-                      ))}
-                      {tableDialog.onDetail ? (
-                        <TableCell align="right">
-                          <Tooltip title={t('crm.table.detail', 'Detalle')}>
-                            <IconButton
-                              size="small"
-                              onClick={() => tableDialog.onDetail(row)}
-                            >
-                              <VisibilityOutlinedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
-                      ) : null}
-                    </TableRow>
-                  ))}
+                {tableDialog.rows.slice(tablePage * tableRpp, tablePage * tableRpp + tableRpp).map((row) => (
+                  <TableRow key={row.id || row.subscriptionId || row.invoiceId || row.licenseId}>
+                    {tableDialog.columns.map((col) => (
+                      <TableCell key={col.field}>{typeof col.render === 'function' ? col.render(row) : (row[col.field] ?? '-')}</TableCell>
+                    ))}
+                    {tableDialog.onDetail ? (
+                      <TableCell align="right">
+                        <Tooltip title={t('crm.table.detail', 'Detalle')}>
+                          <IconButton size="small" onClick={() => tableDialog.onDetail(row)}>
+                            <VisibilityOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    ) : null}
+                  </TableRow>
+                ))}
                 {tableDialog.rows.length === 0 && (
                   <TableRow>
-                    <TableCell
-                      colSpan={tableDialog.columns.length + (tableDialog.onDetail ? 1 : 0)}
-                      align="center"
-                    >
+                    <TableCell colSpan={tableDialog.columns.length + (tableDialog.onDetail ? 1 : 0)} align="center">
                       {t('crm.table.empty', 'No hay datos')}
                     </TableCell>
                   </TableRow>

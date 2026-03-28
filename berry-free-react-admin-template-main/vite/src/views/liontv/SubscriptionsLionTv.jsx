@@ -345,6 +345,13 @@ export default function SubscriptionsLionTv() {
     return map;
   }, [lines]);
 
+  const plusLines = useMemo(() => {
+    return lines.filter((line) => {
+      const provider = (line.provider ?? line.line_provider ?? line.lineProvider ?? '').toString().trim().toUpperCase();
+      return provider === 'LION_PLUS+';
+    });
+  }, [lines]);
+
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
     return status === 401;
@@ -1449,7 +1456,7 @@ export default function SubscriptionsLionTv() {
                       label={t('subscriptions.form.linePlus', 'Line plus')}
                       onChange={(e) => setForm((p) => ({ ...p, linePlusId: e.target.value }))}
                       renderValue={(value) => {
-                        const found = lines.find((l) => l.id === value);
+                        const found = lines.find((l) => l.id === value || l.lineId === value);
                         const lineLabel = found?.username || lineNameMap[String(value)] || value || t('common.selectOption', 'Select an option');
                         return (
                           <Stack direction="row" spacing={1} alignItems="center">
@@ -1464,12 +1471,12 @@ export default function SubscriptionsLionTv() {
                       <MenuItem value="">
                         <em>{t('common.selectOption', 'Select an option')}</em>
                       </MenuItem>
-                      {lines.length === 0 ? (
+                      {plusLines.length === 0 ? (
                         <MenuItem value="" disabled>
-                          {t('subscriptions.form.noLines', 'No lines available')}
+                          {t('subscriptions.form.noPlusLines', 'No LION_PLUS+ lines available')}
                         </MenuItem>
                       ) : (
-                        lines.map((l) => (
+                        plusLines.map((l) => (
                           <MenuItem key={l.id} value={l.id} sx={{ py: 0.7 }}>
                             <Stack direction="row" spacing={0.8} alignItems="center">
                               <Avatar sx={{ width: 24, height: 24, bgcolor: 'primary.lighter', color: 'primary.main', fontSize: 12 }}>
@@ -1493,7 +1500,7 @@ export default function SubscriptionsLionTv() {
                       )}
                     </Select>
                     <FormHelperText>
-                      {t('subscriptions.form.linesPlusHint', 'Secondary line (optional)')}
+                      {t('subscriptions.form.linesPlusHint', 'Only LION_PLUS+ lines (optional)')}
                     </FormHelperText>
                   </FormControl>
                 </Grid>
