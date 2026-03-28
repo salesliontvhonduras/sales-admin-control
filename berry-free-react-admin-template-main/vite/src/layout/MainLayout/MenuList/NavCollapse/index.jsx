@@ -190,7 +190,7 @@ export default function NavCollapse({ menu, level, parentId }) {
                     color: 'inherit',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
-                    width: 120
+                    width: 170
                   }}
                 >
                   {t(menu.title)}

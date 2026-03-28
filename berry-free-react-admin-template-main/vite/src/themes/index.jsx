@@ -27,12 +27,15 @@ export default function ThemeCustomization({ children }) {
   const themeOptions = useMemo(
     () => ({
       direction: 'ltr',
+      shape: {
+        borderRadius: Math.max(Number(borderRadius || 8), 8)
+      },
       mixins: {
         toolbar: {
-          minHeight: '48px',
+          minHeight: '56px',
           padding: '16px',
           '@media (min-width: 600px)': {
-            minHeight: '48px'
+            minHeight: '56px'
           }
         }
       },
@@ -46,9 +49,36 @@ export default function ThemeCustomization({ children }) {
       cssVariables: {
         cssVarPrefix: CSS_VAR_PREFIX,
         colorSchemeSelector: 'data-color-scheme'
-      }
+      },
+      shadows: [
+        'none',
+        '0 1px 2px rgba(15, 23, 42, 0.08)',
+        '0 2px 6px rgba(15, 23, 42, 0.1)',
+        '0 4px 10px rgba(15, 23, 42, 0.12)',
+        '0 6px 14px rgba(15, 23, 42, 0.13)',
+        '0 8px 18px rgba(15, 23, 42, 0.15)',
+        '0 10px 22px rgba(15, 23, 42, 0.16)',
+        '0 12px 24px rgba(15, 23, 42, 0.16)',
+        '0 12px 28px rgba(15, 23, 42, 0.17)',
+        '0 14px 30px rgba(15, 23, 42, 0.18)',
+        '0 16px 34px rgba(15, 23, 42, 0.18)',
+        '0 18px 36px rgba(15, 23, 42, 0.19)',
+        '0 20px 38px rgba(15, 23, 42, 0.19)',
+        '0 22px 40px rgba(15, 23, 42, 0.2)',
+        '0 24px 44px rgba(15, 23, 42, 0.2)',
+        '0 26px 46px rgba(15, 23, 42, 0.2)',
+        '0 28px 48px rgba(15, 23, 42, 0.21)',
+        '0 30px 52px rgba(15, 23, 42, 0.21)',
+        '0 32px 54px rgba(15, 23, 42, 0.22)',
+        '0 34px 56px rgba(15, 23, 42, 0.22)',
+        '0 36px 58px rgba(15, 23, 42, 0.23)',
+        '0 38px 62px rgba(15, 23, 42, 0.23)',
+        '0 40px 64px rgba(15, 23, 42, 0.24)',
+        '0 42px 66px rgba(15, 23, 42, 0.24)',
+        '0 44px 68px rgba(15, 23, 42, 0.25)'
+      ]
     }),
-    [themeTypography, palette]
+    [themeTypography, palette, borderRadius]
   );
 
   const themes = createTheme(themeOptions);

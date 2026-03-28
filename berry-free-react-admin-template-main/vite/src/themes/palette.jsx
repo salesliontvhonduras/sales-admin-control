@@ -76,7 +76,13 @@ export function buildPalette(presetColor) {
     divider: colors.grey200,
     background: {
       paper: colors.paper,
-      default: colors.paper
+      default: '#f6f8fc'
+    },
+    action: {
+      hover: 'rgba(25, 118, 210, 0.06)',
+      selected: 'rgba(25, 118, 210, 0.12)',
+      focus: 'rgba(25, 118, 210, 0.18)',
+      disabledBackground: colors.grey100
     }
   };
 

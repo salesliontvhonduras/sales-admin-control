@@ -12,6 +12,8 @@ export default function Chip(theme) {
       },
       styleOverrides: {
         root: {
+          borderRadius: 999,
+          fontWeight: 600,
           variants: [
             {
               props: { variant: 'light' }, // Variant for light Chip
@@ -63,6 +65,14 @@ export default function Chip(theme) {
           '&.MuiChip-deletable .MuiChip-deleteIcon': {
             color: 'inherit'
           }
+        },
+        sizeSmall: {
+          height: 24,
+          fontSize: '0.68rem'
+        },
+        sizeMedium: {
+          height: 30,
+          fontSize: '0.75rem'
         }
       }
     }

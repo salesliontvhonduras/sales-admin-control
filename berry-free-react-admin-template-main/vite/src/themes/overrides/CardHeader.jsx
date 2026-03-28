@@ -6,10 +6,14 @@ export default function CardHeader(theme) {
       styleOverrides: {
         root: {
           color: theme.vars.palette.text.dark,
-          padding: '24px'
+          padding: '18px 20px'
         },
         title: {
-          fontSize: '1.125rem'
+          fontSize: '1.03rem',
+          fontWeight: 700
+        },
+        subheader: {
+          fontSize: '0.78rem'
         }
       }
     }

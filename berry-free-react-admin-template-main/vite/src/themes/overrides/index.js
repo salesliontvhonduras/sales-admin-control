@@ -10,6 +10,7 @@ import CardContent from './CardContent';
 import CardHeader from './CardHeader';
 import Checkbox from './Checkbox';
 import Chip from './Chip';
+import CssBaseline from './CssBaseline';
 import DataGrid from './DataGrid';
 import DatePicker from './DatePicker';
 import Divider from './Divider';
@@ -17,6 +18,7 @@ import DateTimePickerToolbar from './DateTimePickerToolbar';
 import Dialog from './Dialog';
 import DialogTitle from './DialogTitle';
 import InputBase from './InputBase';
+import OutlinedInput from './OutlinedInput';
 import ListItemButton from './ListItemButton';
 import ListItemIcon from './ListItemIcon';
 import ListItemText from './ListItemText';
@@ -39,13 +41,15 @@ export default function ComponentsOverrides(theme, borderRadius, outlinedFilled)
     CardHeader(theme),
     Checkbox(),
     Chip(theme),
+    CssBaseline(theme),
     DataGrid(theme),
     DatePicker(),
     DateTimePickerToolbar(),
-    Dialog(),
-    DialogTitle(),
+    Dialog(theme),
+    DialogTitle(theme),
     Divider(theme),
     InputBase(theme),
+    OutlinedInput(theme, borderRadius, outlinedFilled),
     ListItemButton(theme),
     ListItemIcon(theme),
     ListItemText(theme),

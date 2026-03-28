@@ -6,14 +6,18 @@ export default function ListItemButton(theme) {
       styleOverrides: {
         root: {
           color: theme.vars.palette.text.primary,
-          paddingTop: '10px',
-          paddingBottom: '10px',
+          paddingTop: '9px',
+          paddingBottom: '9px',
+          borderRadius: 10,
+          transition: 'all 140ms ease',
 
           '&.Mui-selected': {
             color: theme.vars.palette.secondary.dark,
             backgroundColor: theme.vars.palette.secondary.light,
+            boxShadow: 'inset 0 0 0 1px rgba(25, 118, 210, 0.16)',
             '&:hover': {
-              backgroundColor: theme.vars.palette.secondary.light
+              backgroundColor: theme.vars.palette.secondary.light,
+              transform: 'translateX(1px)'
             },
             '& .MuiListItemIcon-root': {
               color: theme.vars.palette.secondary.dark
@@ -23,6 +27,7 @@ export default function ListItemButton(theme) {
           '&:hover': {
             backgroundColor: theme.vars.palette.secondary.light,
             color: theme.vars.palette.secondary.dark,
+            transform: 'translateX(1px)',
             '& .MuiListItemIcon-root': {
               color: theme.vars.palette.secondary.dark
             }

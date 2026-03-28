@@ -34,6 +34,7 @@ const liontv = {
     {
       id: 'liontv-overview',
       title: 'Resumen',
+      caption: 'Control diario y prioridades',
       type: 'collapse',
       icon: icons.IconDashboard,
       children: [
@@ -49,6 +50,7 @@ const liontv = {
     {
       id: 'liontv-commercial',
       title: 'Clientes y Ventas',
+      caption: 'CRM, cobros y relación comercial',
       type: 'collapse',
       icon: icons.IconUsers,
       children: [
@@ -106,6 +108,7 @@ const liontv = {
     {
       id: 'liontv-operations',
       title: 'Operación Técnica',
+      caption: 'Inventario, líneas y cuentas',
       type: 'collapse',
       icon: icons.IconRouter,
       children: [
@@ -142,6 +145,7 @@ const liontv = {
     {
       id: 'liontv-content',
       title: 'Contenido y Feed',
+      caption: 'Demos y catálogo visible',
       type: 'collapse',
       icon: icons.IconDeviceTv,
       children: [
