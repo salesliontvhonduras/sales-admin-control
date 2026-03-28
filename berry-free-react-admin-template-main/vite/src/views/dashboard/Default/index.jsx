@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSnackbar } from 'notistack';
 import Chart from 'react-apexcharts';
 import useAuth from 'hooks/useAuth';
 
@@ -31,20 +30,7 @@ import TimelineIcon from '@mui/icons-material/Timeline';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 
 import { gridSpacing } from 'store/constant';
-import { lionTvApi } from 'utils/api';
-
-function unwrap(res) {
-  return res?.data?.data ?? res?.data ?? null;
-}
-
-function parseCollection(res) {
-  const payload = unwrap(res);
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.items)) return payload.items;
-  if (Array.isArray(payload?.content)) return payload.content;
-  return [];
-}
+import { useLionTvOverview } from 'api/liontv-overview';
 
 function toUpper(value) {
   return String(value || '')
@@ -182,79 +168,33 @@ function ChartCard({ title, helper, children }) {
 export default function DashboardDefault() {
   const theme = useTheme();
   const { t } = useTranslation();
-  const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
 
-  const [loading, setLoading] = useState(false);
+  const {
+    data: overviewData,
+    error: overviewError,
+    isLoading: loading
+  } = useLionTvOverview({
+    enabled: Boolean(accessToken),
+    scope: 'extended'
+  });
 
-  const [customers, setCustomers] = useState([]);
-  const [subscriptions, setSubscriptions] = useState([]);
-  const [invoices, setInvoices] = useState([]);
-  const [licenses, setLicenses] = useState([]);
-  const [lines, setLines] = useState([]);
-  const [commitments, setCommitments] = useState([]);
-  const [managedAccounts, setManagedAccounts] = useState([]);
-  const [purchases, setPurchases] = useState([]);
-  const [potentialCustomers, setPotentialCustomers] = useState([]);
-
-  const getCollection = useCallback(
-    async (path, params = {}) => {
-      const res = await lionTvApi.get(path, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params,
-        skipAuthRedirect: true
-      });
-      return parseCollection(res);
-    },
-    [accessToken]
+  const collections = useMemo(
+    () => ({
+      customers: overviewData?.customers || [],
+      subscriptions: overviewData?.subscriptions || [],
+      invoices: overviewData?.invoices || [],
+      licenses: overviewData?.licenses || [],
+      lines: overviewData?.lines || [],
+      commitments: overviewData?.commitments || [],
+      managedAccounts: overviewData?.managedAccounts || [],
+      purchases: overviewData?.purchases || [],
+      potentialCustomers: overviewData?.potentialCustomers || []
+    }),
+    [overviewData]
   );
 
-  const load = useCallback(async () => {
-    if (!accessToken) return;
-    setLoading(true);
-    try {
-      const tasks = await Promise.allSettled([
-        getCollection('/customers/v1', { index: 0, size: 5000 }),
-        getCollection('/subscriptions/v1', { index: 0, size: 5000 }),
-        getCollection('/invoices/v1', { index: 0, size: 5000 }),
-        getCollection('/licenses/v1', { index: 0, size: 5000 }),
-        getCollection('/lines/v1/list-lines', { index: 0, start: 0, size: 5000, filters: '', sorting: '' }),
-        getCollection('/payment-commitments/v1', { index: 0, size: 5000 }),
-        getCollection('/managed-accounts/v1', { index: 0, size: 5000 }),
-        getCollection('/business-purchases/v1', { index: 0, size: 5000 }),
-        getCollection('/potential-customers/v1', { index: 0, size: 5000 })
-      ]);
-
-      const map = (task) => (task.status === 'fulfilled' ? task.value : []);
-      setCustomers(map(tasks[0]));
-      setSubscriptions(map(tasks[1]));
-      setInvoices(map(tasks[2]));
-      setLicenses(map(tasks[3]));
-      setLines(map(tasks[4]));
-      setCommitments(map(tasks[5]));
-      setManagedAccounts(map(tasks[6]));
-      setPurchases(map(tasks[7]));
-      setPotentialCustomers(map(tasks[8]));
-
-      const failed = tasks.filter((task) => task.status === 'rejected').length;
-      if (failed > 0) {
-        enqueueSnackbar(t('dashboard.partial', 'Se cargaron datos parciales para los KPI.'), { variant: 'warning' });
-      }
-    } catch (error) {
-      const status = error?.response?.status || error?.request?.status;
-      if (status !== 401) {
-        enqueueSnackbar(error?.response?.data?.message || t('dashboard.loadError', 'No se pudo cargar el dashboard.'), {
-          variant: 'error'
-        });
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [accessToken, enqueueSnackbar, getCollection, t]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  const { customers, subscriptions, invoices, licenses, lines, commitments, managedAccounts, purchases, potentialCustomers } = collections;
 
   const metrics = useMemo(() => {
     const now = new Date();
@@ -818,6 +758,22 @@ export default function DashboardDefault() {
           {t('dashboard.kpiSubtitle', 'Dashboard con KPI y gráficos en tiempo real del ecosistema LionTV.')}
         </Alert>
       </Grid>
+
+      {overviewData?.meta?.partial ? (
+        <Grid size={12}>
+          <Alert severity="warning" variant="outlined">
+            {t('dashboard.partial', 'Se cargaron datos parciales para los KPI.')}
+          </Alert>
+        </Grid>
+      ) : null}
+
+      {overviewError ? (
+        <Grid size={12}>
+          <Alert severity="error" variant="outlined">
+            {overviewError?.response?.data?.message || t('dashboard.loadError', 'No se pudo cargar el dashboard.')}
+          </Alert>
+        </Grid>
+      ) : null}
 
       {loading ? (
         <Grid size={12}>

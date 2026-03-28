@@ -4,26 +4,26 @@ import RequireAuth from '../routes/RequireAuth';
 // project imports
 import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
-import DemosLionTv from 'views/liontv/DemosLionTv';
-import CustomersLionTv from 'views/liontv/CustomersLionTv';
-import SubscriptionsLionTv from 'views/liontv/SubscriptionsLionTv';
-import InvoicesLionTv from 'views/liontv/InvoicesLionTv';
-import BusinessPurchasesLionTv from 'views/liontv/BusinessPurchasesLionTv';
-import LinesLionTv from 'views/liontv/LinesLionTv';
-import LicensesLionTv from 'views/liontv/LicensesLionTv';
-import CustomerCrmLionTv from 'views/liontv/CustomerCrmLionTv';
-import PlusLinesExplorer from 'views/liontv/PlusLinesExplorer';
-import PotentialCustomersLionTv from 'views/liontv/PotentialCustomersLionTv';
-import PaymentCommitmentsLionTv from 'views/liontv/PaymentCommitmentsLionTv';
-import MoviesFeedLionTv from 'views/liontv/MoviesFeedLionTv';
-import SeriesFeedLionTv from 'views/liontv/SeriesFeedLionTv';
-import FutbolEventsFeedLionTv from 'views/liontv/FutbolEventsFeedLionTv';
-import ManagedAccountsLionTv from 'views/liontv/ManagedAccountsLionTv';
-import LionTvDashboard from 'views/liontv/LionTvDashboard';
 
 // dashboard routing
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
 const SmsManagement = Loadable(lazy(() => import('views/sms/SmsManagement')));
+const LionTvDashboard = Loadable(lazy(() => import('views/liontv/LionTvDashboard')));
+const DemosLionTv = Loadable(lazy(() => import('views/liontv/DemosLionTv')));
+const CustomersLionTv = Loadable(lazy(() => import('views/liontv/CustomersLionTv')));
+const PotentialCustomersLionTv = Loadable(lazy(() => import('views/liontv/PotentialCustomersLionTv')));
+const PaymentCommitmentsLionTv = Loadable(lazy(() => import('views/liontv/PaymentCommitmentsLionTv')));
+const MoviesFeedLionTv = Loadable(lazy(() => import('views/liontv/MoviesFeedLionTv')));
+const SeriesFeedLionTv = Loadable(lazy(() => import('views/liontv/SeriesFeedLionTv')));
+const FutbolEventsFeedLionTv = Loadable(lazy(() => import('views/liontv/FutbolEventsFeedLionTv')));
+const ManagedAccountsLionTv = Loadable(lazy(() => import('views/liontv/ManagedAccountsLionTv')));
+const CustomerCrmLionTv = Loadable(lazy(() => import('views/liontv/CustomerCrmLionTv')));
+const SubscriptionsLionTv = Loadable(lazy(() => import('views/liontv/SubscriptionsLionTv')));
+const InvoicesLionTv = Loadable(lazy(() => import('views/liontv/InvoicesLionTv')));
+const BusinessPurchasesLionTv = Loadable(lazy(() => import('views/liontv/BusinessPurchasesLionTv')));
+const LicensesLionTv = Loadable(lazy(() => import('views/liontv/LicensesLionTv')));
+const LinesLionTv = Loadable(lazy(() => import('views/liontv/LinesLionTv')));
+const PlusLinesExplorer = Loadable(lazy(() => import('views/liontv/PlusLinesExplorer')));
 
 const MainRoutes = {
   path: '/',

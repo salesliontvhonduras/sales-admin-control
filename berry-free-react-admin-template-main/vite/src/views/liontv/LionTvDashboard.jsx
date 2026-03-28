@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -40,7 +40,7 @@ import LaunchIcon from '@mui/icons-material/Launch';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
-import { lionTvApi } from 'utils/api';
+import { useLionTvOverview } from 'api/liontv-overview';
 
 const ROUTES = {
   licenses: '/liontv/licenses',
@@ -54,19 +54,6 @@ const ROUTES = {
 const HORIZON_OPTIONS = [7, 15, 30, 60];
 const IGNORED_STATUSES = new Set(['CANCELLED', 'REMOVED']);
 const LOST_THRESHOLD_DAYS = -45;
-
-function unwrap(res) {
-  return res?.data?.data ?? res?.data ?? null;
-}
-
-function parseCollection(res) {
-  const payload = unwrap(res);
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.items)) return payload.items;
-  if (Array.isArray(payload?.content)) return payload.content;
-  return [];
-}
 
 function toUpper(value) {
   return String(value || '')
@@ -358,12 +345,22 @@ function AlertsBucketCard({ title, helper, alerts, onOpenAlert }) {
                 <Card key={`${title}-${alert.type}-${alert.entityId}-${alert.reference}`} variant="outlined" sx={{ borderRadius: 2 }}>
                   <CardContent sx={{ '&:last-child': { pb: 2 } }}>
                     <Stack spacing={1}>
-                      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} gap={1}>
+                      <Stack
+                        direction={{ xs: 'column', sm: 'row' }}
+                        justifyContent="space-between"
+                        alignItems={{ xs: 'flex-start', sm: 'center' }}
+                        gap={1}
+                      >
                         <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap>
                           <Chip size="small" color={sev.color} variant="outlined" label={sev.label} />
                           <Chip size="small" color="primary" variant="outlined" label={alert.type} />
                         </Stack>
-                        <Button size="small" variant="outlined" endIcon={<LaunchIcon fontSize="small" />} onClick={() => onOpenAlert(alert)}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          endIcon={<LaunchIcon fontSize="small" />}
+                          onClick={() => onOpenAlert(alert)}
+                        >
                           Ver
                         </Button>
                       </Stack>
@@ -386,7 +383,11 @@ function AlertsBucketCard({ title, helper, alerts, onOpenAlert }) {
                 </Card>
               );
             })}
-            {alerts.length === 0 ? <Alert severity="success" variant="outlined">Sin alertas en este bloque.</Alert> : null}
+            {alerts.length === 0 ? (
+              <Alert severity="success" variant="outlined">
+                Sin alertas en este bloque.
+              </Alert>
+            ) : null}
           </Stack>
         </Stack>
       </CardContent>
@@ -400,7 +401,6 @@ export default function LionTvDashboard() {
   const { accessToken } = useAuth();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(false);
   const [horizonDays, setHorizonDays] = useState(30);
   const [criticalOnly, setCriticalOnly] = useState(false);
 
@@ -411,6 +411,17 @@ export default function LionTvDashboard() {
   const [managedAccounts, setManagedAccounts] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [commitments, setCommitments] = useState([]);
+  const lastToastRef = useRef('');
+
+  const {
+    data: overviewData,
+    error: overviewError,
+    isLoading: loading,
+    refresh
+  } = useLionTvOverview({
+    enabled: Boolean(accessToken),
+    scope: 'core'
+  });
 
   const customerNameMap = useMemo(() => {
     const map = {};
@@ -421,60 +432,53 @@ export default function LionTvDashboard() {
     return map;
   }, [customers]);
 
-  const getCollection = useCallback(
-    async (path, params = {}) => {
-      const res = await lionTvApi.get(path, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params,
-        skipAuthRedirect: true
-      });
-      return parseCollection(res);
-    },
-    [accessToken]
-  );
-
-  const load = useCallback(async () => {
-    if (!accessToken) return;
-    setLoading(true);
-    try {
-      const tasks = await Promise.allSettled([
-        getCollection('/customers/v1', { index: 0, size: 5000 }),
-        getCollection('/subscriptions/v1', { index: 0, size: 5000 }),
-        getCollection('/licenses/v1', { index: 0, size: 5000 }),
-        getCollection('/lines/v1/list-lines', { index: 0, start: 0, size: 5000, filters: '', sorting: '' }),
-        getCollection('/managed-accounts/v1', { index: 0, size: 5000 }),
-        getCollection('/invoices/v1', { index: 0, size: 5000 }),
-        getCollection('/payment-commitments/v1', { index: 0, size: 5000 })
-      ]);
-
-      const map = (task) => (task.status === 'fulfilled' ? task.value : []);
-      setCustomers(map(tasks[0]).map(normalizeCustomer));
-      setSubscriptions(map(tasks[1]).map(normalizeSubscription));
-      setLicenses(map(tasks[2]).map(normalizeLicense));
-      setLines(map(tasks[3]).map(normalizeLine));
-      setManagedAccounts(map(tasks[4]).map(normalizeManagedAccount));
-      setInvoices(map(tasks[5]).map(normalizeInvoice));
-      setCommitments(map(tasks[6]).map(normalizeCommitment));
-
-      const failed = tasks.filter((task) => task.status === 'rejected').length;
-      if (failed > 0) {
-        enqueueSnackbar(t('liontvDashboard.partialLoad', 'Se cargaron datos parciales para seguimiento.'), { variant: 'warning' });
-      }
-    } catch (error) {
-      const status = error?.response?.status || error?.request?.status;
-      if (status !== 401) {
-        enqueueSnackbar(error?.response?.data?.message || t('liontvDashboard.loadError', 'No se pudo cargar el módulo de seguimiento.'), {
-          variant: 'error'
-        });
-      }
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (!accessToken) {
+      setCustomers([]);
+      setSubscriptions([]);
+      setLicenses([]);
+      setLines([]);
+      setManagedAccounts([]);
+      setInvoices([]);
+      setCommitments([]);
+      return;
     }
-  }, [accessToken, enqueueSnackbar, getCollection, t]);
+
+    setCustomers((overviewData?.customers || []).map(normalizeCustomer));
+    setSubscriptions((overviewData?.subscriptions || []).map(normalizeSubscription));
+    setLicenses((overviewData?.licenses || []).map(normalizeLicense));
+    setLines((overviewData?.lines || []).map(normalizeLine));
+    setManagedAccounts((overviewData?.managedAccounts || []).map(normalizeManagedAccount));
+    setInvoices((overviewData?.invoices || []).map(normalizeInvoice));
+    setCommitments((overviewData?.commitments || []).map(normalizeCommitment));
+  }, [accessToken, overviewData]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (!accessToken) return;
+
+    if (overviewData?.meta?.partial) {
+      const key = 'partial';
+      if (lastToastRef.current !== key) {
+        enqueueSnackbar(t('liontvDashboard.partialLoad', 'Se cargaron datos parciales para seguimiento.'), { variant: 'warning' });
+        lastToastRef.current = key;
+      }
+      return;
+    }
+
+    const status = overviewError?.response?.status || overviewError?.request?.status;
+    if (overviewError && status !== 401) {
+      const message =
+        overviewError?.response?.data?.message || t('liontvDashboard.loadError', 'No se pudo cargar el módulo de seguimiento.');
+      const key = `error:${message}`;
+      if (lastToastRef.current !== key) {
+        enqueueSnackbar(message, { variant: 'error' });
+        lastToastRef.current = key;
+      }
+      return;
+    }
+
+    lastToastRef.current = '';
+  }, [accessToken, enqueueSnackbar, overviewData?.meta?.partial, overviewError, t]);
 
   const tracking = useMemo(() => {
     const queue = [];
@@ -638,7 +642,7 @@ export default function LionTvDashboard() {
       title={t('menu.liontvDashboard', 'Seguimiento Operativo')}
       secondary={
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" size="small" startIcon={<RefreshIcon fontSize="small" />} onClick={load} disabled={loading}>
+          <Button variant="outlined" size="small" startIcon={<RefreshIcon fontSize="small" />} onClick={() => refresh()} disabled={loading}>
             {t('actions.refresh', 'Recargar')}
           </Button>
         </Stack>

@@ -3,9 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import Avatar from '@mui/material/Avatar';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Chip from '@mui/material/Chip';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import Divider from '@mui/material/Divider';
 import Dialog from '@mui/material/Dialog';
@@ -21,20 +18,17 @@ import OutlinedInput from '@mui/material/OutlinedInput';
 import Paper from '@mui/material/Paper';
 import Popper from '@mui/material/Popper';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
 import { useNavigate } from 'react-router-dom';
 
 // project imports
-import UpgradePlanCard from './UpgradePlanCard';
 import MainCard from 'ui-component/cards/MainCard';
 import Transitions from 'ui-component/extended/Transitions';
 import useConfig from 'hooks/useConfig';
 import useAuth from 'hooks/useAuth';
 import { useSnackbar } from 'notistack';
-import Tooltip from '@mui/material/Tooltip';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -51,7 +45,6 @@ import { IconLogout, IconSearch, IconSettings, IconUser, IconLock, IconKey, Icon
 
 const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
 
-
 export default function ProfileSection() {
   const theme = useTheme();
   const {
@@ -61,9 +54,7 @@ export default function ProfileSection() {
   const { logout, user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
 
-  const [sdm, setSdm] = useState(true);
   const [value, setValue] = useState('');
-  const [notification, setNotification] = useState(false);
   const [open, setOpen] = useState(false);
   const [openPwd, setOpenPwd] = useState(false);
   const [pwdLoading, setPwdLoading] = useState(false);
@@ -290,8 +281,7 @@ export default function ProfileSection() {
             display: 'flex',
             alignItems: 'center',
             gap: 1,
-            background: (theme) =>
-              `linear-gradient(135deg, ${theme.palette.primary.light}30 0%, ${theme.palette.background.paper} 100%)`
+            background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.light}30 0%, ${theme.palette.background.paper} 100%)`
           }}
         >
           <Avatar sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', width: 40, height: 40, boxShadow: 2 }}>

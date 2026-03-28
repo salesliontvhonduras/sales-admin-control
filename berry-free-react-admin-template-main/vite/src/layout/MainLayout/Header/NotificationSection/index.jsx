@@ -23,7 +23,7 @@ import Box from '@mui/material/Box';
 import useAuth from 'hooks/useAuth';
 import MainCard from 'ui-component/cards/MainCard';
 import Transitions from 'ui-component/extended/Transitions';
-import { lionTvApi } from 'utils/api';
+import { useLionTvOverview } from 'api/liontv-overview';
 import NotificationList from './NotificationList';
 
 // assets
@@ -41,19 +41,6 @@ const ROUTES = {
 
 const IGNORED_STATUSES = new Set(['CANCELLED', 'REMOVED']);
 const REFRESH_INTERVAL_MS = 180000;
-
-function unwrap(res) {
-  return res?.data?.data ?? res?.data ?? null;
-}
-
-function parseCollection(res) {
-  const payload = unwrap(res);
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.items)) return payload.items;
-  if (Array.isArray(payload?.content)) return payload.content;
-  return [];
-}
 
 function pickFirst(item, keys, fallback = null) {
   for (const key of keys) {
@@ -274,82 +261,58 @@ export default function NotificationSection() {
   const { accessToken } = useAuth();
 
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [alerts, setAlerts] = useState([]);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [lastSyncAt, setLastSyncAt] = useState(null);
+  const {
+    data: overviewData,
+    error: overviewError,
+    isLoading: loading,
+    refresh
+  } = useLionTvOverview({
+    enabled: Boolean(accessToken),
+    scope: 'core',
+    refreshInterval: REFRESH_INTERVAL_MS
+  });
+
+  const alerts = useMemo(
+    () =>
+      buildTodayAlerts({
+        customers: overviewData?.customers || [],
+        subscriptions: overviewData?.subscriptions || [],
+        licenses: overviewData?.licenses || [],
+        lines: overviewData?.lines || [],
+        managedAccounts: overviewData?.managedAccounts || [],
+        invoices: overviewData?.invoices || [],
+        commitments: overviewData?.commitments || []
+      }),
+    [overviewData]
+  );
+
+  const lastSyncAt = useMemo(() => {
+    const fetchedAt = overviewData?.meta?.fetchedAt;
+    return fetchedAt ? new Date(fetchedAt) : null;
+  }, [overviewData?.meta?.fetchedAt]);
+
+  const errorMessage = useMemo(() => {
+    if (!accessToken) return '';
+    if (overviewData?.meta?.partial) return 'Se cargaron alertas parciales.';
+
+    const status = overviewError?.response?.status || overviewError?.request?.status;
+    if (overviewError && status !== 401) {
+      return overviewError?.response?.data?.message || 'No se pudieron cargar las alertas de hoy.';
+    }
+
+    return '';
+  }, [accessToken, overviewData?.meta?.partial, overviewError]);
 
   /**
    * anchorRef is used on different componets and specifying one type leads to other components throwing an error
    * */
   const anchorRef = useRef(null);
 
-  const getCollection = useCallback(
-    async (path, params = {}) => {
-      const res = await lionTvApi.get(path, {
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-        params,
-        skipAuthRedirect: true
-      });
-      return parseCollection(res);
-    },
-    [accessToken]
-  );
-
-  const loadTodayAlerts = useCallback(
-    async ({ silent = false } = {}) => {
-      if (!accessToken) {
-        setAlerts([]);
-        setErrorMessage('');
-        return;
-      }
-
-      if (!silent) setLoading(true);
-
-      try {
-        const tasks = await Promise.allSettled([
-          getCollection('/customers/v1', { index: 0, size: 5000 }),
-          getCollection('/subscriptions/v1', { index: 0, size: 5000 }),
-          getCollection('/licenses/v1', { index: 0, size: 5000 }),
-          getCollection('/lines/v1/list-lines', { index: 0, start: 0, size: 5000, filters: '', sorting: '' }),
-          getCollection('/managed-accounts/v1', { index: 0, size: 5000 }),
-          getCollection('/invoices/v1', { index: 0, size: 5000 }),
-          getCollection('/payment-commitments/v1', { index: 0, size: 5000 })
-        ]);
-
-        const mapResult = (task) => (task.status === 'fulfilled' ? task.value : []);
-        const builtAlerts = buildTodayAlerts({
-          customers: mapResult(tasks[0]),
-          subscriptions: mapResult(tasks[1]),
-          licenses: mapResult(tasks[2]),
-          lines: mapResult(tasks[3]),
-          managedAccounts: mapResult(tasks[4]),
-          invoices: mapResult(tasks[5]),
-          commitments: mapResult(tasks[6])
-        });
-
-        setAlerts(builtAlerts);
-        setLastSyncAt(new Date());
-
-        const failedCalls = tasks.filter((task) => task.status === 'rejected').length;
-        setErrorMessage(failedCalls > 0 ? 'Se cargaron alertas parciales.' : '');
-      } catch (error) {
-        const status = error?.response?.status || error?.request?.status;
-        if (status !== 401) {
-          setErrorMessage(error?.response?.data?.message || 'No se pudieron cargar las alertas de hoy.');
-        }
-      } finally {
-        if (!silent) setLoading(false);
-      }
-    },
-    [accessToken, getCollection]
-  );
-
   const handleToggle = () => {
     const nextOpen = !open;
     setOpen(nextOpen);
     if (nextOpen) {
-      loadTodayAlerts({ silent: true });
+      refresh();
     }
   };
 
@@ -367,18 +330,6 @@ export default function NotificationSection() {
     }
     prevOpen.current = open;
   }, [open]);
-
-  useEffect(() => {
-    loadTodayAlerts();
-  }, [loadTodayAlerts]);
-
-  useEffect(() => {
-    if (!accessToken) return undefined;
-    const timer = setInterval(() => {
-      loadTodayAlerts({ silent: true });
-    }, REFRESH_INTERVAL_MS);
-    return () => clearInterval(timer);
-  }, [accessToken, loadTodayAlerts]);
 
   const badgeCount = useMemo(() => {
     if (alerts.length > 99) return '99+';
@@ -461,7 +412,7 @@ export default function NotificationSection() {
                           variant="text"
                           size="small"
                           startIcon={loading ? <CircularProgress size={12} color="inherit" /> : <RefreshIcon fontSize="small" />}
-                          onClick={() => loadTodayAlerts()}
+                          onClick={() => refresh()}
                           disabled={loading}
                         >
                           Recargar

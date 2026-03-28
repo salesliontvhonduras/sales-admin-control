@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // material-ui
@@ -14,7 +14,7 @@ import Box from '@mui/material/Box';
 
 // project imports
 import useAuth from 'hooks/useAuth';
-import { lionTvApi } from 'utils/api';
+import { useLionTvOverview } from 'api/liontv-overview';
 
 // assets
 import RadarRoundedIcon from '@mui/icons-material/RadarRounded';
@@ -22,21 +22,7 @@ import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import PaidRoundedIcon from '@mui/icons-material/PaidRounded';
 import LaunchRoundedIcon from '@mui/icons-material/LaunchRounded';
 
-const REFRESH_INTERVAL_MS = 180000;
 const STATUS_EXCLUDED = new Set(['CANCELLED', 'REMOVED', 'INACTIVE']);
-
-function unwrap(res) {
-  return res?.data?.data ?? res?.data ?? null;
-}
-
-function parseCollection(res) {
-  const payload = unwrap(res);
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.items)) return payload.items;
-  if (Array.isArray(payload?.content)) return payload.content;
-  return [];
-}
 
 function pickFirst(item, keys, fallback = null) {
   for (const key of keys) {
@@ -140,142 +126,98 @@ function MenuCard() {
   const theme = useTheme();
   const navigate = useNavigate();
   const { accessToken } = useAuth();
-
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [lastSyncAt, setLastSyncAt] = useState(null);
-  const [radar, setRadar] = useState({
-    today: 0,
-    tomorrow: 0,
-    next7: 0,
-    pendingInvoicesCount: 0,
-    pendingCommitmentsCount: 0,
-    pendingTotalAmount: 0
+  const {
+    data: overviewData,
+    error: overviewError,
+    isLoading: loading
+  } = useLionTvOverview({
+    enabled: Boolean(accessToken),
+    scope: 'core'
   });
 
-  const getCollection = useCallback(
-    async (path, params = {}) => {
-      const res = await lionTvApi.get(path, {
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-        params,
-        skipAuthRedirect: true
-      });
-      return parseCollection(res);
-    },
-    [accessToken]
-  );
+  const radar = useMemo(() => {
+    const subscriptions = overviewData?.subscriptions || [];
+    const licenses = overviewData?.licenses || [];
+    const lines = overviewData?.lines || [];
+    const managedAccounts = overviewData?.managedAccounts || [];
+    const invoices = overviewData?.invoices || [];
+    const commitments = overviewData?.commitments || [];
 
-  const loadRadar = useCallback(
-    async ({ silent = false } = {}) => {
-      if (!accessToken) return;
-      if (!silent) setLoading(true);
+    const base = { today: 0, tomorrow: 0, next7: 0 };
+    const add = (target, source) => ({
+      today: target.today + source.today,
+      tomorrow: target.tomorrow + source.tomorrow,
+      next7: target.next7 + source.next7
+    });
 
-      try {
-        const tasks = await Promise.allSettled([
-          getCollection('/subscriptions/v1', { index: 0, size: 5000 }),
-          getCollection('/licenses/v1', { index: 0, size: 5000 }),
-          getCollection('/lines/v1/list-lines', { index: 0, start: 0, size: 5000, filters: '', sorting: '' }),
-          getCollection('/managed-accounts/v1', { index: 0, size: 5000 }),
-          getCollection('/invoices/v1', { index: 0, size: 5000 }),
-          getCollection('/payment-commitments/v1', { index: 0, size: 5000 })
-        ]);
+    let due = { ...base };
+    due = add(due, countDue(subscriptions, ['renewalDate', 'renewal_date', 'expDate', 'exp_date']));
+    due = add(due, countDue(licenses, ['expireAt', 'expire_at', 'expDate', 'exp_date']));
+    due = add(
+      due,
+      countDue(lines, ['exp_date', 'expDate'], (line) =>
+        pickFirst(line, ['status'], pickFirst(line, ['enabled'], true) ? 'ACTIVE' : 'INACTIVE')
+      )
+    );
+    due = add(
+      due,
+      countDue(managedAccounts, ['expirationDate', 'expiration_date'], (account) =>
+        pickFirst(account, ['accountStatus', 'status'], 'ACTIVE')
+      )
+    );
 
-        const subscriptions = tasks[0].status === 'fulfilled' ? tasks[0].value : [];
-        const licenses = tasks[1].status === 'fulfilled' ? tasks[1].value : [];
-        const lines = tasks[2].status === 'fulfilled' ? tasks[2].value : [];
-        const managedAccounts = tasks[3].status === 'fulfilled' ? tasks[3].value : [];
-        const invoices = tasks[4].status === 'fulfilled' ? tasks[4].value : [];
-        const commitments = tasks[5].status === 'fulfilled' ? tasks[5].value : [];
+    const pendingInvoices = invoices.filter((invoice) => {
+      const status = toUpper(pickFirst(invoice, ['status'], 'PENDING'));
+      const amountDue = money(pickFirst(invoice, ['amountDue', 'amount_due', 'totalAmount', 'total_amount'], 0));
+      const amountPaid = money(pickFirst(invoice, ['amountPaid', 'amount_paid'], 0));
+      const pendingAmount = money(pickFirst(invoice, ['pendingAmount', 'pending_amount'], Math.max(amountDue - amountPaid, 0)));
+      return status === 'PENDING' || pendingAmount > 0;
+    });
 
-        const base = { today: 0, tomorrow: 0, next7: 0 };
-        const add = (target, source) => ({
-          today: target.today + source.today,
-          tomorrow: target.tomorrow + source.tomorrow,
-          next7: target.next7 + source.next7
-        });
+    const pendingCommitments = commitments.filter((commitment) => {
+      const status = toUpper(pickFirst(commitment, ['status'], 'PENDING'));
+      const amountDue = money(pickFirst(commitment, ['amountDue', 'amount_due'], 0));
+      const amountPaid = money(pickFirst(commitment, ['amountPaid', 'amount_paid'], 0));
+      const pendingAmount = money(pickFirst(commitment, ['pendingAmount', 'pending_amount'], Math.max(amountDue - amountPaid, 0)));
+      return status === 'PENDING' || pendingAmount > 0;
+    });
 
-        let due = { ...base };
-        due = add(due, countDue(subscriptions, ['renewalDate', 'renewal_date', 'expDate', 'exp_date']));
-        due = add(due, countDue(licenses, ['expireAt', 'expire_at', 'expDate', 'exp_date']));
-        due = add(
-          due,
-          countDue(lines, ['exp_date', 'expDate'], (line) =>
-            pickFirst(line, ['status'], pickFirst(line, ['enabled'], true) ? 'ACTIVE' : 'INACTIVE')
-          )
-        );
-        due = add(
-          due,
-          countDue(managedAccounts, ['expirationDate', 'expiration_date'], (account) =>
-            pickFirst(account, ['accountStatus', 'status'], 'ACTIVE')
-          )
-        );
+    const pendingInvoicesTotal = pendingInvoices.reduce((acc, invoice) => {
+      const amountDue = money(pickFirst(invoice, ['amountDue', 'amount_due', 'totalAmount', 'total_amount'], 0));
+      const amountPaid = money(pickFirst(invoice, ['amountPaid', 'amount_paid'], 0));
+      const pendingAmount = money(pickFirst(invoice, ['pendingAmount', 'pending_amount'], Math.max(amountDue - amountPaid, 0)));
+      return acc + pendingAmount;
+    }, 0);
 
-        const pendingInvoices = invoices.filter((invoice) => {
-          const status = toUpper(pickFirst(invoice, ['status'], 'PENDING'));
-          const amountDue = money(pickFirst(invoice, ['amountDue', 'amount_due', 'totalAmount', 'total_amount'], 0));
-          const amountPaid = money(pickFirst(invoice, ['amountPaid', 'amount_paid'], 0));
-          const pendingAmount = money(pickFirst(invoice, ['pendingAmount', 'pending_amount'], Math.max(amountDue - amountPaid, 0)));
-          return status === 'PENDING' || pendingAmount > 0;
-        });
+    const pendingCommitmentsTotal = pendingCommitments.reduce((acc, commitment) => {
+      const amountDue = money(pickFirst(commitment, ['amountDue', 'amount_due'], 0));
+      const amountPaid = money(pickFirst(commitment, ['amountPaid', 'amount_paid'], 0));
+      const pendingAmount = money(pickFirst(commitment, ['pendingAmount', 'pending_amount'], Math.max(amountDue - amountPaid, 0)));
+      return acc + pendingAmount;
+    }, 0);
 
-        const pendingCommitments = commitments.filter((commitment) => {
-          const status = toUpper(pickFirst(commitment, ['status'], 'PENDING'));
-          const amountDue = money(pickFirst(commitment, ['amountDue', 'amount_due'], 0));
-          const amountPaid = money(pickFirst(commitment, ['amountPaid', 'amount_paid'], 0));
-          const pendingAmount = money(pickFirst(commitment, ['pendingAmount', 'pending_amount'], Math.max(amountDue - amountPaid, 0)));
-          return status === 'PENDING' || pendingAmount > 0;
-        });
+    return {
+      today: due.today,
+      tomorrow: due.tomorrow,
+      next7: due.next7,
+      pendingInvoicesCount: pendingInvoices.length,
+      pendingCommitmentsCount: pendingCommitments.length,
+      pendingTotalAmount: pendingInvoicesTotal + pendingCommitmentsTotal
+    };
+  }, [overviewData]);
 
-        const pendingInvoicesTotal = pendingInvoices.reduce((acc, invoice) => {
-          const amountDue = money(pickFirst(invoice, ['amountDue', 'amount_due', 'totalAmount', 'total_amount'], 0));
-          const amountPaid = money(pickFirst(invoice, ['amountPaid', 'amount_paid'], 0));
-          const pendingAmount = money(pickFirst(invoice, ['pendingAmount', 'pending_amount'], Math.max(amountDue - amountPaid, 0)));
-          return acc + pendingAmount;
-        }, 0);
+  const lastSyncAt = useMemo(() => {
+    const fetchedAt = overviewData?.meta?.fetchedAt;
+    return fetchedAt ? new Date(fetchedAt) : null;
+  }, [overviewData?.meta?.fetchedAt]);
 
-        const pendingCommitmentsTotal = pendingCommitments.reduce((acc, commitment) => {
-          const amountDue = money(pickFirst(commitment, ['amountDue', 'amount_due'], 0));
-          const amountPaid = money(pickFirst(commitment, ['amountPaid', 'amount_paid'], 0));
-          const pendingAmount = money(pickFirst(commitment, ['pendingAmount', 'pending_amount'], Math.max(amountDue - amountPaid, 0)));
-          return acc + pendingAmount;
-        }, 0);
-
-        setRadar({
-          today: due.today,
-          tomorrow: due.tomorrow,
-          next7: due.next7,
-          pendingInvoicesCount: pendingInvoices.length,
-          pendingCommitmentsCount: pendingCommitments.length,
-          pendingTotalAmount: pendingInvoicesTotal + pendingCommitmentsTotal
-        });
-
-        const failedCount = tasks.filter((task) => task.status === 'rejected').length;
-        setErrorMessage(failedCount > 0 ? 'Radar parcial: algunos módulos no cargaron.' : '');
-        setLastSyncAt(new Date());
-      } catch (error) {
-        const status = error?.response?.status || error?.request?.status;
-        if (status !== 401) {
-          setErrorMessage(error?.response?.data?.message || 'No se pudo cargar el radar operativo.');
-        }
-      } finally {
-        if (!silent) setLoading(false);
-      }
-    },
-    [accessToken, getCollection]
-  );
-
-  useEffect(() => {
-    if (!accessToken) return;
-    loadRadar();
-  }, [accessToken, loadRadar]);
-
-  useEffect(() => {
-    if (!accessToken) return undefined;
-    const timer = setInterval(() => {
-      loadRadar({ silent: true });
-    }, REFRESH_INTERVAL_MS);
-    return () => clearInterval(timer);
-  }, [accessToken, loadRadar]);
+  const errorMessage = useMemo(() => {
+    if (!accessToken) return '';
+    if (overviewData?.meta?.partial) return 'Radar parcial: algunos módulos no cargaron.';
+    const status = overviewError?.response?.status || overviewError?.request?.status;
+    if (overviewError && status !== 401) return overviewError?.response?.data?.message || 'No se pudo cargar el radar operativo.';
+    return '';
+  }, [accessToken, overviewData?.meta?.partial, overviewError]);
 
   const totalDue = useMemo(() => radar.today + radar.tomorrow + radar.next7, [radar.today, radar.tomorrow, radar.next7]);
 

@@ -29,7 +29,7 @@ import Typography from '@mui/material/Typography';
 // project imports
 import useAuth from 'hooks/useAuth';
 import Transitions from 'ui-component/extended/Transitions';
-import { lionTvApi } from 'utils/api';
+import { useLionTvOverview } from 'api/liontv-overview';
 
 // assets
 import { IconAdjustmentsHorizontal, IconSearch, IconX } from '@tabler/icons-react';
@@ -166,19 +166,6 @@ function persistRecents(value) {
   } catch {
     // noop
   }
-}
-
-function unwrap(res) {
-  return res?.data?.data ?? res?.data ?? null;
-}
-
-function parseCollection(res) {
-  const payload = unwrap(res);
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.items)) return payload.items;
-  if (Array.isArray(payload?.content)) return payload.content;
-  return [];
 }
 
 function pickFirst(item, keys, fallback = null) {
@@ -730,82 +717,48 @@ export default function SearchSection() {
   const [query, setQuery] = useState('');
   const [openDesktop, setOpenDesktop] = useState(false);
   const [openMobile, setOpenMobile] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [indexItems, setIndexItems] = useState([...QUICK_COMMANDS]);
   const [recents, setRecents] = useState(getStoredRecents);
   const [lastSyncAt, setLastSyncAt] = useState(null);
 
-  const getCollection = useCallback(
-    async (path, params = {}) => {
-      const res = await lionTvApi.get(path, {
-        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-        params,
-        skipAuthRedirect: true
-      });
-      return parseCollection(res);
-    },
-    [accessToken]
-  );
-
-  const loadIndex = useCallback(
-    async ({ silent = false } = {}) => {
-      if (!accessToken) {
-        setIndexItems([...QUICK_COMMANDS]);
-        setErrorMessage('');
-        return;
-      }
-
-      if (!silent) setLoading(true);
-      try {
-        const tasks = await Promise.allSettled([
-          getCollection('/customers/v1', { index: 0, size: 5000 }),
-          getCollection('/subscriptions/v1', { index: 0, size: 5000 }),
-          getCollection('/licenses/v1', { index: 0, size: 5000 }),
-          getCollection('/lines/v1/list-lines', { index: 0, start: 0, size: 5000, filters: '', sorting: '' }),
-          getCollection('/managed-accounts/v1', { index: 0, size: 5000 }),
-          getCollection('/invoices/v1', { index: 0, size: 5000 }),
-          getCollection('/payment-commitments/v1', { index: 0, size: 5000 })
-        ]);
-
-        const payload = {
-          customers: tasks[0].status === 'fulfilled' ? tasks[0].value : [],
-          subscriptions: tasks[1].status === 'fulfilled' ? tasks[1].value : [],
-          licenses: tasks[2].status === 'fulfilled' ? tasks[2].value : [],
-          lines: tasks[3].status === 'fulfilled' ? tasks[3].value : [],
-          managedAccounts: tasks[4].status === 'fulfilled' ? tasks[4].value : [],
-          invoices: tasks[5].status === 'fulfilled' ? tasks[5].value : [],
-          commitments: tasks[6].status === 'fulfilled' ? tasks[6].value : []
-        };
-
-        setIndexItems(buildSearchIndex(payload));
-        setLastSyncAt(new Date());
-        const failedCount = tasks.filter((task) => task.status === 'rejected').length;
-        setErrorMessage(failedCount > 0 ? 'Datos parciales cargados en búsqueda global.' : '');
-      } catch (error) {
-        const status = error?.response?.status || error?.request?.status;
-        if (status !== 401) {
-          setErrorMessage(error?.response?.data?.message || 'No se pudo cargar el índice global.');
-        }
-      } finally {
-        if (!silent) setLoading(false);
-      }
-    },
-    [accessToken, getCollection]
-  );
+  const {
+    data: overviewData,
+    error: overviewError,
+    isLoading: loading,
+    refresh
+  } = useLionTvOverview({
+    enabled: Boolean(accessToken),
+    scope: 'core',
+    refreshInterval: REFRESH_INTERVAL_MS
+  });
 
   useEffect(() => {
-    if (!accessToken) return;
-    loadIndex({ silent: true });
-  }, [accessToken, loadIndex]);
+    if (!accessToken) {
+      setIndexItems([...QUICK_COMMANDS]);
+      setErrorMessage('');
+      setLastSyncAt(null);
+      return;
+    }
 
-  useEffect(() => {
-    if (!accessToken) return undefined;
-    const timer = setInterval(() => {
-      loadIndex({ silent: true });
-    }, REFRESH_INTERVAL_MS);
-    return () => clearInterval(timer);
-  }, [accessToken, loadIndex]);
+    setIndexItems(buildSearchIndex(overviewData));
+
+    const fetchedAt = overviewData?.meta?.fetchedAt;
+    setLastSyncAt(fetchedAt ? new Date(fetchedAt) : null);
+
+    if (overviewData?.meta?.partial) {
+      setErrorMessage('Datos parciales cargados en búsqueda global.');
+      return;
+    }
+
+    const status = overviewError?.response?.status || overviewError?.request?.status;
+    if (overviewError && status !== 401) {
+      setErrorMessage(overviewError?.response?.data?.message || 'No se pudo cargar el índice global.');
+      return;
+    }
+
+    setErrorMessage('');
+  }, [accessToken, overviewData, overviewError]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -906,7 +859,7 @@ export default function SearchSection() {
           }}
           onFocus={() => {
             setOpenDesktop(true);
-            loadIndex({ silent: true });
+            refresh();
           }}
           inputRef={desktopInputRef}
         />
@@ -917,7 +870,7 @@ export default function SearchSection() {
           <HeaderAvatar
             onClick={() => {
               setOpenMobile(true);
-              loadIndex({ silent: true });
+              refresh();
             }}
           >
             <IconSearch stroke={1.5} size="19.2px" />
@@ -949,7 +902,7 @@ export default function SearchSection() {
                   urgentResults={urgentResults}
                   filteredResults={hasQuery ? filtered : quickResults}
                   onSelect={handleSelect}
-                  onRefresh={() => loadIndex()}
+                  onRefresh={() => refresh()}
                   onClearRecents={clearRecents}
                 />
               </Paper>
@@ -981,7 +934,7 @@ export default function SearchSection() {
             <SearchInput
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              onFocus={() => loadIndex({ silent: true })}
+              onFocus={() => refresh()}
               inputRef={mobileInputRef}
               autoFocus
               fullWidth
@@ -999,7 +952,7 @@ export default function SearchSection() {
               urgentResults={urgentResults}
               filteredResults={hasQuery ? filtered : quickResults}
               onSelect={handleSelect}
-              onRefresh={() => loadIndex()}
+              onRefresh={() => refresh()}
               onClearRecents={clearRecents}
             />
           </Stack>
