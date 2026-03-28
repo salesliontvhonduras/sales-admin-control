@@ -157,6 +157,34 @@ function parsePaidValue(value) {
   return false;
 }
 
+function parseToDay(value) {
+  if (!value) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+    const date = new Date(`${raw.slice(0, 10)}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function resolveDisplayStatus(statusRaw, expireAt) {
+  const normalized = (statusRaw ?? '').toUpperCase();
+  if (normalized === 'EXPIRED') return 'EXPIRED';
+
+  const expDate = parseToDay(expireAt);
+  if (!expDate) return normalized;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (expDate < today) return 'EXPIRED';
+
+  return normalized;
+}
+
 function LicenseStatusChip({ status }) {
   const theme = useTheme();
   const map = {
@@ -239,18 +267,22 @@ function SectionCard({ title, helper, children }) {
 }
 
 function normalizeLicense(item = {}) {
+  const statusRaw = (item.status ?? '').toUpperCase();
+  const expireAt = item.expireAt ?? item.expire_at ?? null;
+
   return {
     licenseId: item.licenseId ?? item.license_id ?? null,
     macAddress: item.macAddress ?? item.mac_address ?? '',
     name: item.name ?? '',
     deviceKey: item.deviceKey ?? item.device_key ?? '',
     customerId: item.customerId ?? item.customer_id ?? null,
-    status: (item.status ?? '').toUpperCase(),
+    status: resolveDisplayStatus(statusRaw, expireAt),
+    statusRaw,
     app: item.app ?? '',
     price: item.price ?? 0,
     isPaid: parsePaidValue(item.isPaid ?? item.is_paid ?? item.paid),
     createdAt: item.createdAt ?? item.created_at ?? null,
-    expireAt: item.expireAt ?? item.expire_at ?? null,
+    expireAt,
     licensePeriod: item.licensePeriod ?? item.license_period ?? '',
     typeLicense: (item.typeLicense ?? item.type_license ?? '').toUpperCase(),
     username: item.username ?? '',
@@ -443,30 +475,6 @@ export default function LicensesLionTv() {
     }
   }, [accessToken, enqueueSnackbar]);
 
-  const handleContingency = async (action) => {
-    if (!accessToken) return;
-    setSending(true);
-    try {
-      const url = action === 'remove' ? '/licenses/v1/contingency/remove' : '/licenses/v1/contingency';
-      const res = await lionTvApi.post(
-        url,
-        {},
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-          skipAuthRedirect: true
-        }
-      );
-      const msg = res?.data?.data || res?.data?.message || 'Solicitud enviada.';
-      enqueueSnackbar(msg, { variant: 'success' });
-    } catch (err) {
-      if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || 'No se pudo ejecutar la contingencia.', { variant: 'error' });
-      }
-    } finally {
-      setSending(false);
-    }
-  };
-
   const loadCustomers = useCallback(async () => {
     if (!accessToken) return;
     setCustomersLoading(true);
@@ -605,7 +613,7 @@ export default function LicensesLionTv() {
       name: row.name,
       deviceKey: row.deviceKey || '',
       customerId: row.customerId,
-      status: row.status,
+      status: row.statusRaw || row.status,
       app: row.app,
       price: row.price,
       isPaid: Boolean(row.isPaid),

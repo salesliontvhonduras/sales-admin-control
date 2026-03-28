@@ -19,7 +19,7 @@ import MoviesFeedLionTv from 'views/liontv/MoviesFeedLionTv';
 import SeriesFeedLionTv from 'views/liontv/SeriesFeedLionTv';
 import FutbolEventsFeedLionTv from 'views/liontv/FutbolEventsFeedLionTv';
 import ManagedAccountsLionTv from 'views/liontv/ManagedAccountsLionTv';
-
+import LionTvDashboard from 'views/liontv/LionTvDashboard';
 
 // dashboard routing
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
@@ -27,7 +27,7 @@ const SmsManagement = Loadable(lazy(() => import('views/sms/SmsManagement')));
 
 const MainRoutes = {
   path: '/',
-  element: <RequireAuth />,   // 🔒 proteger todas las rutas internas
+  element: <RequireAuth />, // 🔒 proteger todas las rutas internas
   children: [
     {
       element: <MainLayout />, // tu layout solo si está autenticado
@@ -44,6 +44,10 @@ const MainRoutes = {
               element: <DashboardDefault />
             }
           ]
+        },
+        {
+          path: '/liontv/dashboard',
+          element: <LionTvDashboard />
         },
         {
           path: '/liontv/demos',

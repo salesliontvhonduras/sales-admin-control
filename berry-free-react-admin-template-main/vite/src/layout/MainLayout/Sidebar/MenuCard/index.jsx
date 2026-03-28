@@ -1,52 +1,132 @@
-import PropTypes from 'prop-types';
-import { memo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import Avatar from '@mui/material/Avatar';
+import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
-import LinearProgress, { linearProgressClasses } from '@mui/material/LinearProgress';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
-import ListItemText from '@mui/material/ListItemText';
+import Chip from '@mui/material/Chip';
+import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
+// project imports
+import useAuth from 'hooks/useAuth';
+import { lionTvApi } from 'utils/api';
+
 // assets
-import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
+import RadarRoundedIcon from '@mui/icons-material/RadarRounded';
+import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
+import PaidRoundedIcon from '@mui/icons-material/PaidRounded';
+import LaunchRoundedIcon from '@mui/icons-material/LaunchRounded';
 
-// ==============================|| PROGRESS BAR WITH LABEL ||============================== //
+const REFRESH_INTERVAL_MS = 180000;
+const STATUS_EXCLUDED = new Set(['CANCELLED', 'REMOVED', 'INACTIVE']);
 
-function LinearProgressWithLabel({ value, ...others }) {
+function unwrap(res) {
+  return res?.data?.data ?? res?.data ?? null;
+}
+
+function parseCollection(res) {
+  const payload = unwrap(res);
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.content)) return payload.content;
+  return [];
+}
+
+function pickFirst(item, keys, fallback = null) {
+  for (const key of keys) {
+    const value = item?.[key];
+    if (value !== undefined && value !== null && value !== '') return value;
+  }
+  return fallback;
+}
+
+function toUpper(value) {
+  return String(value || '')
+    .trim()
+    .toUpperCase();
+}
+
+function parseDate(value) {
+  if (!value) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const date = new Date(`${raw}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function startOfDay(date = new Date()) {
+  const cloned = new Date(date);
+  cloned.setHours(0, 0, 0, 0);
+  return cloned;
+}
+
+function daysUntil(value) {
+  const target = parseDate(value);
+  if (!target) return null;
+  return Math.round((startOfDay(target).getTime() - startOfDay(new Date()).getTime()) / 86400000);
+}
+
+function money(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function formatMoney(value) {
+  return new Intl.NumberFormat('es-HN', {
+    style: 'currency',
+    currency: 'HNL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(money(value));
+}
+
+function countDue(items, dateFields, statusResolver = (item) => pickFirst(item, ['status'], '')) {
+  return items.reduce(
+    (acc, item) => {
+      const status = toUpper(statusResolver(item));
+      if (STATUS_EXCLUDED.has(status)) return acc;
+
+      const dueDate = pickFirst(item, dateFields, null);
+      const days = daysUntil(dueDate);
+      if (days === null) return acc;
+      if (days === 0) acc.today += 1;
+      else if (days === 1) acc.tomorrow += 1;
+      else if (days >= 2 && days <= 7) acc.next7 += 1;
+      return acc;
+    },
+    { today: 0, tomorrow: 0, next7: 0 }
+  );
+}
+
+function ProgressItem({ label, value, color = 'primary', total }) {
+  const progress = total > 0 ? Math.min((value / total) * 100, 100) : 0;
   return (
-    <Stack sx={{ gap: 1 }}>
-      <Stack direction="row" sx={{ justifyContent: 'space-between', mt: 1.5 }}>
-        <Typography
-          variant="h6"
-          sx={{
-            color: 'primary.800'
-          }}
-        >
-          Progress
+    <Stack spacing={0.4}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Typography variant="caption" color="text.secondary">
+          {label}
         </Typography>
-        <Typography variant="h6" sx={{ color: 'inherit' }}>{`${Math.round(value)}%`}</Typography>
+        <Chip size="small" color={color} variant="outlined" label={value} />
       </Stack>
       <LinearProgress
-        aria-label="progress of theme"
         variant="determinate"
-        value={value}
-        {...others}
+        value={progress}
+        color={color}
         sx={{
-          height: 10,
-          borderRadius: 30,
-          [`&.${linearProgressClasses.colorPrimary}`]: {
-            bgcolor: 'background.paper'
-          },
-          [`& .${linearProgressClasses.bar}`]: {
-            borderRadius: 5,
-            bgcolor: 'primary.dark'
+          height: 8,
+          borderRadius: 999,
+          '& .MuiLinearProgress-bar': {
+            borderRadius: 999
           }
         }}
       />
@@ -54,69 +134,237 @@ function LinearProgressWithLabel({ value, ...others }) {
   );
 }
 
-// ==============================|| SIDEBAR - MENU CARD ||============================== //
+// ==============================|| SIDEBAR - RADAR CARD ||============================== //
 
 function MenuCard() {
   const theme = useTheme();
+  const navigate = useNavigate();
+  const { accessToken } = useAuth();
+
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [lastSyncAt, setLastSyncAt] = useState(null);
+  const [radar, setRadar] = useState({
+    today: 0,
+    tomorrow: 0,
+    next7: 0,
+    pendingInvoicesCount: 0,
+    pendingCommitmentsCount: 0,
+    pendingTotalAmount: 0
+  });
+
+  const getCollection = useCallback(
+    async (path, params = {}) => {
+      const res = await lionTvApi.get(path, {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+        params,
+        skipAuthRedirect: true
+      });
+      return parseCollection(res);
+    },
+    [accessToken]
+  );
+
+  const loadRadar = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!accessToken) return;
+      if (!silent) setLoading(true);
+
+      try {
+        const tasks = await Promise.allSettled([
+          getCollection('/subscriptions/v1', { index: 0, size: 5000 }),
+          getCollection('/licenses/v1', { index: 0, size: 5000 }),
+          getCollection('/lines/v1/list-lines', { index: 0, start: 0, size: 5000, filters: '', sorting: '' }),
+          getCollection('/managed-accounts/v1', { index: 0, size: 5000 }),
+          getCollection('/invoices/v1', { index: 0, size: 5000 }),
+          getCollection('/payment-commitments/v1', { index: 0, size: 5000 })
+        ]);
+
+        const subscriptions = tasks[0].status === 'fulfilled' ? tasks[0].value : [];
+        const licenses = tasks[1].status === 'fulfilled' ? tasks[1].value : [];
+        const lines = tasks[2].status === 'fulfilled' ? tasks[2].value : [];
+        const managedAccounts = tasks[3].status === 'fulfilled' ? tasks[3].value : [];
+        const invoices = tasks[4].status === 'fulfilled' ? tasks[4].value : [];
+        const commitments = tasks[5].status === 'fulfilled' ? tasks[5].value : [];
+
+        const base = { today: 0, tomorrow: 0, next7: 0 };
+        const add = (target, source) => ({
+          today: target.today + source.today,
+          tomorrow: target.tomorrow + source.tomorrow,
+          next7: target.next7 + source.next7
+        });
+
+        let due = { ...base };
+        due = add(due, countDue(subscriptions, ['renewalDate', 'renewal_date', 'expDate', 'exp_date']));
+        due = add(due, countDue(licenses, ['expireAt', 'expire_at', 'expDate', 'exp_date']));
+        due = add(
+          due,
+          countDue(lines, ['exp_date', 'expDate'], (line) =>
+            pickFirst(line, ['status'], pickFirst(line, ['enabled'], true) ? 'ACTIVE' : 'INACTIVE')
+          )
+        );
+        due = add(
+          due,
+          countDue(managedAccounts, ['expirationDate', 'expiration_date'], (account) =>
+            pickFirst(account, ['accountStatus', 'status'], 'ACTIVE')
+          )
+        );
+
+        const pendingInvoices = invoices.filter((invoice) => {
+          const status = toUpper(pickFirst(invoice, ['status'], 'PENDING'));
+          const amountDue = money(pickFirst(invoice, ['amountDue', 'amount_due', 'totalAmount', 'total_amount'], 0));
+          const amountPaid = money(pickFirst(invoice, ['amountPaid', 'amount_paid'], 0));
+          const pendingAmount = money(pickFirst(invoice, ['pendingAmount', 'pending_amount'], Math.max(amountDue - amountPaid, 0)));
+          return status === 'PENDING' || pendingAmount > 0;
+        });
+
+        const pendingCommitments = commitments.filter((commitment) => {
+          const status = toUpper(pickFirst(commitment, ['status'], 'PENDING'));
+          const amountDue = money(pickFirst(commitment, ['amountDue', 'amount_due'], 0));
+          const amountPaid = money(pickFirst(commitment, ['amountPaid', 'amount_paid'], 0));
+          const pendingAmount = money(pickFirst(commitment, ['pendingAmount', 'pending_amount'], Math.max(amountDue - amountPaid, 0)));
+          return status === 'PENDING' || pendingAmount > 0;
+        });
+
+        const pendingInvoicesTotal = pendingInvoices.reduce((acc, invoice) => {
+          const amountDue = money(pickFirst(invoice, ['amountDue', 'amount_due', 'totalAmount', 'total_amount'], 0));
+          const amountPaid = money(pickFirst(invoice, ['amountPaid', 'amount_paid'], 0));
+          const pendingAmount = money(pickFirst(invoice, ['pendingAmount', 'pending_amount'], Math.max(amountDue - amountPaid, 0)));
+          return acc + pendingAmount;
+        }, 0);
+
+        const pendingCommitmentsTotal = pendingCommitments.reduce((acc, commitment) => {
+          const amountDue = money(pickFirst(commitment, ['amountDue', 'amount_due'], 0));
+          const amountPaid = money(pickFirst(commitment, ['amountPaid', 'amount_paid'], 0));
+          const pendingAmount = money(pickFirst(commitment, ['pendingAmount', 'pending_amount'], Math.max(amountDue - amountPaid, 0)));
+          return acc + pendingAmount;
+        }, 0);
+
+        setRadar({
+          today: due.today,
+          tomorrow: due.tomorrow,
+          next7: due.next7,
+          pendingInvoicesCount: pendingInvoices.length,
+          pendingCommitmentsCount: pendingCommitments.length,
+          pendingTotalAmount: pendingInvoicesTotal + pendingCommitmentsTotal
+        });
+
+        const failedCount = tasks.filter((task) => task.status === 'rejected').length;
+        setErrorMessage(failedCount > 0 ? 'Radar parcial: algunos módulos no cargaron.' : '');
+        setLastSyncAt(new Date());
+      } catch (error) {
+        const status = error?.response?.status || error?.request?.status;
+        if (status !== 401) {
+          setErrorMessage(error?.response?.data?.message || 'No se pudo cargar el radar operativo.');
+        }
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [accessToken, getCollection]
+  );
+
+  useEffect(() => {
+    if (!accessToken) return;
+    loadRadar();
+  }, [accessToken, loadRadar]);
+
+  useEffect(() => {
+    if (!accessToken) return undefined;
+    const timer = setInterval(() => {
+      loadRadar({ silent: true });
+    }, REFRESH_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [accessToken, loadRadar]);
+
+  const totalDue = useMemo(() => radar.today + radar.tomorrow + radar.next7, [radar.today, radar.tomorrow, radar.next7]);
 
   return (
     <Card
       sx={{
-        bgcolor: 'primary.light',
         mb: 2.75,
         overflow: 'hidden',
-        position: 'relative',
-        '&:after': {
-          content: '""',
-          position: 'absolute',
-          width: 157,
-          height: 157,
-          bgcolor: 'primary.200',
-          borderRadius: '50%',
-          top: -105,
-          right: -96
-        }
+        borderRadius: 2.5,
+        border: '1px solid',
+        borderColor: 'divider',
+        background: `linear-gradient(165deg, ${theme.palette.primary.lighter || theme.palette.primary.light}35 0%, ${theme.palette.background.paper} 72%)`
       }}
     >
       <Box sx={{ p: 2 }}>
-        <List disablePadding sx={{ pb: 1 }}>
-          <ListItem alignItems="flex-start" disableGutters disablePadding>
-            <ListItemAvatar sx={{ mt: 0 }}>
-              <Avatar
-                variant="rounded"
-                sx={{
-                  ...theme.typography.largeAvatar,
-                  borderRadius: 2,
-                  color: 'primary.main',
-                  border: 'none',
-                  bgcolor: 'background.paper'
-                }}
-              >
-                <TableChartOutlinedIcon fontSize="inherit" />
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText
-              sx={{ mt: 0 }}
-              primary={
-                <Typography
-                  variant="subtitle1"
-                  sx={{
-                    color: 'primary.800'
-                  }}
-                >
-                  Get Extra Space
-                </Typography>
-              }
-              secondary={<Typography variant="caption"> 28/23 GB</Typography>}
+        <Stack spacing={1.35}>
+          <Stack direction="row" alignItems="center" spacing={1.2}>
+            <Avatar
+              variant="rounded"
+              sx={{
+                ...theme.typography.largeAvatar,
+                borderRadius: 2,
+                color: 'primary.main',
+                bgcolor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'divider'
+              }}
+            >
+              <RadarRoundedIcon fontSize="inherit" />
+            </Avatar>
+            <Stack sx={{ minWidth: 0 }}>
+              <Typography variant="subtitle1" sx={{ color: 'text.primary' }}>
+                Radar Operativo
+              </Typography>
+              <Typography variant="caption" color="text.secondary" noWrap>
+                Vencimientos y cobranza
+              </Typography>
+            </Stack>
+          </Stack>
+
+          {loading ? <LinearProgress /> : null}
+
+          <ProgressItem label="Hoy" value={radar.today} color="error" total={Math.max(totalDue, 1)} />
+          <ProgressItem label="Mañana" value={radar.tomorrow} color="warning" total={Math.max(totalDue, 1)} />
+          <ProgressItem label="Próximos 7 días" value={radar.next7} color="info" total={Math.max(totalDue, 1)} />
+
+          <Stack direction="row" alignItems="center" spacing={0.8}>
+            <PaidRoundedIcon fontSize="small" color="action" />
+            <Typography variant="caption" color="text.secondary">
+              Cobranza pendiente
+            </Typography>
+          </Stack>
+
+          <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap>
+            <Chip size="small" icon={<CalendarMonthRoundedIcon />} label={`Facturas: ${radar.pendingInvoicesCount}`} variant="outlined" />
+            <Chip
+              size="small"
+              icon={<CalendarMonthRoundedIcon />}
+              label={`Compromisos: ${radar.pendingCommitmentsCount}`}
+              variant="outlined"
             />
-          </ListItem>
-        </List>
-        <LinearProgressWithLabel value={80} />
+          </Stack>
+
+          <Typography variant="h5">{formatMoney(radar.pendingTotalAmount)}</Typography>
+
+          {errorMessage ? (
+            <Typography variant="caption" color="warning.main">
+              {errorMessage}
+            </Typography>
+          ) : null}
+
+          {lastSyncAt ? (
+            <Typography variant="caption" color="text.secondary">
+              Actualizado: {lastSyncAt.toLocaleTimeString('es-HN')}
+            </Typography>
+          ) : null}
+
+          <Button
+            size="small"
+            variant="outlined"
+            endIcon={<LaunchRoundedIcon fontSize="small" />}
+            onClick={() => navigate('/liontv/dashboard')}
+          >
+            Abrir seguimiento
+          </Button>
+        </Stack>
       </Box>
     </Card>
   );
 }
 
 export default memo(MenuCard);
-
-LinearProgressWithLabel.propTypes = { value: PropTypes.number, others: PropTypes.any };

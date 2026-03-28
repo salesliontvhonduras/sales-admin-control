@@ -18,6 +18,7 @@ const resources = {
         color: 'Color',
         shadow: 'Shadow',
         liontv: 'Lion TV',
+        liontvDashboard: 'Lion TV Tracking',
         demos: 'Lion TV Demos',
         subscriptions: 'Subscriptions',
         invoices: 'Invoices',
@@ -343,7 +344,11 @@ const resources = {
           },
           states: { yes: 'Yes', no: 'No', male: 'Male', female: 'Female', active: 'Active', inactive: 'Inactive' }
         },
-        table: { loading: 'Loading customers...', emptyTitle: 'No customers yet.', emptyText: 'Create your first customer to see it here.' },
+        table: {
+          loading: 'Loading customers...',
+          emptyTitle: 'No customers yet.',
+          emptyText: 'Create your first customer to see it here.'
+        },
         messages: {
           required: 'Please complete the required fields.',
           created: 'Customer created successfully.',
@@ -546,6 +551,7 @@ const resources = {
         color: 'Color',
         shadow: 'Sombra',
         liontv: 'Lion TV',
+        liontvDashboard: 'Seguimiento Lion TV',
         demos: 'Demos Lion TV',
         subscriptions: 'Suscripciones',
         invoices: 'Facturas',
@@ -870,7 +876,11 @@ const resources = {
           },
           states: { yes: 'Sí', no: 'No', male: 'Masculino', female: 'Femenino', active: 'Activo', inactive: 'Inactivo' }
         },
-        table: { loading: 'Cargando clientes...', emptyTitle: 'No hay clientes registrados.', emptyText: 'Crea tu primer cliente para verlo aquí.' },
+        table: {
+          loading: 'Cargando clientes...',
+          emptyTitle: 'No hay clientes registrados.',
+          emptyText: 'Crea tu primer cliente para verlo aquí.'
+        },
         messages: {
           required: 'Completa los campos requeridos.',
           created: 'Cliente creado correctamente.',
