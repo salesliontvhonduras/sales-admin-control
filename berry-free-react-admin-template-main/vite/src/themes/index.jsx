@@ -86,6 +86,35 @@ export default function ThemeCustomization({ children }) {
   );
 
   const themes = createTheme(themeOptions);
+
+  // In CSS variables mode, some components rely on `theme.palette.mode` to branch styles.
+  // We normalize it to the active `data-color-scheme` so light/dark branches stay accurate.
+  const initialMode = themes.palette.mode;
+  const resolveActiveMode = () => {
+    if (typeof document !== 'undefined') {
+      const attrFromHtml = document.documentElement?.getAttribute('data-color-scheme');
+      if (attrFromHtml === 'light' || attrFromHtml === 'dark') return attrFromHtml;
+
+      const attrFromBody = document.body?.getAttribute('data-color-scheme');
+      if (attrFromBody === 'light' || attrFromBody === 'dark') return attrFromBody;
+
+      const scoped = document.querySelector('[data-color-scheme]');
+      const scopedAttr = scoped?.getAttribute('data-color-scheme');
+      if (scopedAttr === 'light' || scopedAttr === 'dark') return scopedAttr;
+    }
+    return initialMode;
+  };
+
+  try {
+    Object.defineProperty(themes.palette, 'mode', {
+      configurable: true,
+      enumerable: true,
+      get: resolveActiveMode
+    });
+  } catch {
+    // non-fatal in case palette.mode is not configurable
+  }
+
   themes.components = useMemo(() => componentsOverrides(themes, borderRadius, outlinedFilled), [themes, borderRadius, outlinedFilled]);
 
   return (
