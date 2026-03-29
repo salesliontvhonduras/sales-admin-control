@@ -35,7 +35,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { authApi } from 'utils/api';
 import IconButton from '@mui/material/IconButton';
 import LanguageIcon from '@mui/icons-material/Language';
+import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
 import LanguageSwitcher from 'ui-component/LanguageSwitcher';
+import ThemeModeSwitcher from 'ui-component/ThemeModeSwitcher';
 
 // assets
 import User1 from 'assets/images/users/user-round.svg';
@@ -237,6 +239,40 @@ export default function ProfileSection() {
                                 Current
                               </Typography>
                               <LanguageSwitcher overlay />
+                            </Box>
+                          </Stack>
+                        </ListItemButton>
+                        <ListItemButton
+                          sx={{
+                            borderRadius: `${borderRadius}px`,
+                            px: 1.5,
+                            py: 1
+                          }}
+                        >
+                          <ListItemIcon>
+                            <DarkModeRoundedIcon fontSize="small" color="primary" />
+                          </ListItemIcon>
+                          <Stack spacing={0.5} sx={{ width: '100%' }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              Color theme
+                            </Typography>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                p: 0.75,
+                                borderRadius: 1.5,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                bgcolor: 'background.default',
+                                boxShadow: theme.shadows[1]
+                              }}
+                            >
+                              <Typography variant="caption" color="text.secondary">
+                                Current
+                              </Typography>
+                              <ThemeModeSwitcher compact />
                             </Box>
                           </Stack>
                         </ListItemButton>

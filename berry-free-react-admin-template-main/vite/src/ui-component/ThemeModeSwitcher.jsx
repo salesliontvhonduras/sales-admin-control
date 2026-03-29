@@ -1,0 +1,87 @@
+import { useMemo, useState } from 'react';
+
+import Avatar from '@mui/material/Avatar';
+import Chip from '@mui/material/Chip';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import { alpha, styled, useColorScheme } from '@mui/material/styles';
+
+import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
+import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
+import SettingsBrightnessRoundedIcon from '@mui/icons-material/SettingsBrightnessRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+
+const StyledChip = styled(Chip)(({ theme }) => ({
+  borderRadius: 18,
+  height: 38,
+  padding: '0 10px',
+  fontWeight: 700,
+  letterSpacing: 0.1,
+  background:
+    theme.palette.mode === 'dark'
+      ? alpha(theme.palette.primary.main, 0.16)
+      : `linear-gradient(120deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(
+          theme.palette.primary.light,
+          0.16
+        )} 45%, ${alpha(theme.palette.background.paper, 0.92)} 100%)`,
+  borderColor: alpha(theme.palette.primary.main, 0.5),
+  color: theme.palette.text.primary,
+  boxShadow: '0 8px 18px rgba(0,0,0,0.12)',
+  '&:hover': {
+    background: theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.24) : alpha(theme.palette.primary.light, 0.3)
+  }
+}));
+
+const modeOptions = [
+  { value: 'light', label: 'Claro', icon: <LightModeRoundedIcon fontSize="small" /> },
+  { value: 'dark', label: 'Oscuro', icon: <DarkModeRoundedIcon fontSize="small" /> },
+  { value: 'system', label: 'Sistema', icon: <SettingsBrightnessRoundedIcon fontSize="small" /> }
+];
+
+export default function ThemeModeSwitcher({ compact = false }) {
+  const colorSchemeApi = useColorScheme();
+  const mode = colorSchemeApi?.mode ?? colorSchemeApi?.colorScheme ?? 'system';
+  const systemMode = colorSchemeApi?.systemMode ?? 'light';
+  const apply = colorSchemeApi?.setMode ?? colorSchemeApi?.setColorScheme;
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const open = Boolean(anchorEl);
+  const effectiveMode = mode === 'system' ? systemMode : mode;
+
+  const currentOption = useMemo(() => modeOptions.find((option) => option.value === mode) || modeOptions[2], [mode]);
+  const currentIcon = effectiveMode === 'dark' ? <DarkModeRoundedIcon fontSize="small" /> : <LightModeRoundedIcon fontSize="small" />;
+
+  const applyMode = (nextMode) => {
+    if (typeof apply === 'function') {
+      apply(nextMode);
+    }
+    setAnchorEl(null);
+  };
+
+  return (
+    <>
+      <StyledChip
+        clickable
+        onClick={(event) => setAnchorEl(event.currentTarget)}
+        avatar={<Avatar sx={{ bgcolor: 'transparent', width: 24, height: 24 }}>{currentIcon}</Avatar>}
+        label={compact ? `${currentOption.label}` : `Modo: ${currentOption.label}`}
+        variant="outlined"
+        size="small"
+      />
+      <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)} keepMounted>
+        {modeOptions.map((option) => (
+          <MenuItem key={option.value} selected={mode === option.value} onClick={() => applyMode(option.value)}>
+            <ListItemIcon sx={{ minWidth: 30 }}>{option.icon}</ListItemIcon>
+            <ListItemText
+              primary={option.label}
+              secondary={option.value === 'system' ? `Actual: ${systemMode === 'dark' ? 'Oscuro' : 'Claro'}` : null}
+            />
+            {mode === option.value ? <CheckRoundedIcon fontSize="small" color="primary" /> : null}
+          </MenuItem>
+        ))}
+      </Menu>
+    </>
+  );
+}

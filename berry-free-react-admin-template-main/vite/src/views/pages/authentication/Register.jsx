@@ -14,6 +14,8 @@ import AuthCardWrapper from './AuthCardWrapper';
 import Logo from 'ui-component/Logo';
 import AuthFooter from 'ui-component/cards/AuthFooter';
 import AuthRegister from '../auth-forms/AuthRegister';
+import LanguageSwitcher from 'ui-component/LanguageSwitcher';
+import ThemeModeSwitcher from 'ui-component/ThemeModeSwitcher';
 
 export default function Register() {
   const downMD = useMediaQuery((theme) => theme.breakpoints.down('md'));
@@ -47,6 +49,11 @@ export default function Register() {
                   <Typography component={Link} to="/pages/login" variant="subtitle1" sx={{ textDecoration: 'none' }}>
                     {t('auth.login')}
                   </Typography>
+                </Stack>
+                <Divider sx={{ width: 1 }} />
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignItems: 'center', justifyContent: 'center' }}>
+                  <ThemeModeSwitcher />
+                  <LanguageSwitcher />
                 </Stack>
               </Stack>
             </AuthCardWrapper>

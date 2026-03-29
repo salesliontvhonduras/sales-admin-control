@@ -14,6 +14,8 @@ import Logo from 'ui-component/Logo';
 import AuthFooter from 'ui-component/cards/AuthFooter';
 import { authApi } from 'utils/api';
 import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from 'ui-component/LanguageSwitcher';
+import ThemeModeSwitcher from 'ui-component/ThemeModeSwitcher';
 
 export default function ForgotPassword() {
   const { enqueueSnackbar } = useSnackbar();
@@ -87,13 +89,7 @@ export default function ForgotPassword() {
                 <Stack spacing={2} sx={{ width: 1 }}>
                   {step === 'email' ? (
                     <>
-                      <TextField
-                        label={t('auth.email')}
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        fullWidth
-                      />
+                      <TextField label={t('auth.email')} type="email" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth />
                       <Button
                         variant="contained"
                         color="secondary"
@@ -106,12 +102,7 @@ export default function ForgotPassword() {
                     </>
                   ) : (
                     <>
-                      <TextField
-                        label="Token"
-                        value={token}
-                        onChange={(e) => setToken(e.target.value)}
-                        fullWidth
-                      />
+                      <TextField label="Token" value={token} onChange={(e) => setToken(e.target.value)} fullWidth />
                       <TextField
                         label={t('auth.password')}
                         type="password"
@@ -139,6 +130,11 @@ export default function ForgotPassword() {
                   <Typography component={Link} to="/pages/login" variant="subtitle1" sx={{ textDecoration: 'none' }}>
                     {t('auth.login')}
                   </Typography>
+                </Stack>
+                <Divider sx={{ width: 1 }} />
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignItems: 'center', justifyContent: 'center' }}>
+                  <ThemeModeSwitcher />
+                  <LanguageSwitcher />
                 </Stack>
               </Stack>
             </AuthCardWrapper>

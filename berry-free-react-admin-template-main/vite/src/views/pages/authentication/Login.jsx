@@ -14,9 +14,8 @@ import Logo from 'ui-component/Logo';
 import AuthFooter from 'ui-component/cards/AuthFooter';
 import AuthLogin from '../auth-forms/AuthLogin';
 import LanguageSwitcher from 'ui-component/LanguageSwitcher';
+import ThemeModeSwitcher from 'ui-component/ThemeModeSwitcher';
 import { useTranslation } from 'react-i18next';
-
-
 
 // ================================|| AUTH3 - LOGIN ||================================ //
 
@@ -29,7 +28,7 @@ export default function Login() {
       <Stack sx={{ justifyContent: 'flex-end', minHeight: '100vh' }}>
         <Stack sx={{ justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 68px)' }}>
           <Box sx={{ m: { xs: 1, sm: 3 }, mb: 0 }}>
-              <AuthCardWrapper>
+            <AuthCardWrapper>
               <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
                 <Box sx={{ mb: 3 }}>
                   <Link to="#" aria-label="logo">
@@ -52,11 +51,14 @@ export default function Login() {
                   <Typography component={Link} to="/pages/register" variant="subtitle1" sx={{ textDecoration: 'none' }}>
                     {t('auth.noAccount')}
                   </Typography>
-                </Stack>   
+                </Stack>
                 <Divider sx={{ width: 1 }} />
-                <LanguageSwitcher />
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignItems: 'center', justifyContent: 'center' }}>
+                  <ThemeModeSwitcher />
+                  <LanguageSwitcher />
+                </Stack>
               </Stack>
-              </AuthCardWrapper>
+            </AuthCardWrapper>
           </Box>
         </Stack>
         <Box sx={{ px: 3, my: 3 }}>

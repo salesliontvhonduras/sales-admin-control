@@ -9,6 +9,7 @@ import LogoSection from '../LogoSection';
 import SearchSection from './SearchSection';
 import ProfileSection from './ProfileSection';
 import NotificationSection from './NotificationSection';
+import ThemeModeSwitcher from 'ui-component/ThemeModeSwitcher';
 
 import { handlerDrawerOpen, useGetMenuMaster } from 'api/menu';
 
@@ -57,6 +58,9 @@ export default function Header() {
       <Box sx={{ flexGrow: 1 }} />
 
       {/* notification */}
+      <Box sx={{ mr: 1, display: { xs: 'none', sm: 'block' } }}>
+        <ThemeModeSwitcher compact />
+      </Box>
       <NotificationSection />
 
       {/* profile */}
