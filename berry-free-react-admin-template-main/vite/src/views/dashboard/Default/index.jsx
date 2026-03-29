@@ -80,8 +80,8 @@ function bucketByDays(values) {
   return bucket;
 }
 
-function formatMoney(value) {
-  return new Intl.NumberFormat('es-HN', {
+function formatMoney(value, locale = 'es-HN') {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'HNL',
     minimumFractionDigits: 2,
@@ -206,8 +206,9 @@ function ChartCard({ title, helper, children }) {
 
 export default function DashboardDefault() {
   const theme = useTheme();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { accessToken } = useAuth();
+  const locale = (i18n?.resolvedLanguage || i18n?.language || 'es').startsWith('en') ? 'en-US' : 'es-HN';
 
   const {
     data: overviewData,
@@ -506,7 +507,14 @@ export default function DashboardDefault() {
   }, [customers, subscriptions, invoices, licenses, commitments, managedAccounts, potentialCustomers, purchases, lines]);
 
   const donutChart = useMemo(() => {
-    const labels = ['Clientes', 'Suscripciones', 'Facturas', 'Líneas', 'Licencias', 'Managed'];
+    const labels = [
+      t('dashboardDefault.labels.customers'),
+      t('dashboardDefault.labels.subscriptions'),
+      t('dashboardDefault.labels.invoices'),
+      t('dashboardDefault.labels.lines'),
+      t('dashboardDefault.labels.licenses'),
+      t('dashboardDefault.labels.managedAccounts')
+    ];
     const series = [customers.length, subscriptions.length, invoices.length, lines.length, licenses.length, managedAccounts.length];
     return {
       series,
@@ -533,7 +541,7 @@ export default function DashboardDefault() {
         }
       }
     };
-  }, [customers.length, subscriptions.length, invoices.length, lines.length, licenses.length, managedAccounts.length, theme, chartTheme]);
+  }, [customers.length, subscriptions.length, invoices.length, lines.length, licenses.length, managedAccounts.length, theme, chartTheme, t]);
 
   const statusBar = useMemo(() => {
     const subsRisk = subscriptions.filter((s) => {
@@ -565,14 +573,23 @@ export default function DashboardDefault() {
 
     return {
       series: [
-        { name: 'OK', data: [metrics.subActive, metrics.invoicePaid, licenseOk, commitOk, managedOk] },
-        { name: 'Riesgo/Pendiente', data: [subsRisk, invoiceRisk, licenseRisk, commitRisk, managedRisk] }
+        { name: t('dashboardDefault.series.ok'), data: [metrics.subActive, metrics.invoicePaid, licenseOk, commitOk, managedOk] },
+        {
+          name: t('dashboardDefault.series.riskPending'),
+          data: [subsRisk, invoiceRisk, licenseRisk, commitRisk, managedRisk]
+        }
       ],
       options: {
         chart: { ...chartTheme.baseChart, type: 'bar', stacked: true },
         states: chartTheme.states,
         plotOptions: { bar: { columnWidth: '42%', borderRadius: 4 } },
-        xaxis: chartTheme.xaxis(['Subs', 'Facturas', 'Licencias', 'Compromisos', 'Managed']),
+        xaxis: chartTheme.xaxis([
+          t('dashboardDefault.categories.subsShort'),
+          t('dashboardDefault.categories.invoices'),
+          t('dashboardDefault.categories.licenses'),
+          t('dashboardDefault.categories.commitments'),
+          t('dashboardDefault.categories.managedShort')
+        ]),
         yaxis: chartTheme.yaxis((v) => Math.round(v)),
         grid: chartTheme.grid,
         colors: [theme.palette.success.main, theme.palette.warning.main],
@@ -581,10 +598,23 @@ export default function DashboardDefault() {
         tooltip: chartTheme.tooltip
       }
     };
-  }, [subscriptions, invoices, licenses, commitments, managedAccounts, metrics.subActive, metrics.invoicePaid, theme, chartTheme]);
+  }, [subscriptions, invoices, licenses, commitments, managedAccounts, metrics.subActive, metrics.invoicePaid, theme, chartTheme, t]);
 
   const monthlyTrend = useMemo(() => {
-    const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const months = [
+      t('dashboardDefault.months.jan'),
+      t('dashboardDefault.months.feb'),
+      t('dashboardDefault.months.mar'),
+      t('dashboardDefault.months.apr'),
+      t('dashboardDefault.months.may'),
+      t('dashboardDefault.months.jun'),
+      t('dashboardDefault.months.jul'),
+      t('dashboardDefault.months.aug'),
+      t('dashboardDefault.months.sep'),
+      t('dashboardDefault.months.oct'),
+      t('dashboardDefault.months.nov'),
+      t('dashboardDefault.months.dec')
+    ];
     const year = new Date().getFullYear();
 
     const income = new Array(12).fill(0);
@@ -603,8 +633,8 @@ export default function DashboardDefault() {
 
     return {
       series: [
-        { name: 'Ingresos', data: income.map((v) => Number(v.toFixed(2))) },
-        { name: 'Gastos', data: expenses.map((v) => Number(v.toFixed(2))) }
+        { name: t('dashboardDefault.series.income'), data: income.map((v) => Number(v.toFixed(2))) },
+        { name: t('dashboardDefault.series.expenses'), data: expenses.map((v) => Number(v.toFixed(2))) }
       ],
       options: {
         chart: { ...chartTheme.baseChart, type: 'area' },
@@ -618,12 +648,12 @@ export default function DashboardDefault() {
           return `${Math.round(v)}`;
         }),
         grid: chartTheme.grid,
-        tooltip: { ...chartTheme.tooltip, y: { formatter: (v) => formatMoney(v) } },
+        tooltip: { ...chartTheme.tooltip, y: { formatter: (v) => formatMoney(v, locale) } },
         colors: [theme.palette.success.main, theme.palette.error.main],
         legend: chartTheme.legend('top', 'right')
       }
     };
-  }, [invoices, purchases, theme, chartTheme]);
+  }, [invoices, purchases, theme, chartTheme, t, locale]);
 
   const expiryChart = useMemo(() => {
     const sub = bucketByDays(subscriptions.map((s) => s.renewalDate ?? s.renewal_date ?? s.expDate ?? s.exp_date));
@@ -632,15 +662,20 @@ export default function DashboardDefault() {
 
     return {
       series: [
-        { name: 'Suscripciones', data: [sub.overdue, sub.today, sub.week, sub.month] },
-        { name: 'Licencias', data: [lic.overdue, lic.today, lic.week, lic.month] },
-        { name: 'Managed', data: [managed.overdue, managed.today, managed.week, managed.month] }
+        { name: t('dashboardDefault.labels.subscriptions'), data: [sub.overdue, sub.today, sub.week, sub.month] },
+        { name: t('dashboardDefault.labels.licenses'), data: [lic.overdue, lic.today, lic.week, lic.month] },
+        { name: t('dashboardDefault.labels.managedAccounts'), data: [managed.overdue, managed.today, managed.week, managed.month] }
       ],
       options: {
         chart: { ...chartTheme.baseChart, type: 'bar' },
         states: chartTheme.states,
         plotOptions: { bar: { horizontal: false, borderRadius: 3, columnWidth: '45%' } },
-        xaxis: chartTheme.xaxis(['Vencidos', 'Hoy', '1-7 días', '8-30 días']),
+        xaxis: chartTheme.xaxis([
+          t('dashboardDefault.categories.overdue'),
+          t('dashboardDefault.categories.today'),
+          t('dashboardDefault.categories.oneToSevenDays'),
+          t('dashboardDefault.categories.eightToThirtyDays')
+        ]),
         yaxis: chartTheme.yaxis((v) => Math.round(v)),
         grid: chartTheme.grid,
         colors: [theme.palette.primary.main, theme.palette.secondary.main, theme.palette.info.main],
@@ -649,18 +684,18 @@ export default function DashboardDefault() {
         tooltip: chartTheme.tooltip
       }
     };
-  }, [subscriptions, licenses, managedAccounts, theme, chartTheme]);
+  }, [subscriptions, licenses, managedAccounts, theme, chartTheme, t]);
 
   const providerMixChart = useMemo(() => {
     const providerCount = new Map();
     lines.forEach((line) => {
-      const providerName = String(line.provider ?? line.providerName ?? line.provider_name ?? 'Sin proveedor').trim();
+      const providerName = String(line.provider ?? line.providerName ?? line.provider_name ?? t('dashboardDefault.provider.noProvider')).trim();
       providerCount.set(providerName, (providerCount.get(providerName) || 0) + 1);
     });
 
     if (providerCount.size === 0) {
       subscriptions.forEach((sub) => {
-        const providerName = String(sub.provider ?? sub.providerName ?? sub.provider_name ?? 'Sin proveedor').trim();
+        const providerName = String(sub.provider ?? sub.providerName ?? sub.provider_name ?? t('dashboardDefault.provider.noProvider')).trim();
         providerCount.set(providerName, (providerCount.get(providerName) || 0) + 1);
       });
     }
@@ -671,7 +706,7 @@ export default function DashboardDefault() {
       .slice(0, 6);
 
     return {
-      series: [{ name: 'Registros', data: sorted.map((x) => x.count) }],
+      series: [{ name: t('dashboardDefault.series.records'), data: sorted.map((x) => x.count) }],
       options: {
         chart: { ...chartTheme.baseChart, type: 'bar' },
         states: chartTheme.states,
@@ -685,7 +720,7 @@ export default function DashboardDefault() {
         tooltip: chartTheme.tooltip
       }
     };
-  }, [lines, subscriptions, theme, chartTheme]);
+  }, [lines, subscriptions, theme, chartTheme, t]);
 
   const commitmentsChart = useMemo(() => {
     const pending = Math.max(metrics.commitmentTotal - metrics.commitmentPaid - metrics.commitmentOverdue, 0);
@@ -695,7 +730,7 @@ export default function DashboardDefault() {
       options: {
         chart: { ...chartTheme.baseChart, type: 'donut' },
         states: chartTheme.states,
-        labels: ['Pagados', 'Pendientes', 'Vencidos'],
+        labels: [t('dashboardDefault.labels.paid'), t('dashboardDefault.labels.pending'), t('dashboardDefault.labels.overdue')],
         legend: chartTheme.legend('bottom', 'center'),
         dataLabels: { enabled: false },
         colors: [theme.palette.success.main, theme.palette.warning.main, theme.palette.error.main],
@@ -703,13 +738,13 @@ export default function DashboardDefault() {
         tooltip: chartTheme.tooltip
       }
     };
-  }, [metrics.commitmentOverdue, metrics.commitmentPaid, metrics.commitmentTotal, theme, chartTheme]);
+  }, [metrics.commitmentOverdue, metrics.commitmentPaid, metrics.commitmentTotal, theme, chartTheme, t]);
 
   const funnelChart = useMemo(() => {
     return {
       series: [
         {
-          name: 'Pipeline',
+          name: t('dashboardDefault.series.pipeline'),
           data: [metrics.potentialTotal, metrics.customerTotal, metrics.customerActive, metrics.subActive, metrics.invoicePaid]
         }
       ],
@@ -717,7 +752,13 @@ export default function DashboardDefault() {
         chart: { ...chartTheme.baseChart, type: 'bar' },
         states: chartTheme.states,
         plotOptions: { bar: { borderRadius: 4, columnWidth: '48%' } },
-        xaxis: chartTheme.xaxis(['Prospectos', 'Clientes', 'Clientes Activos', 'Subs Activas', 'Facturas Pagadas']),
+        xaxis: chartTheme.xaxis([
+          t('dashboardDefault.categories.prospects'),
+          t('dashboardDefault.categories.customers'),
+          t('dashboardDefault.categories.activeCustomers'),
+          t('dashboardDefault.categories.activeSubscriptions'),
+          t('dashboardDefault.categories.paidInvoices')
+        ]),
         yaxis: chartTheme.yaxis((v) => Math.round(v)),
         grid: chartTheme.grid,
         dataLabels: { enabled: false },
@@ -726,199 +767,207 @@ export default function DashboardDefault() {
         tooltip: chartTheme.tooltip
       }
     };
-  }, [metrics.customerActive, metrics.customerTotal, metrics.invoicePaid, metrics.potentialTotal, metrics.subActive, theme, chartTheme]);
+  }, [metrics.customerActive, metrics.customerTotal, metrics.invoicePaid, metrics.potentialTotal, metrics.subActive, theme, chartTheme, t]);
 
   const executiveKpis = useMemo(
     () => [
       {
         key: 'customer-active',
-        title: 'Clientes activos',
+        title: t('dashboardDefault.kpis.executive.customerActive.title'),
         value: metrics.customerActive,
-        helper: `${metrics.customerTotal} total`,
+        helper: t('dashboardDefault.kpis.executive.customerActive.helper', { total: metrics.customerTotal }),
         icon: <PeopleAltIcon fontSize="small" />,
         color: 'primary'
       },
       {
         key: 'sub-active',
-        title: 'Subs activas',
+        title: t('dashboardDefault.kpis.executive.subscriptionsActive.title'),
         value: metrics.subActive,
-        helper: `${metrics.subTotal} total`,
+        helper: t('dashboardDefault.kpis.executive.subscriptionsActive.helper', { total: metrics.subTotal }),
         icon: <CreditCardIcon fontSize="small" />,
         color: 'success'
       },
       {
         key: 'income-net',
-        title: 'Ingreso neto',
-        value: formatMoney(metrics.invoiceNet),
-        helper: `${metrics.invoicePaid} pagadas · ${metrics.invoicePending} pendientes`,
+        title: t('dashboardDefault.kpis.executive.netIncome.title'),
+        value: formatMoney(metrics.invoiceNet, locale),
+        helper: t('dashboardDefault.kpis.executive.netIncome.helper', {
+          paid: metrics.invoicePaid,
+          pending: metrics.invoicePending
+        }),
         icon: <AttachMoneyIcon fontSize="small" />,
         color: 'info'
       },
       {
         key: 'annual-balance',
-        title: 'Balance anual',
-        value: formatMoney(metrics.invoiceNet - metrics.purchasesYear),
-        helper: `${formatMoney(metrics.purchasesYear)} gastos`,
+        title: t('dashboardDefault.kpis.executive.annualBalance.title'),
+        value: formatMoney(metrics.invoiceNet - metrics.purchasesYear, locale),
+        helper: t('dashboardDefault.kpis.executive.annualBalance.helper', { expenses: formatMoney(metrics.purchasesYear, locale) }),
         icon: <AccountBalanceWalletIcon fontSize="small" />,
         color: metrics.invoiceNet - metrics.purchasesYear >= 0 ? 'success' : 'error'
       },
       {
         key: 'pending-commitments',
-        title: 'Compromisos pendientes',
-        value: formatMoney(metrics.commitmentPendingAmount),
-        helper: `${metrics.commitmentTotal} compromisos`,
+        title: t('dashboardDefault.kpis.executive.pendingCommitments.title'),
+        value: formatMoney(metrics.commitmentPendingAmount, locale),
+        helper: t('dashboardDefault.kpis.executive.pendingCommitments.helper', { total: metrics.commitmentTotal }),
         icon: <ReceiptLongIcon fontSize="small" />,
         color: 'warning'
       },
       {
         key: 'managed-active',
-        title: 'Managed activas',
+        title: t('dashboardDefault.kpis.executive.managedActive.title'),
         value: `${metrics.managedActive}/${metrics.managedTotal}`,
-        helper: `${metrics.managedExpiring30} vencen en 30 días`,
+        helper: t('dashboardDefault.kpis.executive.managedActive.helper', { expiring: metrics.managedExpiring30 }),
         icon: <AssessmentIcon fontSize="small" />,
         color: 'secondary'
       }
     ],
-    [metrics]
+    [metrics, t, locale]
   );
 
   const financialKpis = useMemo(
     () => [
       {
         key: 'collection-rate',
-        title: 'Tasa de cobranza',
+        title: t('dashboardDefault.kpis.financial.collectionRate.title'),
         value: formatPercent(metrics.invoiceCollectionRate),
-        helper: `${formatMoney(metrics.invoicePaidAmount)} cobrado`,
+        helper: t('dashboardDefault.kpis.financial.collectionRate.helper', {
+          amount: formatMoney(metrics.invoicePaidAmount, locale)
+        }),
         icon: <TrendingUpIcon fontSize="small" />,
         color: 'success'
       },
       {
         key: 'avg-ticket',
-        title: 'Ticket promedio',
-        value: formatMoney(metrics.invoiceAvgTicket),
-        helper: `sobre ${metrics.invoicePaid} facturas pagadas`,
+        title: t('dashboardDefault.kpis.financial.averageTicket.title'),
+        value: formatMoney(metrics.invoiceAvgTicket, locale),
+        helper: t('dashboardDefault.kpis.financial.averageTicket.helper', { paid: metrics.invoicePaid }),
         icon: <AttachMoneyIcon fontSize="small" />,
         color: 'info'
       },
       {
         key: 'pending-invoice-amount',
-        title: 'Monto por cobrar',
-        value: formatMoney(metrics.invoicePendingAmount),
-        helper: `${metrics.invoiceOverdue} vencidas`,
+        title: t('dashboardDefault.kpis.financial.pendingAmount.title'),
+        value: formatMoney(metrics.invoicePendingAmount, locale),
+        helper: t('dashboardDefault.kpis.financial.pendingAmount.helper', { overdue: metrics.invoiceOverdue }),
         icon: <TrendingDownIcon fontSize="small" />,
         color: 'warning'
       },
       {
         key: 'discount-total',
-        title: 'Descuento aplicado',
-        value: formatMoney(metrics.invoiceDiscountTotal),
-        helper: 'acumulado de facturación',
+        title: t('dashboardDefault.kpis.financial.discountTotal.title'),
+        value: formatMoney(metrics.invoiceDiscountTotal, locale),
+        helper: t('dashboardDefault.kpis.financial.discountTotal.helper'),
         icon: <ReceiptLongIcon fontSize="small" />,
         color: 'secondary'
       },
       {
         key: 'cash-month',
-        title: 'Caja mes actual',
-        value: formatMoney(metrics.invoiceCashThisMonth),
-        helper: `compras mes ${formatMoney(metrics.purchasesThisMonth)}`,
+        title: t('dashboardDefault.kpis.financial.cashMonth.title'),
+        value: formatMoney(metrics.invoiceCashThisMonth, locale),
+        helper: t('dashboardDefault.kpis.financial.cashMonth.helper', { purchases: formatMoney(metrics.purchasesThisMonth, locale) }),
         icon: <TimelineIcon fontSize="small" />,
         color: metrics.invoiceCashThisMonth - metrics.purchasesThisMonth >= 0 ? 'success' : 'error'
       },
       {
         key: 'commitment-recovered',
-        title: 'Recuperado compromisos',
-        value: formatMoney(metrics.commitmentRecoveredAmount),
-        helper: `${metrics.commitmentPaid} pagados`,
+        title: t('dashboardDefault.kpis.financial.recoveredCommitments.title'),
+        value: formatMoney(metrics.commitmentRecoveredAmount, locale),
+        helper: t('dashboardDefault.kpis.financial.recoveredCommitments.helper', { paid: metrics.commitmentPaid }),
         icon: <AutorenewIcon fontSize="small" />,
         color: 'primary'
       }
     ],
-    [metrics]
+    [metrics, t, locale]
   );
 
   const operationalKpis = useMemo(
     () => [
       {
         key: 'sub-expiring',
-        title: 'Subs vencen 7 días',
+        title: t('dashboardDefault.kpis.operational.subsExpiring.title'),
         value: metrics.subExpiring7,
-        helper: `${metrics.subExpiring30} dentro de 30 días`,
+        helper: t('dashboardDefault.kpis.operational.subsExpiring.helper', { within30: metrics.subExpiring30 }),
         icon: <WarningAmberIcon fontSize="small" />,
         color: 'warning'
       },
       {
         key: 'sub-autopay',
-        title: 'Cobro automático',
+        title: t('dashboardDefault.kpis.operational.autoPay.title'),
         value: formatPercent(metrics.subAutoPayRate),
-        helper: `${metrics.subAutoPay}/${metrics.subTotal} suscripciones`,
+        helper: t('dashboardDefault.kpis.operational.autoPay.helper', { autoPay: metrics.subAutoPay, total: metrics.subTotal }),
         icon: <AutorenewIcon fontSize="small" />,
         color: 'success'
       },
       {
         key: 'license-paid',
-        title: 'Licencias pagadas',
+        title: t('dashboardDefault.kpis.operational.licensesPaid.title'),
         value: `${metrics.licensePaid}/${metrics.licenseTotal}`,
-        helper: `${metrics.licenseUnpaid} sin pago`,
+        helper: t('dashboardDefault.kpis.operational.licensesPaid.helper', { unpaid: metrics.licenseUnpaid }),
         icon: <KeyIcon fontSize="small" />,
         color: 'secondary'
       },
       {
         key: 'license-availability',
-        title: 'Licencias disponibles',
+        title: t('dashboardDefault.kpis.operational.licensesAvailable.title'),
         value: `${metrics.licenseAvailable}/${metrics.licenseTotal}`,
-        helper: `${metrics.licenseAssigned} asignadas`,
+        helper: t('dashboardDefault.kpis.operational.licensesAvailable.helper', { assigned: metrics.licenseAssigned }),
         icon: <KeyIcon fontSize="small" />,
         color: 'info'
       },
       {
         key: 'line-plus',
-        title: 'Line Plus (LION_PLUS+)',
+        title: t('dashboardDefault.kpis.operational.linePlus.title'),
         value: `${metrics.linePlusCount}/${metrics.linesTotal}`,
-        helper: `${metrics.linesExpiring7} vencen en 7 días`,
+        helper: t('dashboardDefault.kpis.operational.linePlus.helper', { expiring7: metrics.linesExpiring7 }),
         icon: <CreditCardIcon fontSize="small" />,
         color: 'primary'
       },
       {
         key: 'prospect-conversion',
-        title: 'Conversión prospectos',
+        title: t('dashboardDefault.kpis.operational.prospectConversion.title'),
         value: formatPercent(metrics.potentialConversionRate),
-        helper: `${metrics.potentialConverted}/${metrics.potentialTotal} convertidos`,
+        helper: t('dashboardDefault.kpis.operational.prospectConversion.helper', {
+          converted: metrics.potentialConverted,
+          total: metrics.potentialTotal
+        }),
         icon: <PeopleAltIcon fontSize="small" />,
         color: 'info'
       }
     ],
-    [metrics]
+    [metrics, t]
   );
 
   if (loading && totalRecords === 0) {
-    return <PageLoadingState label={t('dashboard.loading', 'Cargando dashboard...')} />;
+    return <PageLoadingState label={t('dashboardDefault.states.loading')} />;
   }
 
   if (overviewError && totalRecords === 0) {
     return (
       <PageErrorState
-        message={overviewError?.response?.data?.message || t('dashboard.loadError', 'No se pudo cargar el dashboard.')}
+        message={overviewError?.response?.data?.message || t('dashboardDefault.states.loadError')}
         onRetry={() => window.location.reload()}
       />
     );
   }
 
   if (!loading && !overviewError && totalRecords === 0) {
-    return <PageEmptyState message={t('dashboard.empty', 'No hay información para construir los KPI todavía.')} />;
+    return <PageEmptyState message={t('dashboardDefault.states.empty')} />;
   }
 
   return (
     <Grid container spacing={gridSpacing}>
       <Grid size={12}>
         <Alert severity="info" variant="outlined" sx={infoAlertSx}>
-          {t('dashboard.kpiSubtitle', 'Dashboard con KPI y gráficos en tiempo real del ecosistema LionTV.')}
+          {t('dashboardDefault.states.kpiSubtitle')}
         </Alert>
       </Grid>
 
       {overviewData?.meta?.partial ? (
         <Grid size={12}>
           <Alert severity="warning" variant="outlined" sx={warningAlertSx}>
-            {t('dashboard.partial', 'Se cargaron datos parciales para los KPI.')}
+            {t('dashboardDefault.states.partial')}
           </Alert>
         </Grid>
       ) : null}
@@ -926,13 +975,13 @@ export default function DashboardDefault() {
       {overviewError ? (
         <Grid size={12}>
           <Alert severity="error" variant="outlined" sx={errorAlertSx}>
-            {overviewError?.response?.data?.message || t('dashboard.loadError', 'No se pudo cargar el dashboard.')}
+            {overviewError?.response?.data?.message || t('dashboardDefault.states.loadError')}
           </Alert>
         </Grid>
       ) : null}
 
       <Grid size={12}>
-        <Typography variant="h4">Resumen ejecutivo</Typography>
+        <Typography variant="h4">{t('dashboardDefault.sections.executive')}</Typography>
       </Grid>
       {executiveKpis.map((card) => (
         <Grid key={card.key} size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
@@ -941,7 +990,7 @@ export default function DashboardDefault() {
       ))}
 
       <Grid size={12}>
-        <Typography variant="h4">KPIs financieros</Typography>
+        <Typography variant="h4">{t('dashboardDefault.sections.financial')}</Typography>
       </Grid>
       {financialKpis.map((card) => (
         <Grid key={card.key} size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
@@ -950,7 +999,7 @@ export default function DashboardDefault() {
       ))}
 
       <Grid size={12}>
-        <Typography variant="h4">KPIs operativos y riesgo</Typography>
+        <Typography variant="h4">{t('dashboardDefault.sections.operational')}</Typography>
       </Grid>
       {operationalKpis.map((card) => (
         <Grid key={card.key} size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
@@ -960,8 +1009,8 @@ export default function DashboardDefault() {
 
       <Grid size={{ xs: 12, md: 4 }}>
         <ChartCard
-          title={t('dashboard.charts.portfolio', 'Portafolio por módulo')}
-          helper={t('dashboard.charts.portfolioHelper', 'Volumen de registros por entidad')}
+          title={t('dashboardDefault.charts.portfolio.title')}
+          helper={t('dashboardDefault.charts.portfolio.helper')}
         >
           <LazyApexChart options={donutChart.options} series={donutChart.series} type="donut" height={330} />
         </ChartCard>
@@ -969,8 +1018,8 @@ export default function DashboardDefault() {
 
       <Grid size={{ xs: 12, md: 8 }}>
         <ChartCard
-          title={t('dashboard.charts.status', 'Estado operativo por módulo')}
-          helper={t('dashboard.charts.statusHelper', 'Comparativo entre OK y riesgo/pendiente')}
+          title={t('dashboardDefault.charts.status.title')}
+          helper={t('dashboardDefault.charts.status.helper')}
         >
           <LazyApexChart options={statusBar.options} series={statusBar.series} type="bar" height={330} />
         </ChartCard>
@@ -978,8 +1027,8 @@ export default function DashboardDefault() {
 
       <Grid size={{ xs: 12, md: 8 }}>
         <ChartCard
-          title={t('dashboard.charts.cashflow', 'Tendencia mensual: ingresos vs gastos')}
-          helper={t('dashboard.charts.cashflowHelper', 'Año actual consolidado')}
+          title={t('dashboardDefault.charts.cashflow.title')}
+          helper={t('dashboardDefault.charts.cashflow.helper')}
         >
           <LazyApexChart options={monthlyTrend.options} series={monthlyTrend.series} type="area" height={350} />
         </ChartCard>
@@ -987,60 +1036,78 @@ export default function DashboardDefault() {
 
       <Grid size={{ xs: 12, md: 4 }}>
         <ChartCard
-          title={t('dashboard.charts.expiry', 'Vencimientos próximos')}
-          helper={t('dashboard.charts.expiryHelper', 'Buckets de riesgo de 30 días')}
+          title={t('dashboardDefault.charts.expiry.title')}
+          helper={t('dashboardDefault.charts.expiry.helper')}
         >
           <LazyApexChart options={expiryChart.options} series={expiryChart.series} type="bar" height={350} />
           <Divider />
           <Stack spacing={0.8} sx={{ mt: 0.5 }}>
-            <Chip size="small" color="success" variant="outlined" label={`Autopay: ${metrics.subAutoPay}/${metrics.subTotal}`} />
+            <Chip
+              size="small"
+              color="success"
+              variant="outlined"
+              label={t('dashboardDefault.chips.autoPay', { autoPay: metrics.subAutoPay, total: metrics.subTotal })}
+            />
             <Chip
               size="small"
               color="info"
               variant="outlined"
-              label={`Managed activos: ${metrics.managedActive}/${metrics.managedTotal}`}
+              label={t('dashboardDefault.chips.managedActive', { active: metrics.managedActive, total: metrics.managedTotal })}
             />
             <Chip
               size="small"
               color="warning"
               variant="outlined"
-              label={`Prospectos convertidos: ${metrics.potentialConverted}/${metrics.potentialTotal}`}
+              label={t('dashboardDefault.chips.prospectsConverted', {
+                converted: metrics.potentialConverted,
+                total: metrics.potentialTotal
+              })}
             />
           </Stack>
         </ChartCard>
       </Grid>
 
       <Grid size={{ xs: 12, md: 4 }}>
-        <ChartCard title="Compromisos de pago" helper="Distribución por estado operativo">
+        <ChartCard title={t('dashboardDefault.charts.commitments.title')} helper={t('dashboardDefault.charts.commitments.helper')}>
           <LazyApexChart options={commitmentsChart.options} series={commitmentsChart.series} type="donut" height={330} />
           <Divider />
           <Stack spacing={0.8} sx={{ mt: 0.5 }}>
-            <Chip size="small" color="success" variant="outlined" label={`Recuperado: ${formatMoney(metrics.commitmentRecoveredAmount)}`} />
-            <Chip size="small" color="warning" variant="outlined" label={`Pendiente: ${formatMoney(metrics.commitmentPendingAmount)}`} />
+            <Chip
+              size="small"
+              color="success"
+              variant="outlined"
+              label={t('dashboardDefault.chips.recovered', { amount: formatMoney(metrics.commitmentRecoveredAmount, locale) })}
+            />
+            <Chip
+              size="small"
+              color="warning"
+              variant="outlined"
+              label={t('dashboardDefault.chips.pending', { amount: formatMoney(metrics.commitmentPendingAmount, locale) })}
+            />
           </Stack>
         </ChartCard>
       </Grid>
 
       <Grid size={{ xs: 12, md: 4 }}>
-        <ChartCard title="Mix por proveedor" helper="Top proveedores por volumen de líneas/subs">
+        <ChartCard title={t('dashboardDefault.charts.providerMix.title')} helper={t('dashboardDefault.charts.providerMix.helper')}>
           <LazyApexChart options={providerMixChart.options} series={providerMixChart.series} type="bar" height={330} />
           <Divider />
           <Stack spacing={0.8} sx={{ mt: 0.5 }}>
-            <Chip size="small" color="primary" variant="outlined" label={`Line Plus: ${metrics.linePlusCount}`} />
-            <Chip size="small" color="warning" variant="outlined" label={`Líneas vencidas: ${metrics.linesExpired}`} />
+            <Chip size="small" color="primary" variant="outlined" label={t('dashboardDefault.chips.linePlus', { count: metrics.linePlusCount })} />
+            <Chip size="small" color="warning" variant="outlined" label={t('dashboardDefault.chips.linesExpired', { count: metrics.linesExpired })} />
           </Stack>
         </ChartCard>
       </Grid>
 
       <Grid size={12}>
-        <ChartCard title="Embudo comercial-operativo" helper="Del prospecto hasta facturación cobrada">
+        <ChartCard title={t('dashboardDefault.charts.funnel.title')} helper={t('dashboardDefault.charts.funnel.helper')}>
           <LazyApexChart options={funnelChart.options} series={funnelChart.series} type="bar" height={290} />
           <Divider />
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-            <Chip size="small" color="info" variant="outlined" label={`Prospectos abiertos: ${metrics.potentialOpen}`} />
-            <Chip size="small" color="success" variant="outlined" label={`Clientes inactivos: ${metrics.customerInactive}`} />
-            <Chip size="small" color="warning" variant="outlined" label={`Subs expiradas: ${metrics.subExpired}`} />
-            <Chip size="small" color="secondary" variant="outlined" label={`Licencias por vencer (30d): ${metrics.licenseExpiring30}`} />
+            <Chip size="small" color="info" variant="outlined" label={t('dashboardDefault.chips.openProspects', { count: metrics.potentialOpen })} />
+            <Chip size="small" color="success" variant="outlined" label={t('dashboardDefault.chips.inactiveCustomers', { count: metrics.customerInactive })} />
+            <Chip size="small" color="warning" variant="outlined" label={t('dashboardDefault.chips.expiredSubs', { count: metrics.subExpired })} />
+            <Chip size="small" color="secondary" variant="outlined" label={t('dashboardDefault.chips.expiringLicenses30d', { count: metrics.licenseExpiring30 })} />
           </Stack>
         </ChartCard>
       </Grid>

@@ -1,15 +1,17 @@
 import FeedCrudManager from './FeedCrudManager';
+import { useTranslation } from 'react-i18next';
 
 export default function SeriesFeedLionTv() {
+  const { t } = useTranslation();
   return (
     <FeedCrudManager
-      title="Series Feed"
+      title={t('feeds.series.title')}
       endpointBase="/new-series-feed"
-      createButtonLabel="New Series Feed"
-      emptyMessage="No series feed records found."
-      createSuccessMessage="Series feed created."
-      updateSuccessMessage="Series feed updated."
-      deleteSuccessMessage="Series feed deleted."
+      createButtonLabel={t('feeds.series.create')}
+      emptyMessage={t('feeds.series.empty')}
+      createSuccessMessage={t('feeds.series.created')}
+      updateSuccessMessage={t('feeds.series.updated')}
+      deleteSuccessMessage={t('feeds.series.deleted')}
     />
   );
 }

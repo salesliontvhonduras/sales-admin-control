@@ -6,14 +6,14 @@ const icons = {
 
 const security = {
   id: 'security',
-  title: 'Seguridad',
+  title: 'menu.security',
   type: 'group',
   permission: { any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] },
   children: [
     {
       id: 'security-user-access',
-      title: 'Usuarios y Accesos',
-      caption: 'Roles y permisos',
+      title: 'menu.userAccess',
+      caption: 'menu.userAccessCaption',
       type: 'item',
       url: '/admin/users-access',
       icon: icons.IconShieldLock,

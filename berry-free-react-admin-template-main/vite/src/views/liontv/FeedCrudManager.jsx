@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -71,7 +72,7 @@ function payloadPreview(payload) {
   return normalized.length > 120 ? `${normalized.slice(0, 120)}...` : normalized;
 }
 
-function FeedRowActions({ row, onEdit, onDelete }) {
+function FeedRowActions({ row, onEdit, onDelete, editLabel, deleteLabel }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -94,7 +95,7 @@ function FeedRowActions({ row, onEdit, onDelete }) {
           }}
         >
           <EditOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#1e88e5' }} />
-          Edit
+          {editLabel}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -103,7 +104,7 @@ function FeedRowActions({ row, onEdit, onDelete }) {
           }}
         >
           <DeleteOutlineIcon fontSize="small" style={{ marginRight: 8, color: '#e53935' }} />
-          Delete
+          {deleteLabel}
         </MenuItem>
       </Menu>
     </>
@@ -128,6 +129,7 @@ export default function FeedCrudManager({
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
+  const { t } = useTranslation();
 
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -161,12 +163,12 @@ export default function FeedCrudManager({
       setRows(normalized);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo cargar la información.', { variant: 'error' });
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('feedCrud.errors.load'), { variant: 'error' });
       }
     } finally {
       setLoading(false);
     }
-  }, [accessToken, endpointBase, enqueueSnackbar]);
+  }, [accessToken, endpointBase, enqueueSnackbar, t]);
 
   useEffect(() => {
     loadRows();
@@ -199,14 +201,14 @@ export default function FeedCrudManager({
 
   const validatePayloadJson = (payloadJson) => {
     if (!payloadJson?.trim()) {
-      enqueueSnackbar('payloadJson es obligatorio.', { variant: 'warning' });
+      enqueueSnackbar(t('feedCrud.validation.payloadRequired'), { variant: 'warning' });
       return false;
     }
     try {
       JSON.parse(payloadJson);
       return true;
     } catch (error) {
-      enqueueSnackbar('payloadJson debe ser un JSON válido.', { variant: 'warning' });
+      enqueueSnackbar(t('feedCrud.validation.payloadInvalid'), { variant: 'warning' });
       return false;
     }
   };
@@ -250,7 +252,7 @@ export default function FeedCrudManager({
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo guardar el registro.', { variant: 'error' });
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('feedCrud.errors.save'), { variant: 'error' });
       }
     } finally {
       setSending(false);
@@ -275,7 +277,7 @@ export default function FeedCrudManager({
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo eliminar el registro.', { variant: 'error' });
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('feedCrud.errors.delete'), { variant: 'error' });
       }
     } finally {
       setSending(false);
@@ -299,7 +301,7 @@ export default function FeedCrudManager({
         secondary={
           <Stack direction="row" spacing={1.25}>
             <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => setRefreshKey((v) => v + 1)}>
-              Refresh
+              {t('feedCrud.actions.refresh')}
             </Button>
             <Button
               variant="contained"
@@ -316,7 +318,7 @@ export default function FeedCrudManager({
       >
         <TextField
           size="small"
-          placeholder="Search by ID, JSON content, date or active state"
+          placeholder={t('feedCrud.searchPlaceholder')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           fullWidth
@@ -335,12 +337,12 @@ export default function FeedCrudManager({
             <TableHead>
               <TableRow>
                 <TableCell>ID</TableCell>
-                <TableCell>Published</TableCell>
-                <TableCell>Active</TableCell>
-                <TableCell>Payload Preview</TableCell>
-                <TableCell>Created</TableCell>
-                <TableCell>Updated</TableCell>
-                <TableCell align="right">Actions</TableCell>
+                <TableCell>{t('feedCrud.table.published')}</TableCell>
+                <TableCell>{t('feedCrud.table.active')}</TableCell>
+                <TableCell>{t('feedCrud.table.payloadPreview')}</TableCell>
+                <TableCell>{t('feedCrud.table.created')}</TableCell>
+                <TableCell>{t('feedCrud.table.updated')}</TableCell>
+                <TableCell align="right">{t('feedCrud.table.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -361,7 +363,7 @@ export default function FeedCrudManager({
                     <TableCell>{row.id}</TableCell>
                     <TableCell>{formatDateTime(row.publishedAt)}</TableCell>
                     <TableCell>
-                      <Chip size="small" color={row.active ? 'success' : 'default'} label={row.active ? 'Yes' : 'No'} />
+                      <Chip size="small" color={row.active ? 'success' : 'default'} label={row.active ? t('common.yes') : t('common.no')} />
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">{payloadPreview(row.payloadJson)}</Typography>
@@ -369,7 +371,13 @@ export default function FeedCrudManager({
                     <TableCell>{formatDateTime(row.createdAt)}</TableCell>
                     <TableCell>{formatDateTime(row.updatedAt)}</TableCell>
                     <TableCell align="right">
-                      <FeedRowActions row={row} onEdit={handleEdit} onDelete={(selected) => setOpenDelete({ open: true, row: selected })} />
+                      <FeedRowActions
+                        row={row}
+                        onEdit={handleEdit}
+                        onDelete={(selected) => setOpenDelete({ open: true, row: selected })}
+                        editLabel={t('feedCrud.actions.edit')}
+                        deleteLabel={t('feedCrud.actions.delete')}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -392,15 +400,16 @@ export default function FeedCrudManager({
           rowsPerPage={rowsPerPage}
           onPageChange={(event, nextPage) => setPage(nextPage)}
           onRowsPerPageChange={(event) => setRowsPerPage(parseInt(event.target.value, 10))}
+          labelRowsPerPage={t('feedCrud.pagination.rowsPerPage')}
         />
       </MainCard>
 
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="md">
-        <DialogTitle>{form.id ? 'Edit Record' : 'Create Record'}</DialogTitle>
+        <DialogTitle>{form.id ? t('feedCrud.dialogs.editTitle') : t('feedCrud.dialogs.createTitle')}</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2}>
             <TextField
-              label="Payload JSON"
+              label={t('feedCrud.form.payloadJson')}
               value={form.payloadJson}
               onChange={(e) => setForm((prev) => ({ ...prev, payloadJson: e.target.value }))}
               multiline
@@ -409,7 +418,7 @@ export default function FeedCrudManager({
               fullWidth
             />
             <TextField
-              label="Published At"
+              label={t('feedCrud.form.publishedAt')}
               type="datetime-local"
               value={form.publishedAt}
               onChange={(e) => setForm((prev) => ({ ...prev, publishedAt: e.target.value }))}
@@ -418,33 +427,33 @@ export default function FeedCrudManager({
             />
             <FormControlLabel
               control={<Switch checked={Boolean(form.active)} onChange={(e) => setForm((prev) => ({ ...prev, active: e.target.checked }))} />}
-              label="Active"
+              label={t('feedCrud.form.active')}
             />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenModal(false)} disabled={sending}>
-            Cancel
+            {t('common.close')}
           </Button>
           <Button onClick={handleSave} variant="contained" disabled={sending}>
-            {sending ? 'Saving...' : form.id ? 'Save changes' : 'Create'}
+            {sending ? t('feedCrud.actions.saving') : form.id ? t('feedCrud.actions.saveChanges') : t('feedCrud.actions.create')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={openDelete.open} onClose={() => setOpenDelete({ open: false, row: null })} fullWidth maxWidth="xs">
-        <DialogTitle>Delete Record</DialogTitle>
+        <DialogTitle>{t('feedCrud.dialogs.deleteTitle')}</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2">
-            Are you sure you want to delete this record? ID: <strong>{openDelete.row?.id ?? '-'}</strong>
+            {t('feedCrud.dialogs.deleteBody', { id: openDelete.row?.id ?? '-' })}
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDelete({ open: false, row: null })} disabled={sending}>
-            Cancel
+            {t('common.close')}
           </Button>
           <Button onClick={confirmDelete} color="error" variant="contained" disabled={sending}>
-            {sending ? 'Deleting...' : 'Delete'}
+            {sending ? t('feedCrud.actions.deleting') : t('feedCrud.actions.delete')}
           </Button>
         </DialogActions>
       </Dialog>

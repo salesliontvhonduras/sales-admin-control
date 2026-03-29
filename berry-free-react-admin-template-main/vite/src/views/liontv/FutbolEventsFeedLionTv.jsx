@@ -1,15 +1,17 @@
 import FeedCrudManager from './FeedCrudManager';
+import { useTranslation } from 'react-i18next';
 
 export default function FutbolEventsFeedLionTv() {
+  const { t } = useTranslation();
   return (
     <FeedCrudManager
-      title="Futbol Events Feed"
+      title={t('feeds.futbol.title')}
       endpointBase="/new-futbol-events-feed"
-      createButtonLabel="New Futbol Events Feed"
-      emptyMessage="No futbol events feed records found."
-      createSuccessMessage="Futbol events feed created."
-      updateSuccessMessage="Futbol events feed updated."
-      deleteSuccessMessage="Futbol events feed deleted."
+      createButtonLabel={t('feeds.futbol.create')}
+      emptyMessage={t('feeds.futbol.empty')}
+      createSuccessMessage={t('feeds.futbol.created')}
+      updateSuccessMessage={t('feeds.futbol.updated')}
+      deleteSuccessMessage={t('feeds.futbol.deleted')}
     />
   );
 }

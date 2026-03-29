@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
@@ -56,12 +57,6 @@ import {
   updateAdminUserAccess,
   updateAdminUserStatus
 } from 'api/auth-admin';
-
-const statusFilterOptions = [
-  { value: 'ALL', label: 'Todos' },
-  { value: 'ACTIVE', label: 'Activos' },
-  { value: 'INACTIVE', label: 'Inactivos' }
-];
 
 const defaultCreateForm = {
   name: '',
@@ -181,11 +176,11 @@ function boolFilter(value) {
   return null;
 }
 
-function formatDateTime(value) {
+function formatDateTime(value, locale = 'es-HN') {
   if (!value) return '-';
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return '-';
-  return parsed.toLocaleString('es-HN');
+  return parsed.toLocaleString(locale);
 }
 
 function roleColor(role) {
@@ -238,8 +233,18 @@ function MetricCard({ title, value, helper, icon, color = 'primary' }) {
 export default function UserAccessAdmin() {
   const { accessToken } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
+  const { t, i18n } = useTranslation();
+  const locale = (i18n?.resolvedLanguage || i18n?.language || 'es').startsWith('en') ? 'en-US' : 'es-HN';
 
   const headers = useMemo(() => ({ Authorization: `Bearer ${accessToken}` }), [accessToken]);
+  const statusFilterOptions = useMemo(
+    () => [
+      { value: 'ALL', label: t('userAccess.filters.all') },
+      { value: 'ACTIVE', label: t('userAccess.filters.active') },
+      { value: 'INACTIVE', label: t('userAccess.filters.inactive') }
+    ],
+    [t]
+  );
 
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -287,11 +292,11 @@ export default function UserAccessAdmin() {
         Array.isArray(payload?.permissionCatalog) ? [...payload.permissionCatalog].sort((a, b) => String(a).localeCompare(String(b))) : []
       );
     } catch (error) {
-      onError(error, 'No se pudo cargar el catálogo de acceso.');
+      onError(error, t('userAccess.errors.loadCatalog'));
     } finally {
       setCatalogLoading(false);
     }
-  }, [accessToken, headers, onError]);
+  }, [accessToken, headers, onError, t]);
 
   const loadUsers = useCallback(
     async ({ nextIndex = index, nextSize = size, nextSearch = search, nextStatus = statusFilter, silent = false } = {}) => {
@@ -314,13 +319,13 @@ export default function UserAccessAdmin() {
         setUsers(Array.isArray(payload?.data) ? payload.data : []);
         setTotal(Number(payload?.total || 0));
       } catch (error) {
-        onError(error, 'No se pudo cargar el listado de usuarios.');
+        onError(error, t('userAccess.errors.loadUsers'));
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [accessToken, headers, index, onError, search, size, statusFilter]
+    [accessToken, headers, index, onError, search, size, statusFilter, t]
   );
 
   useEffect(() => {
@@ -349,20 +354,20 @@ export default function UserAccessAdmin() {
 
   const handleCreateUser = async () => {
     if (!createForm.name || !createForm.email || !createForm.password || !createForm.serialCode) {
-      enqueueSnackbar('Completa nombre, email, password y serial.', { variant: 'warning' });
+      enqueueSnackbar(t('userAccess.messages.requiredFields'), { variant: 'warning' });
       return;
     }
 
     setCreateSaving(true);
     try {
       await createAdminUser(createForm, { headers, skipAuthRedirect: true });
-      enqueueSnackbar('Usuario creado correctamente.', { variant: 'success' });
+      enqueueSnackbar(t('userAccess.messages.userCreated'), { variant: 'success' });
       setCreateOpen(false);
       resetCreateForm();
       await loadUsers({ nextIndex: 0, silent: true });
       setIndex(0);
     } catch (error) {
-      onError(error, 'No se pudo crear el usuario.');
+      onError(error, t('userAccess.errors.createUser'));
     } finally {
       setCreateSaving(false);
     }
@@ -377,7 +382,7 @@ export default function UserAccessAdmin() {
       setSelectedPermissions(storedRoles.filter((value) => !value.startsWith('ROLE_')));
       setAccessOpen(true);
     } catch (error) {
-      onError(error, 'No se pudo cargar el detalle del usuario.');
+      onError(error, t('userAccess.errors.loadUserDetail'));
     }
   };
 
@@ -393,12 +398,12 @@ export default function UserAccessAdmin() {
         },
         { headers, skipAuthRedirect: true }
       );
-      enqueueSnackbar('Accesos actualizados.', { variant: 'success' });
+      enqueueSnackbar(t('userAccess.messages.accessUpdated'), { variant: 'success' });
       setAccessOpen(false);
       setSelectedUser(null);
       await loadUsers({ silent: true });
     } catch (error) {
-      onError(error, 'No se pudo actualizar los accesos.');
+      onError(error, t('userAccess.errors.updateAccess'));
     } finally {
       setAccessSaving(false);
     }
@@ -415,12 +420,12 @@ export default function UserAccessAdmin() {
     setStatusSaving(true);
     try {
       await updateAdminUserStatus(statusTargetUser.id, nextStatusValue, { headers, skipAuthRedirect: true });
-      enqueueSnackbar('Estado de usuario actualizado.', { variant: 'success' });
+      enqueueSnackbar(t('userAccess.messages.statusUpdated'), { variant: 'success' });
       setStatusOpen(false);
       setStatusTargetUser(null);
       await loadUsers({ silent: true });
     } catch (error) {
-      onError(error, 'No se pudo actualizar el estado.');
+      onError(error, t('userAccess.errors.updateStatus'));
     } finally {
       setStatusSaving(false);
     }
@@ -431,7 +436,7 @@ export default function UserAccessAdmin() {
       <Grid item xs={12}>
         <MainCard
           sx={sectionCardSx}
-          title="Administración de Usuarios y Accesos"
+          title={t('userAccess.title')}
           secondary={
             <Stack direction="row" spacing={1}>
               <Button
@@ -440,54 +445,58 @@ export default function UserAccessAdmin() {
                 onClick={() => loadUsers({ silent: true })}
                 disabled={loading || refreshing}
               >
-                Refrescar
+                {t('userAccess.actions.refresh')}
               </Button>
               <Button variant="contained" startIcon={<PersonAddAlt1OutlinedIcon />} onClick={() => setCreateOpen(true)}>
-                Nuevo usuario
+                {t('userAccess.actions.newUser')}
               </Button>
             </Stack>
           }
         >
           <Typography variant="body2" color="text.secondary">
-            Configura altas de usuarios, roles y permisos efectivos desde un solo panel. El alta usa serial/licencia para mantener
-            coherencia con el flujo actual.
+            {t('userAccess.subtitle')}
           </Typography>
         </MainCard>
       </Grid>
 
       <Grid item xs={12} md={3}>
-        <MetricCard title="Usuarios en página" value={users.length} helper={`Total filtrado: ${total}`} icon={<BadgeOutlinedIcon />} />
+        <MetricCard
+          title={t('userAccess.metrics.usersInPage')}
+          value={users.length}
+          helper={t('userAccess.metrics.filteredTotal', { count: total })}
+          icon={<BadgeOutlinedIcon />}
+        />
       </Grid>
       <Grid item xs={12} md={3}>
         <MetricCard
-          title="Activos"
+          title={t('userAccess.metrics.active')}
           value={metrics.activeCount}
-          helper="Cuentas habilitadas"
+          helper={t('userAccess.metrics.activeHelper')}
           color="success"
           icon={<VerifiedUserOutlinedIcon />}
         />
       </Grid>
       <Grid item xs={12} md={3}>
         <MetricCard
-          title="Admins (página)"
+          title={t('userAccess.metrics.adminsInPage')}
           value={metrics.adminCount}
-          helper="Rol principal con ADMIN"
+          helper={t('userAccess.metrics.adminsHelper')}
           color="error"
           icon={<AdminPanelSettingsOutlinedIcon />}
         />
       </Grid>
       <Grid item xs={12} md={3}>
         <MetricCard
-          title="Sin licencia activa"
+          title={t('userAccess.metrics.noActiveLicense')}
           value={metrics.noLicense}
-          helper="No podrán iniciar sesión"
+          helper={t('userAccess.metrics.noActiveLicenseHelper')}
           color="warning"
           icon={<BlockOutlinedIcon />}
         />
       </Grid>
 
       <Grid item xs={12}>
-        <MainCard title="Listado de Usuarios" sx={sectionCardSx}>
+        <MainCard title={t('userAccess.listTitle')} sx={sectionCardSx}>
           <Stack spacing={2.5}>
             <Box sx={filterPanelSx}>
               <Grid container spacing={2}>
@@ -495,7 +504,7 @@ export default function UserAccessAdmin() {
                   <TextField
                     fullWidth
                     value={search}
-                    label="Buscar por nombre o email"
+                    label={t('userAccess.filters.search')}
                     onChange={(event) => {
                       setIndex(0);
                       setSearch(event.target.value);
@@ -509,7 +518,7 @@ export default function UserAccessAdmin() {
                   <TextField
                     fullWidth
                     select
-                    label="Estado"
+                    label={t('userAccess.filters.status')}
                     value={statusFilter}
                     onChange={(event) => {
                       setIndex(0);
@@ -525,8 +534,10 @@ export default function UserAccessAdmin() {
                 </Grid>
                 <Grid item xs={12} md={4}>
                   <Alert severity="info" variant="outlined" sx={infoAlertSx}>
-                    Catálogo cargado:{' '}
-                    {catalogLoading ? 'cargando...' : `${roleTemplates.length} roles plantilla / ${permissionCatalog.length} permisos`}
+                    {t('userAccess.catalog.loaded')}{' '}
+                    {catalogLoading
+                      ? t('userAccess.catalog.loading')
+                      : t('userAccess.catalog.ready', { roles: roleTemplates.length, permissions: permissionCatalog.length })}
                   </Alert>
                 </Grid>
               </Grid>
@@ -538,12 +549,12 @@ export default function UserAccessAdmin() {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Usuario</TableCell>
-                    <TableCell>Estado</TableCell>
-                    <TableCell>Rol Principal</TableCell>
-                    <TableCell>Licencia</TableCell>
-                    <TableCell>Permisos</TableCell>
-                    <TableCell align="right">Acciones</TableCell>
+                    <TableCell>{t('userAccess.table.user')}</TableCell>
+                    <TableCell>{t('userAccess.table.status')}</TableCell>
+                    <TableCell>{t('userAccess.table.primaryRole')}</TableCell>
+                    <TableCell>{t('userAccess.table.license')}</TableCell>
+                    <TableCell>{t('userAccess.table.permissions')}</TableCell>
+                    <TableCell align="right">{t('userAccess.table.actions')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -553,28 +564,32 @@ export default function UserAccessAdmin() {
                         <Stack spacing={0.4}>
                           <Typography variant="subtitle2">{item.name || '-'}</Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {item.email} | {item.provider || 'LOCAL'}
+                            {item.email} | {item.provider || t('userAccess.table.localProvider')}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Alta: {formatDateTime(item.createdAt)}
+                            {t('userAccess.table.createdAt', { value: formatDateTime(item.createdAt, locale) })}
                           </Typography>
                         </Stack>
                       </TableCell>
                       <TableCell>
-                        <Chip size="small" color={statusColor(item.active)} label={item.active ? 'ACTIVO' : 'INACTIVO'} />
+                        <Chip
+                          size="small"
+                          color={statusColor(item.active)}
+                          label={item.active ? t('userAccess.status.active') : t('userAccess.status.inactive')}
+                        />
                       </TableCell>
                       <TableCell>
-                        <Chip size="small" color={roleColor(item.primaryRole)} label={item.primaryRole || 'SIN_ROL'} />
+                        <Chip size="small" color={roleColor(item.primaryRole)} label={item.primaryRole || t('userAccess.table.noRole')} />
                       </TableCell>
                       <TableCell>
                         <Stack spacing={0.4}>
                           <Chip
                             size="small"
                             color={item.hasActiveLicense ? 'success' : 'warning'}
-                            label={item.hasActiveLicense ? 'LICENCIA ACTIVA' : 'SIN LICENCIA ACTIVA'}
+                            label={item.hasActiveLicense ? t('userAccess.license.active') : t('userAccess.license.inactive')}
                           />
                           <Typography variant="caption" color="text.secondary">
-                            Expira: {formatDateTime(item.licenseExpiresAt)}
+                            {t('userAccess.table.expiresAt', { value: formatDateTime(item.licenseExpiresAt, locale) })}
                           </Typography>
                         </Stack>
                       </TableCell>
@@ -584,23 +599,23 @@ export default function UserAccessAdmin() {
                             <Chip key={`${item.id}-${permission}`} size="small" variant="outlined" label={permission} />
                           ))}
                           {(item.permissions || []).length > 3 && (
-                            <Chip size="small" variant="outlined" label={`+${item.permissions.length - 3} más`} />
+                            <Chip size="small" variant="outlined" label={t('userAccess.table.morePermissions', { count: item.permissions.length - 3 })} />
                           )}
                         </Stack>
                       </TableCell>
                       <TableCell align="right">
                         <Stack direction="row" justifyContent="flex-end" spacing={1}>
-                          <Tooltip title="Editar roles y permisos">
+                          <Tooltip title={t('userAccess.tooltips.editAccess')}>
                             <Button
                               size="small"
                               variant="outlined"
                               startIcon={<SecurityOutlinedIcon />}
                               onClick={() => openAccessModal(item.id)}
                             >
-                              Accesos
+                              {t('userAccess.actions.access')}
                             </Button>
                           </Tooltip>
-                          <Tooltip title="Activar/Inactivar">
+                          <Tooltip title={t('userAccess.tooltips.toggleStatus')}>
                             <Button
                               size="small"
                               variant="contained"
@@ -608,7 +623,7 @@ export default function UserAccessAdmin() {
                               startIcon={<ManageAccountsOutlinedIcon />}
                               onClick={() => openStatusModal(item)}
                             >
-                              Estado
+                              {t('userAccess.actions.status')}
                             </Button>
                           </Tooltip>
                         </Stack>
@@ -619,7 +634,7 @@ export default function UserAccessAdmin() {
                     <TableRow>
                       <TableCell colSpan={6}>
                         <Alert severity="warning" variant="outlined" sx={warningAlertSx}>
-                          No hay usuarios para los filtros actuales.
+                          {t('userAccess.table.empty')}
                         </Alert>
                       </TableCell>
                     </TableRow>
@@ -639,6 +654,7 @@ export default function UserAccessAdmin() {
                 setIndex(0);
               }}
               rowsPerPageOptions={[10, 25, 50]}
+              labelRowsPerPage={t('userAccess.pagination.rowsPerPage')}
             />
           </Stack>
         </MainCard>
@@ -651,17 +667,17 @@ export default function UserAccessAdmin() {
         maxWidth="md"
         PaperProps={{ sx: modalPaperSx }}
       >
-        <DialogTitle sx={modalHeaderSx}>Nuevo Usuario</DialogTitle>
+        <DialogTitle sx={modalHeaderSx}>{t('userAccess.dialogs.create.title')}</DialogTitle>
         <DialogContent sx={modalContentSx}>
           <Stack spacing={2}>
             <Alert severity="info" variant="outlined" sx={infoAlertSx}>
-              Este alta usa el flujo actual con serial/licencia, por lo tanto el usuario quedará listo para autenticarse según su licencia.
+              {t('userAccess.dialogs.create.info')}
             </Alert>
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Nombre"
+                  label={t('userAccess.form.name')}
                   value={createForm.name}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, name: e.target.value }))}
                 />
@@ -669,7 +685,7 @@ export default function UserAccessAdmin() {
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Email"
+                  label={t('userAccess.form.email')}
                   type="email"
                   value={createForm.email}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, email: e.target.value }))}
@@ -678,7 +694,7 @@ export default function UserAccessAdmin() {
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Password temporal"
+                  label={t('userAccess.form.tempPassword')}
                   type="password"
                   value={createForm.password}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, password: e.target.value }))}
@@ -687,20 +703,20 @@ export default function UserAccessAdmin() {
               <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="Serial de licencia"
+                  label={t('userAccess.form.serialCode')}
                   value={createForm.serialCode}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, serialCode: e.target.value }))}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="create-roles-label">Roles</InputLabel>
+                  <InputLabel id="create-roles-label">{t('userAccess.form.roles')}</InputLabel>
                   <Select
                     labelId="create-roles-label"
                     multiple
                     value={createForm.roles}
                     onChange={(event) => setCreateForm((prev) => ({ ...prev, roles: event.target.value }))}
-                    input={<OutlinedInput label="Roles" />}
+                    input={<OutlinedInput label={t('userAccess.form.roles')} />}
                     renderValue={(selected) => selected.join(', ')}
                   >
                     {roleTemplates.map((role) => (
@@ -714,13 +730,13 @@ export default function UserAccessAdmin() {
               </Grid>
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="create-permissions-label">Permisos extra</InputLabel>
+                  <InputLabel id="create-permissions-label">{t('userAccess.form.extraPermissions')}</InputLabel>
                   <Select
                     labelId="create-permissions-label"
                     multiple
                     value={createForm.permissions}
                     onChange={(event) => setCreateForm((prev) => ({ ...prev, permissions: event.target.value }))}
-                    input={<OutlinedInput label="Permisos extra" />}
+                    input={<OutlinedInput label={t('userAccess.form.extraPermissions')} />}
                     renderValue={(selected) => selected.join(', ')}
                   >
                     {permissionCatalog.map((permission) => (
@@ -737,10 +753,10 @@ export default function UserAccessAdmin() {
         </DialogContent>
         <DialogActions sx={modalActionsSx}>
           <Button onClick={() => setCreateOpen(false)} disabled={createSaving}>
-            Cancelar
+            {t('userAccess.actions.cancel')}
           </Button>
           <Button onClick={handleCreateUser} variant="contained" disabled={createSaving} startIcon={<PersonAddAlt1OutlinedIcon />}>
-            Crear usuario
+            {t('userAccess.actions.createUser')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -752,21 +768,21 @@ export default function UserAccessAdmin() {
         maxWidth="md"
         PaperProps={{ sx: modalPaperSx }}
       >
-        <DialogTitle sx={modalHeaderSx}>Configurar Accesos</DialogTitle>
+        <DialogTitle sx={modalHeaderSx}>{t('userAccess.dialogs.access.title')}</DialogTitle>
         <DialogContent sx={modalContentSx}>
           <Stack spacing={2}>
             <Typography variant="subtitle2">
-              Usuario: {selectedUser?.name} ({selectedUser?.email})
+              {t('userAccess.dialogs.access.user', { name: selectedUser?.name, email: selectedUser?.email })}
             </Typography>
             <Divider />
             <FormControl fullWidth>
-              <InputLabel id="edit-roles-label">Roles</InputLabel>
+              <InputLabel id="edit-roles-label">{t('userAccess.form.roles')}</InputLabel>
               <Select
                 labelId="edit-roles-label"
                 multiple
                 value={selectedRoles}
                 onChange={(event) => setSelectedRoles(event.target.value)}
-                input={<OutlinedInput label="Roles" />}
+                input={<OutlinedInput label={t('userAccess.form.roles')} />}
                 renderValue={(selected) => selected.join(', ')}
               >
                 {roleTemplates.map((role) => (
@@ -778,13 +794,13 @@ export default function UserAccessAdmin() {
               </Select>
             </FormControl>
             <FormControl fullWidth>
-              <InputLabel id="edit-permissions-label">Permisos extra</InputLabel>
+              <InputLabel id="edit-permissions-label">{t('userAccess.form.extraPermissions')}</InputLabel>
               <Select
                 labelId="edit-permissions-label"
                 multiple
                 value={selectedPermissions}
                 onChange={(event) => setSelectedPermissions(event.target.value)}
-                input={<OutlinedInput label="Permisos extra" />}
+                input={<OutlinedInput label={t('userAccess.form.extraPermissions')} />}
                 renderValue={(selected) => selected.join(', ')}
               >
                 {permissionCatalog.map((permission) => (
@@ -799,10 +815,10 @@ export default function UserAccessAdmin() {
         </DialogContent>
         <DialogActions sx={modalActionsSx}>
           <Button onClick={() => setAccessOpen(false)} disabled={accessSaving}>
-            Cancelar
+            {t('userAccess.actions.cancel')}
           </Button>
           <Button onClick={handleSaveAccess} variant="contained" disabled={accessSaving} startIcon={<SecurityOutlinedIcon />}>
-            Guardar accesos
+            {t('userAccess.actions.saveAccess')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -814,7 +830,7 @@ export default function UserAccessAdmin() {
         maxWidth="sm"
         PaperProps={{ sx: modalPaperSx }}
       >
-        <DialogTitle sx={modalHeaderSx}>Actualizar Estado del Usuario</DialogTitle>
+        <DialogTitle sx={modalHeaderSx}>{t('userAccess.dialogs.status.title')}</DialogTitle>
         <DialogContent sx={modalContentSx}>
           <Stack spacing={2}>
             <Typography variant="subtitle2">
@@ -838,13 +854,15 @@ export default function UserAccessAdmin() {
                 }
               })}
             >
-              Nuevo estado: {nextStatusValue ? 'ACTIVO' : 'INACTIVO'}
+              {t('userAccess.dialogs.status.newStatus', {
+                status: nextStatusValue ? t('userAccess.status.active') : t('userAccess.status.inactive')
+              })}
             </Alert>
           </Stack>
         </DialogContent>
         <DialogActions sx={modalActionsSx}>
           <Button onClick={() => setStatusOpen(false)} disabled={statusSaving}>
-            Cancelar
+            {t('userAccess.actions.cancel')}
           </Button>
           <Button
             onClick={handleUpdateStatus}
@@ -853,7 +871,7 @@ export default function UserAccessAdmin() {
             disabled={statusSaving}
             startIcon={<ManageAccountsOutlinedIcon />}
           >
-            Confirmar
+            {t('userAccess.actions.confirm')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,15 +1,17 @@
 import FeedCrudManager from './FeedCrudManager';
+import { useTranslation } from 'react-i18next';
 
 export default function MoviesFeedLionTv() {
+  const { t } = useTranslation();
   return (
     <FeedCrudManager
-      title="Movies Feed"
+      title={t('feeds.movies.title')}
       endpointBase="/new-movies-feed"
-      createButtonLabel="New Movie Feed"
-      emptyMessage="No movie feed records found."
-      createSuccessMessage="Movie feed created."
-      updateSuccessMessage="Movie feed updated."
-      deleteSuccessMessage="Movie feed deleted."
+      createButtonLabel={t('feeds.movies.create')}
+      emptyMessage={t('feeds.movies.empty')}
+      createSuccessMessage={t('feeds.movies.created')}
+      updateSuccessMessage={t('feeds.movies.updated')}
+      deleteSuccessMessage={t('feeds.movies.deleted')}
     />
   );
 }

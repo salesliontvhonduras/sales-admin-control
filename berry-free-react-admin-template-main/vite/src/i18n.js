@@ -30,7 +30,10 @@ const resources = {
         lines: 'Lines',
         licenses: 'Licenses',
         sample: 'Sample Page',
-        docs: 'Documentation'
+        docs: 'Documentation',
+        security: 'Security',
+        userAccess: 'Users & Access',
+        userAccessCaption: 'Roles and permissions'
       },
       auth: {
         hi: 'Hi, Welcome Back',
@@ -552,6 +555,292 @@ const resources = {
         },
         table: { detail: 'Detail', empty: 'No data', emptyHelp: 'No records were found for this customer in this module.' }
       },
+      userAccess: {
+        title: 'User Administration & Access',
+        subtitle:
+          'Create users and configure effective roles and permissions from a single panel. Signup keeps license/serial consistency with the current flow.',
+        actions: {
+          refresh: 'Refresh',
+          newUser: 'New user',
+          access: 'Access',
+          status: 'Status',
+          cancel: 'Cancel',
+          createUser: 'Create user',
+          saveAccess: 'Save access',
+          confirm: 'Confirm'
+        },
+        filters: {
+          all: 'All',
+          active: 'Active',
+          inactive: 'Inactive',
+          search: 'Search by name or email',
+          status: 'Status'
+        },
+        metrics: {
+          usersInPage: 'Users in page',
+          filteredTotal: 'Filtered total: {{count}}',
+          active: 'Active',
+          activeHelper: 'Enabled accounts',
+          adminsInPage: 'Admins (page)',
+          adminsHelper: 'Primary role contains ADMIN',
+          noActiveLicense: 'No active license',
+          noActiveLicenseHelper: 'They will not be able to sign in'
+        },
+        catalog: {
+          loaded: 'Catalog loaded:',
+          loading: 'loading...',
+          ready: '{{roles}} role templates / {{permissions}} permissions'
+        },
+        listTitle: 'User list',
+        table: {
+          user: 'User',
+          status: 'Status',
+          primaryRole: 'Primary role',
+          license: 'License',
+          permissions: 'Permissions',
+          actions: 'Actions',
+          localProvider: 'LOCAL',
+          createdAt: 'Created: {{value}}',
+          expiresAt: 'Expires: {{value}}',
+          noRole: 'NO_ROLE',
+          morePermissions: '+{{count}} more',
+          empty: 'There are no users for the current filters.'
+        },
+        status: {
+          active: 'ACTIVE',
+          inactive: 'INACTIVE'
+        },
+        license: {
+          active: 'ACTIVE LICENSE',
+          inactive: 'NO ACTIVE LICENSE'
+        },
+        tooltips: {
+          editAccess: 'Edit roles and permissions',
+          toggleStatus: 'Enable/Disable'
+        },
+        form: {
+          name: 'Name',
+          email: 'Email',
+          tempPassword: 'Temporary password',
+          serialCode: 'License serial',
+          roles: 'Roles',
+          extraPermissions: 'Extra permissions'
+        },
+        dialogs: {
+          create: {
+            title: 'New user',
+            info: 'This signup uses the current serial/license flow, so the user will be ready to authenticate according to their license.'
+          },
+          access: {
+            title: 'Configure access',
+            user: 'User: {{name}} ({{email}})'
+          },
+          status: {
+            title: 'Update user status',
+            newStatus: 'New status: {{status}}'
+          }
+        },
+        errors: {
+          loadCatalog: 'Could not load access catalog.',
+          loadUsers: 'Could not load user list.',
+          createUser: 'Could not create user.',
+          loadUserDetail: 'Could not load user detail.',
+          updateAccess: 'Could not update access.',
+          updateStatus: 'Could not update status.'
+        },
+        messages: {
+          requiredFields: 'Complete name, email, password and serial.',
+          userCreated: 'User created successfully.',
+          accessUpdated: 'Access updated.',
+          statusUpdated: 'User status updated.'
+        },
+        pagination: {
+          rowsPerPage: 'Rows per page:'
+        }
+      },
+      dashboardDefault: {
+        states: {
+          loading: 'Loading dashboard...',
+          loadError: 'Could not load dashboard.',
+          empty: 'There is not enough data to build KPI yet.',
+          kpiSubtitle: 'Dashboard with real-time KPI and charts for the LionTV ecosystem.',
+          partial: 'Partial data loaded for KPI.'
+        },
+        sections: {
+          executive: 'Executive summary',
+          financial: 'Financial KPI',
+          operational: 'Operational & risk KPI'
+        },
+        labels: {
+          customers: 'Customers',
+          subscriptions: 'Subscriptions',
+          invoices: 'Invoices',
+          lines: 'Lines',
+          licenses: 'Licenses',
+          managedAccounts: 'Managed',
+          paid: 'Paid',
+          pending: 'Pending',
+          overdue: 'Overdue'
+        },
+        series: {
+          ok: 'OK',
+          riskPending: 'Risk/Pending',
+          income: 'Income',
+          expenses: 'Expenses',
+          records: 'Records',
+          pipeline: 'Pipeline'
+        },
+        categories: {
+          subsShort: 'Subs',
+          invoices: 'Invoices',
+          licenses: 'Licenses',
+          commitments: 'Commitments',
+          managedShort: 'Managed',
+          overdue: 'Overdue',
+          today: 'Today',
+          oneToSevenDays: '1-7 days',
+          eightToThirtyDays: '8-30 days',
+          prospects: 'Prospects',
+          customers: 'Customers',
+          activeCustomers: 'Active Customers',
+          activeSubscriptions: 'Active Subs',
+          paidInvoices: 'Paid Invoices'
+        },
+        months: {
+          jan: 'Jan',
+          feb: 'Feb',
+          mar: 'Mar',
+          apr: 'Apr',
+          may: 'May',
+          jun: 'Jun',
+          jul: 'Jul',
+          aug: 'Aug',
+          sep: 'Sep',
+          oct: 'Oct',
+          nov: 'Nov',
+          dec: 'Dec'
+        },
+        provider: {
+          noProvider: 'No provider'
+        },
+        kpis: {
+          executive: {
+            customerActive: { title: 'Active customers', helper: '{{total}} total' },
+            subscriptionsActive: { title: 'Active subscriptions', helper: '{{total}} total' },
+            netIncome: { title: 'Net income', helper: '{{paid}} paid · {{pending}} pending' },
+            annualBalance: { title: 'Annual balance', helper: '{{expenses}} expenses' },
+            pendingCommitments: { title: 'Pending commitments', helper: '{{total}} commitments' },
+            managedActive: { title: 'Active managed', helper: '{{expiring}} expire in 30 days' }
+          },
+          financial: {
+            collectionRate: { title: 'Collection rate', helper: '{{amount}} collected' },
+            averageTicket: { title: 'Average ticket', helper: 'Based on {{paid}} paid invoices' },
+            pendingAmount: { title: 'Amount pending', helper: '{{overdue}} overdue' },
+            discountTotal: { title: 'Discount applied', helper: 'Billing accumulated' },
+            cashMonth: { title: 'Current month cash', helper: 'Month purchases {{purchases}}' },
+            recoveredCommitments: { title: 'Recovered commitments', helper: '{{paid}} paid' }
+          },
+          operational: {
+            subsExpiring: { title: 'Subs expiring in 7 days', helper: '{{within30}} within 30 days' },
+            autoPay: { title: 'Automatic charge', helper: '{{autoPay}}/{{total}} subscriptions' },
+            licensesPaid: { title: 'Paid licenses', helper: '{{unpaid}} unpaid' },
+            licensesAvailable: { title: 'Available licenses', helper: '{{assigned}} assigned' },
+            linePlus: { title: 'Line Plus (LION_PLUS+)', helper: '{{expiring7}} expire in 7 days' },
+            prospectConversion: { title: 'Prospect conversion', helper: '{{converted}}/{{total}} converted' }
+          }
+        },
+        charts: {
+          portfolio: { title: 'Portfolio by module', helper: 'Record volume by entity' },
+          status: { title: 'Operational status by module', helper: 'Comparison between OK and risk/pending' },
+          cashflow: { title: 'Monthly trend: income vs expenses', helper: 'Current year consolidated' },
+          expiry: { title: 'Upcoming expirations', helper: '30-day risk buckets' },
+          commitments: { title: 'Payment commitments', helper: 'Distribution by operational status' },
+          providerMix: { title: 'Provider mix', helper: 'Top providers by line/sub volume' },
+          funnel: { title: 'Commercial-operational funnel', helper: 'From prospect to collected billing' }
+        },
+        chips: {
+          autoPay: 'Autopay: {{autoPay}}/{{total}}',
+          managedActive: 'Managed active: {{active}}/{{total}}',
+          prospectsConverted: 'Prospects converted: {{converted}}/{{total}}',
+          recovered: 'Recovered: {{amount}}',
+          pending: 'Pending: {{amount}}',
+          linePlus: 'Line Plus: {{count}}',
+          linesExpired: 'Expired lines: {{count}}',
+          openProspects: 'Open prospects: {{count}}',
+          inactiveCustomers: 'Inactive customers: {{count}}',
+          expiredSubs: 'Expired subscriptions: {{count}}',
+          expiringLicenses30d: 'Licenses expiring (30d): {{count}}'
+        }
+      },
+      feedCrud: {
+        actions: {
+          refresh: 'Refresh',
+          create: 'Create',
+          edit: 'Edit',
+          delete: 'Delete',
+          saving: 'Saving...',
+          saveChanges: 'Save changes',
+          deleting: 'Deleting...'
+        },
+        searchPlaceholder: 'Search (id, payload, date, active)',
+        table: {
+          published: 'Published at',
+          active: 'Active',
+          payloadPreview: 'Payload preview',
+          created: 'Created',
+          updated: 'Updated',
+          actions: 'Actions'
+        },
+        form: {
+          payloadJson: 'Payload JSON',
+          publishedAt: 'Published at',
+          active: 'Active'
+        },
+        dialogs: {
+          createTitle: 'New record',
+          editTitle: 'Edit record',
+          deleteTitle: 'Delete record',
+          deleteBody: 'Delete record ID {{id}}? This action cannot be undone.'
+        },
+        validation: {
+          payloadRequired: 'Payload JSON is required.',
+          payloadInvalid: 'Payload JSON is not valid.'
+        },
+        errors: {
+          load: 'Could not load records.',
+          save: 'Could not save record.',
+          delete: 'Could not delete record.'
+        },
+        pagination: {
+          rowsPerPage: 'Rows per page:'
+        }
+      },
+      feeds: {
+        movies: {
+          title: 'Movies Feed',
+          create: 'New movie feed',
+          empty: 'No movie feed records found.',
+          created: 'Movie feed record created successfully.',
+          updated: 'Movie feed record updated successfully.',
+          deleted: 'Movie feed record deleted successfully.'
+        },
+        series: {
+          title: 'Series Feed',
+          create: 'New series feed',
+          empty: 'No series feed records found.',
+          created: 'Series feed record created successfully.',
+          updated: 'Series feed record updated successfully.',
+          deleted: 'Series feed record deleted successfully.'
+        },
+        futbol: {
+          title: 'Futbol Events Feed',
+          create: 'New futbol event',
+          empty: 'No futbol event records found.',
+          created: 'Futbol event record created successfully.',
+          updated: 'Futbol event record updated successfully.',
+          deleted: 'Futbol event record deleted successfully.'
+        }
+      },
       common: { close: 'Close', yes: 'Yes', no: 'No' },
       sms: {
         title: 'SMS Management',
@@ -631,7 +920,10 @@ const resources = {
         lines: 'Líneas',
         licenses: 'Licencias',
         sample: 'Página de ejemplo',
-        docs: 'Documentación'
+        docs: 'Documentación',
+        security: 'Seguridad',
+        userAccess: 'Usuarios y Accesos',
+        userAccessCaption: 'Roles y permisos'
       },
       auth: {
         hi: 'Hola, bienvenido',
@@ -1152,6 +1444,292 @@ const resources = {
         },
         table: { detail: 'Detalle', empty: 'No hay datos', emptyHelp: 'No hay registros para este cliente en este módulo.' }
       },
+      userAccess: {
+        title: 'Administración de Usuarios y Accesos',
+        subtitle:
+          'Configura altas de usuarios, roles y permisos efectivos desde un solo panel. El alta usa serial/licencia para mantener coherencia con el flujo actual.',
+        actions: {
+          refresh: 'Refrescar',
+          newUser: 'Nuevo usuario',
+          access: 'Accesos',
+          status: 'Estado',
+          cancel: 'Cancelar',
+          createUser: 'Crear usuario',
+          saveAccess: 'Guardar accesos',
+          confirm: 'Confirmar'
+        },
+        filters: {
+          all: 'Todos',
+          active: 'Activos',
+          inactive: 'Inactivos',
+          search: 'Buscar por nombre o email',
+          status: 'Estado'
+        },
+        metrics: {
+          usersInPage: 'Usuarios en página',
+          filteredTotal: 'Total filtrado: {{count}}',
+          active: 'Activos',
+          activeHelper: 'Cuentas habilitadas',
+          adminsInPage: 'Admins (página)',
+          adminsHelper: 'Rol principal con ADMIN',
+          noActiveLicense: 'Sin licencia activa',
+          noActiveLicenseHelper: 'No podrán iniciar sesión'
+        },
+        catalog: {
+          loaded: 'Catálogo cargado:',
+          loading: 'cargando...',
+          ready: '{{roles}} roles plantilla / {{permissions}} permisos'
+        },
+        listTitle: 'Listado de Usuarios',
+        table: {
+          user: 'Usuario',
+          status: 'Estado',
+          primaryRole: 'Rol Principal',
+          license: 'Licencia',
+          permissions: 'Permisos',
+          actions: 'Acciones',
+          localProvider: 'LOCAL',
+          createdAt: 'Alta: {{value}}',
+          expiresAt: 'Expira: {{value}}',
+          noRole: 'SIN_ROL',
+          morePermissions: '+{{count}} más',
+          empty: 'No hay usuarios para los filtros actuales.'
+        },
+        status: {
+          active: 'ACTIVO',
+          inactive: 'INACTIVO'
+        },
+        license: {
+          active: 'LICENCIA ACTIVA',
+          inactive: 'SIN LICENCIA ACTIVA'
+        },
+        tooltips: {
+          editAccess: 'Editar roles y permisos',
+          toggleStatus: 'Activar/Inactivar'
+        },
+        form: {
+          name: 'Nombre',
+          email: 'Email',
+          tempPassword: 'Password temporal',
+          serialCode: 'Serial de licencia',
+          roles: 'Roles',
+          extraPermissions: 'Permisos extra'
+        },
+        dialogs: {
+          create: {
+            title: 'Nuevo Usuario',
+            info: 'Este alta usa el flujo actual con serial/licencia, por lo tanto el usuario quedará listo para autenticarse según su licencia.'
+          },
+          access: {
+            title: 'Configurar Accesos',
+            user: 'Usuario: {{name}} ({{email}})'
+          },
+          status: {
+            title: 'Actualizar Estado del Usuario',
+            newStatus: 'Nuevo estado: {{status}}'
+          }
+        },
+        errors: {
+          loadCatalog: 'No se pudo cargar el catálogo de acceso.',
+          loadUsers: 'No se pudo cargar el listado de usuarios.',
+          createUser: 'No se pudo crear el usuario.',
+          loadUserDetail: 'No se pudo cargar el detalle del usuario.',
+          updateAccess: 'No se pudo actualizar los accesos.',
+          updateStatus: 'No se pudo actualizar el estado.'
+        },
+        messages: {
+          requiredFields: 'Completa nombre, email, password y serial.',
+          userCreated: 'Usuario creado correctamente.',
+          accessUpdated: 'Accesos actualizados.',
+          statusUpdated: 'Estado de usuario actualizado.'
+        },
+        pagination: {
+          rowsPerPage: 'Filas por página:'
+        }
+      },
+      dashboardDefault: {
+        states: {
+          loading: 'Cargando dashboard...',
+          loadError: 'No se pudo cargar el dashboard.',
+          empty: 'No hay información para construir los KPI todavía.',
+          kpiSubtitle: 'Dashboard con KPI y gráficos en tiempo real del ecosistema LionTV.',
+          partial: 'Se cargaron datos parciales para los KPI.'
+        },
+        sections: {
+          executive: 'Resumen ejecutivo',
+          financial: 'KPIs financieros',
+          operational: 'KPIs operativos y riesgo'
+        },
+        labels: {
+          customers: 'Clientes',
+          subscriptions: 'Suscripciones',
+          invoices: 'Facturas',
+          lines: 'Líneas',
+          licenses: 'Licencias',
+          managedAccounts: 'Managed',
+          paid: 'Pagados',
+          pending: 'Pendientes',
+          overdue: 'Vencidos'
+        },
+        series: {
+          ok: 'OK',
+          riskPending: 'Riesgo/Pendiente',
+          income: 'Ingresos',
+          expenses: 'Gastos',
+          records: 'Registros',
+          pipeline: 'Pipeline'
+        },
+        categories: {
+          subsShort: 'Subs',
+          invoices: 'Facturas',
+          licenses: 'Licencias',
+          commitments: 'Compromisos',
+          managedShort: 'Managed',
+          overdue: 'Vencidos',
+          today: 'Hoy',
+          oneToSevenDays: '1-7 días',
+          eightToThirtyDays: '8-30 días',
+          prospects: 'Prospectos',
+          customers: 'Clientes',
+          activeCustomers: 'Clientes Activos',
+          activeSubscriptions: 'Subs Activas',
+          paidInvoices: 'Facturas Pagadas'
+        },
+        months: {
+          jan: 'Ene',
+          feb: 'Feb',
+          mar: 'Mar',
+          apr: 'Abr',
+          may: 'May',
+          jun: 'Jun',
+          jul: 'Jul',
+          aug: 'Ago',
+          sep: 'Sep',
+          oct: 'Oct',
+          nov: 'Nov',
+          dec: 'Dic'
+        },
+        provider: {
+          noProvider: 'Sin proveedor'
+        },
+        kpis: {
+          executive: {
+            customerActive: { title: 'Clientes activos', helper: '{{total}} total' },
+            subscriptionsActive: { title: 'Subs activas', helper: '{{total}} total' },
+            netIncome: { title: 'Ingreso neto', helper: '{{paid}} pagadas · {{pending}} pendientes' },
+            annualBalance: { title: 'Balance anual', helper: '{{expenses}} gastos' },
+            pendingCommitments: { title: 'Compromisos pendientes', helper: '{{total}} compromisos' },
+            managedActive: { title: 'Managed activas', helper: '{{expiring}} vencen en 30 días' }
+          },
+          financial: {
+            collectionRate: { title: 'Tasa de cobranza', helper: '{{amount}} cobrado' },
+            averageTicket: { title: 'Ticket promedio', helper: 'sobre {{paid}} facturas pagadas' },
+            pendingAmount: { title: 'Monto por cobrar', helper: '{{overdue}} vencidas' },
+            discountTotal: { title: 'Descuento aplicado', helper: 'acumulado de facturación' },
+            cashMonth: { title: 'Caja mes actual', helper: 'compras mes {{purchases}}' },
+            recoveredCommitments: { title: 'Recuperado compromisos', helper: '{{paid}} pagados' }
+          },
+          operational: {
+            subsExpiring: { title: 'Subs vencen 7 días', helper: '{{within30}} dentro de 30 días' },
+            autoPay: { title: 'Cobro automático', helper: '{{autoPay}}/{{total}} suscripciones' },
+            licensesPaid: { title: 'Licencias pagadas', helper: '{{unpaid}} sin pago' },
+            licensesAvailable: { title: 'Licencias disponibles', helper: '{{assigned}} asignadas' },
+            linePlus: { title: 'Line Plus (LION_PLUS+)', helper: '{{expiring7}} vencen en 7 días' },
+            prospectConversion: { title: 'Conversión prospectos', helper: '{{converted}}/{{total}} convertidos' }
+          }
+        },
+        charts: {
+          portfolio: { title: 'Portafolio por módulo', helper: 'Volumen de registros por entidad' },
+          status: { title: 'Estado operativo por módulo', helper: 'Comparativo entre OK y riesgo/pendiente' },
+          cashflow: { title: 'Tendencia mensual: ingresos vs gastos', helper: 'Año actual consolidado' },
+          expiry: { title: 'Vencimientos próximos', helper: 'Buckets de riesgo de 30 días' },
+          commitments: { title: 'Compromisos de pago', helper: 'Distribución por estado operativo' },
+          providerMix: { title: 'Mix por proveedor', helper: 'Top proveedores por volumen de líneas/subs' },
+          funnel: { title: 'Embudo comercial-operativo', helper: 'Del prospecto hasta facturación cobrada' }
+        },
+        chips: {
+          autoPay: 'Autopay: {{autoPay}}/{{total}}',
+          managedActive: 'Managed activos: {{active}}/{{total}}',
+          prospectsConverted: 'Prospectos convertidos: {{converted}}/{{total}}',
+          recovered: 'Recuperado: {{amount}}',
+          pending: 'Pendiente: {{amount}}',
+          linePlus: 'Line Plus: {{count}}',
+          linesExpired: 'Líneas vencidas: {{count}}',
+          openProspects: 'Prospectos abiertos: {{count}}',
+          inactiveCustomers: 'Clientes inactivos: {{count}}',
+          expiredSubs: 'Subs expiradas: {{count}}',
+          expiringLicenses30d: 'Licencias por vencer (30d): {{count}}'
+        }
+      },
+      feedCrud: {
+        actions: {
+          refresh: 'Refrescar',
+          create: 'Crear',
+          edit: 'Editar',
+          delete: 'Eliminar',
+          saving: 'Guardando...',
+          saveChanges: 'Guardar cambios',
+          deleting: 'Eliminando...'
+        },
+        searchPlaceholder: 'Buscar (id, payload, fecha, activo)',
+        table: {
+          published: 'Publicado',
+          active: 'Activo',
+          payloadPreview: 'Vista de payload',
+          created: 'Creado',
+          updated: 'Actualizado',
+          actions: 'Acciones'
+        },
+        form: {
+          payloadJson: 'Payload JSON',
+          publishedAt: 'Fecha publicación',
+          active: 'Activo'
+        },
+        dialogs: {
+          createTitle: 'Nuevo registro',
+          editTitle: 'Editar registro',
+          deleteTitle: 'Eliminar registro',
+          deleteBody: '¿Eliminar el registro ID {{id}}? Esta acción no se puede deshacer.'
+        },
+        validation: {
+          payloadRequired: 'El payload JSON es requerido.',
+          payloadInvalid: 'El payload JSON no es válido.'
+        },
+        errors: {
+          load: 'No se pudo cargar los registros.',
+          save: 'No se pudo guardar el registro.',
+          delete: 'No se pudo eliminar el registro.'
+        },
+        pagination: {
+          rowsPerPage: 'Filas por página:'
+        }
+      },
+      feeds: {
+        movies: {
+          title: 'Feed de Películas',
+          create: 'Nuevo feed de películas',
+          empty: 'No hay registros en el feed de películas.',
+          created: 'Registro de feed de películas creado correctamente.',
+          updated: 'Registro de feed de películas actualizado correctamente.',
+          deleted: 'Registro de feed de películas eliminado correctamente.'
+        },
+        series: {
+          title: 'Feed de Series',
+          create: 'Nuevo feed de series',
+          empty: 'No hay registros en el feed de series.',
+          created: 'Registro de feed de series creado correctamente.',
+          updated: 'Registro de feed de series actualizado correctamente.',
+          deleted: 'Registro de feed de series eliminado correctamente.'
+        },
+        futbol: {
+          title: 'Feed de Eventos de Fútbol',
+          create: 'Nuevo evento de fútbol',
+          empty: 'No hay registros en el feed de fútbol.',
+          created: 'Registro de evento de fútbol creado correctamente.',
+          updated: 'Registro de evento de fútbol actualizado correctamente.',
+          deleted: 'Registro de evento de fútbol eliminado correctamente.'
+        }
+      },
       common: { close: 'Cerrar', yes: 'Sí', no: 'No' },
       sms: {
         title: 'Gestión de SMS',
@@ -1205,13 +1783,163 @@ const resources = {
   }
 };
 
+const missingWordDictionary = {
+  es: {
+    active: 'activo',
+    inactive: 'inactivo',
+    cancelled: 'cancelado',
+    pending: 'pendiente',
+    paid: 'pagado',
+    overdue: 'vencido',
+    loading: 'cargando',
+    empty: 'vacío',
+    error: 'error',
+    title: 'título',
+    subtitle: 'subtítulo',
+    helper: 'ayuda',
+    form: 'formulario',
+    table: 'tabla',
+    actions: 'acciones',
+    action: 'acción',
+    create: 'crear',
+    created: 'creado',
+    new: 'nuevo',
+    edit: 'editar',
+    update: 'actualizar',
+    updated: 'actualizado',
+    delete: 'eliminar',
+    deleting: 'eliminando',
+    save: 'guardar',
+    saving: 'guardando',
+    clear: 'limpiar',
+    close: 'cerrar',
+    cancel: 'cancelar',
+    refresh: 'refrescar',
+    status: 'estado',
+    search: 'buscar',
+    filters: 'filtros',
+    filter: 'filtro',
+    rows: 'filas',
+    row: 'fila',
+    page: 'página',
+    detail: 'detalle',
+    details: 'detalles',
+    summary: 'resumen',
+    amount: 'monto',
+    total: 'total',
+    count: 'cantidad',
+    customer: 'cliente',
+    customers: 'clientes',
+    provider: 'proveedor',
+    providers: 'proveedores',
+    subscription: 'suscripción',
+    subscriptions: 'suscripciones',
+    invoice: 'factura',
+    invoices: 'facturas',
+    license: 'licencia',
+    licenses: 'licencias',
+    line: 'línea',
+    lines: 'líneas',
+    payment: 'pago',
+    commitments: 'compromisos',
+    notifications: 'notificaciones',
+    send: 'enviar',
+    sending: 'enviando',
+    email: 'correo',
+    whatsapp: 'whatsapp',
+    id: 'id'
+  }
+};
+
+const interpolationCandidateKeys = new Set([
+  'count',
+  'val',
+  'value',
+  'total',
+  'amount',
+  'paid',
+  'pending',
+  'overdue',
+  'active',
+  'inactive',
+  'id',
+  'name',
+  'status',
+  'date',
+  'days',
+  'rows',
+  'user',
+  'email',
+  'line',
+  'provider',
+  'expiring',
+  'within30',
+  'converted',
+  'autoPay',
+  'unpaid',
+  'assigned',
+  'expiring7',
+  'purchases',
+  'expenses'
+]);
+
+const shouldHumanizeMissingKey = (key) => {
+  if (!key || typeof key !== 'string') return false;
+  if (key.includes('/')) return false;
+  if (key.startsWith('http')) return false;
+  if (key.startsWith('views/')) return false;
+  if (key === 'react-apexcharts' || key === 'web-vitals') return false;
+  return true;
+};
+
+const humanizeLeaf = (leaf, language) => {
+  const tokens = leaf
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  const mapped = tokens.map((token) => {
+    if (language?.startsWith('es')) {
+      return missingWordDictionary.es[token] || token;
+    }
+    return token;
+  });
+
+  const sentence = mapped.join(' ').trim();
+  if (!sentence) return leaf;
+  return sentence.charAt(0).toUpperCase() + sentence.slice(1);
+};
+
+const missingKeyFallback = (key, language, options) => {
+  if (!shouldHumanizeMissingKey(key)) return key;
+
+  const leaf = key.split('.').pop() || key;
+  let label = humanizeLeaf(leaf, language);
+
+  if (options && typeof options === 'object') {
+    const interpolationKeys = Object.keys(options).filter((optKey) => interpolationCandidateKeys.has(optKey));
+    if (interpolationKeys.length > 0) {
+      const placeholders = interpolationKeys.map((optKey) => `{{${optKey}}}`).join(' · ');
+      label = `${label}: ${placeholders}`;
+    }
+  }
+
+  return label;
+};
+
 const storedLng = typeof window !== 'undefined' ? localStorage.getItem('lng') : null;
 
 i18n.use(initReactI18next).init({
   resources,
   lng: storedLng || 'es',
   fallbackLng: 'en',
-  interpolation: { escapeValue: false }
+  interpolation: { escapeValue: false },
+  parseMissingKeyHandler: (key, _defaultValue, options) =>
+    missingKeyFallback(key, options?.lng || i18n.language || storedLng || 'es', options),
+  returnNull: false,
+  returnEmptyString: false
 });
 
 export default i18n;
