@@ -305,6 +305,39 @@ function expirationLabel(meta, t) {
   return t('managedAccounts.expiration.inDays', { defaultValue: 'Due in {{days}}d', days: meta.days ?? 0 });
 }
 
+function expirationChipSx(meta) {
+  return (theme) => {
+    if (!meta) return { fontWeight: 700 };
+
+    const paletteByState = {
+      EXPIRED: theme.palette.error,
+      TODAY: theme.palette.error,
+      DUE: meta.days !== null && meta.days <= 7 ? theme.palette.warning : meta.days !== null && meta.days <= 30 ? theme.palette.info : theme.palette.success,
+      NO_DATE: theme.palette.grey
+    };
+
+    const palette = paletteByState[meta.state] || theme.palette.info;
+
+    if (meta.state === 'NO_DATE') {
+      return {
+        fontWeight: 700,
+        bgcolor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[200],
+        color: theme.palette.mode === 'dark' ? theme.palette.grey[100] : theme.palette.grey[900],
+        border: '1px solid',
+        borderColor: theme.palette.mode === 'dark' ? theme.palette.grey[700] : theme.palette.grey[300]
+      };
+    }
+
+    return {
+      fontWeight: 700,
+      bgcolor: theme.palette.mode === 'dark' ? palette.main : palette.lighter || palette.light,
+      color: theme.palette.mode === 'dark' ? palette.contrastText : palette.dark || palette.main,
+      border: '1px solid',
+      borderColor: theme.palette.mode === 'dark' ? withAlpha(palette.main, 0.9) : withAlpha(palette.main, 0.3)
+    };
+  };
+}
+
 function MetricCard({ title, value, helper, color = 'primary', icon }) {
   return (
     <Card sx={(theme) => cardGlassSx(theme)}>
@@ -921,7 +954,7 @@ export default function ManagedAccountsLionTv() {
                               <TableCell>
                                 <Stack spacing={0.3}>
                                   <Typography variant="body2">{formatDate(row.expirationDate, dateLocale)}</Typography>
-                                  <Chip size="small" color={meta.chipColor} label={expirationLabel(meta, t)} />
+                                  <Chip size="small" color={meta.chipColor} label={expirationLabel(meta, t)} sx={expirationChipSx(meta)} />
                                 </Stack>
                               </TableCell>
                               <TableCell>
@@ -1147,7 +1180,7 @@ export default function ManagedAccountsLionTv() {
                           <TableCell>
                             <Stack spacing={0.4}>
                               <Typography variant="body2">{formatDate(row.expirationDate, dateLocale)}</Typography>
-                              <Chip size="small" color={exp.chipColor} label={expirationLabel(exp, t)} />
+                              <Chip size="small" color={exp.chipColor} label={expirationLabel(exp, t)} sx={expirationChipSx(exp)} />
                             </Stack>
                           </TableCell>
                           <TableCell>{formatDateTime(row.lastEmailReceivedAt, dateLocale)}</TableCell>

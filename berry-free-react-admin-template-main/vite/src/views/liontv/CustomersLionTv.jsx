@@ -939,8 +939,20 @@ export default function CustomersLionTv() {
                       size="small"
                       label={row.isReferred || row.refererBy ? 'Sí' : 'No'}
                       sx={(theme) => ({
-                        bgcolor: row.isReferred || row.refererBy ? theme.palette.info.lighter : theme.palette.surface?.muted || theme.palette.background.paper,
-                        color: row.isReferred || row.refererBy ? theme.palette.info.dark : theme.palette.text.secondary,
+                        bgcolor:
+                          row.isReferred || row.refererBy
+                            ? theme.palette.mode === 'dark'
+                              ? theme.palette.info.main
+                              : theme.palette.info.lighter
+                            : theme.palette.surface?.muted || theme.palette.background.paper,
+                        color:
+                          row.isReferred || row.refererBy
+                            ? theme.palette.mode === 'dark'
+                              ? theme.palette.info.contrastText
+                              : theme.palette.info.dark
+                            : theme.palette.mode === 'dark'
+                              ? theme.palette.text.primary
+                              : theme.palette.text.secondary,
                         fontWeight: 600
                       })}
                       icon={<PeopleAltIcon fontSize="small" />}
@@ -952,8 +964,8 @@ export default function CustomersLionTv() {
                       icon={<ShareIcon fontSize="small" />}
                       label={row.channel || '-'}
                       sx={(theme) => ({
-                        bgcolor: theme.palette.info.lighter,
-                        color: theme.palette.info.darker,
+                        bgcolor: theme.palette.mode === 'dark' ? theme.palette.info.dark : theme.palette.info.lighter,
+                        color: theme.palette.mode === 'dark' ? theme.palette.info.contrastText : theme.palette.info.darker,
                         fontWeight: 600
                       })}
                     />

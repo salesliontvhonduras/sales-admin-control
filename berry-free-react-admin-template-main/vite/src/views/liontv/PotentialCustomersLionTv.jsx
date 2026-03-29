@@ -262,7 +262,31 @@ function StatusChip({ status }) {
     CONVERTED: 'success',
     LOST: 'error'
   };
-  return <Chip size="small" color={map[status] || 'default'} label={status || '-'} />;
+  return (
+    <Chip
+      size="small"
+      label={status || '-'}
+      sx={(theme) => {
+        const paletteKey = map[status];
+        if (!paletteKey) {
+          return {
+            fontWeight: 700,
+            bgcolor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[200],
+            color: theme.palette.mode === 'dark' ? theme.palette.grey[100] : theme.palette.grey[900]
+          };
+        }
+
+        const palette = theme.palette[paletteKey];
+        return {
+          fontWeight: 700,
+          bgcolor: theme.palette.mode === 'dark' ? palette.main : palette.lighter || palette.light,
+          color: theme.palette.mode === 'dark' ? palette.contrastText : palette.dark || palette.main,
+          border: '1px solid',
+          borderColor: theme.palette.mode === 'dark' ? palette.main : palette.light || palette.main
+        };
+      }}
+    />
+  );
 }
 
 function RowActions({ row, onEdit, onDelete, onWhatsApp, onMarkContacted }) {
