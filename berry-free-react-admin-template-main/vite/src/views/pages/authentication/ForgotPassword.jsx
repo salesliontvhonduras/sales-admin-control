@@ -38,7 +38,7 @@ export default function ForgotPassword() {
       enqueueSnackbar(t('messages.codeSent'), { variant: 'info' });
       setStep('reset');
     } catch (err) {
-      const msg = err?.response?.data?.message || 'No pudimos enviar el correo, intenta más tarde.';
+      const msg = err?.response?.data?.message || t('auth.forgotErrors.sendEmail');
       enqueueSnackbar(msg, { variant: 'error' });
     } finally {
       setLoading(false);
@@ -59,7 +59,7 @@ export default function ForgotPassword() {
       setPassword('');
       navigate('/pages/login', { replace: true, state: { email } });
     } catch (err) {
-      const msg = err?.response?.data?.message || 'No se pudo actualizar la contraseña.';
+      const msg = err?.response?.data?.message || t('auth.forgotErrors.resetPassword');
       enqueueSnackbar(msg, { variant: 'error' });
     } finally {
       setLoading(false);
@@ -74,7 +74,7 @@ export default function ForgotPassword() {
             <AuthCardWrapper>
               <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
                 <Box sx={{ mb: 3 }}>
-                  <Link to="#" aria-label="logo">
+                  <Link to="#" aria-label={t('auth.logoAriaLabel')}>
                     <Logo />
                   </Link>
                 </Box>
@@ -102,7 +102,7 @@ export default function ForgotPassword() {
                     </>
                   ) : (
                     <>
-                      <TextField label="Token" value={token} onChange={(e) => setToken(e.target.value)} fullWidth />
+                      <TextField label={t('auth.codeLabel')} value={token} onChange={(e) => setToken(e.target.value)} fullWidth />
                       <TextField
                         label={t('auth.password')}
                         type="password"

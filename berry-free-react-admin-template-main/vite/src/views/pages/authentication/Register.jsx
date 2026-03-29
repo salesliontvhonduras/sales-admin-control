@@ -29,7 +29,7 @@ export default function Register() {
             <AuthCardWrapper>
               <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
                 <Box sx={{ mb: 3 }}>
-                  <Link to="#" aria-label="theme logo">
+                  <Link to="#" aria-label={t('auth.logoAriaLabel')}>
                     <Logo />
                   </Link>
                 </Box>

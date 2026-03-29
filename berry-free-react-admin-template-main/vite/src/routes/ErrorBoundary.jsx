@@ -1,4 +1,5 @@
 import { isRouteErrorResponse, useRouteError } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 // material-ui
 import Alert from '@mui/material/Alert';
@@ -7,24 +8,25 @@ import Alert from '@mui/material/Alert';
 
 export default function ErrorBoundary() {
   const error = useRouteError();
+  const { t } = useTranslation();
 
   if (isRouteErrorResponse(error)) {
     if (error.status === 404) {
-      return <Alert color="error">Error 404 - This page doesn't exist!</Alert>;
+      return <Alert color="error">{t('errorBoundary.404')}</Alert>;
     }
 
     if (error.status === 401) {
-      return <Alert color="error">Error 401 - You aren't authorized to see this</Alert>;
+      return <Alert color="error">{t('errorBoundary.401')}</Alert>;
     }
 
     if (error.status === 503) {
-      return <Alert color="error">Error 503 - Looks like our API is down</Alert>;
+      return <Alert color="error">{t('errorBoundary.503')}</Alert>;
     }
 
     if (error.status === 418) {
-      return <Alert color="error">Error 418 - Contact administrator</Alert>;
+      return <Alert color="error">{t('errorBoundary.418')}</Alert>;
     }
   }
 
-  return <Alert color="error">Under Maintenance</Alert>;
+  return <Alert color="error">{t('errorBoundary.default')}</Alert>;
 }

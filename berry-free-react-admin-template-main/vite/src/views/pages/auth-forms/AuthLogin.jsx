@@ -132,7 +132,7 @@ export default function AuthLogin() {
       await resendOtp();
       enqueueSnackbar(t('messages.resendOk'), { variant: 'info' });
     } catch (err) {
-      const msg = err?.response?.data?.message || 'No pudimos reenviar el código.';
+      const msg = err?.response?.data?.message || t('auth.otpResendError');
       enqueueSnackbar(msg, { variant: 'error' });
       console.error(err);
     } finally {
@@ -176,7 +176,7 @@ export default function AuthLogin() {
               endAdornment={
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label="toggle password visibility"
+                    aria-label={t('auth.togglePasswordVisibility')}
                     onClick={handleClickShowPassword}
                     onMouseDown={handleMouseDownPassword}
                     edge="end"
@@ -238,10 +238,10 @@ export default function AuthLogin() {
             {t('auth.otpTitle')}
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            {t('auth.otpInstruction', { dest: destinationLabel || 'tu dispositivo' })}
+            {t('auth.otpInstruction', { dest: destinationLabel || t('auth.otpDestinationFallback') })}
           </Typography>
           <TextField
-            label={t('auth.codeLabel', { defaultValue: 'Código' })}
+            label={t('auth.codeLabel')}
             value={otpCode}
             onChange={(e) => setOtpCode(e.target.value.replace(/\\s+/g, ''))}
             inputProps={{ inputMode: 'numeric', maxLength: 8 }}

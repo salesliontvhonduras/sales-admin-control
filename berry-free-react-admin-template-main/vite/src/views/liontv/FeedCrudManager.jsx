@@ -336,7 +336,7 @@ export default function FeedCrudManager({
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>ID</TableCell>
+                <TableCell>{t('feedCrud.headers.id', 'ID')}</TableCell>
                 <TableCell>{t('feedCrud.table.published')}</TableCell>
                 <TableCell>{t('feedCrud.table.active')}</TableCell>
                 <TableCell>{t('feedCrud.table.payloadPreview')}</TableCell>

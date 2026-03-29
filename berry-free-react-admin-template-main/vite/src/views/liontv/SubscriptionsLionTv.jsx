@@ -333,12 +333,12 @@ export default function SubscriptionsLionTv() {
       if (!rawId) return;
       const id = String(rawId);
       map[id] = {
-        name: p.name || p.packageName || `Package ${id}`,
+        name: p.name || p.packageName || t('subscriptions.labels.packageFallback', { id }),
         description: p.description || p.packageDescription || ''
       };
     });
     return map;
-  }, [packages]);
+  }, [packages, t]);
 
   const lineNameMap = useMemo(() => {
     const map = {};
@@ -376,11 +376,11 @@ export default function SubscriptionsLionTv() {
       );
       setPackages(filtered);
     } catch (err) {
-      enqueueSnackbar('No se pudieron cargar los paquetes.', { variant: 'warning' });
+      enqueueSnackbar(t('subscriptions.messages.packagesLoadError'), { variant: 'warning' });
     } finally {
       setPackagesLoading(false);
     }
-  }, [enqueueSnackbar]);
+  }, [enqueueSnackbar, t]);
 
   const loadLines = useCallback(async () => {
     if (!accessToken) return;
@@ -402,12 +402,12 @@ export default function SubscriptionsLionTv() {
       setLines(sorted);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar('No se pudieron cargar las líneas.', { variant: 'warning' });
+        enqueueSnackbar(t('subscriptions.messages.linesLoadError'), { variant: 'warning' });
       }
     } finally {
       setLinesLoading(false);
     }
-  }, [accessToken, enqueueSnackbar]);
+  }, [accessToken, enqueueSnackbar, t]);
 
   const loadCustomers = useCallback(async () => {
     if (!accessToken) return;
@@ -424,12 +424,12 @@ export default function SubscriptionsLionTv() {
       setCustomers(list);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar('No se pudieron cargar los clientes.', { variant: 'warning' });
+        enqueueSnackbar(t('subscriptions.messages.customersLoadError'), { variant: 'warning' });
       }
     } finally {
       setCustomersLoading(false);
     }
-  }, [accessToken, enqueueSnackbar]);
+  }, [accessToken, enqueueSnackbar, t]);
 
   const loadSubscriptions = useCallback(async () => {
     if (!accessToken) return;
@@ -448,7 +448,7 @@ export default function SubscriptionsLionTv() {
       setTotal(normalized.length);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudieron cargar las suscripciones.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('subscriptions.messages.loadError'), {
           variant: 'error'
         });
       }
@@ -484,12 +484,12 @@ export default function SubscriptionsLionTv() {
         };
       } catch (err) {
         if (!handleUnauthorized(err)) {
-          enqueueSnackbar('No se pudo obtener el correo del cliente.', { variant: 'warning' });
+          enqueueSnackbar(t('subscriptions.messages.customerEmailError'), { variant: 'warning' });
         }
         return { email: '', name: '' };
       }
     },
-    [accessToken, customerEmailMap, customerNameMap, enqueueSnackbar]
+    [accessToken, customerEmailMap, customerNameMap, enqueueSnackbar, t]
   );
 
   // enriquecer filas con nombres de línea y paquete cuando lleguen los catálogos
@@ -625,7 +625,7 @@ export default function SubscriptionsLionTv() {
       const { email, name } = await fetchCustomerContact(row.customerId);
       const emailNormalized = (email || '').trim().toLowerCase();
       if (!emailNormalized || emailNormalized === 'nomail@gmail.com') {
-        enqueueSnackbar('Actualiza el correo válido del cliente antes de enviar la notificación.', { variant: 'error' });
+        enqueueSnackbar(t('subscriptions.messages.invalidCustomerEmail'), { variant: 'error' });
         return;
       }
       const expirationDate = row.renewalDate || row.startDate || null;
@@ -634,10 +634,10 @@ export default function SubscriptionsLionTv() {
         { email, expirationDate },
         { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
       );
-      enqueueSnackbar('Notificación de vencimiento enviada.', { variant: 'success' });
+      enqueueSnackbar(t('subscriptions.messages.expirationSent'), { variant: 'success' });
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || 'No se pudo enviar la notificación.', { variant: 'error' });
+        enqueueSnackbar(err?.response?.data?.message || t('subscriptions.messages.notificationError'), { variant: 'error' });
       }
     } finally {
       setNotifLoadingId(null);
@@ -651,7 +651,7 @@ export default function SubscriptionsLionTv() {
       const { email, name } = await fetchCustomerContact(row.customerId);
       const emailNormalized = (email || '').trim().toLowerCase();
       if (!emailNormalized || emailNormalized === 'nomail@gmail.com') {
-        enqueueSnackbar('Actualiza el correo válido del cliente antes de enviar la notificación.', { variant: 'error' });
+        enqueueSnackbar(t('subscriptions.messages.invalidCustomerEmail'), { variant: 'error' });
         return;
       }
       await lionTvApi.post(
@@ -659,10 +659,10 @@ export default function SubscriptionsLionTv() {
         { email, customerName: name || row.customerName || row.customer_name || '' },
         { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
       );
-      enqueueSnackbar('Correo de reenganche enviado.', { variant: 'success' });
+      enqueueSnackbar(t('subscriptions.messages.reengageSent'), { variant: 'success' });
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || 'No se pudo enviar la notificación.', { variant: 'error' });
+        enqueueSnackbar(err?.response?.data?.message || t('subscriptions.messages.notificationError'), { variant: 'error' });
       }
     } finally {
       setNotifLoadingId(null);
@@ -676,7 +676,7 @@ export default function SubscriptionsLionTv() {
       const { email } = await fetchCustomerContact(row.customerId);
       const emailNormalized = (email || '').trim().toLowerCase();
       if (!emailNormalized || emailNormalized === 'nomail@gmail.com') {
-        enqueueSnackbar('Actualiza el correo válido del cliente antes de enviar la notificación.', { variant: 'error' });
+        enqueueSnackbar(t('subscriptions.messages.invalidCustomerEmail'), { variant: 'error' });
         return;
       }
       await lionTvApi.post(
@@ -684,10 +684,10 @@ export default function SubscriptionsLionTv() {
         {},
         { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
       );
-      enqueueSnackbar('Notificación de renovación enviada.', { variant: 'success' });
+      enqueueSnackbar(t('subscriptions.messages.renewalSent'), { variant: 'success' });
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || 'No se pudo enviar la notificación.', { variant: 'error' });
+        enqueueSnackbar(err?.response?.data?.message || t('subscriptions.messages.notificationError'), { variant: 'error' });
       }
     } finally {
       setNotifLoadingId(null);
@@ -696,7 +696,7 @@ export default function SubscriptionsLionTv() {
 
   const handleSave = async () => {
     if (!form.customerId || !form.lineId || !form.packageId || !form.status || !form.startDate) {
-      enqueueSnackbar('Completa los campos requeridos.', { variant: 'warning' });
+      enqueueSnackbar(t('subscriptions.messages.required'), { variant: 'warning' });
       return;
     }
 
@@ -722,20 +722,20 @@ export default function SubscriptionsLionTv() {
           headers: { Authorization: `Bearer ${accessToken}` },
           skipAuthRedirect: true
         });
-        enqueueSnackbar(t('messages.welcome'), { variant: 'success' });
+        enqueueSnackbar(t('subscriptions.messages.updated'), { variant: 'success' });
       } else {
         await lionTvApi.post('/subscriptions/v1', payload, {
           headers: { Authorization: `Bearer ${accessToken}` },
           skipAuthRedirect: true
         });
-        enqueueSnackbar(t('messages.welcome'), { variant: 'success' });
+        enqueueSnackbar(t('subscriptions.messages.created'), { variant: 'success' });
       }
       setOpenModal(false);
       resetForm();
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo guardar la suscripción.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('subscriptions.messages.saveError'), {
           variant: 'error'
         });
       }
@@ -756,12 +756,12 @@ export default function SubscriptionsLionTv() {
         headers: { Authorization: `Bearer ${accessToken}` },
         skipAuthRedirect: true
       });
-      enqueueSnackbar(t('messages.welcome'), { variant: 'success' });
+      enqueueSnackbar(t('subscriptions.messages.deleted'), { variant: 'success' });
       setOpenDelete({ open: false, row: null });
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo eliminar la suscripción.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('subscriptions.messages.deleteError'), {
           variant: 'error'
         });
       }
@@ -777,7 +777,7 @@ export default function SubscriptionsLionTv() {
       icon: <CreditCardIcon fontSize="small" />
     },
     {
-      label: `STATUS: ACTIVE ${rows.filter((r) => r.status === 'ACTIVE').length}`,
+      label: t('subscriptions.kpi.activeStatus', { count: rows.filter((r) => r.status === 'ACTIVE').length }),
       color: theme.vars.palette.success.main,
       icon: <AutoAwesomeIcon fontSize="small" />
     },
@@ -1046,7 +1046,7 @@ export default function SubscriptionsLionTv() {
                       <TableCell>
                         <Chip
                           size="small"
-                          label={row.provider || 'LION_TV'}
+                          label={row.provider || t('subscriptions.labels.providerFallback')}
                           color="info"
                           variant="outlined"
                           sx={{ fontWeight: 700, borderRadius: 1.5 }}
@@ -1316,7 +1316,7 @@ export default function SubscriptionsLionTv() {
                     <Select
                       displayEmpty
                       value={form.packageId}
-                      label="Package"
+                      label={t('subscriptions.form.package', 'Package')}
                       onChange={handleFormChange('packageId')}
                       renderValue={(value) => {
                         const pkg = packages.find((p) => p.id === value);
@@ -1347,7 +1347,7 @@ export default function SubscriptionsLionTv() {
                                   <BoltIcon fontSize="inherit" />
                                 </Avatar>
                                 <Typography variant="body2" color="text.primary">
-                                  {p.name || `Paquete ${p.id}`}
+                                  {p.name || t('subscriptions.labels.packageFallback', { id: p.id })}
                                 </Typography>
                               </Stack>
                               {p.description ? (
@@ -1454,7 +1454,7 @@ export default function SubscriptionsLionTv() {
                                 </Typography>
                                 <Chip
                                   size="small"
-                                  label={l.provider || 'LION_TV'}
+                                  label={l.provider || t('subscriptions.labels.providerFallback')}
                                   color="info"
                                   variant="outlined"
                                   sx={{ height: 18, fontWeight: 700, letterSpacing: 0.25, borderRadius: 1.2, fontSize: 11, px: 0.6, width: 'fit-content' }}
@@ -1513,7 +1513,7 @@ export default function SubscriptionsLionTv() {
                                 </Typography>
                                 <Chip
                                   size="small"
-                                  label={l.provider || 'LION_TV'}
+                                  label={l.provider || t('subscriptions.labels.providerFallback')}
                                   color="info"
                                   variant="outlined"
                                   sx={{ height: 18, fontWeight: 700, letterSpacing: 0.25, borderRadius: 1.2, fontSize: 11, px: 0.6, width: 'fit-content' }}
@@ -1535,7 +1535,7 @@ export default function SubscriptionsLionTv() {
                     <Select
                       displayEmpty
                       value={form.billing}
-                      label="Billing"
+                      label={t('subscriptions.form.billing', 'Billing')}
                       onChange={handleFormChange('billing')}
                       renderValue={(value) => (
                         <Stack direction="row" spacing={1} alignItems="center">
@@ -1677,7 +1677,7 @@ export default function SubscriptionsLionTv() {
                     onChange={handleFormChange('linkAutomatic')}
                     fullWidth
                     sx={fieldSx}
-                    placeholder="https://..."
+                    placeholder={t('subscriptions.form.autopayLinkPlaceholder', 'https://...')}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">

@@ -1,5 +1,6 @@
 import { memo, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -68,8 +69,8 @@ function money(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
-function formatMoney(value) {
-  return new Intl.NumberFormat('es-HN', {
+function formatMoney(value, locale = 'es-HN') {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'HNL',
     minimumFractionDigits: 2,
@@ -126,6 +127,7 @@ function ProgressItem({ label, value, color = 'primary', total }) {
 function MenuCard() {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const { accessToken } = useAuth();
   const {
     data: overviewData,
@@ -212,13 +214,20 @@ function MenuCard() {
     return fetchedAt ? new Date(fetchedAt) : null;
   }, [overviewData?.meta?.fetchedAt]);
 
+  const locale = useMemo(() => {
+    const lang = String(i18n?.resolvedLanguage || i18n?.language || 'es').toLowerCase();
+    return lang.startsWith('en') ? 'en-US' : 'es-HN';
+  }, [i18n?.language, i18n?.resolvedLanguage]);
+
   const errorMessage = useMemo(() => {
     if (!accessToken) return '';
-    if (overviewData?.meta?.partial) return 'Radar parcial: algunos módulos no cargaron.';
+    if (overviewData?.meta?.partial) return t('sidebarRadar.partial', 'Radar parcial: algunos módulos no cargaron.');
     const status = overviewError?.response?.status || overviewError?.request?.status;
-    if (overviewError && status !== 401) return overviewError?.response?.data?.message || 'No se pudo cargar el radar operativo.';
+    if (overviewError && status !== 401) {
+      return overviewError?.response?.data?.message || t('sidebarRadar.loadError', 'No se pudo cargar el radar operativo.');
+    }
     return '';
-  }, [accessToken, overviewData?.meta?.partial, overviewError]);
+  }, [accessToken, overviewData?.meta?.partial, overviewError, t]);
 
   const totalDue = useMemo(() => radar.today + radar.tomorrow + radar.next7, [radar.today, radar.tomorrow, radar.next7]);
 
@@ -254,38 +263,53 @@ function MenuCard() {
             </Avatar>
             <Stack sx={{ minWidth: 0 }}>
               <Typography variant="subtitle1" sx={{ color: 'text.primary' }}>
-                Radar Operativo
+                {t('sidebarRadar.title', 'Radar Operativo')}
               </Typography>
               <Typography variant="caption" color="text.secondary" noWrap>
-                Vencimientos y cobranza
+                {t('sidebarRadar.subtitle', 'Vencimientos y cobranza')}
               </Typography>
             </Stack>
           </Stack>
 
           {loading ? <LinearProgress /> : null}
 
-          <ProgressItem label="Hoy" value={radar.today} color="error" total={Math.max(totalDue, 1)} />
-          <ProgressItem label="Mañana" value={radar.tomorrow} color="warning" total={Math.max(totalDue, 1)} />
-          <ProgressItem label="Próximos 7 días" value={radar.next7} color="info" total={Math.max(totalDue, 1)} />
+          <ProgressItem label={t('sidebarRadar.today', 'Hoy')} value={radar.today} color="error" total={Math.max(totalDue, 1)} />
+          <ProgressItem
+            label={t('sidebarRadar.tomorrow', 'Mañana')}
+            value={radar.tomorrow}
+            color="warning"
+            total={Math.max(totalDue, 1)}
+          />
+          <ProgressItem
+            label={t('sidebarRadar.next7Days', 'Próximos 7 días')}
+            value={radar.next7}
+            color="info"
+            total={Math.max(totalDue, 1)}
+          />
 
           <Stack direction="row" alignItems="center" spacing={0.8}>
             <PaidRoundedIcon fontSize="small" color="action" />
             <Typography variant="caption" color="text.secondary">
-              Cobranza pendiente
+              {t('sidebarRadar.pendingCollection', 'Cobranza pendiente')}
             </Typography>
           </Stack>
 
           <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap>
-            <Chip size="small" icon={<CalendarMonthRoundedIcon />} label={`Facturas: ${radar.pendingInvoicesCount}`} variant="outlined" />
             <Chip
               size="small"
               icon={<CalendarMonthRoundedIcon />}
-              label={`Compromisos: ${radar.pendingCommitmentsCount}`}
+              label={t('sidebarRadar.invoices', { val: radar.pendingInvoicesCount, defaultValue: 'Facturas: {{val}}' })}
+              variant="outlined"
+            />
+            <Chip
+              size="small"
+              icon={<CalendarMonthRoundedIcon />}
+              label={t('sidebarRadar.commitments', { val: radar.pendingCommitmentsCount, defaultValue: 'Compromisos: {{val}}' })}
               variant="outlined"
             />
           </Stack>
 
-          <Typography variant="h5">{formatMoney(radar.pendingTotalAmount)}</Typography>
+          <Typography variant="h5">{formatMoney(radar.pendingTotalAmount, locale)}</Typography>
 
           {errorMessage ? (
             <Typography variant="caption" color="warning.main">
@@ -295,7 +319,7 @@ function MenuCard() {
 
           {lastSyncAt ? (
             <Typography variant="caption" color="text.secondary">
-              Actualizado: {lastSyncAt.toLocaleTimeString('es-HN')}
+              {t('sidebarRadar.updatedAt', { time: lastSyncAt.toLocaleTimeString(locale), defaultValue: 'Actualizado: {{time}}' })}
             </Typography>
           ) : null}
 
@@ -305,7 +329,7 @@ function MenuCard() {
             endIcon={<LaunchRoundedIcon fontSize="small" />}
             onClick={() => navigate('/liontv/dashboard')}
           >
-            Abrir seguimiento
+            {t('sidebarRadar.openTracking', 'Abrir seguimiento')}
           </Button>
         </Stack>
       </Box>

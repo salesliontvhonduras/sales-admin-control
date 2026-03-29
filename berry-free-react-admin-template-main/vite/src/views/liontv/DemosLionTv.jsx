@@ -939,7 +939,7 @@ export default function DemosLionTv() {
                 <Grid item xs={12} md={4}>
                   <TextField
                     required
-                    label="Email"
+                    label={t('demos.headers.email', 'Email')}
                     type="email"
                     value={form.email}
                     onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
@@ -962,10 +962,10 @@ export default function DemosLionTv() {
                 <Grid item xs={12} md={6}>
                   <TextField
                     required
-                    label="MAC Address"
+                    label={t('demos.form.macAddress', 'MAC Address')}
                     value={form.macAddress}
                     onChange={handleMacChange}
-                    placeholder="aa:bb:cc:dd:ee:ff"
+                    placeholder={t('demos.form.macPlaceholder', 'aa:bb:cc:dd:ee:ff')}
                     fullWidth
                     sx={fieldSx}
                     InputProps={{

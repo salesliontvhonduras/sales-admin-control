@@ -392,10 +392,10 @@ export default function LicensesLionTv() {
       })));
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar('No se pudieron cargar suscripciones', { variant: 'warning' });
+        enqueueSnackbar(t('licenses.messages.subscriptionsLoadError'), { variant: 'warning' });
       }
     }
-  }, [accessToken, enqueueSnackbar]);
+  }, [accessToken, enqueueSnackbar, t]);
 
   const loadLines = useCallback(async () => {
     if (!accessToken) return;
@@ -419,10 +419,10 @@ export default function LicensesLionTv() {
       })));
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar('No se pudieron cargar líneas', { variant: 'warning' });
+        enqueueSnackbar(t('licenses.messages.linesLoadError'), { variant: 'warning' });
       }
     }
-  }, [accessToken, enqueueSnackbar]);
+  }, [accessToken, enqueueSnackbar, t]);
 
   const loadServers = useCallback(async () => {
     if (!accessToken) return;
@@ -438,10 +438,10 @@ export default function LicensesLionTv() {
       setServerOptions(normalized);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar('No se pudieron cargar los servidores.', { variant: 'warning' });
+        enqueueSnackbar(t('licenses.messages.serversLoadError'), { variant: 'warning' });
       }
     }
-  }, [accessToken, enqueueSnackbar]);
+  }, [accessToken, enqueueSnackbar, t]);
 
   const loadLicenses = useCallback(async () => {
     if (!accessToken) return;
@@ -468,12 +468,12 @@ export default function LicensesLionTv() {
       setTotal(normalized.length);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar('No se pudieron cargar las licencias.', { variant: 'error' });
+        enqueueSnackbar(t('licenses.messages.loadError'), { variant: 'error' });
       }
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar]);
+  }, [accessToken, enqueueSnackbar, t]);
 
   const loadCustomers = useCallback(async () => {
     if (!accessToken) return;
@@ -503,12 +503,12 @@ export default function LicensesLionTv() {
       setCustomers(sorted);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar('No se pudieron cargar los clientes.', { variant: 'warning' });
+        enqueueSnackbar(t('licenses.messages.customersLoadError'), { variant: 'warning' });
       }
     } finally {
       setCustomersLoading(false);
     }
-  }, [accessToken, enqueueSnackbar]);
+  }, [accessToken, enqueueSnackbar, t]);
 
   useEffect(() => {
     loadLicenses();
@@ -628,7 +628,7 @@ export default function LicensesLionTv() {
 
   const handleSave = async () => {
     if (!form.macAddress || !form.name || !form.customerId || !form.status || !form.app || !form.licensePeriod || !form.typeLicense) {
-      enqueueSnackbar('Completa los campos requeridos.', { variant: 'warning' });
+      enqueueSnackbar(t('licenses.messages.required'), { variant: 'warning' });
       return;
     }
 
@@ -672,7 +672,7 @@ export default function LicensesLionTv() {
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo guardar la licencia.', { variant: 'error' });
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('licenses.messages.saveError'), { variant: 'error' });
       }
     } finally {
       setSending(false);
@@ -696,7 +696,7 @@ export default function LicensesLionTv() {
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo eliminar.', { variant: 'error' });
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('licenses.messages.deleteError'), { variant: 'error' });
       }
     } finally {
       setSending(false);
@@ -751,12 +751,12 @@ export default function LicensesLionTv() {
         { serverKey, macAddress, lineId, playlistName, username, password },
         { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
       );
-      const msg = res?.data?.data?.message || res?.data?.message || 'Servidor actualizado.';
+      const msg = res?.data?.data?.message || res?.data?.message || t('licenses.server.updated');
       enqueueSnackbar(msg, { variant: 'success' });
       setOpenServerChange({ open: false, row: null });
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo cambiar el servidor.', { variant: 'error' });
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('licenses.server.error'), { variant: 'error' });
       }
     } finally {
       setSending(false);
@@ -781,7 +781,7 @@ export default function LicensesLionTv() {
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo trasladar.', { variant: 'error' });
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('licenses.transfer.error'), { variant: 'error' });
       }
     } finally {
       setSending(false);

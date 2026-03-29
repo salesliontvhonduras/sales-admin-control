@@ -70,11 +70,11 @@ import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
-const channelOptions = [
-  { value: 'red social', label: 'Red social' },
-  { value: 'google', label: 'Google' },
-  { value: 'familiares', label: 'Familiares' },
-  { value: 'amigos', label: 'Amigos' }
+const buildChannelOptions = (t) => [
+  { value: 'red social', label: t('customers.channels.social') },
+  { value: 'google', label: t('customers.channels.google') },
+  { value: 'familiares', label: t('customers.channels.family') },
+  { value: 'amigos', label: t('customers.channels.friends') }
 ];
 
 const fieldSx = {
@@ -111,6 +111,7 @@ function formatDate(value) {
 
 function StatusChip({ status }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const map = {
     ACTIVE: {
       bg: theme.palette.success.lighter || `${theme.palette.success.main}22`,
@@ -149,7 +150,7 @@ function StatusChip({ status }) {
     <Chip
       size="small"
       icon={cfg.icon}
-      label={status || '-'}
+      label={status ? t(`customers.status.${status}`, { defaultValue: status }) : '-'}
       variant="outlined"
       sx={{
         fontWeight: 700,
@@ -306,6 +307,7 @@ export default function CustomersLionTv() {
   const { accessToken } = useAuth();
   const { t } = useTranslation();
   const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const createDefaultForm = () => {
@@ -344,6 +346,7 @@ export default function CustomersLionTv() {
   const [referers, setReferers] = useState([]);
   const [referersLoading, setReferersLoading] = useState(false);
   const [referersFetched, setReferersFetched] = useState(false);
+  const channelOptions = useMemo(() => buildChannelOptions(t), [t]);
 
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
@@ -369,7 +372,7 @@ export default function CustomersLionTv() {
       setTotal(normalized.length);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudieron cargar los clientes.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('customers.messages.loadError'), {
           variant: 'error'
         });
       }
@@ -393,7 +396,7 @@ export default function CustomersLionTv() {
       setReferers(normalized);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar('No se pudieron cargar los referidores.', { variant: 'warning' });
+        enqueueSnackbar(t('customers.messages.referersLoadError'), { variant: 'warning' });
       }
     } finally {
       setReferersLoading(false);
@@ -562,7 +565,7 @@ export default function CustomersLionTv() {
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo crear el cliente.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('customers.messages.createError'), {
           variant: 'error'
         });
       }
@@ -590,7 +593,7 @@ export default function CustomersLionTv() {
 
   const handleUpdateCustomer = async () => {
     if (!form.customerId) {
-      enqueueSnackbar('No se pudo identificar el cliente.', { variant: 'error' });
+      enqueueSnackbar(t('customers.messages.missingCustomerId'), { variant: 'error' });
       return;
     }
     if (!form.customerFullname || !form.gender || !form.customerPhone || !form.customerMail || !form.channel) {
@@ -623,7 +626,7 @@ export default function CustomersLionTv() {
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo actualizar el cliente.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('customers.messages.updateError'), {
           variant: 'error'
         });
       }
@@ -635,7 +638,7 @@ export default function CustomersLionTv() {
   const handleDeleteCustomer = async () => {
     const row = openDelete.row;
     if (!row?.customerId && !row?.id) {
-      enqueueSnackbar('No se pudo identificar el cliente a eliminar.', { variant: 'error' });
+      enqueueSnackbar(t('customers.messages.missingDeleteId'), { variant: 'error' });
       return;
     }
     const id = row.customerId || row.id;
@@ -650,7 +653,7 @@ export default function CustomersLionTv() {
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo eliminar el cliente.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('customers.messages.deleteError'), {
           variant: 'error'
         });
       }
@@ -696,8 +699,8 @@ export default function CustomersLionTv() {
         <Grid container spacing={gridSpacing}>
           {[
             { label: `${total} ${t('customers.title').toLowerCase()}`, color: 'primary.main' },
-            { label: `${t('customers.headers.status')}: ACTIVE ${summary.active}`, color: 'success.main' },
-            { label: `${t('customers.headers.status')}: INACTIVE ${summary.inactive}`, color: 'text.secondary' },
+            { label: `${t('customers.headers.status')}: ${t('customers.status.ACTIVE')} ${summary.active}`, color: 'success.main' },
+            { label: `${t('customers.headers.status')}: ${t('customers.status.INACTIVE')} ${summary.inactive}`, color: 'text.secondary' },
             { label: `${t('customers.headers.referred')}: ${summary.referred}`, color: 'secondary.main' }
           ].map((item, idx) => (
             <Grid item xs={12} sm={6} md={3} key={idx}>
@@ -937,37 +940,94 @@ export default function CustomersLionTv() {
                   <TableCell>
                     <Chip
                       size="small"
-                      label={row.isReferred || row.refererBy ? 'Sí' : 'No'}
-                      sx={(theme) => ({
-                        bgcolor:
-                          row.isReferred || row.refererBy
-                            ? theme.palette.mode === 'dark'
-                              ? theme.palette.info.main
+                      label={
+                        <Box
+                          component="span"
+                          sx={{
+                            color:
+                              row.isReferred || row.refererBy
+                                ? '#0B1F3A !important'
+                                : isDarkMode
+                                  ? '#F8FAFC !important'
+                                  : 'inherit',
+                            fontWeight: 700
+                          }}
+                        >
+                          {row.isReferred || row.refererBy ? 'Sí' : 'No'}
+                        </Box>
+                      }
+                      sx={(theme) => {
+                        const referred = row.isReferred || row.refererBy;
+                        const darkMode = theme.palette.mode === 'dark';
+                        const chipColor = referred
+                          ? '#0B1F3A'
+                          : darkMode
+                            ? '#F8FAFC'
+                            : theme.palette.text.secondary;
+
+                        return {
+                          bgcolor: referred
+                            ? darkMode
+                              ? '#7DD3FC'
                               : theme.palette.info.lighter
                             : theme.palette.surface?.muted || theme.palette.background.paper,
-                        color:
-                          row.isReferred || row.refererBy
-                            ? theme.palette.mode === 'dark'
-                              ? theme.palette.info.contrastText
-                              : theme.palette.info.dark
-                            : theme.palette.mode === 'dark'
-                              ? theme.palette.text.primary
-                              : theme.palette.text.secondary,
-                        fontWeight: 600
-                      })}
-                      icon={<PeopleAltIcon fontSize="small" />}
+                          color: `${chipColor} !important`,
+                          fontWeight: 700,
+                          border: '1px solid',
+                          borderColor: referred ? (darkMode ? '#38BDF8' : theme.palette.info.light) : theme.palette.divider,
+                          '& .MuiChip-label': { color: `${chipColor} !important`, fontWeight: 700 },
+                          '& .MuiChip-icon': { color: `${chipColor} !important` },
+                          '& .MuiSvgIcon-root': { color: `${chipColor} !important` }
+                        };
+                      }}
+                      icon={
+                        <PeopleAltIcon
+                          fontSize="small"
+                          sx={{
+                            color:
+                              row.isReferred || row.refererBy ? '#0B1F3A !important' : isDarkMode ? '#F8FAFC !important' : `${theme.palette.info.dark} !important`
+                          }}
+                        />
+                      }
                     />
                   </TableCell>
                   <TableCell>
                     <Chip
                       size="small"
-                      icon={<ShareIcon fontSize="small" />}
-                      label={row.channel || '-'}
-                      sx={(theme) => ({
-                        bgcolor: theme.palette.mode === 'dark' ? theme.palette.info.dark : theme.palette.info.lighter,
-                        color: theme.palette.mode === 'dark' ? theme.palette.info.contrastText : theme.palette.info.darker,
-                        fontWeight: 600
-                      })}
+                      icon={
+                        <ShareIcon
+                          fontSize="small"
+                          sx={{
+                            color: isDarkMode ? '#FFFFFF !important' : `${theme.palette.info.darker} !important`
+                          }}
+                        />
+                      }
+                      label={
+                        <Box component="span" sx={{ color: isDarkMode ? '#FFFFFF !important' : 'inherit', fontWeight: 700 }}>
+                          {row.channel || '-'}
+                        </Box>
+                      }
+                      sx={(theme) => {
+                        const darkMode = theme.palette.mode === 'dark';
+                        const channelColor = darkMode ? '#FFFFFF' : theme.palette.info.darker;
+                        return {
+                          bgcolor: darkMode ? 'rgba(2, 136, 209, 0.42)' : theme.palette.info.lighter,
+                          color: `${channelColor} !important`,
+                          border: '1px solid',
+                          borderColor: darkMode ? 'rgba(125, 211, 252, 0.45)' : theme.palette.info.light,
+                          fontWeight: 700,
+                          '& .MuiChip-label': {
+                            color: `${channelColor} !important`,
+                            fontWeight: 700
+                          },
+                          '& .MuiChip-icon': {
+                            color: `${channelColor} !important`
+                          },
+                          '& .MuiSvgIcon-root': {
+                            color: `${channelColor} !important`
+                          }
+                        };
+                      }}
                     />
                   </TableCell>
                   <TableCell align="right">

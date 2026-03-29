@@ -19,6 +19,14 @@ const resources = {
         shadow: 'Shadow',
         liontv: 'Lion TV',
         liontvDashboard: 'Lion TV Tracking',
+        liontvOverview: 'Overview',
+        liontvOverviewCaption: 'Daily control and priorities',
+        liontvCommercial: 'Customers & Sales',
+        liontvCommercialCaption: 'CRM, collections and commercial relationship',
+        liontvOperations: 'Technical Operations',
+        liontvOperationsCaption: 'Inventory, lines and accounts',
+        liontvContent: 'Content & Feed',
+        liontvContentCaption: 'Demos and visible catalog',
         demos: 'Lion TV Demos',
         subscriptions: 'Subscriptions',
         invoices: 'Invoices',
@@ -28,7 +36,12 @@ const resources = {
         paymentCommitments: 'Payment Commitments',
         crm: 'Customer CRM',
         lines: 'Lines',
+        plusLines: 'Plus Lines',
         licenses: 'Licenses',
+        managedAccounts: 'Managed Accounts',
+        moviesFeed: 'Movies Feed',
+        seriesFeed: 'Series Feed',
+        futbolEventsFeed: 'Futbol Events Feed',
         sample: 'Sample Page',
         docs: 'Documentation',
         security: 'Security',
@@ -38,16 +51,20 @@ const resources = {
       auth: {
         hi: 'Hi, Welcome Back',
         enterCredentials: 'Enter your credentials to continue',
+        logoAriaLabel: 'Application logo',
         signIn: 'Sign In',
         email: 'Email Address',
         password: 'Password',
+        togglePasswordVisibility: 'Toggle password visibility',
         keepLogged: 'Keep me logged in',
         forgot: 'Forgot Password?',
         noAccount: "Don't have an account?",
         otpTitle: 'Two-step verification',
         otpInstruction: 'Enter the code we sent to {{dest}}.',
+        otpDestinationFallback: 'your device',
         codeLabel: 'Verification code',
         resend: 'Resend code',
+        otpResendError: "We couldn't resend the code.",
         confirm: 'Confirm',
         sending: 'Signing in...',
         verifying: 'Verifying...',
@@ -67,7 +84,25 @@ const resources = {
         serial: 'Serial Code',
         register: 'Sign up with Email address',
         passwordStrength: 'Password strength',
-        registerBtn: 'Create account'
+        registerBtn: 'Create account',
+        registerSuccess: 'User registered successfully.',
+        registerFailed: 'Registration failed.',
+        registerUnexpectedError: 'Unexpected error while registering.',
+        passwordStrengthLevels: {
+          poor: 'Poor',
+          weak: 'Weak',
+          normal: 'Normal',
+          good: 'Good',
+          strong: 'Strong'
+        },
+        googleLogin: {
+          failed: 'Could not sign in with Google.',
+          unexpectedError: 'Unexpected error while signing in with Google.'
+        },
+        forgotErrors: {
+          sendEmail: 'We could not send the email, please try again later.',
+          resetPassword: 'Could not update the password.'
+        }
       },
       messages: {
         welcome: 'Welcome back! 👋',
@@ -89,7 +124,15 @@ const resources = {
         newInvoice: 'New invoice',
         newCustomer: 'New customer',
         edit: 'Edit',
-        delete: 'Delete'
+        delete: 'Delete',
+        clear: 'Clear',
+        create: 'Create',
+        save: 'Save changes',
+        saving: 'Saving...',
+        deleting: 'Deleting...',
+        sending: 'Sending...',
+        cancel: 'Cancel',
+        whatsapp: 'WhatsApp'
       },
       invoices: {
         title: 'Invoices',
@@ -530,6 +573,34 @@ const resources = {
         title: 'Subscriptions',
         search: 'Search (customer, line, package, status)',
         filters: { status: 'Status', all: 'All' },
+        kpi: {
+          activeStatus: 'STATUS: ACTIVE {{count}}'
+        },
+        labels: {
+          packageFallback: 'Package {{id}}',
+          providerFallback: 'LION_TV'
+        },
+        messages: {
+          packagesLoadError: 'Could not load packages.',
+          linesLoadError: 'Could not load lines.',
+          customersLoadError: 'Could not load customers.',
+          loadError: 'Could not load subscriptions.',
+          customerEmailError: 'Could not fetch customer email.',
+          invalidCustomerEmail: 'Update a valid customer email before sending notification.',
+          expirationSent: 'Expiration notification sent.',
+          reengageSent: 'Reengagement email sent.',
+          renewalSent: 'Renewal notification sent.',
+          notificationError: 'Could not send notification.',
+          required: 'Complete required fields.',
+          created: 'Subscription created successfully.',
+          updated: 'Subscription updated successfully.',
+          deleted: 'Subscription deleted successfully.',
+          saveError: 'Could not save subscription.',
+          deleteError: 'Could not delete subscription.'
+        },
+        form: {
+          autopayLinkPlaceholder: 'https://...'
+        },
         headers: {
           id: 'ID',
           customer: 'Customer',
@@ -548,6 +619,16 @@ const resources = {
         search: 'Search (MAC, device key, customer, status)',
         filters: { status: 'Status', payment: 'Payment', all: 'All' },
         paid: { paid: 'Paid', pending: 'Pending' },
+        messages: {
+          subscriptionsLoadError: 'Could not load subscriptions.',
+          linesLoadError: 'Could not load lines.',
+          serversLoadError: 'Could not load servers.',
+          loadError: 'Could not load licenses.',
+          customersLoadError: 'Could not load customers.',
+          required: 'Complete required fields.',
+          saveError: 'Could not save license.',
+          deleteError: 'Could not delete license.'
+        },
         headers: {
           id: 'ID',
           mac: 'MAC',
@@ -570,6 +651,13 @@ const resources = {
           deviceKeyHelper: 'Optional key for this device',
           paid: 'Payment status',
           paidHelper: 'Track if this license was already paid'
+        },
+        server: {
+          updated: 'Server updated.',
+          error: 'Could not change server.'
+        },
+        transfer: {
+          error: 'Could not transfer license.'
         }
       },
       demos: {
@@ -578,6 +666,7 @@ const resources = {
         search: 'Search (phone, user, package, app)',
         headers: {
           phone: 'Phone',
+          email: 'Email',
           country: 'Country code',
           package: 'Package',
           app: 'App',
@@ -589,6 +678,10 @@ const resources = {
         new: 'New demo',
         infoTitle: 'Demo data',
         infoSubtitle: 'Fill required fields; dates are assigned by backend.',
+        form: {
+          macAddress: 'MAC Address',
+          macPlaceholder: 'aa:bb:cc:dd:ee:ff'
+        },
         table: { empty: 'No demos found.', loading: 'Loading...' }
       },
       lines: {
@@ -643,6 +736,18 @@ const resources = {
           closing: 'Closing',
           referred: 'Referred',
           channel: 'Channel'
+        },
+        channels: {
+          social: 'Social media',
+          google: 'Google',
+          family: 'Family',
+          friends: 'Friends'
+        },
+        status: {
+          ACTIVE: 'ACTIVE',
+          INACTIVE: 'INACTIVE',
+          BLOCKED: 'BLOCKED',
+          SUSPENDED: 'SUSPENDED'
         },
         badge: { new: 'New', edit: 'Edit' },
         tips: {
@@ -701,6 +806,13 @@ const resources = {
           emptyText: 'Create your first customer to see it here.'
         },
         messages: {
+          loadError: 'Could not load customers.',
+          referersLoadError: 'Could not load referrers.',
+          createError: 'Could not create customer.',
+          missingCustomerId: 'Could not identify customer.',
+          updateError: 'Could not update customer.',
+          missingDeleteId: 'Could not identify customer to delete.',
+          deleteError: 'Could not delete customer.',
           required: 'Please complete the required fields.',
           created: 'Customer created successfully.',
           updated: 'Customer updated successfully.',
@@ -1006,6 +1118,125 @@ const resources = {
           rowsPerPage: 'Rows per page:'
         }
       },
+      sidebarRadar: {
+        title: 'Operational Radar',
+        subtitle: 'Expirations and collections',
+        today: 'Today',
+        tomorrow: 'Tomorrow',
+        next7Days: 'Next 7 days',
+        pendingCollection: 'Pending collection',
+        invoices: 'Invoices: {{val}}',
+        commitments: 'Commitments: {{val}}',
+        updatedAt: 'Updated: {{time}}',
+        openTracking: 'Open tracking',
+        partial: 'Partial radar: some modules did not load.',
+        loadError: 'Could not load operational radar.'
+      },
+      liontvDashboard: {
+        loading: 'Loading operational tracking...',
+        loadError: 'Could not load tracking module.',
+        empty: 'There is not enough data to build alerts yet.',
+        partialLoad: 'Partial tracking data loaded.',
+        infoBanner: 'Tracking module to avoid missing anything: expirations, pending items, risks and upcoming business events.',
+        horizonLabel: 'Alert horizon:',
+        daysChip: '{{days}} days',
+        criticalOnly: 'Critical only',
+        actions: {
+          open: 'Open',
+          view: 'View',
+          openInvoices: 'Open invoices',
+          openCommitments: 'Open commitments'
+        },
+        sections: {
+          trackingByDate: 'Tracking by date',
+          detailByDate: 'Details by date',
+          expiryRadar: 'Expiration radar',
+          priorityQueue: 'Prioritized alert queue',
+          pendingInvoices: 'Pending invoices',
+          pendingCommitments: 'Pending payment commitments'
+        },
+        metrics: {
+          todayAlerts: { title: 'Today alerts', helper: 'due today' },
+          tomorrowAlerts: { title: 'Tomorrow alerts', helper: 'due in 1 day' },
+          next7Alerts: { title: '7-day alerts', helper: 'from day 2 to day 7' },
+          criticalAlerts: { title: 'Critical alerts', helper: '{{count}} due today/1 day' },
+          highAlerts: { title: 'High alerts', helper: '{{count}} recently overdue' },
+          horizonAlerts: { title: 'Next {{days}} days', helper: '{{count}} within 7 days' },
+          pendingInvoices: { title: 'Pending invoices' },
+          pendingCommitments: { title: 'Pending commitments' },
+          lostCustomers: { title: 'Lost customers', helper: 'overdue > {{days}} days' }
+        },
+        buckets: {
+          today: { title: 'Today details', helper: 'Cases due today' },
+          tomorrow: { title: 'Tomorrow details', helper: 'Cases due in 1 day' },
+          next7: { title: 'Next 7 days details', helper: 'Cases due between 2 and 7 days' }
+        },
+        labels: {
+          alertsCount: '{{count}} alerts',
+          customer: 'Customer',
+          status: 'Status',
+          appFallback: 'APP',
+          planFallback: 'Plan'
+        },
+        table: {
+          priority: 'Priority',
+          type: 'Type',
+          reference: 'Reference',
+          customer: 'Customer',
+          targetDate: 'Target date',
+          status: 'Status',
+          detail: 'Detail',
+          action: 'Action',
+          id: 'ID',
+          pendingAmount: 'Pending amount',
+          dueDate: 'Due date',
+          promisedDate: 'Promise date'
+        },
+        messages: {
+          noAlertsInBucket: 'No alerts in this block.',
+          queueEmpty: 'No alerts in this range. Everything is under control.',
+          noPendingInvoices: 'There are no pending invoices.',
+          noPendingCommitments: 'There are no pending commitments.',
+          operationalRecommendation:
+            'Operational recommendation: review critical alerts first and then high alerts. Very old overdue items are moved to lost for commercial follow-up and no longer saturate critical priority.'
+        },
+        severity: {
+          critical: 'Critical',
+          high: 'High',
+          medium: 'Medium',
+          lost: 'Lost',
+          low: 'Low'
+        },
+        due: {
+          noDate: 'No date',
+          overdueAgo: 'Overdue {{days}}d ago',
+          today: 'Due today',
+          inDays: 'Due in {{days}}d'
+        },
+        types: {
+          license: 'License',
+          subscription: 'Subscription',
+          line: 'Line',
+          managedAccount: 'Managed Account',
+          pendingInvoice: 'Pending invoice',
+          paymentCommitment: 'Payment commitment',
+          licensePlural: 'Licenses',
+          subscriptionPlural: 'Subscriptions',
+          linePlural: 'Lines',
+          managedAccountPlural: 'Managed Accounts'
+        },
+        reference: {
+          invoice: 'Invoice #{{id}}',
+          commitment: 'Commitment #{{id}}'
+        },
+        radar: {
+          overdue: 'Overdue: {{count}}',
+          today: 'Today: {{count}}',
+          next7: '7 days: {{count}}',
+          next30: '30 days: {{count}}',
+          noDate: 'No date: {{count}}'
+        }
+      },
       dashboardDefault: {
         states: {
           loading: 'Loading dashboard...',
@@ -1121,6 +1352,9 @@ const resources = {
         }
       },
       feedCrud: {
+        headers: {
+          id: 'ID'
+        },
         actions: {
           refresh: 'Refresh',
           create: 'Create',
@@ -1189,7 +1423,694 @@ const resources = {
           deleted: 'Futbol event record deleted successfully.'
         }
       },
-      common: { close: 'Close', yes: 'Yes', no: 'No' },
+      errorBoundary: {
+        404: "Error 404 - This page doesn't exist!",
+        401: "Error 401 - You aren't authorized to see this",
+        503: 'Error 503 - Looks like our API is down',
+        418: 'Error 418 - Contact administrator',
+        default: 'Under maintenance'
+      },
+      pageState: {
+        loading: 'Loading data...',
+        error: 'Could not load information.',
+        retry: 'Retry',
+        empty: 'No data available to display.'
+      },
+      themeMode: {
+        light: 'Light',
+        dark: 'Dark',
+        system: 'System',
+        labelPrefix: 'Mode',
+        currentPrefix: 'Current'
+      },
+      profileMenu: {
+        greeting: 'Good morning,',
+        userFallback: 'User',
+        roleFallback: 'Project Admin',
+        searchPlaceholder: 'Search profile options',
+        changeLanguage: 'Change language',
+        current: 'Current',
+        colorTheme: 'Color theme',
+        accountSettings: 'Account settings',
+        changePassword: 'Change password',
+        logout: 'Logout',
+        messages: {
+          logoutSuccess: 'Session closed.',
+          fillAllFields: 'Complete all fields.',
+          passwordMismatch: 'Passwords do not match.',
+          passwordUpdated: 'Password updated.',
+          passwordUpdateError: 'Could not update password.'
+        },
+        passwordDialog: {
+          title: 'Change password',
+          subtitle: 'Keep your account secure with a strong password.',
+          currentPassword: 'Current password',
+          newPassword: 'New password',
+          newPasswordHelper: 'Use at least 8 characters, with letters, numbers, and symbols.',
+          confirmPassword: 'Confirm new password',
+          tip: 'Tip: avoid reusing passwords and do not share this change.'
+        },
+        upgradeCard: {
+          title: 'Upgrade your plan',
+          subtitleLine1: '70% discount for 1-year',
+          subtitleLine2: 'subscriptions.',
+          action: 'Go Premium'
+        }
+      },
+      headerSearch: {
+        placeholder: 'Global search (type:, status:, due:)',
+        dialogTitle: 'Global search',
+        kinds: {
+          customer: 'Customer',
+          subscription: 'Subscription',
+          license: 'License',
+          line: 'Line',
+          account: 'Managed account',
+          invoice: 'Invoice',
+          commitment: 'Commitment',
+          command: 'Command',
+          result: 'Result'
+        },
+        quickCommands: {
+          dashboard: { title: 'Go to operational tracking', subtitle: 'KPI, alerts and priorities for the day.' },
+          customers: { title: 'Open customers', subtitle: 'Portfolio and customer data management.' },
+          subscriptions: { title: 'Open subscriptions', subtitle: 'Plan status and renewals.' },
+          invoices: { title: 'Open invoices', subtitle: 'Pending collections and payments.' },
+          commitments: { title: 'Open payment commitments', subtitle: 'Promises and collection follow-up.' },
+          managedAccounts: { title: 'Open managed accounts', subtitle: 'Aliases, inbox and forwarding.' },
+          licenses: { title: 'Open licenses', subtitle: 'License status by customer.' },
+          lines: { title: 'Open lines', subtitle: 'Line and expiration control.' }
+        },
+        labels: {
+          customerById: 'Customer #{{id}}',
+          customerValue: 'Customer: {{customer}}',
+          idValue: 'ID {{id}}',
+          noProvider: 'No provider',
+          planFallback: 'Plan',
+          licenseFallback: 'License',
+          result: 'Result'
+        },
+        reference: {
+          invoice: 'Invoice #{{id}}',
+          commitment: 'Commitment #{{id}}'
+        },
+        due: {
+          overdue: 'Overdue {{days}}d',
+          today: 'Today',
+          tomorrow: 'Tomorrow',
+          inDays: '{{days}}d'
+        },
+        summary: {
+          results: '{{count}} results',
+          todayAlerts: '{{count}} alerts today',
+          sync: 'Sync: {{time}}'
+        },
+        sections: {
+          quickActions: 'Quick actions',
+          recents: 'Recent',
+          todayPending: 'Due today'
+        },
+        messages: {
+          noRecents: 'No recents yet.',
+          noTodayDue: 'No due items for today in the current index.',
+          noResults: 'No results found.',
+          filtersHelp:
+            'Use filters: type:customer|subscription|license|line|account|invoice|commitment|command, status:pending|active|expired, due:today|tomorrow|7d|overdue',
+          partialData: 'Partial data loaded in global search.',
+          loadError: 'Could not load the global index.'
+        }
+      },
+      headerNotifications: {
+        title: 'Today alerts',
+        partial: 'Partial alerts loaded.',
+        loadError: 'Could not load today alerts.',
+        updatedAt: 'Updated: {{time}}',
+        openTracking: 'View full tracking',
+        empty: 'No alerts for today.',
+        types: {
+          license: 'License',
+          subscription: 'Subscription',
+          line: 'Line',
+          managedAccount: 'Managed account',
+          pendingInvoice: 'Pending invoice',
+          paymentCommitment: 'Payment commitment'
+        },
+        labels: {
+          appFallback: 'APP',
+          planFallback: 'Plan',
+          lineFallback: 'line',
+          accountCodeFallback: 'ACC',
+          customer: 'Customer',
+          alert: 'Alert',
+          reviewPending: 'Review pending alert.',
+          open: 'Open'
+        },
+        reference: {
+          invoice: 'Invoice #{{id}}',
+          commitment: 'Commitment #{{id}}'
+        },
+        alertDetail: {
+          dueToday: 'Due today',
+          dueTodayAmount: 'Due today · {{amount}}'
+        },
+        severity: {
+          critical: 'Critical',
+          high: 'High',
+          medium: 'Medium',
+          low: 'Low',
+          info: 'Info'
+        }
+      },
+      paymentCommitments: {
+        title: 'Payment commitments',
+        actions: { new: 'New commitment', create: 'Create commitment' },
+        filters: {
+          title: 'Debt control',
+          search: 'Search by customer, status, note or ID',
+          status: 'Status',
+          all: 'All',
+          debtorsOnly: 'Debtors only'
+        },
+        status: {
+          pending: 'Pending',
+          partial: 'Partial',
+          paid: 'Paid',
+          cancelled: 'Cancelled'
+        },
+        kpi: {
+          total: '{{count}} commitments',
+          debtors: '{{count}} debtors',
+          pendingAmount: 'Pending: {{amount}}',
+          overdue: '{{count}} overdue'
+        },
+        labels: {
+          customerId: 'Customer #{{id}}',
+          thisCustomer: 'this customer'
+        },
+        risk: { overdue: 'Overdue', onTime: 'On time' },
+        table: {
+          headers: {
+            id: 'ID',
+            customer: 'Customer',
+            promisedDate: 'Promised date',
+            amountDue: 'Amount due',
+            amountPaid: 'Amount paid',
+            pendingAmount: 'Pending',
+            status: 'Status',
+            risk: 'Risk',
+            note: 'Note',
+            actions: 'Actions'
+          },
+          emptyTitle: 'No records',
+          emptyText: 'No commitments match your current search and filters.',
+          rowsPerPage: 'Rows per page'
+        },
+        dialog: {
+          editTitle: 'Edit payment commitment',
+          createTitle: 'New payment commitment',
+          subtitle: 'Register promise date and track pending balance by customer.'
+        },
+        form: {
+          customer: 'Customer',
+          customerHelper: 'Customer linked to this payment commitment.',
+          loadingCustomers: 'Loading customers...',
+          noCustomers: 'No customers available',
+          promisedDate: 'Promised date',
+          amountDue: 'Amount due',
+          amountPaid: 'Amount paid',
+          notes: 'Notes',
+          markCancelled: 'Mark as cancelled',
+          projectedStatus: 'Projected status',
+          pendingBalance: 'Pending balance: {{amount}}',
+          statusHint: 'If not cancelled, backend calculates automatically: Pending, Partial or Paid.',
+          main: {
+            title: 'Main data',
+            helper: 'Select customer, date and commitment amounts.'
+          },
+          tracking: {
+            title: 'Control & tracking',
+            helper: 'Status is calculated from amounts. You can only force Cancelled.'
+          }
+        },
+        delete: {
+          title: 'Delete commitment',
+          body: 'Delete commitment #{{id}} for {{customer}}? This action cannot be undone.'
+        },
+        messages: {
+          loadError: 'Could not load payment commitments.',
+          customersLoadWarning: 'Could not load customer catalog.',
+          selectCustomer: 'Select a customer.',
+          selectDate: 'Select the promised payment date.',
+          amountDuePositive: 'Amount due must be greater than zero.',
+          amountPaidNegative: 'Amount paid cannot be negative.',
+          amountPaidGreaterThanDue: 'Amount paid cannot be greater than amount due.',
+          created: 'Payment commitment created.',
+          updated: 'Payment commitment updated.',
+          deleted: 'Payment commitment deleted.',
+          saveError: 'Could not save payment commitment.',
+          deleteError: 'Could not delete payment commitment.'
+        }
+      },
+      potentialCustomers: {
+        title: 'Potential customers',
+        subtitle: 'Register and track interested contacts.',
+        search: 'Search prospects',
+        searchPlaceholder: 'Search by name, email, phone, country',
+        filters: { status: 'Status' },
+        headers: {
+          name: 'Name',
+          email: 'Email',
+          phone: 'Phone',
+          country: 'Country',
+          category: 'Category',
+          status: 'Status',
+          createdAt: 'Created',
+          actions: 'Actions'
+        },
+        kpi: {
+          total: 'Total',
+          new: 'New',
+          contacted: 'Contacted',
+          converted: 'Converted'
+        },
+        actions: {
+          new: 'New potential customer',
+          edit: 'Edit potential customer',
+          markContacted: 'Mark as contacted'
+        },
+        form: {
+          identity: 'Identity',
+          identityHelper: 'Primary contact details',
+          classification: 'Classification',
+          classificationHelper: 'Categorize and set commercial status'
+        },
+        categories: {
+          GENERAL: 'General',
+          IPTV: 'IPTV',
+          SPORTS_BAR: 'Sports bar',
+          BAR_RESTAURANT: 'Bar / restaurant',
+          RESTAURANT: 'Restaurant',
+          CAFE: 'Cafe',
+          BARBERSHOP: 'Barbershop',
+          BEAUTY_SALON: 'Beauty salon',
+          HOTEL: 'Hotel',
+          MOTEL: 'Motel',
+          HOSTEL: 'Hostel',
+          GYM: 'Gym',
+          CLINIC_WAITING_ROOM: 'Clinic waiting room',
+          DENTAL_CLINIC: 'Dental clinic',
+          AUTO_WORKSHOP: 'Auto workshop',
+          CAR_DEALERSHIP: 'Car dealership',
+          SUPERMARKET: 'Supermarket',
+          CONVENIENCE_STORE: 'Convenience store',
+          OFFICE: 'Office',
+          CALL_CENTER: 'Call center',
+          EVENT_HALL: 'Event hall',
+          BILLIARD_CLUB: 'Billiard club',
+          NIGHTCLUB: 'Nightclub',
+          SOCIAL_MEDIA: 'Social media',
+          REFERRAL: 'Referral',
+          WEB: 'Web',
+          OTHER: 'Other'
+        },
+        status: {
+          NEW: 'New',
+          CONTACTED: 'Contacted',
+          NEGOTIATION: 'Negotiation',
+          CONVERTED: 'Converted',
+          LOST: 'Lost'
+        },
+        empty: 'No potential customers found.',
+        emailDefault: 'If empty, nomail@gmail.com will be saved.',
+        selectCountry: 'Select country',
+        deleteTitle: 'Delete potential customer',
+        deleteBody: 'Delete {{name}}?',
+        messages: {
+          loadError: 'Could not load potential customers.',
+          alreadyContacted: 'This prospect is already Contacted.',
+          markContactedSuccess: 'Status updated to Contacted.',
+          markContactedError: 'Could not update status.',
+          invalidWhatsAppPhone: 'This prospect has no valid WhatsApp phone.',
+          requiredName: 'Complete the name.',
+          created: 'Potential customer created.',
+          updated: 'Potential customer updated.',
+          deleted: 'Potential customer deleted.',
+          saveError: 'Could not save potential customer.',
+          deleteError: 'Could not delete potential customer.'
+        }
+      },
+      errorBoundary: {
+        404: 'Error 404 - ¡Esta página no existe!',
+        401: 'Error 401 - No estás autorizado para ver esto',
+        503: 'Error 503 - Parece que nuestra API está caída',
+        418: 'Error 418 - Contacta al administrador',
+        default: 'En mantenimiento'
+      },
+      pageState: {
+        loading: 'Cargando datos...',
+        error: 'No se pudo cargar la información.',
+        retry: 'Reintentar',
+        empty: 'No hay datos disponibles para mostrar.'
+      },
+      themeMode: {
+        light: 'Claro',
+        dark: 'Oscuro',
+        system: 'Sistema',
+        labelPrefix: 'Modo',
+        currentPrefix: 'Actual'
+      },
+      profileMenu: {
+        greeting: 'Buenos días,',
+        userFallback: 'Usuario',
+        roleFallback: 'Administrador del proyecto',
+        searchPlaceholder: 'Buscar opciones del perfil',
+        changeLanguage: 'Cambiar idioma',
+        current: 'Actual',
+        colorTheme: 'Tema de color',
+        accountSettings: 'Configuración de cuenta',
+        changePassword: 'Cambiar contraseña',
+        logout: 'Cerrar sesión',
+        messages: {
+          logoutSuccess: 'Sesión cerrada.',
+          fillAllFields: 'Completa todos los campos.',
+          passwordMismatch: 'Las contraseñas no coinciden.',
+          passwordUpdated: 'Contraseña actualizada.',
+          passwordUpdateError: 'No se pudo actualizar la contraseña.'
+        },
+        passwordDialog: {
+          title: 'Cambiar contraseña',
+          subtitle: 'Mantén tu cuenta segura con una contraseña fuerte.',
+          currentPassword: 'Contraseña actual',
+          newPassword: 'Nueva contraseña',
+          newPasswordHelper: 'Usa al menos 8 caracteres, mezcla letras, números y símbolos.',
+          confirmPassword: 'Confirmar nueva contraseña',
+          tip: 'Consejo: evita reutilizar contraseñas y no compartas este cambio.'
+        },
+        upgradeCard: {
+          title: 'Mejora tu plan',
+          subtitleLine1: '70% de descuento en suscripciones',
+          subtitleLine2: 'anuales.',
+          action: 'Ir a Premium'
+        }
+      },
+      headerSearch: {
+        placeholder: 'Búsqueda global (tipo:, estado:, vence:)',
+        dialogTitle: 'Búsqueda global',
+        kinds: {
+          customer: 'Cliente',
+          subscription: 'Suscripción',
+          license: 'Licencia',
+          line: 'Línea',
+          account: 'Managed account',
+          invoice: 'Factura',
+          commitment: 'Compromiso',
+          command: 'Comando',
+          result: 'Resultado'
+        },
+        quickCommands: {
+          dashboard: { title: 'Ir a seguimiento operativo', subtitle: 'KPI, alertas y prioridades del día.' },
+          customers: { title: 'Abrir clientes', subtitle: 'Gestión de cartera y datos del cliente.' },
+          subscriptions: { title: 'Abrir suscripciones', subtitle: 'Estado y renovaciones de planes.' },
+          invoices: { title: 'Abrir facturas', subtitle: 'Cobros pendientes y pagos.' },
+          commitments: { title: 'Abrir compromisos de pago', subtitle: 'Promesas y seguimiento de cobranza.' },
+          managedAccounts: { title: 'Abrir managed accounts', subtitle: 'Aliases, bandeja y forwarding.' },
+          licenses: { title: 'Abrir licencias', subtitle: 'Estado de licencias por cliente.' },
+          lines: { title: 'Abrir líneas', subtitle: 'Control de líneas y expiración.' }
+        },
+        labels: {
+          customerById: 'Cliente #{{id}}',
+          customerValue: 'Cliente: {{customer}}',
+          idValue: 'ID {{id}}',
+          noProvider: 'Sin provider',
+          planFallback: 'Plan',
+          licenseFallback: 'Licencia',
+          result: 'Resultado'
+        },
+        reference: {
+          invoice: 'Factura #{{id}}',
+          commitment: 'Compromiso #{{id}}'
+        },
+        due: {
+          overdue: 'Vencido {{days}}d',
+          today: 'Hoy',
+          tomorrow: 'Mañana',
+          inDays: '{{days}}d'
+        },
+        summary: {
+          results: '{{count}} resultados',
+          todayAlerts: '{{count}} alertas hoy',
+          sync: 'Sync: {{time}}'
+        },
+        sections: {
+          quickActions: 'Acciones rápidas',
+          recents: 'Recientes',
+          todayPending: 'Pendientes de hoy'
+        },
+        messages: {
+          noRecents: 'Sin recientes todavía.',
+          noTodayDue: 'No hay vencimientos de hoy en el índice actual.',
+          noResults: 'No se encontraron resultados.',
+          filtersHelp:
+            'Usa filtros: tipo:cliente|suscripcion|licencia|linea|account|factura|compromiso|comando, estado:pending|active|expired, vence:hoy|manana|7d|vencido',
+          partialData: 'Datos parciales cargados en búsqueda global.',
+          loadError: 'No se pudo cargar el índice global.'
+        }
+      },
+      headerNotifications: {
+        title: 'Alertas de hoy',
+        partial: 'Se cargaron alertas parciales.',
+        loadError: 'No se pudieron cargar las alertas de hoy.',
+        updatedAt: 'Actualizado: {{time}}',
+        openTracking: 'Ver seguimiento completo',
+        empty: 'No hay alertas para hoy.',
+        types: {
+          license: 'Licencia',
+          subscription: 'Suscripción',
+          line: 'Línea',
+          managedAccount: 'Managed account',
+          pendingInvoice: 'Factura pendiente',
+          paymentCommitment: 'Compromiso de pago'
+        },
+        labels: {
+          appFallback: 'APP',
+          planFallback: 'Plan',
+          lineFallback: 'line',
+          accountCodeFallback: 'ACC',
+          customer: 'Cliente',
+          alert: 'Alerta',
+          reviewPending: 'Revisar alerta pendiente.',
+          open: 'Abrir'
+        },
+        reference: {
+          invoice: 'Factura #{{id}}',
+          commitment: 'Compromiso #{{id}}'
+        },
+        alertDetail: {
+          dueToday: 'Vence hoy',
+          dueTodayAmount: 'Vence hoy · {{amount}}'
+        },
+        severity: {
+          critical: 'Crítico',
+          high: 'Alto',
+          medium: 'Medio',
+          low: 'Bajo',
+          info: 'Info'
+        }
+      },
+      paymentCommitments: {
+        title: 'Compromisos de pago',
+        actions: { new: 'Nuevo compromiso', create: 'Crear compromiso' },
+        filters: {
+          title: 'Control de deuda',
+          search: 'Buscar por cliente, estado, nota o ID',
+          status: 'Estado',
+          all: 'Todos',
+          debtorsOnly: 'Solo deudores'
+        },
+        status: {
+          pending: 'Pendiente',
+          partial: 'Parcial',
+          paid: 'Pagado',
+          cancelled: 'Cancelado'
+        },
+        kpi: {
+          total: '{{count}} compromisos',
+          debtors: '{{count}} deudores',
+          pendingAmount: 'Pendiente: {{amount}}',
+          overdue: '{{count}} vencidos'
+        },
+        labels: {
+          customerId: 'Cliente #{{id}}',
+          thisCustomer: 'este cliente'
+        },
+        risk: { overdue: 'Vencido', onTime: 'Al día' },
+        table: {
+          headers: {
+            id: 'ID',
+            customer: 'Cliente',
+            promisedDate: 'Fecha compromiso',
+            amountDue: 'Adeudado',
+            amountPaid: 'Pagado',
+            pendingAmount: 'Pendiente',
+            status: 'Estado',
+            risk: 'Riesgo',
+            note: 'Nota',
+            actions: 'Acciones'
+          },
+          emptyTitle: 'Sin registros',
+          emptyText: 'No hay compromisos que coincidan con tu búsqueda y filtros actuales.',
+          rowsPerPage: 'Filas por página'
+        },
+        dialog: {
+          editTitle: 'Editar compromiso de pago',
+          createTitle: 'Nuevo compromiso de pago',
+          subtitle: 'Registra fecha de compromiso y controla el saldo pendiente por cliente.'
+        },
+        form: {
+          customer: 'Cliente',
+          customerHelper: 'Cliente asociado al compromiso de pago.',
+          loadingCustomers: 'Cargando clientes...',
+          noCustomers: 'No hay clientes disponibles',
+          promisedDate: 'Fecha compromiso',
+          amountDue: 'Monto adeudado',
+          amountPaid: 'Monto pagado',
+          notes: 'Notas',
+          markCancelled: 'Marcar como cancelado',
+          projectedStatus: 'Estado proyectado',
+          pendingBalance: 'Saldo pendiente: {{amount}}',
+          statusHint: 'Si no está cancelado, el backend calcula automáticamente: Pendiente, Parcial o Pagado.',
+          main: {
+            title: 'Datos principales',
+            helper: 'Selecciona cliente, fecha y montos del compromiso.'
+          },
+          tracking: {
+            title: 'Control y seguimiento',
+            helper: 'El estado se calcula por montos. Solo puedes forzar Cancelado.'
+          }
+        },
+        delete: {
+          title: 'Eliminar compromiso',
+          body: '¿Deseas eliminar el compromiso #{{id}} de {{customer}}? Esta acción no se puede deshacer.'
+        },
+        messages: {
+          loadError: 'No se pudieron cargar los compromisos de pago.',
+          customersLoadWarning: 'No se pudo cargar el catálogo de clientes.',
+          selectCustomer: 'Selecciona un cliente.',
+          selectDate: 'Selecciona la fecha comprometida de pago.',
+          amountDuePositive: 'El monto adeudado debe ser mayor que cero.',
+          amountPaidNegative: 'El monto pagado no puede ser negativo.',
+          amountPaidGreaterThanDue: 'El monto pagado no puede ser mayor que el adeudado.',
+          created: 'Compromiso de pago creado.',
+          updated: 'Compromiso de pago actualizado.',
+          deleted: 'Compromiso de pago eliminado.',
+          saveError: 'No se pudo guardar el compromiso de pago.',
+          deleteError: 'No se pudo eliminar el compromiso de pago.'
+        }
+      },
+      potentialCustomers: {
+        title: 'Clientes potenciales',
+        subtitle: 'Registra y da seguimiento a contactos interesados.',
+        search: 'Buscar potenciales',
+        searchPlaceholder: 'Buscar por nombre, correo, teléfono, país',
+        filters: { status: 'Estado' },
+        headers: {
+          name: 'Nombre',
+          email: 'Correo',
+          phone: 'Teléfono',
+          country: 'País',
+          category: 'Categoría',
+          status: 'Estado',
+          createdAt: 'Creado',
+          actions: 'Acciones'
+        },
+        kpi: {
+          total: 'Total',
+          new: 'Nuevos',
+          contacted: 'Contactados',
+          converted: 'Convertidos'
+        },
+        actions: {
+          new: 'Nuevo cliente potencial',
+          edit: 'Editar cliente potencial',
+          markContacted: 'Marcar como contactado'
+        },
+        form: {
+          identity: 'Identidad',
+          identityHelper: 'Datos principales del contacto',
+          classification: 'Clasificación',
+          classificationHelper: 'Categoriza y define estado comercial'
+        },
+        categories: {
+          GENERAL: 'General',
+          IPTV: 'IPTV',
+          SPORTS_BAR: 'Sports Bar',
+          BAR_RESTAURANT: 'Bar / Restaurant',
+          RESTAURANT: 'Restaurant',
+          CAFE: 'Cafe',
+          BARBERSHOP: 'Barbershop',
+          BEAUTY_SALON: 'Beauty Salon',
+          HOTEL: 'Hotel',
+          MOTEL: 'Motel',
+          HOSTEL: 'Hostel',
+          GYM: 'Gym',
+          CLINIC_WAITING_ROOM: 'Clinic Waiting Room',
+          DENTAL_CLINIC: 'Dental Clinic',
+          AUTO_WORKSHOP: 'Auto Workshop',
+          CAR_DEALERSHIP: 'Car Dealership',
+          SUPERMARKET: 'Supermarket',
+          CONVENIENCE_STORE: 'Convenience Store',
+          OFFICE: 'Office',
+          CALL_CENTER: 'Call Center',
+          EVENT_HALL: 'Event Hall',
+          BILLIARD_CLUB: 'Billiard Club',
+          NIGHTCLUB: 'Nightclub',
+          SOCIAL_MEDIA: 'Social Media',
+          REFERRAL: 'Referral',
+          WEB: 'Web',
+          OTHER: 'Other'
+        },
+        status: {
+          NEW: 'New',
+          CONTACTED: 'Contacted',
+          NEGOTIATION: 'Negotiation',
+          CONVERTED: 'Converted',
+          LOST: 'Lost'
+        },
+        empty: 'No hay clientes potenciales registrados.',
+        emailDefault: 'Si lo dejas vacío se guardará nomail@gmail.com',
+        selectCountry: 'Seleccionar país',
+        deleteTitle: 'Eliminar cliente potencial',
+        deleteBody: '¿Eliminar a {{name}}?',
+        messages: {
+          loadError: 'No se pudieron cargar los clientes potenciales.',
+          alreadyContacted: 'Este prospecto ya está en Contacted.',
+          markContactedSuccess: 'Estado actualizado a Contacted.',
+          markContactedError: 'No se pudo actualizar el estado.',
+          invalidWhatsAppPhone: 'Este prospecto no tiene teléfono válido para WhatsApp.',
+          requiredName: 'Completa el nombre.',
+          created: 'Cliente potencial creado.',
+          updated: 'Cliente potencial actualizado.',
+          deleted: 'Cliente potencial eliminado.',
+          saveError: 'No se pudo guardar el cliente potencial.',
+          deleteError: 'No se pudo eliminar el cliente potencial.'
+        }
+      },
+      common: {
+        close: 'Close',
+        yes: 'Yes',
+        no: 'No',
+        cancel: 'Cancel',
+        save: 'Save',
+        clear: 'Clear',
+        create: 'Create',
+        creating: 'Creating...',
+        saving: 'Saving...',
+        saveChanges: 'Save changes',
+        deleting: 'Deleting...',
+        edit: 'Edit',
+        new: 'New',
+        selectOption: 'Select an option'
+      },
       sms: {
         title: 'SMS Management',
         enqueue: 'Enqueue SMS',
@@ -1257,6 +2178,14 @@ const resources = {
         shadow: 'Sombra',
         liontv: 'Lion TV',
         liontvDashboard: 'Seguimiento Lion TV',
+        liontvOverview: 'Resumen',
+        liontvOverviewCaption: 'Control diario y prioridades',
+        liontvCommercial: 'Clientes y Ventas',
+        liontvCommercialCaption: 'CRM, cobros y relación comercial',
+        liontvOperations: 'Operación Técnica',
+        liontvOperationsCaption: 'Inventario, líneas y cuentas',
+        liontvContent: 'Contenido y Feed',
+        liontvContentCaption: 'Demos y catálogo visible',
         demos: 'Demos Lion TV',
         subscriptions: 'Suscripciones',
         invoices: 'Facturas',
@@ -1266,7 +2195,12 @@ const resources = {
         paymentCommitments: 'Compromisos de pago',
         crm: 'CRM Clientes',
         lines: 'Líneas',
+        plusLines: 'Líneas Plus',
         licenses: 'Licencias',
+        managedAccounts: 'Managed Accounts',
+        moviesFeed: 'Feed de Películas',
+        seriesFeed: 'Feed de Series',
+        futbolEventsFeed: 'Feed de Eventos de Fútbol',
         sample: 'Página de ejemplo',
         docs: 'Documentación',
         security: 'Seguridad',
@@ -1276,16 +2210,20 @@ const resources = {
       auth: {
         hi: 'Hola, bienvenido',
         enterCredentials: 'Ingresa tus credenciales para continuar',
+        logoAriaLabel: 'Logo de la aplicación',
         signIn: 'Iniciar sesión',
         email: 'Correo electrónico',
         password: 'Contraseña',
+        togglePasswordVisibility: 'Mostrar u ocultar contraseña',
         keepLogged: 'Mantener sesión iniciada',
         forgot: '¿Olvidaste tu contraseña?',
         noAccount: '¿No tienes cuenta?',
         otpTitle: 'Verificación en dos pasos',
         otpInstruction: 'Ingresa el código enviado a {{dest}}.',
+        otpDestinationFallback: 'tu dispositivo',
         codeLabel: 'Código de verificación',
         resend: 'Reenviar código',
+        otpResendError: 'No pudimos reenviar el código.',
         confirm: 'Confirmar',
         sending: 'Ingresando...',
         verifying: 'Verificando...',
@@ -1305,7 +2243,25 @@ const resources = {
         serial: 'Código serial',
         register: 'Regístrate con correo',
         passwordStrength: 'Fortaleza de la contraseña',
-        registerBtn: 'Crear cuenta'
+        registerBtn: 'Crear cuenta',
+        registerSuccess: 'Usuario registrado correctamente.',
+        registerFailed: 'No se pudo completar el registro.',
+        registerUnexpectedError: 'Error inesperado al registrar usuario.',
+        passwordStrengthLevels: {
+          poor: 'Débil',
+          weak: 'Baja',
+          normal: 'Media',
+          good: 'Buena',
+          strong: 'Fuerte'
+        },
+        googleLogin: {
+          failed: 'No se pudo iniciar sesión con Google.',
+          unexpectedError: 'Error inesperado al iniciar sesión con Google.'
+        },
+        forgotErrors: {
+          sendEmail: 'No pudimos enviar el correo, intenta más tarde.',
+          resetPassword: 'No se pudo actualizar la contraseña.'
+        }
       },
       messages: {
         welcome: '¡Bienvenido de nuevo! 👋',
@@ -1327,7 +2283,15 @@ const resources = {
         newInvoice: 'Nueva factura',
         newCustomer: 'Nuevo cliente',
         edit: 'Editar',
-        delete: 'Eliminar'
+        delete: 'Eliminar',
+        clear: 'Limpiar',
+        create: 'Crear',
+        save: 'Guardar cambios',
+        saving: 'Guardando...',
+        deleting: 'Eliminando...',
+        sending: 'Enviando...',
+        cancel: 'Cancelar',
+        whatsapp: 'WhatsApp'
       },
       invoices: {
         title: 'Facturas',
@@ -1768,6 +2732,34 @@ const resources = {
         title: 'Suscripciones',
         search: 'Buscar (cliente, línea, paquete, estado)',
         filters: { status: 'Estado', all: 'Todos' },
+        kpi: {
+          activeStatus: 'ESTADO: ACTIVA {{count}}'
+        },
+        labels: {
+          packageFallback: 'Paquete {{id}}',
+          providerFallback: 'LION_TV'
+        },
+        messages: {
+          packagesLoadError: 'No se pudieron cargar los paquetes.',
+          linesLoadError: 'No se pudieron cargar las líneas.',
+          customersLoadError: 'No se pudieron cargar los clientes.',
+          loadError: 'No se pudieron cargar las suscripciones.',
+          customerEmailError: 'No se pudo obtener el correo del cliente.',
+          invalidCustomerEmail: 'Actualiza el correo válido del cliente antes de enviar la notificación.',
+          expirationSent: 'Notificación de vencimiento enviada.',
+          reengageSent: 'Correo de reenganche enviado.',
+          renewalSent: 'Notificación de renovación enviada.',
+          notificationError: 'No se pudo enviar la notificación.',
+          required: 'Completa los campos requeridos.',
+          created: 'Suscripción creada correctamente.',
+          updated: 'Suscripción actualizada correctamente.',
+          deleted: 'Suscripción eliminada correctamente.',
+          saveError: 'No se pudo guardar la suscripción.',
+          deleteError: 'No se pudo eliminar la suscripción.'
+        },
+        form: {
+          autopayLinkPlaceholder: 'https://...'
+        },
         headers: {
           id: 'ID',
           customer: 'Cliente',
@@ -1786,6 +2778,16 @@ const resources = {
         search: 'Buscar (MAC, device key, cliente, estado)',
         filters: { status: 'Estado', payment: 'Pago', all: 'Todos' },
         paid: { paid: 'Pagada', pending: 'Pendiente' },
+        messages: {
+          subscriptionsLoadError: 'No se pudieron cargar suscripciones.',
+          linesLoadError: 'No se pudieron cargar líneas.',
+          serversLoadError: 'No se pudieron cargar los servidores.',
+          loadError: 'No se pudieron cargar las licencias.',
+          customersLoadError: 'No se pudieron cargar los clientes.',
+          required: 'Completa los campos requeridos.',
+          saveError: 'No se pudo guardar la licencia.',
+          deleteError: 'No se pudo eliminar la licencia.'
+        },
         headers: {
           id: 'ID',
           mac: 'MAC',
@@ -1808,6 +2810,13 @@ const resources = {
           deviceKeyHelper: 'Llave opcional para este dispositivo',
           paid: 'Estado de pago',
           paidHelper: 'Indica si esta licencia ya fue pagada'
+        },
+        server: {
+          updated: 'Servidor actualizado.',
+          error: 'No se pudo cambiar el servidor.'
+        },
+        transfer: {
+          error: 'No se pudo trasladar.'
         }
       },
       demos: {
@@ -1816,6 +2825,7 @@ const resources = {
         search: 'Buscar (celular, usuario, paquete, app)',
         headers: {
           phone: 'Celular',
+          email: 'Email',
           country: 'Código país',
           package: 'Paquete',
           app: 'App',
@@ -1827,6 +2837,10 @@ const resources = {
         new: 'Nueva demo',
         infoTitle: 'Datos de la demo',
         infoSubtitle: 'Completa los campos requeridos; las fechas se asignan automáticamente.',
+        form: {
+          macAddress: 'MAC Address',
+          macPlaceholder: 'aa:bb:cc:dd:ee:ff'
+        },
         table: { empty: 'No hay demos registradas.', loading: 'Cargando...' }
       },
       lines: {
@@ -1881,6 +2895,18 @@ const resources = {
           closing: 'Cierre',
           referred: 'Referido',
           channel: 'Canal'
+        },
+        channels: {
+          social: 'Red social',
+          google: 'Google',
+          family: 'Familiares',
+          friends: 'Amigos'
+        },
+        status: {
+          ACTIVE: 'ACTIVO',
+          INACTIVE: 'INACTIVO',
+          BLOCKED: 'BLOQUEADO',
+          SUSPENDED: 'SUSPENDIDO'
         },
         badge: { new: 'Alta', edit: 'Edición' },
         tips: {
@@ -1939,6 +2965,13 @@ const resources = {
           emptyText: 'Crea tu primer cliente para verlo aquí.'
         },
         messages: {
+          loadError: 'No se pudieron cargar los clientes.',
+          referersLoadError: 'No se pudieron cargar los referidores.',
+          createError: 'No se pudo crear el cliente.',
+          missingCustomerId: 'No se pudo identificar el cliente.',
+          updateError: 'No se pudo actualizar el cliente.',
+          missingDeleteId: 'No se pudo identificar el cliente a eliminar.',
+          deleteError: 'No se pudo eliminar el cliente.',
           required: 'Completa los campos requeridos.',
           created: 'Cliente creado correctamente.',
           updated: 'Cliente actualizado correctamente.',
@@ -2244,6 +3277,125 @@ const resources = {
           rowsPerPage: 'Filas por página:'
         }
       },
+      sidebarRadar: {
+        title: 'Radar Operativo',
+        subtitle: 'Vencimientos y cobranza',
+        today: 'Hoy',
+        tomorrow: 'Mañana',
+        next7Days: 'Próximos 7 días',
+        pendingCollection: 'Cobranza pendiente',
+        invoices: 'Facturas: {{val}}',
+        commitments: 'Compromisos: {{val}}',
+        updatedAt: 'Actualizado: {{time}}',
+        openTracking: 'Abrir seguimiento',
+        partial: 'Radar parcial: algunos módulos no cargaron.',
+        loadError: 'No se pudo cargar el radar operativo.'
+      },
+      liontvDashboard: {
+        loading: 'Cargando seguimiento operativo...',
+        loadError: 'No se pudo cargar el módulo de seguimiento.',
+        empty: 'No hay datos suficientes para construir alertas todavía.',
+        partialLoad: 'Se cargaron datos parciales para seguimiento.',
+        infoBanner: 'Módulo de seguimiento para no olvidar nada: vencimientos, pendientes, riesgos y próximos eventos del negocio.',
+        horizonLabel: 'Horizonte de alertas:',
+        daysChip: '{{days}} días',
+        criticalOnly: 'Solo críticos',
+        actions: {
+          open: 'Abrir',
+          view: 'Ver',
+          openInvoices: 'Abrir facturas',
+          openCommitments: 'Abrir compromisos'
+        },
+        sections: {
+          trackingByDate: 'Seguimiento por fecha',
+          detailByDate: 'Detalle por fecha',
+          expiryRadar: 'Radar de vencimientos',
+          priorityQueue: 'Cola de alertas priorizada',
+          pendingInvoices: 'Facturas pendientes',
+          pendingCommitments: 'Compromisos de pago pendientes'
+        },
+        metrics: {
+          todayAlerts: { title: 'Alertas de hoy', helper: 'vence hoy' },
+          tomorrowAlerts: { title: 'Alertas de mañana', helper: 'vence en 1 día' },
+          next7Alerts: { title: 'Alertas a 7 días', helper: 'desde 2 hasta 7 días' },
+          criticalAlerts: { title: 'Alertas críticas', helper: '{{count}} vencen hoy/1 día' },
+          highAlerts: { title: 'Alertas altas', helper: '{{count}} vencidas recientes' },
+          horizonAlerts: { title: 'Próximos {{days}} días', helper: '{{count}} en 7 días' },
+          pendingInvoices: { title: 'Facturas pendientes' },
+          pendingCommitments: { title: 'Compromisos pendientes' },
+          lostCustomers: { title: 'Clientes perdidos', helper: 'vencidos > {{days}} días' }
+        },
+        buckets: {
+          today: { title: 'Detalle de hoy', helper: 'Casos que vencen hoy' },
+          tomorrow: { title: 'Detalle de mañana', helper: 'Casos que vencen en 1 día' },
+          next7: { title: 'Detalle próximos 7 días', helper: 'Casos que vencen entre 2 y 7 días' }
+        },
+        labels: {
+          alertsCount: '{{count}} alertas',
+          customer: 'Cliente',
+          status: 'Estado',
+          appFallback: 'APP',
+          planFallback: 'Plan'
+        },
+        table: {
+          priority: 'Prioridad',
+          type: 'Tipo',
+          reference: 'Referencia',
+          customer: 'Cliente',
+          targetDate: 'Fecha objetivo',
+          status: 'Estado',
+          detail: 'Detalle',
+          action: 'Acción',
+          id: 'ID',
+          pendingAmount: 'Monto pendiente',
+          dueDate: 'Vence',
+          promisedDate: 'Fecha promesa'
+        },
+        messages: {
+          noAlertsInBucket: 'Sin alertas en este bloque.',
+          queueEmpty: 'No hay alertas en este rango. Todo está bajo control.',
+          noPendingInvoices: 'No hay facturas pendientes.',
+          noPendingCommitments: 'No hay compromisos pendientes.',
+          operationalRecommendation:
+            'Recomendación operativa: revisa primero alertas críticas y luego altas. Los vencidos muy antiguos pasan a perdido para seguimiento comercial y ya no saturan la prioridad crítica.'
+        },
+        severity: {
+          critical: 'Crítico',
+          high: 'Alto',
+          medium: 'Medio',
+          lost: 'Perdido',
+          low: 'Bajo'
+        },
+        due: {
+          noDate: 'Sin fecha',
+          overdueAgo: 'Vencido hace {{days}}d',
+          today: 'Vence hoy',
+          inDays: 'Vence en {{days}}d'
+        },
+        types: {
+          license: 'Licencia',
+          subscription: 'Suscripción',
+          line: 'Línea',
+          managedAccount: 'Managed Account',
+          pendingInvoice: 'Factura pendiente',
+          paymentCommitment: 'Compromiso de pago',
+          licensePlural: 'Licencias',
+          subscriptionPlural: 'Suscripciones',
+          linePlural: 'Líneas',
+          managedAccountPlural: 'Managed Accounts'
+        },
+        reference: {
+          invoice: 'Factura #{{id}}',
+          commitment: 'Compromiso #{{id}}'
+        },
+        radar: {
+          overdue: 'Vencidos: {{count}}',
+          today: 'Hoy: {{count}}',
+          next7: '7 días: {{count}}',
+          next30: '30 días: {{count}}',
+          noDate: 'Sin fecha: {{count}}'
+        }
+      },
       dashboardDefault: {
         states: {
           loading: 'Cargando dashboard...',
@@ -2359,6 +3511,9 @@ const resources = {
         }
       },
       feedCrud: {
+        headers: {
+          id: 'ID'
+        },
         actions: {
           refresh: 'Refrescar',
           create: 'Crear',
@@ -2427,7 +3582,22 @@ const resources = {
           deleted: 'Registro de evento de fútbol eliminado correctamente.'
         }
       },
-      common: { close: 'Cerrar', yes: 'Sí', no: 'No' },
+      common: {
+        close: 'Cerrar',
+        yes: 'Sí',
+        no: 'No',
+        cancel: 'Cancelar',
+        save: 'Guardar',
+        clear: 'Limpiar',
+        create: 'Crear',
+        creating: 'Creando...',
+        saving: 'Guardando...',
+        saveChanges: 'Guardar cambios',
+        deleting: 'Eliminando...',
+        edit: 'Editar',
+        new: 'Nuevo',
+        selectOption: 'Selecciona una opción'
+      },
       sms: {
         title: 'Gestión de SMS',
         enqueue: 'Encolar SMS',

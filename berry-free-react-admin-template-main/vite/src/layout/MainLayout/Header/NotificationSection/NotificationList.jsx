@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -60,13 +61,13 @@ function ListItemWrapper({ children, onClick }) {
 
 // ==============================|| NOTIFICATION LIST ITEM ||============================== //
 
-function severityMeta(level) {
+function severityMeta(level, t) {
   const value = String(level || '').toUpperCase();
-  if (value === 'CRITICAL') return { label: 'Crítico', color: 'error' };
-  if (value === 'HIGH') return { label: 'Alto', color: 'warning' };
-  if (value === 'MEDIUM') return { label: 'Medio', color: 'info' };
-  if (value === 'LOW') return { label: 'Bajo', color: 'default' };
-  return { label: 'Info', color: 'default' };
+  if (value === 'CRITICAL') return { label: t('headerNotifications.severity.critical'), color: 'error' };
+  if (value === 'HIGH') return { label: t('headerNotifications.severity.high'), color: 'warning' };
+  if (value === 'MEDIUM') return { label: t('headerNotifications.severity.medium'), color: 'info' };
+  if (value === 'LOW') return { label: t('headerNotifications.severity.low'), color: 'default' };
+  return { label: t('headerNotifications.severity.info'), color: 'default' };
 }
 
 function typeAvatar(type) {
@@ -77,7 +78,7 @@ function typeAvatar(type) {
   if (value.includes('SUSCRIP')) {
     return { icon: <ReceiptLongOutlinedIcon fontSize="small" />, color: 'success.dark', bg: 'success.light' };
   }
-  if (value.includes('LÍNEA') || value.includes('LINEA')) {
+  if (value.includes('LÍNEA') || value.includes('LINEA') || value.includes('LINE')) {
     return { icon: <RouterOutlinedIcon fontSize="small" />, color: 'info.dark', bg: 'info.light' };
   }
   if (value.includes('MANAGED')) {
@@ -104,6 +105,7 @@ function LoadingRows() {
 }
 
 export default function NotificationList({ notifications, loading, onOpenItem }) {
+  const { t } = useTranslation();
   const containerSX = { gap: 1, pl: 7 };
 
   if (loading && notifications.length === 0) {
@@ -114,7 +116,7 @@ export default function NotificationList({ notifications, loading, onOpenItem })
     return (
       <Box sx={{ p: 2 }}>
         <Alert severity="success" variant="outlined">
-          No hay alertas para hoy.
+          {t('headerNotifications.empty')}
         </Alert>
       </Box>
     );
@@ -123,7 +125,7 @@ export default function NotificationList({ notifications, loading, onOpenItem })
   return (
     <List sx={{ width: '100%', maxWidth: { xs: '100%', md: 420 }, py: 0 }}>
       {notifications.map((item) => {
-        const severity = severityMeta(item.severity);
+        const severity = severityMeta(item.severity, t);
         const avatar = typeAvatar(item.type);
         return (
           <ListItemWrapper key={item.key || `${item.type}-${item.entityId}`} onClick={() => onOpenItem?.(item)}>
@@ -146,19 +148,19 @@ export default function NotificationList({ notifications, loading, onOpenItem })
                 }
                 secondary={
                   <Typography variant="caption" color="text.secondary">
-                    Cliente: {item.customerName || '-'}
+                    {t('headerNotifications.labels.customer')}: {item.customerName || '-'}
                   </Typography>
                 }
               />
             </ListItem>
             <Stack sx={containerSX}>
               <Stack direction="row" sx={{ alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                <Chip label={item.type || 'Alerta'} color="primary" variant="outlined" size="small" />
+                <Chip label={item.type || t('headerNotifications.labels.alert')} color="primary" variant="outlined" size="small" />
                 <Chip label={severity.label} color={severity.color} variant="outlined" size="small" />
                 {item.status ? <Chip label={item.status} color="default" variant="outlined" size="small" /> : null}
               </Stack>
               <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
-                {item.detail || 'Revisar alerta pendiente.'}
+                {item.detail || t('headerNotifications.labels.reviewPending')}
               </Typography>
               <Stack direction="row" justifyContent="flex-end">
                 <Button
@@ -169,7 +171,7 @@ export default function NotificationList({ notifications, loading, onOpenItem })
                     onOpenItem?.(item);
                   }}
                 >
-                  Abrir
+                  {t('headerNotifications.labels.open')}
                 </Button>
               </Stack>
             </Stack>

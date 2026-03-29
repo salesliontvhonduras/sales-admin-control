@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -55,6 +56,7 @@ export default function ProfileSection() {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
 
   const [value, setValue] = useState('');
   const [open, setOpen] = useState(false);
@@ -92,18 +94,18 @@ export default function ProfileSection() {
 
   const handleLogout = () => {
     logout();
-    enqueueSnackbar('Sesión cerrada.', { variant: 'success' });
+    enqueueSnackbar(t('profileMenu.messages.logoutSuccess'), { variant: 'success' });
     setOpen(false);
     navigate(BASE_URL + '/pages/login');
   };
 
   const handleChangePwd = async () => {
     if (!pwdForm.current || !pwdForm.next || !pwdForm.confirm) {
-      enqueueSnackbar('Completa todos los campos.', { variant: 'warning' });
+      enqueueSnackbar(t('profileMenu.messages.fillAllFields'), { variant: 'warning' });
       return;
     }
     if (pwdForm.next !== pwdForm.confirm) {
-      enqueueSnackbar('Las contraseñas no coinciden.', { variant: 'warning' });
+      enqueueSnackbar(t('profileMenu.messages.passwordMismatch'), { variant: 'warning' });
       return;
     }
     setPwdLoading(true);
@@ -112,11 +114,11 @@ export default function ProfileSection() {
         currentPassword: pwdForm.current,
         newPassword: pwdForm.next
       });
-      enqueueSnackbar('Contraseña actualizada.', { variant: 'success' });
+      enqueueSnackbar(t('profileMenu.messages.passwordUpdated'), { variant: 'success' });
       setOpenPwd(false);
       setPwdForm({ current: '', next: '', confirm: '' });
     } catch (err) {
-      const msg = err?.response?.data?.message || 'No se pudo actualizar la contraseña.';
+      const msg = err?.response?.data?.message || t('profileMenu.messages.passwordUpdateError');
       enqueueSnackbar(msg, { variant: 'error' });
     } finally {
       setPwdLoading(false);
@@ -169,12 +171,12 @@ export default function ProfileSection() {
                       <Stack>
                         <Stack direction="row" sx={{ alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                           <Box>
-                            <Typography variant="h4">Good Morning,</Typography>
+                            <Typography variant="h4">{t('profileMenu.greeting')}</Typography>
                             <Typography component="span" variant="h4" sx={{ fontWeight: 400 }}>
-                              {user?.name || 'User'}
+                              {user?.name || t('profileMenu.userFallback')}
                             </Typography>
                             <Typography variant="subtitle2" color="text.secondary">
-                              {user?.role || 'Project Admin'}
+                              {user?.role || t('profileMenu.roleFallback')}
                             </Typography>
                           </Box>
                           <Box sx={{ flexGrow: 1 }} />
@@ -185,7 +187,7 @@ export default function ProfileSection() {
                         id="input-search-profile"
                         value={value}
                         onChange={(e) => setValue(e.target.value)}
-                        placeholder="Search profile options"
+                        placeholder={t('profileMenu.searchPlaceholder')}
                         startAdornment={
                           <InputAdornment position="start">
                             <IconSearch stroke={1.5} size="16px" />
@@ -228,7 +230,7 @@ export default function ProfileSection() {
                           </ListItemIcon>
                           <Stack spacing={0.5} sx={{ width: '100%' }}>
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              Change language
+                              {t('profileMenu.changeLanguage')}
                             </Typography>
                             <Box
                               sx={{
@@ -244,7 +246,7 @@ export default function ProfileSection() {
                               }}
                             >
                               <Typography variant="caption" color="text.secondary">
-                                Current
+                                {t('profileMenu.current')}
                               </Typography>
                               <LanguageSwitcher overlay />
                             </Box>
@@ -262,7 +264,7 @@ export default function ProfileSection() {
                           </ListItemIcon>
                           <Stack spacing={0.5} sx={{ width: '100%' }}>
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              Color theme
+                              {t('profileMenu.colorTheme')}
                             </Typography>
                             <Box
                               sx={{
@@ -278,7 +280,7 @@ export default function ProfileSection() {
                               }}
                             >
                               <Typography variant="caption" color="text.secondary">
-                                Current
+                                {t('profileMenu.current')}
                               </Typography>
                               <ThemeModeSwitcher compact />
                             </Box>
@@ -288,7 +290,7 @@ export default function ProfileSection() {
                           <ListItemIcon>
                             <IconSettings stroke={1.5} size="20px" />
                           </ListItemIcon>
-                          <ListItemText primary={<Typography variant="body2">Account Settings</Typography>} />
+                          <ListItemText primary={<Typography variant="body2">{t('profileMenu.accountSettings')}</Typography>} />
                         </ListItemButton>
                         <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} onClick={() => setOpenPwd(true)}>
                           <ListItemIcon>
@@ -297,7 +299,7 @@ export default function ProfileSection() {
                           <ListItemText
                             primary={
                               <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                                <Typography variant="body2">Change Password</Typography>
+                                <Typography variant="body2">{t('profileMenu.changePassword')}</Typography>
                               </Stack>
                             }
                           />
@@ -306,7 +308,7 @@ export default function ProfileSection() {
                           <ListItemIcon>
                             <IconLogout stroke={1.5} size="20px" />
                           </ListItemIcon>
-                          <ListItemText primary={<Typography variant="body2">Logout</Typography>} />
+                          <ListItemText primary={<Typography variant="body2">{t('profileMenu.logout')}</Typography>} />
                         </ListItemButton>
                       </List>
                     </Box>
@@ -334,10 +336,10 @@ export default function ProfileSection() {
           </Avatar>
           <Box>
             <Typography variant="h6" sx={{ lineHeight: 1 }}>
-              Cambiar contraseña
+              {t('profileMenu.passwordDialog.title')}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Mantén tu cuenta segura con una contraseña fuerte.
+              {t('profileMenu.passwordDialog.subtitle')}
             </Typography>
           </Box>
         </DialogTitleWithClose>
@@ -355,7 +357,7 @@ export default function ProfileSection() {
           }}
         >
           <TextField
-            label="Contraseña actual"
+            label={t('profileMenu.passwordDialog.currentPassword')}
             type="password"
             value={pwdForm.current}
             onChange={(e) => setPwdForm((p) => ({ ...p, current: e.target.value }))}
@@ -369,12 +371,12 @@ export default function ProfileSection() {
             }}
           />
           <TextField
-            label="Nueva contraseña"
+            label={t('profileMenu.passwordDialog.newPassword')}
             type={showNew ? 'text' : 'password'}
             value={pwdForm.next}
             onChange={(e) => setPwdForm((p) => ({ ...p, next: e.target.value }))}
             fullWidth
-            helperText="Usa al menos 8 caracteres, mezcla letras, números y símbolos."
+            helperText={t('profileMenu.passwordDialog.newPasswordHelper')}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -391,7 +393,7 @@ export default function ProfileSection() {
             }}
           />
           <TextField
-            label="Confirmar nueva contraseña"
+            label={t('profileMenu.passwordDialog.confirmPassword')}
             type={showConfirm ? 'text' : 'password'}
             value={pwdForm.confirm}
             onChange={(e) => setPwdForm((p) => ({ ...p, confirm: e.target.value }))}
@@ -423,15 +425,15 @@ export default function ProfileSection() {
               fontSize: 13
             }}
           >
-            Consejo: evita reutilizar contraseñas y no compartas este cambio.
+            {t('profileMenu.passwordDialog.tip')}
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
           <Button onClick={() => setOpenPwd(false)} disabled={pwdLoading}>
-            Cancelar
+            {t('common.cancel')}
           </Button>
           <Button variant="contained" onClick={handleChangePwd} disabled={pwdLoading}>
-            {pwdLoading ? <CircularProgress size={18} color="inherit" /> : 'Guardar'}
+            {pwdLoading ? <CircularProgress size={18} color="inherit" /> : t('common.save')}
           </Button>
         </DialogActions>
       </Dialog>

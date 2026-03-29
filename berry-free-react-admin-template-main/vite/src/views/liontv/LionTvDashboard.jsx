@@ -89,10 +89,10 @@ function daysUntil(value) {
   return Math.round((due.getTime() - today.getTime()) / 86400000);
 }
 
-function formatDate(value) {
+function formatDate(value, locale = 'es-HN') {
   const date = parseDate(value);
   if (!date) return '-';
-  return date.toLocaleDateString('es-HN');
+  return date.toLocaleDateString(locale);
 }
 
 function money(value) {
@@ -100,8 +100,8 @@ function money(value) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function formatMoney(value) {
-  return new Intl.NumberFormat('es-HN', {
+function formatMoney(value, locale = 'es-HN') {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: 'HNL',
     minimumFractionDigits: 2,
@@ -217,19 +217,19 @@ function severityRank(level) {
   return 1;
 }
 
-function severityMeta(level) {
-  if (level === 'CRITICAL') return { label: 'Crítico', color: 'error' };
-  if (level === 'HIGH') return { label: 'Alto', color: 'warning' };
-  if (level === 'MEDIUM') return { label: 'Medio', color: 'info' };
-  if (level === 'LOST') return { label: 'Perdido', color: 'default' };
-  return { label: 'Bajo', color: 'default' };
+function severityMeta(level, t) {
+  if (level === 'CRITICAL') return { label: t('liontvDashboard.severity.critical', 'Crítico'), color: 'error' };
+  if (level === 'HIGH') return { label: t('liontvDashboard.severity.high', 'Alto'), color: 'warning' };
+  if (level === 'MEDIUM') return { label: t('liontvDashboard.severity.medium', 'Medio'), color: 'info' };
+  if (level === 'LOST') return { label: t('liontvDashboard.severity.lost', 'Perdido'), color: 'default' };
+  return { label: t('liontvDashboard.severity.low', 'Bajo'), color: 'default' };
 }
 
-function describeDays(days) {
-  if (days === null) return 'Sin fecha';
-  if (days < 0) return `Vencido hace ${Math.abs(days)}d`;
-  if (days === 0) return 'Vence hoy';
-  return `Vence en ${days}d`;
+function describeDays(days, t) {
+  if (days === null) return t('liontvDashboard.due.noDate', 'Sin fecha');
+  if (days < 0) return t('liontvDashboard.due.overdueAgo', { days: Math.abs(days), defaultValue: 'Vencido hace {{days}}d' });
+  if (days === 0) return t('liontvDashboard.due.today', 'Vence hoy');
+  return t('liontvDashboard.due.inDays', { days, defaultValue: 'Vence en {{days}}d' });
 }
 
 function radarStats(items, dateField, statusField = 'status') {
@@ -298,7 +298,7 @@ function MetricCard({ title, value, helper, icon, color = 'primary' }) {
   );
 }
 
-function RadarCard({ title, stats, icon, color = 'primary', onOpen }) {
+function RadarCard({ title, stats, icon, color = 'primary', onOpen, t }) {
   return (
     <Card sx={(theme) => metricCardStyle(theme, color)}>
       <CardContent>
@@ -309,15 +309,40 @@ function RadarCard({ title, stats, icon, color = 'primary', onOpen }) {
               <Typography variant="h4">{title}</Typography>
             </Stack>
             <Button variant="outlined" size="small" onClick={onOpen} endIcon={<LaunchIcon fontSize="small" />}>
-              Abrir
+              {t('liontvDashboard.actions.open', 'Abrir')}
             </Button>
           </Stack>
           <Stack direction="row" spacing={1} flexWrap="wrap">
-            <Chip size="small" color="error" variant="outlined" label={`Vencidos: ${stats.expired}`} />
-            <Chip size="small" color="warning" variant="outlined" label={`Hoy: ${stats.today}`} />
-            <Chip size="small" color="info" variant="outlined" label={`7 días: ${stats.next7}`} />
-            <Chip size="small" color="primary" variant="outlined" label={`30 días: ${stats.next30}`} />
-            <Chip size="small" color="default" variant="outlined" label={`Sin fecha: ${stats.withoutDate}`} />
+            <Chip
+              size="small"
+              color="error"
+              variant="outlined"
+              label={t('liontvDashboard.radar.overdue', { count: stats.expired, defaultValue: 'Vencidos: {{count}}' })}
+            />
+            <Chip
+              size="small"
+              color="warning"
+              variant="outlined"
+              label={t('liontvDashboard.radar.today', { count: stats.today, defaultValue: 'Hoy: {{count}}' })}
+            />
+            <Chip
+              size="small"
+              color="info"
+              variant="outlined"
+              label={t('liontvDashboard.radar.next7', { count: stats.next7, defaultValue: '7 días: {{count}}' })}
+            />
+            <Chip
+              size="small"
+              color="primary"
+              variant="outlined"
+              label={t('liontvDashboard.radar.next30', { count: stats.next30, defaultValue: '30 días: {{count}}' })}
+            />
+            <Chip
+              size="small"
+              color="default"
+              variant="outlined"
+              label={t('liontvDashboard.radar.noDate', { count: stats.withoutDate, defaultValue: 'Sin fecha: {{count}}' })}
+            />
           </Stack>
         </Stack>
       </CardContent>
@@ -325,14 +350,19 @@ function RadarCard({ title, stats, icon, color = 'primary', onOpen }) {
   );
 }
 
-function AlertsBucketCard({ title, helper, alerts, onOpenAlert }) {
+function AlertsBucketCard({ title, helper, alerts, onOpenAlert, t }) {
   return (
     <Card sx={{ borderRadius: 2.5, border: '1px solid', borderColor: 'divider', height: '100%' }}>
       <CardContent>
         <Stack spacing={1.2}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="h4">{title}</Typography>
-            <Chip size="small" color="primary" variant="outlined" label={`${alerts.length} alertas`} />
+            <Chip
+              size="small"
+              color="primary"
+              variant="outlined"
+              label={t('liontvDashboard.labels.alertsCount', { count: alerts.length, defaultValue: '{{count}} alertas' })}
+            />
           </Stack>
           {helper ? (
             <Typography variant="caption" color="text.secondary">
@@ -342,7 +372,7 @@ function AlertsBucketCard({ title, helper, alerts, onOpenAlert }) {
           <Divider />
           <Stack spacing={1}>
             {alerts.slice(0, 8).map((alert) => {
-              const sev = severityMeta(alert.severity);
+              const sev = severityMeta(alert.severity, t);
               return (
                 <Card key={`${title}-${alert.type}-${alert.entityId}-${alert.reference}`} variant="outlined" sx={{ borderRadius: 2 }}>
                   <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -363,7 +393,7 @@ function AlertsBucketCard({ title, helper, alerts, onOpenAlert }) {
                           endIcon={<LaunchIcon fontSize="small" />}
                           onClick={() => onOpenAlert(alert)}
                         >
-                          Ver
+                          {t('liontvDashboard.actions.view', 'Ver')}
                         </Button>
                       </Stack>
                       <Typography variant="subtitle2" sx={{ wordBreak: 'break-word' }}>
@@ -371,10 +401,10 @@ function AlertsBucketCard({ title, helper, alerts, onOpenAlert }) {
                       </Typography>
                       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} useFlexGap>
                         <Typography variant="caption" color="text.secondary">
-                          Cliente: {alert.customerName || '-'}
+                          {t('liontvDashboard.labels.customer', 'Cliente')}: {alert.customerName || '-'}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Estado: {alert.status || '-'}
+                          {t('liontvDashboard.labels.status', 'Estado')}: {alert.status || '-'}
                         </Typography>
                       </Stack>
                       <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-word' }}>
@@ -387,7 +417,7 @@ function AlertsBucketCard({ title, helper, alerts, onOpenAlert }) {
             })}
             {alerts.length === 0 ? (
               <Alert severity="success" variant="outlined">
-                Sin alertas en este bloque.
+                {t('liontvDashboard.messages.noAlertsInBucket', 'Sin alertas en este bloque.')}
               </Alert>
             ) : null}
           </Stack>
@@ -398,13 +428,17 @@ function AlertsBucketCard({ title, helper, alerts, onOpenAlert }) {
 }
 
 export default function LionTvDashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
   const navigate = useNavigate();
 
   const [horizonDays, setHorizonDays] = useState(30);
   const [criticalOnly, setCriticalOnly] = useState(false);
+  const locale = useMemo(() => {
+    const lang = String(i18n?.resolvedLanguage || i18n?.language || 'es').toLowerCase();
+    return lang.startsWith('en') ? 'en-US' : 'es-HN';
+  }, [i18n?.language, i18n?.resolvedLanguage]);
 
   const [customers, setCustomers] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -508,30 +542,30 @@ export default function LionTvDashboard() {
         status,
         targetDate: dateValue,
         days,
-        detail: describeDays(days)
+        detail: describeDays(days, t)
       });
     };
 
     licenses.forEach((item) => {
-      pushExpiryAlert(item, 'Licencia', ROUTES.licenses, {
+      pushExpiryAlert(item, t('liontvDashboard.types.license', 'Licencia'), ROUTES.licenses, {
         dateField: 'expireAt',
         statusField: 'status',
-        reference: (it) => `${it.app || 'APP'} #${it.id ?? '-'}`,
+        reference: (it) => `${it.app || t('liontvDashboard.labels.appFallback', 'APP')} #${it.id ?? '-'}`,
         fallbackName: () => '-'
       });
     });
 
     subscriptions.forEach((item) => {
-      pushExpiryAlert(item, 'Suscripción', ROUTES.subscriptions, {
+      pushExpiryAlert(item, t('liontvDashboard.types.subscription', 'Suscripción'), ROUTES.subscriptions, {
         dateField: 'renewalDate',
         statusField: 'status',
-        reference: (it) => `${it.packageName || 'Plan'} #${it.id ?? '-'}`,
+        reference: (it) => `${it.packageName || t('liontvDashboard.labels.planFallback', 'Plan')} #${it.id ?? '-'}`,
         fallbackName: () => '-'
       });
     });
 
     lines.forEach((item) => {
-      pushExpiryAlert(item, 'Línea', ROUTES.lines, {
+      pushExpiryAlert(item, t('liontvDashboard.types.line', 'Línea'), ROUTES.lines, {
         dateField: 'expDate',
         statusField: 'status',
         reference: (it) => `${it.username || 'line'} #${it.id ?? '-'}`,
@@ -540,7 +574,7 @@ export default function LionTvDashboard() {
     });
 
     managedAccounts.forEach((item) => {
-      pushExpiryAlert(item, 'Managed Account', ROUTES.managedAccounts, {
+      pushExpiryAlert(item, t('liontvDashboard.types.managedAccount', 'Managed Account'), ROUTES.managedAccounts, {
         dateField: 'expirationDate',
         statusField: 'status',
         reference: (it) => `${it.accountCode || 'ACC'} · ${it.aliasEmail || it.displayName || it.id}`,
@@ -553,15 +587,15 @@ export default function LionTvDashboard() {
       const days = daysUntil(inv.dueDate);
       queue.push({
         severity: severityFromDays(days),
-        type: 'Factura pendiente',
+        type: t('liontvDashboard.types.pendingInvoice', 'Factura pendiente'),
         route: ROUTES.invoices,
         entityId: inv.id ?? '-',
-        reference: `Factura #${inv.id ?? '-'}`,
+        reference: t('liontvDashboard.reference.invoice', { id: inv.id ?? '-', defaultValue: 'Factura #{{id}}' }),
         customerName: customerNameMap[inv.customerId] || '-',
         status: inv.status,
         targetDate: inv.dueDate ?? inv.createdAt ?? inv.paymentDate ?? null,
         days,
-        detail: `${describeDays(days)} · ${formatMoney(inv.pendingAmount)}`
+        detail: `${describeDays(days, t)} · ${formatMoney(inv.pendingAmount, locale)}`
       });
     });
 
@@ -570,15 +604,15 @@ export default function LionTvDashboard() {
       const days = daysUntil(item.promisedDate);
       queue.push({
         severity: severityFromDays(days),
-        type: 'Compromiso de pago',
+        type: t('liontvDashboard.types.paymentCommitment', 'Compromiso de pago'),
         route: ROUTES.commitments,
         entityId: item.id ?? '-',
-        reference: `Compromiso #${item.id ?? '-'}`,
+        reference: t('liontvDashboard.reference.commitment', { id: item.id ?? '-', defaultValue: 'Compromiso #{{id}}' }),
         customerName: customerNameMap[item.customerId] || '-',
         status: item.status,
         targetDate: item.promisedDate,
         days,
-        detail: `${describeDays(days)} · ${formatMoney(item.pendingAmount)}`
+        detail: `${describeDays(days, t)} · ${formatMoney(item.pendingAmount, locale)}`
       });
     });
 
@@ -637,7 +671,7 @@ export default function LionTvDashboard() {
         managed: radarStats(managedAccounts, 'expirationDate', 'status')
       }
     };
-  }, [licenses, subscriptions, lines, managedAccounts, invoices, commitments, horizonDays, criticalOnly, customerNameMap]);
+  }, [licenses, subscriptions, lines, managedAccounts, invoices, commitments, horizonDays, criticalOnly, customerNameMap, locale, t]);
   const hasSourceData =
     customers.length +
       subscriptions.length +
@@ -650,7 +684,7 @@ export default function LionTvDashboard() {
 
   return (
     <MainCard
-      title={t('menu.liontvDashboard', 'Seguimiento Operativo')}
+      title={t('menu.liontvDashboard', 'Operational Tracking')}
       secondary={
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" size="small" startIcon={<RefreshIcon fontSize="small" />} onClick={() => refresh()} disabled={loading}>
@@ -661,18 +695,21 @@ export default function LionTvDashboard() {
     >
       <Stack spacing={2.2}>
         <Alert severity="info" variant="outlined">
-          Módulo de seguimiento para no olvidar nada: vencimientos, pendientes, riesgos y próximos eventos del negocio.
+          {t(
+            'liontvDashboard.infoBanner',
+            'Módulo de seguimiento para no olvidar nada: vencimientos, pendientes, riesgos y próximos eventos del negocio.'
+          )}
         </Alert>
 
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', md: 'center' }}>
           <Typography variant="subtitle2" color="text.secondary">
-            Horizonte de alertas:
+            {t('liontvDashboard.horizonLabel', 'Horizonte de alertas:')}
           </Typography>
           <Stack direction="row" spacing={1}>
             {HORIZON_OPTIONS.map((days) => (
               <Chip
                 key={days}
-                label={`${days} días`}
+                label={t('liontvDashboard.daysChip', { days, defaultValue: '{{days}} días' })}
                 clickable
                 color={horizonDays === days ? 'primary' : 'default'}
                 variant={horizonDays === days ? 'filled' : 'outlined'}
@@ -681,7 +718,7 @@ export default function LionTvDashboard() {
             ))}
           </Stack>
           <Chip
-            label="Solo críticos"
+            label={t('liontvDashboard.criticalOnly', 'Solo críticos')}
             clickable
             color={criticalOnly ? 'error' : 'default'}
             variant={criticalOnly ? 'filled' : 'outlined'}
@@ -707,31 +744,31 @@ export default function LionTvDashboard() {
         {hasSourceData ? (
           <Grid container spacing={gridSpacing}>
             <Grid size={12}>
-              <Typography variant="h4">Seguimiento por fecha</Typography>
+              <Typography variant="h4">{t('liontvDashboard.sections.trackingByDate', 'Seguimiento por fecha')}</Typography>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <MetricCard
-                title="Alertas de hoy"
+                title={t('liontvDashboard.metrics.todayAlerts.title', 'Alertas de hoy')}
                 value={tracking.todayCount}
-                helper="vence hoy"
+                helper={t('liontvDashboard.metrics.todayAlerts.helper', 'vence hoy')}
                 color="error"
                 icon={<CalendarMonthIcon fontSize="small" />}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <MetricCard
-                title="Alertas de mañana"
+                title={t('liontvDashboard.metrics.tomorrowAlerts.title', 'Alertas de mañana')}
                 value={tracking.tomorrowCount}
-                helper="vence en 1 día"
+                helper={t('liontvDashboard.metrics.tomorrowAlerts.helper', 'vence en 1 día')}
                 color="warning"
                 icon={<CalendarMonthIcon fontSize="small" />}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <MetricCard
-                title="Alertas a 7 días"
+                title={t('liontvDashboard.metrics.next7Alerts.title', 'Alertas a 7 días')}
                 value={tracking.in7DaysCount}
-                helper="desde 2 hasta 7 días"
+                helper={t('liontvDashboard.metrics.next7Alerts.helper', 'desde 2 hasta 7 días')}
                 color="info"
                 icon={<CalendarMonthIcon fontSize="small" />}
               />
@@ -742,30 +779,33 @@ export default function LionTvDashboard() {
             </Grid>
 
             <Grid size={12}>
-              <Typography variant="h4">Detalle por fecha</Typography>
+              <Typography variant="h4">{t('liontvDashboard.sections.detailByDate', 'Detalle por fecha')}</Typography>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <AlertsBucketCard
-                title="Detalle de hoy"
-                helper="Casos que vencen hoy"
+                title={t('liontvDashboard.buckets.today.title', 'Detalle de hoy')}
+                helper={t('liontvDashboard.buckets.today.helper', 'Casos que vencen hoy')}
                 alerts={tracking.todayAlerts}
                 onOpenAlert={(alert) => navigate(alert.route)}
+                t={t}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <AlertsBucketCard
-                title="Detalle de mañana"
-                helper="Casos que vencen en 1 día"
+                title={t('liontvDashboard.buckets.tomorrow.title', 'Detalle de mañana')}
+                helper={t('liontvDashboard.buckets.tomorrow.helper', 'Casos que vencen en 1 día')}
                 alerts={tracking.tomorrowAlerts}
                 onOpenAlert={(alert) => navigate(alert.route)}
+                t={t}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <AlertsBucketCard
-                title="Detalle próximos 7 días"
-                helper="Casos que vencen entre 2 y 7 días"
+                title={t('liontvDashboard.buckets.next7.title', 'Detalle próximos 7 días')}
+                helper={t('liontvDashboard.buckets.next7.helper', 'Casos que vencen entre 2 y 7 días')}
                 alerts={tracking.in7DaysAlerts}
                 onOpenAlert={(alert) => navigate(alert.route)}
+                t={t}
               />
             </Grid>
 
@@ -775,97 +815,116 @@ export default function LionTvDashboard() {
 
             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
               <MetricCard
-                title="Alertas críticas"
+                title={t('liontvDashboard.metrics.criticalAlerts.title', 'Alertas críticas')}
                 value={tracking.criticalCount}
-                helper={`${tracking.todayOrTomorrowCount} vencen hoy/1 día`}
+                helper={t('liontvDashboard.metrics.criticalAlerts.helper', {
+                  count: tracking.todayOrTomorrowCount,
+                  defaultValue: '{{count}} vencen hoy/1 día'
+                })}
                 color="error"
                 icon={<ErrorOutlineIcon fontSize="small" />}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
               <MetricCard
-                title="Alertas altas"
+                title={t('liontvDashboard.metrics.highAlerts.title', 'Alertas altas')}
                 value={tracking.highCount}
-                helper={`${tracking.overdueActiveCount} vencidas recientes`}
+                helper={t('liontvDashboard.metrics.highAlerts.helper', {
+                  count: tracking.overdueActiveCount,
+                  defaultValue: '{{count}} vencidas recientes'
+                })}
                 color="warning"
                 icon={<WarningAmberIcon fontSize="small" />}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
               <MetricCard
-                title={`Próximos ${horizonDays} días`}
+                title={t('liontvDashboard.metrics.horizonAlerts.title', {
+                  days: horizonDays,
+                  defaultValue: 'Próximos {{days}} días'
+                })}
                 value={tracking.queue.length}
-                helper={`${tracking.next7Count} en 7 días`}
+                helper={t('liontvDashboard.metrics.horizonAlerts.helper', {
+                  count: tracking.next7Count,
+                  defaultValue: '{{count}} en 7 días'
+                })}
                 color="info"
                 icon={<NotificationsActiveIcon fontSize="small" />}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
               <MetricCard
-                title="Facturas pendientes"
+                title={t('liontvDashboard.metrics.pendingInvoices.title', 'Facturas pendientes')}
                 value={tracking.pendingInvoices.length}
-                helper={formatMoney(tracking.invoicesPendingAmount)}
+                helper={formatMoney(tracking.invoicesPendingAmount, locale)}
                 color="secondary"
                 icon={<ReceiptLongIcon fontSize="small" />}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
               <MetricCard
-                title="Compromisos pendientes"
+                title={t('liontvDashboard.metrics.pendingCommitments.title', 'Compromisos pendientes')}
                 value={tracking.pendingCommitments.length}
-                helper={formatMoney(tracking.commitmentsPendingAmount)}
+                helper={formatMoney(tracking.commitmentsPendingAmount, locale)}
                 color="warning"
                 icon={<PriceCheckIcon fontSize="small" />}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
               <MetricCard
-                title="Clientes perdidos"
+                title={t('liontvDashboard.metrics.lostCustomers.title', 'Clientes perdidos')}
                 value={tracking.lostCount}
-                helper={`vencidos > ${Math.abs(LOST_THRESHOLD_DAYS)} días`}
+                helper={t('liontvDashboard.metrics.lostCustomers.helper', {
+                  days: Math.abs(LOST_THRESHOLD_DAYS),
+                  defaultValue: 'vencidos > {{days}} días'
+                })}
                 color="secondary"
                 icon={<FactCheckIcon fontSize="small" />}
               />
             </Grid>
 
             <Grid size={12}>
-              <Typography variant="h4">Radar de vencimientos</Typography>
+              <Typography variant="h4">{t('liontvDashboard.sections.expiryRadar', 'Radar de vencimientos')}</Typography>
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
               <RadarCard
-                title="Licencias"
+                title={t('liontvDashboard.types.licensePlural', 'Licencias')}
                 icon={<VpnKeyIcon fontSize="small" />}
                 color="secondary"
                 stats={tracking.radar.licenses}
                 onOpen={() => navigate(ROUTES.licenses)}
+                t={t}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <RadarCard
-                title="Suscripciones"
+                title={t('liontvDashboard.types.subscriptionPlural', 'Suscripciones')}
                 icon={<CreditCardIcon fontSize="small" />}
                 color="success"
                 stats={tracking.radar.subscriptions}
                 onOpen={() => navigate(ROUTES.subscriptions)}
+                t={t}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <RadarCard
-                title="Líneas"
+                title={t('liontvDashboard.types.linePlural', 'Líneas')}
                 icon={<RouterIcon fontSize="small" />}
                 color="info"
                 stats={tracking.radar.lines}
                 onOpen={() => navigate(ROUTES.lines)}
+                t={t}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <RadarCard
-                title="Managed Accounts"
+                title={t('liontvDashboard.types.managedAccountPlural', 'Managed Accounts')}
                 icon={<MarkEmailReadIcon fontSize="small" />}
                 color="primary"
                 stats={tracking.radar.managed}
                 onOpen={() => navigate(ROUTES.managedAccounts)}
+                t={t}
               />
             </Grid>
 
@@ -874,27 +933,35 @@ export default function LionTvDashboard() {
                 <CardContent>
                   <Stack spacing={1.4}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography variant="h4">Cola de alertas priorizada</Typography>
-                      <Chip size="small" color="primary" variant="outlined" label={`${tracking.queueFiltered.length} alertas`} />
+                      <Typography variant="h4">{t('liontvDashboard.sections.priorityQueue', 'Cola de alertas priorizada')}</Typography>
+                      <Chip
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        label={t('liontvDashboard.labels.alertsCount', {
+                          count: tracking.queueFiltered.length,
+                          defaultValue: '{{count}} alertas'
+                        })}
+                      />
                     </Stack>
                     <Divider />
                     <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
                       <Table size="small">
                         <TableHead>
                           <TableRow>
-                            <TableCell>Prioridad</TableCell>
-                            <TableCell>Tipo</TableCell>
-                            <TableCell>Referencia</TableCell>
-                            <TableCell>Cliente</TableCell>
-                            <TableCell>Fecha objetivo</TableCell>
-                            <TableCell>Estado</TableCell>
-                            <TableCell>Detalle</TableCell>
-                            <TableCell align="right">Acción</TableCell>
+                            <TableCell>{t('liontvDashboard.table.priority', 'Prioridad')}</TableCell>
+                            <TableCell>{t('liontvDashboard.table.type', 'Tipo')}</TableCell>
+                            <TableCell>{t('liontvDashboard.table.reference', 'Referencia')}</TableCell>
+                            <TableCell>{t('liontvDashboard.table.customer', 'Cliente')}</TableCell>
+                            <TableCell>{t('liontvDashboard.table.targetDate', 'Fecha objetivo')}</TableCell>
+                            <TableCell>{t('liontvDashboard.table.status', 'Estado')}</TableCell>
+                            <TableCell>{t('liontvDashboard.table.detail', 'Detalle')}</TableCell>
+                            <TableCell align="right">{t('liontvDashboard.table.action', 'Acción')}</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
                           {tracking.queueFiltered.slice(0, 200).map((row) => {
-                            const sev = severityMeta(row.severity);
+                            const sev = severityMeta(row.severity, t);
                             return (
                               <TableRow key={`${row.type}-${row.entityId}-${row.reference}`}>
                                 <TableCell>
@@ -903,7 +970,7 @@ export default function LionTvDashboard() {
                                 <TableCell>{row.type}</TableCell>
                                 <TableCell>{row.reference}</TableCell>
                                 <TableCell>{row.customerName || '-'}</TableCell>
-                                <TableCell>{formatDate(row.targetDate)}</TableCell>
+                                <TableCell>{formatDate(row.targetDate, locale)}</TableCell>
                                 <TableCell>
                                   <Chip size="small" variant="outlined" label={row.status || '-'} />
                                 </TableCell>
@@ -915,7 +982,7 @@ export default function LionTvDashboard() {
                                     endIcon={<LaunchIcon fontSize="small" />}
                                     onClick={() => navigate(row.route)}
                                   >
-                                    Ver
+                                    {t('liontvDashboard.actions.view', 'Ver')}
                                   </Button>
                                 </TableCell>
                               </TableRow>
@@ -925,7 +992,7 @@ export default function LionTvDashboard() {
                             <TableRow>
                               <TableCell colSpan={8}>
                                 <Alert severity="success" variant="outlined">
-                                  No hay alertas en este rango. Todo está bajo control.
+                                  {t('liontvDashboard.messages.queueEmpty', 'No hay alertas en este rango. Todo está bajo control.')}
                                 </Alert>
                               </TableCell>
                             </TableRow>
@@ -943,9 +1010,9 @@ export default function LionTvDashboard() {
                 <CardContent>
                   <Stack spacing={1.2}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography variant="h4">Facturas pendientes</Typography>
+                      <Typography variant="h4">{t('liontvDashboard.sections.pendingInvoices', 'Facturas pendientes')}</Typography>
                       <Button size="small" variant="outlined" onClick={() => navigate(ROUTES.invoices)}>
-                        Abrir facturas
+                        {t('liontvDashboard.actions.openInvoices', 'Abrir facturas')}
                       </Button>
                     </Stack>
                     <Divider />
@@ -953,10 +1020,10 @@ export default function LionTvDashboard() {
                       <Table size="small">
                         <TableHead>
                           <TableRow>
-                            <TableCell>ID</TableCell>
-                            <TableCell>Cliente</TableCell>
-                            <TableCell>Monto pendiente</TableCell>
-                            <TableCell>Vence</TableCell>
+                            <TableCell>{t('liontvDashboard.table.id', 'ID')}</TableCell>
+                            <TableCell>{t('liontvDashboard.table.customer', 'Cliente')}</TableCell>
+                            <TableCell>{t('liontvDashboard.table.pendingAmount', 'Monto pendiente')}</TableCell>
+                            <TableCell>{t('liontvDashboard.table.dueDate', 'Vence')}</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -964,13 +1031,13 @@ export default function LionTvDashboard() {
                             <TableRow key={`inv-${row.id}`}>
                               <TableCell>#{row.id}</TableCell>
                               <TableCell>{customerNameMap[row.customerId] || '-'}</TableCell>
-                              <TableCell>{formatMoney(row.pendingAmount)}</TableCell>
-                              <TableCell>{formatDate(row.dueDate || row.createdAt || row.paymentDate)}</TableCell>
+                              <TableCell>{formatMoney(row.pendingAmount, locale)}</TableCell>
+                              <TableCell>{formatDate(row.dueDate || row.createdAt || row.paymentDate, locale)}</TableCell>
                             </TableRow>
                           ))}
                           {tracking.pendingInvoices.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={4}>No hay facturas pendientes.</TableCell>
+                              <TableCell colSpan={4}>{t('liontvDashboard.messages.noPendingInvoices', 'No hay facturas pendientes.')}</TableCell>
                             </TableRow>
                           ) : null}
                         </TableBody>
@@ -986,9 +1053,9 @@ export default function LionTvDashboard() {
                 <CardContent>
                   <Stack spacing={1.2}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography variant="h4">Compromisos de pago pendientes</Typography>
+                      <Typography variant="h4">{t('liontvDashboard.sections.pendingCommitments', 'Compromisos de pago pendientes')}</Typography>
                       <Button size="small" variant="outlined" onClick={() => navigate(ROUTES.commitments)}>
-                        Abrir compromisos
+                        {t('liontvDashboard.actions.openCommitments', 'Abrir compromisos')}
                       </Button>
                     </Stack>
                     <Divider />
@@ -996,10 +1063,10 @@ export default function LionTvDashboard() {
                       <Table size="small">
                         <TableHead>
                           <TableRow>
-                            <TableCell>ID</TableCell>
-                            <TableCell>Cliente</TableCell>
-                            <TableCell>Monto pendiente</TableCell>
-                            <TableCell>Fecha promesa</TableCell>
+                            <TableCell>{t('liontvDashboard.table.id', 'ID')}</TableCell>
+                            <TableCell>{t('liontvDashboard.table.customer', 'Cliente')}</TableCell>
+                            <TableCell>{t('liontvDashboard.table.pendingAmount', 'Monto pendiente')}</TableCell>
+                            <TableCell>{t('liontvDashboard.table.promisedDate', 'Fecha promesa')}</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
@@ -1007,13 +1074,15 @@ export default function LionTvDashboard() {
                             <TableRow key={`commit-${row.id}`}>
                               <TableCell>#{row.id}</TableCell>
                               <TableCell>{customerNameMap[row.customerId] || '-'}</TableCell>
-                              <TableCell>{formatMoney(row.pendingAmount)}</TableCell>
-                              <TableCell>{formatDate(row.promisedDate)}</TableCell>
+                              <TableCell>{formatMoney(row.pendingAmount, locale)}</TableCell>
+                              <TableCell>{formatDate(row.promisedDate, locale)}</TableCell>
                             </TableRow>
                           ))}
                           {tracking.pendingCommitments.length === 0 ? (
                             <TableRow>
-                              <TableCell colSpan={4}>No hay compromisos pendientes.</TableCell>
+                              <TableCell colSpan={4}>
+                                {t('liontvDashboard.messages.noPendingCommitments', 'No hay compromisos pendientes.')}
+                              </TableCell>
                             </TableRow>
                           ) : null}
                         </TableBody>
@@ -1026,8 +1095,10 @@ export default function LionTvDashboard() {
 
             <Grid size={12}>
               <Alert severity="warning" variant="outlined" icon={<FactCheckIcon />}>
-                Recomendación operativa: revisa primero alertas <strong>Críticas</strong> y luego <strong>Altas</strong>. Los vencidos muy
-                antiguos pasan a <strong>Perdido</strong> para seguimiento comercial y ya no saturan la prioridad crítica.
+                {t(
+                  'liontvDashboard.messages.operationalRecommendation',
+                  'Recomendación operativa: revisa primero alertas críticas y luego altas. Los vencidos muy antiguos pasan a perdido para seguimiento comercial y ya no saturan la prioridad crítica.'
+                )}
               </Alert>
             </Grid>
           </Grid>

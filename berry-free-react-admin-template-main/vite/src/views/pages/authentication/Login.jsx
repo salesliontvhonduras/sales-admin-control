@@ -31,7 +31,7 @@ export default function Login() {
             <AuthCardWrapper>
               <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
                 <Box sx={{ mb: 3 }}>
-                  <Link to="#" aria-label="logo">
+                  <Link to="#" aria-label={t('auth.logoAriaLabel')}>
                     <Logo />
                   </Link>
                 </Box>

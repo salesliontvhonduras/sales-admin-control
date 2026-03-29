@@ -34,8 +34,8 @@ const liontv = {
   children: [
     {
       id: 'liontv-overview',
-      title: 'Resumen',
-      caption: 'Control diario y prioridades',
+      title: 'menu.liontvOverview',
+      caption: 'menu.liontvOverviewCaption',
       type: 'collapse',
       icon: icons.IconDashboard,
       permission: { any: ['LIONTV_DASHBOARD_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
@@ -52,8 +52,8 @@ const liontv = {
     },
     {
       id: 'liontv-commercial',
-      title: 'Clientes y Ventas',
-      caption: 'CRM, cobros y relación comercial',
+      title: 'menu.liontvCommercial',
+      caption: 'menu.liontvCommercialCaption',
       type: 'collapse',
       icon: icons.IconUsers,
       permission: { any: ['LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
@@ -118,8 +118,8 @@ const liontv = {
     },
     {
       id: 'liontv-operations',
-      title: 'Operación Técnica',
-      caption: 'Inventario, líneas y cuentas',
+      title: 'menu.liontvOperations',
+      caption: 'menu.liontvOperationsCaption',
       type: 'collapse',
       icon: icons.IconRouter,
       permission: { any: ['LIONTV_TECH_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
@@ -134,7 +134,7 @@ const liontv = {
         },
         {
           id: 'liontv-plus-lines',
-          title: 'Plus lines',
+          title: 'menu.plusLines',
           type: 'item',
           url: '/liontv/plus-lines',
           breadcrumbs: true,
@@ -150,7 +150,7 @@ const liontv = {
         },
         {
           id: 'liontv-managed-accounts',
-          title: 'Managed Accounts',
+          title: 'menu.managedAccounts',
           type: 'item',
           url: '/liontv/managed-accounts',
           breadcrumbs: true,
@@ -160,8 +160,8 @@ const liontv = {
     },
     {
       id: 'liontv-content',
-      title: 'Contenido y Feed',
-      caption: 'Demos y catálogo visible',
+      title: 'menu.liontvContent',
+      caption: 'menu.liontvContentCaption',
       type: 'collapse',
       icon: icons.IconDeviceTv,
       permission: { any: ['LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
@@ -176,7 +176,7 @@ const liontv = {
         },
         {
           id: 'liontv-movies-feed',
-          title: 'Movies Feed',
+          title: 'menu.moviesFeed',
           type: 'item',
           url: '/liontv/movies-feed',
           breadcrumbs: true,
@@ -184,7 +184,7 @@ const liontv = {
         },
         {
           id: 'liontv-series-feed',
-          title: 'Series Feed',
+          title: 'menu.seriesFeed',
           type: 'item',
           url: '/liontv/series-feed',
           breadcrumbs: true,
@@ -192,7 +192,7 @@ const liontv = {
         },
         {
           id: 'liontv-futbol-events-feed',
-          title: 'Futbol Events Feed',
+          title: 'menu.futbolEventsFeed',
           type: 'item',
           url: '/liontv/futbol-events-feed',
           breadcrumbs: true,

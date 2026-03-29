@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import useAuth from '../../../hooks/useAuth';
 import { useSnackbar } from 'notistack';
 
@@ -7,6 +8,7 @@ export default function GoogleLoginButton() {
 
   const { enqueueSnackbar } = useSnackbar();
   const { loginWithGoogle } = useAuth();
+  const { t } = useTranslation();
   const buttonRef = useRef(null);
   const navigate = useNavigate();
 
@@ -23,13 +25,13 @@ export default function GoogleLoginButton() {
           const { status, data } = responseBackend;
 
           if (status === 201 && data?.success) {
-            enqueueSnackbar('Welcome back! 👋', { variant: 'success' });
+            enqueueSnackbar(t('messages.welcome'), { variant: 'success' });
             navigate('/dashboard/default');
           } else {
-            enqueueSnackbar(data?.message || 'No se pudo iniciar sesión con Google.', { variant: 'error' });
+            enqueueSnackbar(data?.message || t('auth.googleLogin.failed'), { variant: 'error' });
           }
         } catch (err) {
-          const errorMessage = err?.response?.data?.message || err?.message || 'Error inesperado al iniciar sesión con Google.';
+          const errorMessage = err?.response?.data?.message || err?.message || t('auth.googleLogin.unexpectedError');
           enqueueSnackbar(errorMessage, { variant: 'error' });
           console.error(err);
         }
@@ -41,7 +43,7 @@ export default function GoogleLoginButton() {
       size: 'large',
       width: 250
     });
-  }, [loginWithGoogle, navigate]);
+  }, [loginWithGoogle, navigate, t]);
 
   return <div ref={buttonRef} />;
 }

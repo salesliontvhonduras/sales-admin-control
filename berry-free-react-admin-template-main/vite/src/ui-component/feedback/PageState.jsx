@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -6,7 +7,10 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 
-export function PageLoadingState({ label = 'Cargando datos...' }) {
+export function PageLoadingState({ label }) {
+  const { t } = useTranslation();
+  const resolvedLabel = label || t('pageState.loading');
+
   return (
     <Box
       sx={{
@@ -23,7 +27,7 @@ export function PageLoadingState({ label = 'Cargando datos...' }) {
       <Stack direction="row" spacing={1.2} alignItems="center">
         <CircularProgress size={24} />
         <Typography variant="body2" color="text.secondary">
-          {label}
+          {resolvedLabel}
         </Typography>
       </Stack>
     </Box>
@@ -34,16 +38,19 @@ PageLoadingState.propTypes = {
   label: PropTypes.string
 };
 
-export function PageErrorState({ message = 'No se pudo cargar la información.', onRetry }) {
+export function PageErrorState({ message, onRetry }) {
+  const { t } = useTranslation();
+  const resolvedMessage = message || t('pageState.error');
+
   return (
     <Stack spacing={1.5}>
       <Alert severity="error" variant="outlined">
-        {message}
+        {resolvedMessage}
       </Alert>
       {onRetry ? (
         <Box>
           <Button variant="outlined" size="small" onClick={onRetry}>
-            Reintentar
+            {t('pageState.retry')}
           </Button>
         </Box>
       ) : null}
@@ -56,10 +63,13 @@ PageErrorState.propTypes = {
   onRetry: PropTypes.func
 };
 
-export function PageEmptyState({ message = 'No hay datos disponibles para mostrar.' }) {
+export function PageEmptyState({ message }) {
+  const { t } = useTranslation();
+  const resolvedMessage = message || t('pageState.empty');
+
   return (
     <Alert severity="info" variant="outlined">
-      {message}
+      {resolvedMessage}
     </Alert>
   );
 }

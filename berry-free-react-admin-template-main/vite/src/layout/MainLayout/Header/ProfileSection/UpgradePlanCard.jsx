@@ -5,6 +5,7 @@ import CardContent from '@mui/material/CardContent';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import { useTranslation } from 'react-i18next';
 
 // project imports
 import AnimateButton from 'ui-component/extended/AnimateButton';
@@ -12,6 +13,7 @@ import AnimateButton from 'ui-component/extended/AnimateButton';
 // ==============================|| PROFILE MENU - UPGRADE PLAN CARD ||============================== //
 
 export default function UpgradePlanCard() {
+  const { t } = useTranslation();
   const cardSX = {
     content: '""',
     position: 'absolute',
@@ -45,7 +47,7 @@ export default function UpgradePlanCard() {
     >
       <CardContent>
         <Stack sx={{ gap: 2 }}>
-          <Typography variant="h4">Upgrade your plan</Typography>
+          <Typography variant="h4">{t('profileMenu.upgradeCard.title')}</Typography>
           <Typography
             variant="subtitle2"
             sx={{
@@ -53,14 +55,14 @@ export default function UpgradePlanCard() {
               opacity: 0.6
             }}
           >
-            70% discount for 1 years <br />
-            subscriptions.
+            {t('profileMenu.upgradeCard.subtitleLine1')} <br />
+            {t('profileMenu.upgradeCard.subtitleLine2')}
           </Typography>
           <Stack direction="row">
             <Link sx={{ textDecoration: 'none' }} href="https://links.codedthemes.com/hsqll" target="_blank">
               <AnimateButton>
                 <Button variant="contained" color="warning" sx={{ boxShadow: 'none' }}>
-                  Go Premium
+                  {t('profileMenu.upgradeCard.action')}
                 </Button>
               </AnimateButton>
             </Link>

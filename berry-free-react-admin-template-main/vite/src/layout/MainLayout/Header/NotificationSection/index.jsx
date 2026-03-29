@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -91,7 +92,7 @@ function money(value) {
 }
 
 function formatMoney(value) {
-  return new Intl.NumberFormat('es-HN', {
+  return new Intl.NumberFormat(undefined, {
     style: 'currency',
     currency: 'HNL',
     minimumFractionDigits: 2,
@@ -114,6 +115,7 @@ function buildCustomerNameMap(customers = []) {
 }
 
 function buildTodayAlerts({
+  t,
   customers = [],
   subscriptions = [],
   licenses = [],
@@ -145,7 +147,7 @@ function buildTodayAlerts({
       reference: options.reference(item, entityId),
       customerName,
       status,
-      detail: 'Vence hoy',
+      detail: t('headerNotifications.alertDetail.dueToday'),
       targetDate: dateValue,
       days,
       severity: 'CRITICAL'
@@ -153,25 +155,25 @@ function buildTodayAlerts({
   };
 
   licenses.forEach((item) => {
-    pushExpiryAlert(item, 'Licencia', ROUTES.licenses, {
+    pushExpiryAlert(item, t('headerNotifications.types.license'), ROUTES.licenses, {
       idFields: ['licenseId', 'id', 'license_id'],
       dateFields: ['expireAt', 'expire_at', 'expDate', 'exp_date'],
       statusField: 'status',
-      reference: (it, id) => `${pickFirst(it, ['app'], 'APP')} #${id}`
+      reference: (it, id) => `${pickFirst(it, ['app'], t('headerNotifications.labels.appFallback'))} #${id}`
     });
   });
 
   subscriptions.forEach((item) => {
-    pushExpiryAlert(item, 'Suscripción', ROUTES.subscriptions, {
+    pushExpiryAlert(item, t('headerNotifications.types.subscription'), ROUTES.subscriptions, {
       idFields: ['subscriptionId', 'id'],
       dateFields: ['renewalDate', 'renewal_date', 'expDate', 'exp_date'],
       statusField: 'status',
-      reference: (it, id) => `${pickFirst(it, ['packageName', 'package_name'], 'Plan')} #${id}`
+      reference: (it, id) => `${pickFirst(it, ['packageName', 'package_name'], t('headerNotifications.labels.planFallback'))} #${id}`
     });
   });
 
   lines.forEach((item) => {
-    pushExpiryAlert(item, 'Línea', ROUTES.lines, {
+    pushExpiryAlert(item, t('headerNotifications.types.line'), ROUTES.lines, {
       idFields: ['id', 'lineId', 'line_id'],
       dateFields: ['exp_date', 'expDate'],
       statusResolver: (it) => {
@@ -179,17 +181,21 @@ function buildTodayAlerts({
         if (rawStatus) return rawStatus;
         return pickFirst(it, ['enabled']) === false ? 'INACTIVE' : 'ACTIVE';
       },
-      reference: (it, id) => `${pickFirst(it, ['username'], 'line')} #${id}`
+      reference: (it, id) => `${pickFirst(it, ['username'], t('headerNotifications.labels.lineFallback'))} #${id}`
     });
   });
 
   managedAccounts.forEach((item) => {
-    pushExpiryAlert(item, 'Managed Account', ROUTES.managedAccounts, {
+    pushExpiryAlert(item, t('headerNotifications.types.managedAccount'), ROUTES.managedAccounts, {
       idFields: ['id', 'managedAccountId', 'managed_account_id'],
       dateFields: ['expirationDate', 'expiration_date'],
       statusResolver: (it) => pickFirst(it, ['accountStatus', 'status'], ''),
       reference: (it, id) =>
-        `${pickFirst(it, ['accountCode', 'account_code'], 'ACC')} · ${pickFirst(it, ['aliasEmail', 'alias_email', 'displayName', 'display_name'], id)}`,
+        `${pickFirst(it, ['accountCode', 'account_code'], t('headerNotifications.labels.accountCodeFallback'))} · ${pickFirst(
+          it,
+          ['aliasEmail', 'alias_email', 'displayName', 'display_name'],
+          id
+        )}`,
       fallbackName: (it) => pickFirst(it, ['displayName', 'display_name'], '-')
     });
   });
@@ -208,13 +214,13 @@ function buildTodayAlerts({
     const customerId = pickFirst(item, ['customerId', 'customer_id'], null);
     queue.push({
       key: `Factura-${invoiceId}-${String(dueDate || 'today')}`,
-      type: 'Factura pendiente',
+      type: t('headerNotifications.types.pendingInvoice'),
       route: ROUTES.invoices,
       entityId: invoiceId,
-      reference: `Factura #${invoiceId}`,
+      reference: t('headerNotifications.reference.invoice', { id: invoiceId }),
       customerName: customerNameMap[customerId] || '-',
       status,
-      detail: `Vence hoy · ${formatMoney(pendingAmount)}`,
+      detail: t('headerNotifications.alertDetail.dueTodayAmount', { amount: formatMoney(pendingAmount) }),
       targetDate: dueDate,
       days: 0,
       severity: 'CRITICAL'
@@ -235,13 +241,13 @@ function buildTodayAlerts({
     const customerId = pickFirst(item, ['customerId', 'customer_id'], null);
     queue.push({
       key: `Compromiso-${commitmentId}-${String(promisedDate || 'today')}`,
-      type: 'Compromiso de pago',
+      type: t('headerNotifications.types.paymentCommitment'),
       route: ROUTES.commitments,
       entityId: commitmentId,
-      reference: `Compromiso #${commitmentId}`,
+      reference: t('headerNotifications.reference.commitment', { id: commitmentId }),
       customerName: customerNameMap[customerId] || '-',
       status,
-      detail: `Vence hoy · ${formatMoney(pendingAmount)}`,
+      detail: t('headerNotifications.alertDetail.dueTodayAmount', { amount: formatMoney(pendingAmount) }),
       targetDate: promisedDate,
       days: 0,
       severity: 'CRITICAL'
@@ -258,6 +264,7 @@ export default function NotificationSection() {
   const theme = useTheme();
   const downMD = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const { accessToken } = useAuth();
 
   const [open, setOpen] = useState(false);
@@ -275,6 +282,7 @@ export default function NotificationSection() {
   const alerts = useMemo(
     () =>
       buildTodayAlerts({
+        t,
         customers: overviewData?.customers || [],
         subscriptions: overviewData?.subscriptions || [],
         licenses: overviewData?.licenses || [],
@@ -283,7 +291,7 @@ export default function NotificationSection() {
         invoices: overviewData?.invoices || [],
         commitments: overviewData?.commitments || []
       }),
-    [overviewData]
+    [overviewData, t]
   );
 
   const lastSyncAt = useMemo(() => {
@@ -293,15 +301,15 @@ export default function NotificationSection() {
 
   const errorMessage = useMemo(() => {
     if (!accessToken) return '';
-    if (overviewData?.meta?.partial) return 'Se cargaron alertas parciales.';
+    if (overviewData?.meta?.partial) return t('headerNotifications.partial');
 
     const status = overviewError?.response?.status || overviewError?.request?.status;
     if (overviewError && status !== 401) {
-      return overviewError?.response?.data?.message || 'No se pudieron cargar las alertas de hoy.';
+      return overviewError?.response?.data?.message || t('headerNotifications.loadError');
     }
 
     return '';
-  }, [accessToken, overviewData?.meta?.partial, overviewError]);
+  }, [accessToken, overviewData?.meta?.partial, overviewError, t]);
 
   /**
    * anchorRef is used on different componets and specifying one type leads to other components throwing an error
@@ -400,7 +408,7 @@ export default function NotificationSection() {
                     <Stack sx={{ gap: 2 }}>
                       <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', pt: 2, px: 2 }}>
                         <Stack direction="row" sx={{ gap: 2 }}>
-                          <Typography variant="subtitle1">Alertas de hoy</Typography>
+                          <Typography variant="subtitle1">{t('headerNotifications.title')}</Typography>
                           <Chip
                             size="small"
                             label={alerts.length}
@@ -415,7 +423,7 @@ export default function NotificationSection() {
                           onClick={() => refresh()}
                           disabled={loading}
                         >
-                          Recargar
+                          {t('actions.refresh')}
                         </Button>
                       </Stack>
                       <Box sx={{ height: 1, maxHeight: 'calc(100vh - 205px)', overflowX: 'hidden', '&::-webkit-scrollbar': { width: 5 } }}>
@@ -427,7 +435,7 @@ export default function NotificationSection() {
                           ) : null}
                           {lastSyncAt ? (
                             <Typography variant="caption" color="text.secondary">
-                              Actualizado: {lastSyncAt.toLocaleTimeString('es-HN')}
+                              {t('headerNotifications.updatedAt', { time: lastSyncAt.toLocaleTimeString(i18n.language || undefined) })}
                             </Typography>
                           ) : null}
                         </Box>
@@ -437,7 +445,7 @@ export default function NotificationSection() {
                     </Stack>
                     <CardActions sx={{ p: 1.25, justifyContent: 'center' }}>
                       <Button size="small" disableElevation onClick={handleOpenDashboard}>
-                        Ver seguimiento completo
+                        {t('headerNotifications.openTracking')}
                       </Button>
                     </CardActions>
                   </MainCard>

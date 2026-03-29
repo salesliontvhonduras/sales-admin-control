@@ -59,42 +59,42 @@ import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
-const categoryOptions = [
-  { value: 'GENERAL', label: 'General' },
-  { value: 'IPTV', label: 'IPTV' },
-  { value: 'SPORTS_BAR', label: 'Sports Bar' },
-  { value: 'BAR_RESTAURANT', label: 'Bar / Restaurant' },
-  { value: 'RESTAURANT', label: 'Restaurant' },
-  { value: 'CAFE', label: 'Cafe' },
-  { value: 'BARBERSHOP', label: 'Barbershop' },
-  { value: 'BEAUTY_SALON', label: 'Beauty Salon' },
-  { value: 'HOTEL', label: 'Hotel' },
-  { value: 'MOTEL', label: 'Motel' },
-  { value: 'HOSTEL', label: 'Hostel' },
-  { value: 'GYM', label: 'Gym' },
-  { value: 'CLINIC_WAITING_ROOM', label: 'Clinic Waiting Room' },
-  { value: 'DENTAL_CLINIC', label: 'Dental Clinic' },
-  { value: 'AUTO_WORKSHOP', label: 'Auto Workshop' },
-  { value: 'CAR_DEALERSHIP', label: 'Car Dealership' },
-  { value: 'SUPERMARKET', label: 'Supermarket' },
-  { value: 'CONVENIENCE_STORE', label: 'Convenience Store' },
-  { value: 'OFFICE', label: 'Office' },
-  { value: 'CALL_CENTER', label: 'Call Center' },
-  { value: 'EVENT_HALL', label: 'Event Hall' },
-  { value: 'BILLIARD_CLUB', label: 'Billiard Club' },
-  { value: 'NIGHTCLUB', label: 'Nightclub' },
-  { value: 'SOCIAL_MEDIA', label: 'Social Media' },
-  { value: 'REFERRAL', label: 'Referral' },
-  { value: 'WEB', label: 'Web' },
-  { value: 'OTHER', label: 'Other' }
+const buildCategoryOptions = (t) => [
+  { value: 'GENERAL', label: t('potentialCustomers.categories.GENERAL') },
+  { value: 'IPTV', label: t('potentialCustomers.categories.IPTV') },
+  { value: 'SPORTS_BAR', label: t('potentialCustomers.categories.SPORTS_BAR') },
+  { value: 'BAR_RESTAURANT', label: t('potentialCustomers.categories.BAR_RESTAURANT') },
+  { value: 'RESTAURANT', label: t('potentialCustomers.categories.RESTAURANT') },
+  { value: 'CAFE', label: t('potentialCustomers.categories.CAFE') },
+  { value: 'BARBERSHOP', label: t('potentialCustomers.categories.BARBERSHOP') },
+  { value: 'BEAUTY_SALON', label: t('potentialCustomers.categories.BEAUTY_SALON') },
+  { value: 'HOTEL', label: t('potentialCustomers.categories.HOTEL') },
+  { value: 'MOTEL', label: t('potentialCustomers.categories.MOTEL') },
+  { value: 'HOSTEL', label: t('potentialCustomers.categories.HOSTEL') },
+  { value: 'GYM', label: t('potentialCustomers.categories.GYM') },
+  { value: 'CLINIC_WAITING_ROOM', label: t('potentialCustomers.categories.CLINIC_WAITING_ROOM') },
+  { value: 'DENTAL_CLINIC', label: t('potentialCustomers.categories.DENTAL_CLINIC') },
+  { value: 'AUTO_WORKSHOP', label: t('potentialCustomers.categories.AUTO_WORKSHOP') },
+  { value: 'CAR_DEALERSHIP', label: t('potentialCustomers.categories.CAR_DEALERSHIP') },
+  { value: 'SUPERMARKET', label: t('potentialCustomers.categories.SUPERMARKET') },
+  { value: 'CONVENIENCE_STORE', label: t('potentialCustomers.categories.CONVENIENCE_STORE') },
+  { value: 'OFFICE', label: t('potentialCustomers.categories.OFFICE') },
+  { value: 'CALL_CENTER', label: t('potentialCustomers.categories.CALL_CENTER') },
+  { value: 'EVENT_HALL', label: t('potentialCustomers.categories.EVENT_HALL') },
+  { value: 'BILLIARD_CLUB', label: t('potentialCustomers.categories.BILLIARD_CLUB') },
+  { value: 'NIGHTCLUB', label: t('potentialCustomers.categories.NIGHTCLUB') },
+  { value: 'SOCIAL_MEDIA', label: t('potentialCustomers.categories.SOCIAL_MEDIA') },
+  { value: 'REFERRAL', label: t('potentialCustomers.categories.REFERRAL') },
+  { value: 'WEB', label: t('potentialCustomers.categories.WEB') },
+  { value: 'OTHER', label: t('potentialCustomers.categories.OTHER') }
 ];
 
-const statusOptions = [
-  { value: 'NEW', label: 'New' },
-  { value: 'CONTACTED', label: 'Contacted' },
-  { value: 'NEGOTIATION', label: 'Negotiation' },
-  { value: 'CONVERTED', label: 'Converted' },
-  { value: 'LOST', label: 'Lost' }
+const buildStatusOptions = (t) => [
+  { value: 'NEW', label: t('potentialCustomers.status.NEW') },
+  { value: 'CONTACTED', label: t('potentialCustomers.status.CONTACTED') },
+  { value: 'NEGOTIATION', label: t('potentialCustomers.status.NEGOTIATION') },
+  { value: 'CONVERTED', label: t('potentialCustomers.status.CONVERTED') },
+  { value: 'LOST', label: t('potentialCustomers.status.LOST') }
 ];
 
 const EMAIL_FALLBACK = 'nomail@gmail.com';
@@ -255,6 +255,7 @@ function normalizePhoneForWhatsApp(phone, countryIso = '') {
 }
 
 function StatusChip({ status }) {
+  const { t } = useTranslation();
   const map = {
     NEW: 'info',
     CONTACTED: 'warning',
@@ -265,7 +266,7 @@ function StatusChip({ status }) {
   return (
     <Chip
       size="small"
-      label={status || '-'}
+      label={t(`potentialCustomers.status.${status}`, { defaultValue: status || '-' })}
       sx={(theme) => {
         const paletteKey = map[status];
         if (!paletteKey) {
@@ -418,6 +419,8 @@ export default function PotentialCustomersLionTv() {
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
   const [form, setForm] = useState(defaultForm);
   const [sending, setSending] = useState(false);
+  const categoryOptions = useMemo(() => buildCategoryOptions(t), [t]);
+  const statusOptions = useMemo(() => buildStatusOptions(t), [t]);
 
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
@@ -441,7 +444,7 @@ export default function PotentialCustomersLionTv() {
       setTotal(payload.total ?? normalized.length);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudieron cargar los clientes potenciales.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('potentialCustomers.messages.loadError'), {
           variant: 'error'
         });
       }
@@ -533,7 +536,7 @@ export default function PotentialCustomersLionTv() {
     if (!id) return;
 
     if ((row?.status || '').toUpperCase() === 'CONTACTED') {
-      enqueueSnackbar('Este prospecto ya está en Contacted.', { variant: 'info' });
+      enqueueSnackbar(t('potentialCustomers.messages.alreadyContacted'), { variant: 'info' });
       return;
     }
 
@@ -550,11 +553,11 @@ export default function PotentialCustomersLionTv() {
           skipAuthRedirect: true
         }
       );
-      enqueueSnackbar('Estado actualizado a Contacted.', { variant: 'success' });
+      enqueueSnackbar(t('potentialCustomers.messages.markContactedSuccess'), { variant: 'success' });
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo actualizar el estado.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('potentialCustomers.messages.markContactedError'), {
           variant: 'error'
         });
       }
@@ -566,7 +569,7 @@ export default function PotentialCustomersLionTv() {
   const handleWhatsApp = (row) => {
     const phone = normalizePhoneForWhatsApp(row?.phone, row?.country);
     if (!phone) {
-      enqueueSnackbar('Este prospecto no tiene teléfono válido para WhatsApp.', { variant: 'warning' });
+      enqueueSnackbar(t('potentialCustomers.messages.invalidWhatsAppPhone'), { variant: 'warning' });
       return;
     }
 
@@ -576,7 +579,7 @@ export default function PotentialCustomersLionTv() {
 
   const handleSave = async () => {
     if (!form.fullName) {
-      enqueueSnackbar('Completa el nombre.', { variant: 'warning' });
+      enqueueSnackbar(t('potentialCustomers.messages.requiredName'), { variant: 'warning' });
       return;
     }
 
@@ -596,20 +599,20 @@ export default function PotentialCustomersLionTv() {
           headers: { Authorization: `Bearer ${accessToken}` },
           skipAuthRedirect: true
         });
-        enqueueSnackbar('Cliente potencial actualizado.', { variant: 'success' });
+        enqueueSnackbar(t('potentialCustomers.messages.updated'), { variant: 'success' });
       } else {
         await lionTvApi.post('/potential-customers/v1', payload, {
           headers: { Authorization: `Bearer ${accessToken}` },
           skipAuthRedirect: true
         });
-        enqueueSnackbar('Cliente potencial creado.', { variant: 'success' });
+        enqueueSnackbar(t('potentialCustomers.messages.created'), { variant: 'success' });
       }
       setOpenModal(false);
       resetForm();
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo guardar el cliente potencial.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('potentialCustomers.messages.saveError'), {
           variant: 'error'
         });
       }
@@ -630,12 +633,12 @@ export default function PotentialCustomersLionTv() {
         headers: { Authorization: `Bearer ${accessToken}` },
         skipAuthRedirect: true
       });
-      enqueueSnackbar('Cliente potencial eliminado.', { variant: 'success' });
+      enqueueSnackbar(t('potentialCustomers.messages.deleted'), { variant: 'success' });
       setOpenDelete({ open: false, row: null });
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo eliminar el cliente potencial.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('potentialCustomers.messages.deleteError'), {
           variant: 'error'
         });
       }
@@ -683,10 +686,10 @@ export default function PotentialCustomersLionTv() {
       >
         <Grid container spacing={gridSpacing}>
           {[
-            { icon: GroupIcon, label: 'Total', value: total, color: 'primary.main' },
-            { icon: InfoOutlinedIcon, label: 'Nuevos', value: summary.newCount, color: 'info.main' },
-            { icon: ContactPhoneOutlinedIcon, label: 'Contactados', value: summary.contacted, color: 'warning.main' },
-            { icon: TrendingUpOutlinedIcon, label: 'Convertidos', value: summary.converted, color: 'success.main' }
+            { icon: GroupIcon, label: t('potentialCustomers.kpi.total'), value: total, color: 'primary.main' },
+            { icon: InfoOutlinedIcon, label: t('potentialCustomers.kpi.new'), value: summary.newCount, color: 'info.main' },
+            { icon: ContactPhoneOutlinedIcon, label: t('potentialCustomers.kpi.contacted'), value: summary.contacted, color: 'warning.main' },
+            { icon: TrendingUpOutlinedIcon, label: t('potentialCustomers.kpi.converted'), value: summary.converted, color: 'success.main' }
           ].map((item, idx) => (
             <Grid item xs={12} sm={6} md={3} key={idx}>
               <Card

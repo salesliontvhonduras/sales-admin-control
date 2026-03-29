@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -63,91 +64,92 @@ const ROUTES = {
   plusLines: '/liontv/plus-lines'
 };
 
-const QUICK_COMMANDS = [
+const QUICK_COMMANDS_CONFIG = [
   {
     id: 'cmd-dashboard',
     kind: 'comando',
-    typeLabel: 'Comando',
-    title: 'Ir a Seguimiento Operativo',
-    subtitle: 'KPIs, alertas y prioridades del día.',
+    titleKey: 'headerSearch.quickCommands.dashboard.title',
+    subtitleKey: 'headerSearch.quickCommands.dashboard.subtitle',
     route: ROUTES.dashboard,
     keywords: ['dashboard', 'kpi', 'seguimiento', 'alertas']
   },
   {
     id: 'cmd-customers',
     kind: 'comando',
-    typeLabel: 'Comando',
-    title: 'Abrir clientes',
-    subtitle: 'Gestión de cartera y datos del cliente.',
+    titleKey: 'headerSearch.quickCommands.customers.title',
+    subtitleKey: 'headerSearch.quickCommands.customers.subtitle',
     route: ROUTES.customers,
     keywords: ['clientes', 'customer', 'crm']
   },
   {
     id: 'cmd-subscriptions',
     kind: 'comando',
-    typeLabel: 'Comando',
-    title: 'Abrir suscripciones',
-    subtitle: 'Estado y renovaciones de planes.',
+    titleKey: 'headerSearch.quickCommands.subscriptions.title',
+    subtitleKey: 'headerSearch.quickCommands.subscriptions.subtitle',
     route: ROUTES.subscriptions,
     keywords: ['suscripciones', 'planes', 'renewal']
   },
   {
     id: 'cmd-invoices',
     kind: 'comando',
-    typeLabel: 'Comando',
-    title: 'Abrir facturas',
-    subtitle: 'Cobros pendientes y pagos.',
+    titleKey: 'headerSearch.quickCommands.invoices.title',
+    subtitleKey: 'headerSearch.quickCommands.invoices.subtitle',
     route: ROUTES.invoices,
     keywords: ['facturas', 'invoice', 'cobros']
   },
   {
     id: 'cmd-commitments',
     kind: 'comando',
-    typeLabel: 'Comando',
-    title: 'Abrir compromisos de pago',
-    subtitle: 'Promesas y seguimiento de cobranza.',
+    titleKey: 'headerSearch.quickCommands.commitments.title',
+    subtitleKey: 'headerSearch.quickCommands.commitments.subtitle',
     route: ROUTES.commitments,
     keywords: ['compromisos', 'promesas', 'pago']
   },
   {
     id: 'cmd-managed-accounts',
     kind: 'comando',
-    typeLabel: 'Comando',
-    title: 'Abrir managed accounts',
-    subtitle: 'Aliases, bandeja y forwarding.',
+    titleKey: 'headerSearch.quickCommands.managedAccounts.title',
+    subtitleKey: 'headerSearch.quickCommands.managedAccounts.subtitle',
     route: ROUTES.managedAccounts,
     keywords: ['managed', 'accounts', 'alias', 'mail']
   },
   {
     id: 'cmd-licenses',
     kind: 'comando',
-    typeLabel: 'Comando',
-    title: 'Abrir licencias',
-    subtitle: 'Estado de licencias por cliente.',
+    titleKey: 'headerSearch.quickCommands.licenses.title',
+    subtitleKey: 'headerSearch.quickCommands.licenses.subtitle',
     route: ROUTES.licenses,
     keywords: ['licencias', 'keys', 'device']
   },
   {
     id: 'cmd-lines',
     kind: 'comando',
-    typeLabel: 'Comando',
-    title: 'Abrir líneas',
-    subtitle: 'Control de líneas y expiración.',
+    titleKey: 'headerSearch.quickCommands.lines.title',
+    subtitleKey: 'headerSearch.quickCommands.lines.subtitle',
     route: ROUTES.lines,
     keywords: ['lineas', 'lines', 'plus']
   }
 ];
 
-const KIND_LABELS = {
-  cliente: 'Cliente',
-  suscripcion: 'Suscripción',
-  licencia: 'Licencia',
-  linea: 'Línea',
-  account: 'Managed Account',
-  factura: 'Factura',
-  compromiso: 'Compromiso',
-  comando: 'Comando'
+const KIND_LABEL_KEYS = {
+  cliente: 'customer',
+  suscripcion: 'subscription',
+  licencia: 'license',
+  linea: 'line',
+  account: 'account',
+  factura: 'invoice',
+  compromiso: 'commitment',
+  comando: 'command'
 };
+
+function buildQuickCommands(t) {
+  return QUICK_COMMANDS_CONFIG.map((command) => ({
+    ...command,
+    typeLabel: t('headerSearch.kinds.command'),
+    title: t(command.titleKey),
+    subtitle: t(command.subtitleKey)
+  }));
+}
 
 function getStoredRecents() {
   try {
@@ -233,7 +235,8 @@ function itemSearchBlob(item) {
   );
 }
 
-function buildSearchIndex(payload = {}) {
+function buildSearchIndex(payload = {}, t) {
+  const kindLabel = (kind) => t(`headerSearch.kinds.${KIND_LABEL_KEYS[kind] || 'result'}`);
   const customers = payload.customers || [];
   const customerNameMap = customers.reduce((acc, customer) => {
     const id = pickFirst(customer, ['customerId', 'id', 'customer_id']);
@@ -245,14 +248,18 @@ function buildSearchIndex(payload = {}) {
 
   const customerItems = customers.map((customer) => {
     const id = pickFirst(customer, ['customerId', 'id', 'customer_id'], '-');
-    const customerName = pickFirst(customer, ['customerFullname', 'fullName', 'customer_name', 'username'], `Cliente #${id}`);
+    const customerName = pickFirst(
+      customer,
+      ['customerFullname', 'fullName', 'customer_name', 'username'],
+      t('headerSearch.labels.customerById', { id })
+    );
     const email = pickFirst(customer, ['customerMail', 'email'], '');
     return {
       id: `customer-${id}`,
       kind: 'cliente',
-      typeLabel: KIND_LABELS.cliente,
+      typeLabel: kindLabel('cliente'),
       title: customerName,
-      subtitle: email || `ID ${id}`,
+      subtitle: email || t('headerSearch.labels.idValue', { id }),
       code: String(id),
       route: ROUTES.customers,
       status: toUpper(pickFirst(customer, ['status'], 'ACTIVE')),
@@ -266,14 +273,14 @@ function buildSearchIndex(payload = {}) {
     const id = pickFirst(subscription, ['subscriptionId', 'id'], '-');
     const customerId = pickFirst(subscription, ['customerId', 'customer_id']);
     const customerName = customerNameMap[customerId] || '-';
-    const packageName = pickFirst(subscription, ['packageName', 'package_name'], 'Plan');
+    const packageName = pickFirst(subscription, ['packageName', 'package_name'], t('headerSearch.labels.planFallback'));
     const dueDate = pickFirst(subscription, ['renewalDate', 'renewal_date', 'expDate', 'exp_date']);
     return {
       id: `subscription-${id}`,
       kind: 'suscripcion',
-      typeLabel: KIND_LABELS.suscripcion,
+      typeLabel: kindLabel('suscripcion'),
       title: `${packageName} #${id}`,
-      subtitle: `Cliente: ${customerName}`,
+      subtitle: t('headerSearch.labels.customerValue', { customer: customerName }),
       code: String(id),
       route: ROUTES.subscriptions,
       status: toUpper(pickFirst(subscription, ['status'], 'ACTIVE')),
@@ -287,14 +294,14 @@ function buildSearchIndex(payload = {}) {
     const id = pickFirst(license, ['licenseId', 'id', 'license_id'], '-');
     const customerId = pickFirst(license, ['customerId', 'customer_id']);
     const customerName = customerNameMap[customerId] || '-';
-    const appName = pickFirst(license, ['app'], 'Licencia');
+    const appName = pickFirst(license, ['app'], t('headerSearch.labels.licenseFallback'));
     const dueDate = pickFirst(license, ['expireAt', 'expire_at', 'expDate', 'exp_date']);
     return {
       id: `license-${id}`,
       kind: 'licencia',
-      typeLabel: KIND_LABELS.licencia,
+      typeLabel: kindLabel('licencia'),
       title: `${appName} #${id}`,
-      subtitle: `Cliente: ${customerName}`,
+      subtitle: t('headerSearch.labels.customerValue', { customer: customerName }),
       code: String(id),
       route: ROUTES.licenses,
       status: toUpper(pickFirst(license, ['status'], 'ACTIVE')),
@@ -313,9 +320,9 @@ function buildSearchIndex(payload = {}) {
     return {
       id: `line-${id}`,
       kind: 'linea',
-      typeLabel: KIND_LABELS.linea,
+      typeLabel: kindLabel('linea'),
       title: `${username} #${id}`,
-      subtitle: provider || 'Sin provider',
+      subtitle: provider || t('headerSearch.labels.noProvider'),
       code: String(id),
       route: ROUTES.lines,
       status: toUpper(pickFirst(line, ['status'], enabled ? 'ACTIVE' : 'INACTIVE')),
@@ -334,7 +341,7 @@ function buildSearchIndex(payload = {}) {
     return {
       id: `account-${id}`,
       kind: 'account',
-      typeLabel: KIND_LABELS.account,
+      typeLabel: kindLabel('account'),
       title: `${accountCode} · ${alias}`,
       subtitle: displayName,
       code: String(id),
@@ -354,9 +361,9 @@ function buildSearchIndex(payload = {}) {
     return {
       id: `invoice-${id}`,
       kind: 'factura',
-      typeLabel: KIND_LABELS.factura,
-      title: `Factura #${id}`,
-      subtitle: `Cliente: ${customerName}`,
+      typeLabel: kindLabel('factura'),
+      title: t('headerSearch.reference.invoice', { id }),
+      subtitle: t('headerSearch.labels.customerValue', { customer: customerName }),
       code: String(id),
       route: ROUTES.invoices,
       status: toUpper(pickFirst(invoice, ['status'], 'PENDING')),
@@ -374,9 +381,9 @@ function buildSearchIndex(payload = {}) {
     return {
       id: `commitment-${id}`,
       kind: 'compromiso',
-      typeLabel: KIND_LABELS.compromiso,
-      title: `Compromiso #${id}`,
-      subtitle: `Cliente: ${customerName}`,
+      typeLabel: kindLabel('compromiso'),
+      title: t('headerSearch.reference.commitment', { id }),
+      subtitle: t('headerSearch.labels.customerValue', { customer: customerName }),
       code: String(id),
       route: ROUTES.commitments,
       status: toUpper(pickFirst(commitment, ['status'], 'PENDING')),
@@ -387,7 +394,7 @@ function buildSearchIndex(payload = {}) {
   });
 
   return [
-    ...QUICK_COMMANDS,
+    ...buildQuickCommands(t),
     ...customerItems,
     ...subscriptionItems,
     ...licenseItems,
@@ -418,13 +425,13 @@ function statusColor(status) {
   return 'default';
 }
 
-function dueChipLabel(days) {
+function dueChipLabel(days, t) {
   if (days === null || days === undefined || Number.isNaN(Number(days))) return null;
   const normalizedDays = Number(days);
-  if (normalizedDays < 0) return `Vencido ${Math.abs(normalizedDays)}d`;
-  if (normalizedDays === 0) return 'Hoy';
-  if (normalizedDays === 1) return 'Mañana';
-  return `${normalizedDays}d`;
+  if (normalizedDays < 0) return t('headerSearch.due.overdue', { days: Math.abs(normalizedDays) });
+  if (normalizedDays === 0) return t('headerSearch.due.today');
+  if (normalizedDays === 1) return t('headerSearch.due.tomorrow');
+  return t('headerSearch.due.inDays', { days: normalizedDays });
 }
 
 function parseQueryFilters(query) {
@@ -496,7 +503,7 @@ function SearchInput({
   autoFocus = false,
   fullWidth = false,
   showShortcut = true,
-  placeholder = 'Buscar global (tipo:, estado:, vence:)'
+  placeholder
 }) {
   const theme = useTheme();
 
@@ -556,7 +563,8 @@ function SearchInput({
 
 function ResultRow({ item, onSelect }) {
   const theme = useTheme();
-  const dueLabel = dueChipLabel(item.dueDays);
+  const { t } = useTranslation();
+  const dueLabel = dueChipLabel(item.dueDays, t);
 
   return (
     <ListItemButton
@@ -577,7 +585,7 @@ function ResultRow({ item, onSelect }) {
             <Typography variant="subtitle2" noWrap sx={{ maxWidth: { xs: 180, md: 320 } }}>
               {item.title}
             </Typography>
-            <Chip size="small" label={item.typeLabel || 'Resultado'} variant="outlined" />
+            <Chip size="small" label={item.typeLabel || t('headerSearch.labels.result')} variant="outlined" />
           </Stack>
         }
         secondary={
@@ -609,6 +617,7 @@ function SearchPanel({
   onRefresh,
   onClearRecents
 }) {
+  const { t, i18n } = useTranslation();
   const hasQuery = normalizeString(query).length > 0;
 
   const Section = ({ title, children, action = null }) => (
@@ -627,16 +636,16 @@ function SearchPanel({
     <Stack spacing={1.5} sx={{ p: 1.5 }}>
       <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
         <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-          <Chip size="small" color="primary" variant="outlined" label={`${filteredResults.length} resultados`} />
-          <Chip size="small" color="warning" variant="outlined" label={`${urgentResults.length} alertas hoy`} />
+          <Chip size="small" color="primary" variant="outlined" label={t('headerSearch.summary.results', { count: filteredResults.length })} />
+          <Chip size="small" color="warning" variant="outlined" label={t('headerSearch.summary.todayAlerts', { count: urgentResults.length })} />
           {lastSyncAt ? (
             <Typography variant="caption" color="text.secondary">
-              Sync: {lastSyncAt.toLocaleTimeString('es-HN')}
+              {t('headerSearch.summary.sync', { time: lastSyncAt.toLocaleTimeString(i18n.language || undefined) })}
             </Typography>
           ) : null}
         </Stack>
         <Button variant="text" size="small" startIcon={<RefreshRoundedIcon fontSize="small" />} onClick={onRefresh}>
-          Actualizar
+          {t('actions.refresh')}
         </Button>
       </Stack>
 
@@ -652,7 +661,7 @@ function SearchPanel({
       <Box sx={{ maxHeight: 420, overflowY: 'auto', pr: 0.5 }}>
         {!hasQuery ? (
           <Stack spacing={1.5}>
-            <Section title="Acciones rápidas">
+            <Section title={t('headerSearch.sections.quickActions')}>
               <List disablePadding sx={{ display: 'grid', gap: 0.4 }}>
                 {quickResults.slice(0, 6).map((item) => (
                   <ResultRow key={item.id} item={item} onSelect={onSelect} />
@@ -661,18 +670,18 @@ function SearchPanel({
             </Section>
 
             <Section
-              title="Recientes"
+              title={t('headerSearch.sections.recents')}
               action={
                 recents.length > 0 ? (
                   <Button size="small" color="inherit" onClick={onClearRecents}>
-                    Limpiar
+                    {t('actions.clear', 'Clear')}
                   </Button>
                 ) : null
               }
             >
               {recentResults.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
-                  Sin recientes todavía.
+                  {t('headerSearch.messages.noRecents')}
                 </Typography>
               ) : (
                 <List disablePadding sx={{ display: 'grid', gap: 0.4 }}>
@@ -683,10 +692,10 @@ function SearchPanel({
               )}
             </Section>
 
-            <Section title="Pendientes de hoy">
+            <Section title={t('headerSearch.sections.todayPending')}>
               {urgentResults.length === 0 ? (
                 <Typography variant="body2" color="text.secondary">
-                  No hay vencimientos de hoy en el índice actual.
+                  {t('headerSearch.messages.noTodayDue')}
                 </Typography>
               ) : (
                 <List disablePadding sx={{ display: 'grid', gap: 0.4 }}>
@@ -700,14 +709,12 @@ function SearchPanel({
         ) : (
           <Stack spacing={1}>
             <Typography variant="caption" color="text.secondary">
-              Usa filtros: <b>tipo:</b>cliente|suscripcion|licencia|linea|account|factura|compromiso|comando, <b>estado:</b>
-              pending|active|expired,
-              <b> vence:</b>hoy|manana|7d|vencido
+              {t('headerSearch.messages.filtersHelp')}
             </Typography>
             <List disablePadding sx={{ display: 'grid', gap: 0.4 }}>
               {filteredResults.length === 0 ? (
                 <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
-                  No se encontraron resultados.
+                  {t('headerSearch.messages.noResults')}
                 </Typography>
               ) : (
                 filteredResults.slice(0, 40).map((item) => <ResultRow key={`result-${item.id}`} item={item} onSelect={onSelect} />)
@@ -725,6 +732,7 @@ function SearchPanel({
 export default function SearchSection() {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const downMD = useMediaQuery(theme.breakpoints.down('md'));
   const { accessToken } = useAuth();
 
@@ -736,7 +744,7 @@ export default function SearchSection() {
   const [openDesktop, setOpenDesktop] = useState(false);
   const [openMobile, setOpenMobile] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [indexItems, setIndexItems] = useState([...QUICK_COMMANDS]);
+  const [indexItems, setIndexItems] = useState(buildQuickCommands(t));
   const [recents, setRecents] = useState(getStoredRecents);
   const [lastSyncAt, setLastSyncAt] = useState(null);
 
@@ -753,30 +761,30 @@ export default function SearchSection() {
 
   useEffect(() => {
     if (!accessToken) {
-      setIndexItems([...QUICK_COMMANDS]);
+      setIndexItems(buildQuickCommands(t));
       setErrorMessage('');
       setLastSyncAt(null);
       return;
     }
 
-    setIndexItems(buildSearchIndex(overviewData));
+    setIndexItems(buildSearchIndex(overviewData, t));
 
     const fetchedAt = overviewData?.meta?.fetchedAt;
     setLastSyncAt(fetchedAt ? new Date(fetchedAt) : null);
 
     if (overviewData?.meta?.partial) {
-      setErrorMessage('Datos parciales cargados en búsqueda global.');
+      setErrorMessage(t('headerSearch.messages.partialData'));
       return;
     }
 
     const status = overviewError?.response?.status || overviewError?.request?.status;
     if (overviewError && status !== 401) {
-      setErrorMessage(overviewError?.response?.data?.message || 'No se pudo cargar el índice global.');
+      setErrorMessage(overviewError?.response?.data?.message || t('headerSearch.messages.loadError'));
       return;
     }
 
     setErrorMessage('');
-  }, [accessToken, overviewData, overviewError]);
+  }, [accessToken, overviewData, overviewError, t]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -880,6 +888,7 @@ export default function SearchSection() {
             setOpenDesktop(true);
             refresh();
           }}
+          placeholder={t('headerSearch.placeholder')}
           inputRef={desktopInputRef}
         />
       </Box>
@@ -951,7 +960,7 @@ export default function SearchSection() {
       >
         <DialogTitle sx={{ pb: 1.2 }}>
           <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-            <Typography variant="h4">Búsqueda Global</Typography>
+            <Typography variant="h4">{t('headerSearch.dialogTitle')}</Typography>
             <IconButton onClick={() => setOpenMobile(false)}>
               <IconX stroke={1.5} size="18px" />
             </IconButton>
@@ -968,6 +977,7 @@ export default function SearchSection() {
               autoFocus
               fullWidth
               showShortcut={false}
+              placeholder={t('headerSearch.placeholder')}
             />
 
             <SearchPanel

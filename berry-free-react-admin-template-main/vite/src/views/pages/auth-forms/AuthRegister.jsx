@@ -27,7 +27,6 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import useAuth from 'hooks/useAuth';
 import { useSnackbar } from 'notistack';
 
-
 // ===========================|| JWT - REGISTER ||=========================== //
 
 const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
@@ -97,24 +96,31 @@ export default function AuthRegister() {
       });
 
       if (res.status === 201 && res.data.success) {
-        enqueueSnackbar('User registered successfuly.', { variant: 'success' });
+        enqueueSnackbar(t('auth.registerSuccess'), { variant: 'success' });
         navigate(BASE_URL + '/pages/login');
       } else {
-        const backendMessage = res?.data?.message || 'Registration failed.';
+        const backendMessage = res?.data?.message || t('auth.registerFailed');
         enqueueSnackbar(backendMessage, { variant: 'error' });
       }
-      
     } catch (error) {
       console.error('Register error:', error);
-      const errorMessage = error?.response?.data?.message || error?.message || 'Unexpected error while registering.';
+      const errorMessage = error?.response?.data?.message || error?.message || t('auth.registerUnexpectedError');
       enqueueSnackbar(errorMessage, { variant: 'error' });
     }
+  };
+
+  const strengthLabelMap = {
+    Poor: t('auth.passwordStrengthLevels.poor'),
+    Weak: t('auth.passwordStrengthLevels.weak'),
+    Normal: t('auth.passwordStrengthLevels.normal'),
+    Good: t('auth.passwordStrengthLevels.good'),
+    Strong: t('auth.passwordStrengthLevels.strong')
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <Stack sx={{ mb: 2, alignItems: 'center' }}>
-        <Typography variant="subtitle1">Sign up with Email address </Typography>
+        <Typography variant="subtitle1">{t('auth.register')}</Typography>
       </Stack>
 
       <Grid container spacing={{ xs: 0, sm: 2 }}>
@@ -182,7 +188,7 @@ export default function AuthRegister() {
           endAdornment={
             <InputAdornment position="end">
               <IconButton
-                aria-label="toggle password visibility"
+                aria-label={t('auth.togglePasswordVisibility')}
                 onClick={handleClickShowPassword}
                 onMouseDown={handleMouseDownPassword}
                 edge="end"
@@ -201,7 +207,7 @@ export default function AuthRegister() {
             <Stack direction="row" sx={{ gap: 2, alignItems: 'center' }}>
               <Box sx={{ width: 85, height: 8, borderRadius: '7px', bgcolor: level?.color }} />
               <Typography variant="subtitle1" sx={{ fontSize: '0.75rem' }}>
-                {level?.label}
+                {strengthLabelMap[level?.label] || level?.label}
               </Typography>
             </Stack>
           </Box>
@@ -211,7 +217,7 @@ export default function AuthRegister() {
       <Box sx={{ mt: 2 }}>
         <AnimateButton>
           <Button disableElevation fullWidth size="large" type="submit" variant="contained" color="secondary">
-            Sign up
+            {t('auth.registerBtn')}
           </Button>
         </AnimateButton>
       </Box>

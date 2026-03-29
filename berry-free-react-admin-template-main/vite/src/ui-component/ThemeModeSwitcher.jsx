@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
@@ -36,12 +37,13 @@ const StyledChip = styled(Chip)(({ theme }) => ({
 }));
 
 const modeOptions = [
-  { value: 'light', label: 'Claro', icon: <LightModeRoundedIcon fontSize="small" /> },
-  { value: 'dark', label: 'Oscuro', icon: <DarkModeRoundedIcon fontSize="small" /> },
-  { value: 'system', label: 'Sistema', icon: <SettingsBrightnessRoundedIcon fontSize="small" /> }
+  { value: 'light', icon: <LightModeRoundedIcon fontSize="small" /> },
+  { value: 'dark', icon: <DarkModeRoundedIcon fontSize="small" /> },
+  { value: 'system', icon: <SettingsBrightnessRoundedIcon fontSize="small" /> }
 ];
 
 export default function ThemeModeSwitcher({ compact = false }) {
+  const { t } = useTranslation();
   const colorSchemeApi = useColorScheme();
   const mode = colorSchemeApi?.mode ?? colorSchemeApi?.colorScheme ?? 'system';
   const systemMode = colorSchemeApi?.systemMode ?? 'light';
@@ -51,6 +53,14 @@ export default function ThemeModeSwitcher({ compact = false }) {
   const open = Boolean(anchorEl);
   const effectiveMode = mode === 'system' ? systemMode : mode;
 
+  const modeLabel = useMemo(
+    () => ({
+      light: t('themeMode.light'),
+      dark: t('themeMode.dark'),
+      system: t('themeMode.system')
+    }),
+    [t]
+  );
   const currentOption = useMemo(() => modeOptions.find((option) => option.value === mode) || modeOptions[2], [mode]);
   const currentIcon = effectiveMode === 'dark' ? <DarkModeRoundedIcon fontSize="small" /> : <LightModeRoundedIcon fontSize="small" />;
 
@@ -67,7 +77,7 @@ export default function ThemeModeSwitcher({ compact = false }) {
         clickable
         onClick={(event) => setAnchorEl(event.currentTarget)}
         avatar={<Avatar sx={{ bgcolor: 'transparent', width: 24, height: 24 }}>{currentIcon}</Avatar>}
-        label={compact ? `${currentOption.label}` : `Modo: ${currentOption.label}`}
+        label={compact ? `${modeLabel[currentOption.value]}` : `${t('themeMode.labelPrefix')}: ${modeLabel[currentOption.value]}`}
         variant="outlined"
         size="small"
       />
@@ -76,8 +86,8 @@ export default function ThemeModeSwitcher({ compact = false }) {
           <MenuItem key={option.value} selected={mode === option.value} onClick={() => applyMode(option.value)}>
             <ListItemIcon sx={{ minWidth: 30 }}>{option.icon}</ListItemIcon>
             <ListItemText
-              primary={option.label}
-              secondary={option.value === 'system' ? `Actual: ${systemMode === 'dark' ? 'Oscuro' : 'Claro'}` : null}
+              primary={modeLabel[option.value]}
+              secondary={option.value === 'system' ? `${t('themeMode.currentPrefix')}: ${modeLabel[systemMode] || modeLabel.light}` : null}
             />
             {mode === option.value ? <CheckRoundedIcon fontSize="small" color="primary" /> : null}
           </MenuItem>

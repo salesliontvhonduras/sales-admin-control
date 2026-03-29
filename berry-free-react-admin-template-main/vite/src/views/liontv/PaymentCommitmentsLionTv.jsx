@@ -59,12 +59,12 @@ import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
-const statusOptions = [
-  { value: '', label: 'Todos' },
-  { value: 'PENDING', label: 'Pendiente' },
-  { value: 'PARTIAL', label: 'Parcial' },
-  { value: 'PAID', label: 'Pagado' },
-  { value: 'CANCELLED', label: 'Cancelado' }
+const buildStatusOptions = (t) => [
+  { value: '', label: t('paymentCommitments.filters.all') },
+  { value: 'PENDING', label: t('paymentCommitments.status.pending') },
+  { value: 'PARTIAL', label: t('paymentCommitments.status.partial') },
+  { value: 'PAID', label: t('paymentCommitments.status.paid') },
+  { value: 'CANCELLED', label: t('paymentCommitments.status.cancelled') }
 ];
 
 const viewModes = {
@@ -156,12 +156,13 @@ function computeStatusPreview(amountDue, amountPaid, cancelled) {
 }
 
 function StatusChip({ status }) {
+  const { t } = useTranslation();
   const normalized = (status || '').toUpperCase();
   const config = {
-    PAID: { color: 'success', icon: <CheckCircleOutlineIcon fontSize="small" />, label: 'Pagado' },
-    PARTIAL: { color: 'info', icon: <PendingActionsIcon fontSize="small" />, label: 'Parcial' },
-    CANCELLED: { color: 'default', icon: <RemoveCircleOutlineIcon fontSize="small" />, label: 'Cancelado' },
-    PENDING: { color: 'warning', icon: <PendingActionsIcon fontSize="small" />, label: 'Pendiente' }
+    PAID: { color: 'success', icon: <CheckCircleOutlineIcon fontSize="small" />, label: t('paymentCommitments.status.paid') },
+    PARTIAL: { color: 'info', icon: <PendingActionsIcon fontSize="small" />, label: t('paymentCommitments.status.partial') },
+    CANCELLED: { color: 'default', icon: <RemoveCircleOutlineIcon fontSize="small" />, label: t('paymentCommitments.status.cancelled') },
+    PENDING: { color: 'warning', icon: <PendingActionsIcon fontSize="small" />, label: t('paymentCommitments.status.pending') }
   }[normalized] || { color: 'default', label: normalized || '-' };
 
   return <Chip size="small" color={config.color} icon={config.icon} label={config.label} />;
@@ -284,6 +285,7 @@ export default function PaymentCommitmentsLionTv() {
 
   const [customers, setCustomers] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(false);
+  const statusOptions = useMemo(() => buildStatusOptions(t), [t]);
 
   const handleUnauthorized = (error) => {
     const status = error?.response?.status || error?.request?.status;
@@ -308,7 +310,7 @@ export default function PaymentCommitmentsLionTv() {
       setRows(normalized);
     } catch (error) {
       if (!handleUnauthorized(error)) {
-        enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudieron cargar los compromisos de pago.', {
+        enqueueSnackbar(error?.response?.data?.message || error.message || t('paymentCommitments.messages.loadError'), {
           variant: 'error'
         });
       }
@@ -341,7 +343,7 @@ export default function PaymentCommitmentsLionTv() {
       setCustomers(normalizedCustomers);
     } catch (error) {
       if (!handleUnauthorized(error)) {
-        enqueueSnackbar('No se pudo cargar el catálogo de clientes.', { variant: 'warning' });
+        enqueueSnackbar(t('paymentCommitments.messages.customersLoadWarning'), { variant: 'warning' });
       }
     } finally {
       setCustomersLoading(false);
@@ -434,12 +436,12 @@ export default function PaymentCommitmentsLionTv() {
 
   const validatePayload = () => {
     if (!form.customerId) {
-      enqueueSnackbar('Selecciona un cliente.', { variant: 'warning' });
+      enqueueSnackbar(t('paymentCommitments.messages.selectCustomer'), { variant: 'warning' });
       return false;
     }
 
     if (!form.promisedPaymentDate) {
-      enqueueSnackbar('Selecciona la fecha comprometida de pago.', { variant: 'warning' });
+      enqueueSnackbar(t('paymentCommitments.messages.selectDate'), { variant: 'warning' });
       return false;
     }
 
@@ -447,17 +449,17 @@ export default function PaymentCommitmentsLionTv() {
     const amountPaid = normalizeMoney(form.amountPaid);
 
     if (amountDue <= 0) {
-      enqueueSnackbar('El monto adeudado debe ser mayor que cero.', { variant: 'warning' });
+      enqueueSnackbar(t('paymentCommitments.messages.amountDuePositive'), { variant: 'warning' });
       return false;
     }
 
     if (amountPaid < 0) {
-      enqueueSnackbar('El monto pagado no puede ser negativo.', { variant: 'warning' });
+      enqueueSnackbar(t('paymentCommitments.messages.amountPaidNegative'), { variant: 'warning' });
       return false;
     }
 
     if (amountPaid > amountDue) {
-      enqueueSnackbar('El monto pagado no puede ser mayor que el adeudado.', { variant: 'warning' });
+      enqueueSnackbar(t('paymentCommitments.messages.amountPaidGreaterThanDue'), { variant: 'warning' });
       return false;
     }
 
@@ -483,13 +485,13 @@ export default function PaymentCommitmentsLionTv() {
           headers: { Authorization: `Bearer ${accessToken}` },
           skipAuthRedirect: true
         });
-        enqueueSnackbar('Compromiso de pago actualizado.', { variant: 'success' });
+        enqueueSnackbar(t('paymentCommitments.messages.updated'), { variant: 'success' });
       } else {
         await lionTvApi.post('/payment-commitments/v1', payload, {
           headers: { Authorization: `Bearer ${accessToken}` },
           skipAuthRedirect: true
         });
-        enqueueSnackbar('Compromiso de pago creado.', { variant: 'success' });
+        enqueueSnackbar(t('paymentCommitments.messages.created'), { variant: 'success' });
       }
 
       setOpenModal(false);
@@ -497,7 +499,7 @@ export default function PaymentCommitmentsLionTv() {
       setRefreshKey((value) => value + 1);
     } catch (error) {
       if (!handleUnauthorized(error)) {
-        enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo guardar el compromiso de pago.', {
+        enqueueSnackbar(error?.response?.data?.message || error.message || t('paymentCommitments.messages.saveError'), {
           variant: 'error'
         });
       }
@@ -519,12 +521,12 @@ export default function PaymentCommitmentsLionTv() {
         headers: { Authorization: `Bearer ${accessToken}` },
         skipAuthRedirect: true
       });
-      enqueueSnackbar('Compromiso de pago eliminado.', { variant: 'success' });
+      enqueueSnackbar(t('paymentCommitments.messages.deleted'), { variant: 'success' });
       setOpenDelete({ open: false, row: null });
       setRefreshKey((value) => value + 1);
     } catch (error) {
       if (!handleUnauthorized(error)) {
-        enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo eliminar el compromiso de pago.', {
+        enqueueSnackbar(error?.response?.data?.message || error.message || t('paymentCommitments.messages.deleteError'), {
           variant: 'error'
         });
       }
@@ -570,10 +572,10 @@ export default function PaymentCommitmentsLionTv() {
       >
         <Grid container spacing={gridSpacing}>
           {[
-            { label: `${summary.total} compromisos`, icon: AssignmentTurnedInIcon, color: 'primary.main' },
-            { label: `${summary.debtorsCount} deudores`, icon: GroupIcon, color: 'secondary.main' },
-            { label: `Pendiente: ${formatMoney(summary.totalPending)}`, icon: AccountBalanceWalletIcon, color: 'warning.main' },
-            { label: `${summary.overdueCount} vencidos`, icon: WarningAmberIcon, color: 'error.main' }
+            { label: t('paymentCommitments.kpi.total', { count: summary.total }), icon: AssignmentTurnedInIcon, color: 'primary.main' },
+            { label: t('paymentCommitments.kpi.debtors', { count: summary.debtorsCount }), icon: GroupIcon, color: 'secondary.main' },
+            { label: t('paymentCommitments.kpi.pendingAmount', { amount: formatMoney(summary.totalPending) }), icon: AccountBalanceWalletIcon, color: 'warning.main' },
+            { label: t('paymentCommitments.kpi.overdue', { count: summary.overdueCount }), icon: WarningAmberIcon, color: 'error.main' }
           ].map((item, index) => (
             <Grid item xs={12} sm={6} md={3} key={index}>
               <Card
@@ -700,16 +702,16 @@ export default function PaymentCommitmentsLionTv() {
           <Table size={isMobile ? 'small' : 'medium'}>
             <TableHead>
               <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Cliente</TableCell>
-                <TableCell>Fecha compromiso</TableCell>
-                <TableCell align="right">Adeudado</TableCell>
-                <TableCell align="right">Pagado</TableCell>
-                <TableCell align="right">Pendiente</TableCell>
-                <TableCell>Estado</TableCell>
-                <TableCell>Riesgo</TableCell>
-                <TableCell>Nota</TableCell>
-                <TableCell align="right">Acciones</TableCell>
+                <TableCell>{t('paymentCommitments.table.headers.id')}</TableCell>
+                <TableCell>{t('paymentCommitments.table.headers.customer')}</TableCell>
+                <TableCell>{t('paymentCommitments.table.headers.promisedDate')}</TableCell>
+                <TableCell align="right">{t('paymentCommitments.table.headers.amountDue')}</TableCell>
+                <TableCell align="right">{t('paymentCommitments.table.headers.amountPaid')}</TableCell>
+                <TableCell align="right">{t('paymentCommitments.table.headers.pendingAmount')}</TableCell>
+                <TableCell>{t('paymentCommitments.table.headers.status')}</TableCell>
+                <TableCell>{t('paymentCommitments.table.headers.risk')}</TableCell>
+                <TableCell>{t('paymentCommitments.table.headers.note')}</TableCell>
+                <TableCell align="right">{t('paymentCommitments.table.headers.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -734,7 +736,7 @@ export default function PaymentCommitmentsLionTv() {
                             {row.customerFullname || '-'}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Cliente #{row.customerId || '-'}
+                            {t('paymentCommitments.labels.customerId', { id: row.customerId || '-' })}
                           </Typography>
                         </Stack>
                       </TableCell>
@@ -761,7 +763,11 @@ export default function PaymentCommitmentsLionTv() {
                         <StatusChip status={row.status} />
                       </TableCell>
                       <TableCell>
-                        {row.overdue ? <Chip size="small" color="error" label="Vencido" /> : <Chip size="small" color="success" label="Al día" />}
+                        {row.overdue ? (
+                          <Chip size="small" color="error" label={t('paymentCommitments.risk.overdue')} />
+                        ) : (
+                          <Chip size="small" color="success" label={t('paymentCommitments.risk.onTime')} />
+                        )}
                       </TableCell>
                       <TableCell>
                         <Typography
@@ -789,9 +795,9 @@ export default function PaymentCommitmentsLionTv() {
                       <Avatar sx={{ bgcolor: 'warning.lighter', color: 'warning.main', width: 56, height: 56 }}>
                         <WarningAmberIcon />
                       </Avatar>
-                      <Typography variant="subtitle1">Sin registros</Typography>
+                      <Typography variant="subtitle1">{t('paymentCommitments.table.emptyTitle')}</Typography>
                       <Typography variant="body2" color="text.secondary">
-                        No hay compromisos que coincidan con tu búsqueda y filtros actuales.
+                        {t('paymentCommitments.table.emptyText')}
                       </Typography>
                     </Stack>
                   </TableCell>
@@ -824,10 +830,10 @@ export default function PaymentCommitmentsLionTv() {
             </Avatar>
             <Box>
               <Typography variant="h4">
-                {form.paymentCommitmentId ? 'Editar compromiso de pago' : 'Nuevo compromiso de pago'}
+                {form.paymentCommitmentId ? t('paymentCommitments.dialog.editTitle') : t('paymentCommitments.dialog.createTitle')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Registra fecha de compromiso y controla el saldo pendiente por cliente.
+                {t('paymentCommitments.dialog.subtitle')}
               </Typography>
             </Box>
           </Stack>
@@ -837,19 +843,19 @@ export default function PaymentCommitmentsLionTv() {
           <Stack spacing={2}>
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
-                <FormSection title="Datos principales" helper="Selecciona cliente, fecha y montos del compromiso.">
+                <FormSection title={t('paymentCommitments.form.main.title')} helper={t('paymentCommitments.form.main.helper')}>
                   <Stack spacing={2}>
                     <FormControl fullWidth sx={fieldSx}>
-                      <InputLabel id="customer-select-label">Cliente</InputLabel>
+                      <InputLabel id="customer-select-label">{t('paymentCommitments.form.customer')}</InputLabel>
                       <Select
                         labelId="customer-select-label"
                         value={form.customerId}
-                        label="Cliente"
+                        label={t('paymentCommitments.form.customer')}
                         onChange={handleFormChange('customerId')}
                       >
                         {customersLoading ? (
                           <MenuItem value="" disabled>
-                            Cargando clientes...
+                            {t('paymentCommitments.form.loadingCustomers')}
                           </MenuItem>
                         ) : customers.length ? (
                           customers.map((customer) => (
@@ -859,15 +865,15 @@ export default function PaymentCommitmentsLionTv() {
                           ))
                         ) : (
                           <MenuItem value="" disabled>
-                            No hay clientes disponibles
+                            {t('paymentCommitments.form.noCustomers')}
                           </MenuItem>
                         )}
                       </Select>
-                      <FormHelperText>Cliente asociado al compromiso de pago.</FormHelperText>
+                      <FormHelperText>{t('paymentCommitments.form.customerHelper')}</FormHelperText>
                     </FormControl>
 
                     <TextField
-                      label="Fecha compromiso"
+                      label={t('paymentCommitments.form.promisedDate')}
                       type="date"
                       value={form.promisedPaymentDate}
                       onChange={handleFormChange('promisedPaymentDate')}
@@ -877,7 +883,7 @@ export default function PaymentCommitmentsLionTv() {
                     />
 
                     <TextField
-                      label="Monto adeudado"
+                      label={t('paymentCommitments.form.amountDue')}
                       type="number"
                       value={form.amountDue}
                       onChange={handleFormChange('amountDue')}
@@ -887,7 +893,7 @@ export default function PaymentCommitmentsLionTv() {
                     />
 
                     <TextField
-                      label="Monto pagado"
+                      label={t('paymentCommitments.form.amountPaid')}
                       type="number"
                       value={form.amountPaid}
                       onChange={handleFormChange('amountPaid')}
@@ -900,10 +906,10 @@ export default function PaymentCommitmentsLionTv() {
               </Grid>
 
               <Grid item xs={12} md={6}>
-                <FormSection title="Control y seguimiento" helper="El estado se calcula por montos. Solo puedes forzar Cancelado.">
+                <FormSection title={t('paymentCommitments.form.tracking.title')} helper={t('paymentCommitments.form.tracking.helper')}>
                   <Stack spacing={2}>
                     <TextField
-                      label="Notas"
+                      label={t('paymentCommitments.form.notes')}
                       value={form.notes}
                       onChange={handleFormChange('notes')}
                       multiline
@@ -914,7 +920,7 @@ export default function PaymentCommitmentsLionTv() {
 
                     <FormControlLabel
                       control={<Switch checked={form.cancelled} onChange={handleFormChange('cancelled')} color="warning" />}
-                      label="Marcar como cancelado"
+                      label={t('paymentCommitments.form.markCancelled')}
                     />
 
                     <Card
@@ -930,18 +936,20 @@ export default function PaymentCommitmentsLionTv() {
                       })}
                     >
                       <Stack spacing={1.25}>
-                        <Typography variant="subtitle2">Estado proyectado</Typography>
+                        <Typography variant="subtitle2">{t('paymentCommitments.form.projectedStatus')}</Typography>
                         <Stack direction="row" spacing={1} alignItems="center">
                           <StatusChip status={statusPreview} />
                           <Typography variant="caption" color="text.secondary">
-                            Saldo pendiente: {formatMoney(Math.max(normalizeMoney(form.amountDue) - normalizeMoney(form.amountPaid), 0))}
+                            {t('paymentCommitments.form.pendingBalance', {
+                              amount: formatMoney(Math.max(normalizeMoney(form.amountDue) - normalizeMoney(form.amountPaid), 0))
+                            })}
                           </Typography>
                         </Stack>
                         <Divider />
                         <Stack direction="row" spacing={0.75} alignItems="center">
                           <InfoOutlinedIcon fontSize="small" color="info" />
                           <Typography variant="caption" color="text.secondary">
-                            Si no está cancelado, el backend calcula automáticamente: Pendiente, Parcial o Pagado.
+                            {t('paymentCommitments.form.statusHint')}
                           </Typography>
                         </Stack>
                       </Stack>
@@ -965,17 +973,27 @@ export default function PaymentCommitmentsLionTv() {
             {t('actions.cancel', 'Cancelar')}
           </Button>
           <Button onClick={handleSave} disabled={sending} variant="contained">
-            {sending ? (form.paymentCommitmentId ? 'Guardando...' : 'Creando...') : form.paymentCommitmentId ? 'Guardar cambios' : 'Crear compromiso'}
+            {sending
+              ? form.paymentCommitmentId
+                ? t('common.saving', 'Saving...')
+                : t('common.creating', 'Creating...')
+              : form.paymentCommitmentId
+                ? t('common.saveChanges', 'Save changes')
+                : t('paymentCommitments.actions.create')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={openDelete.open} onClose={() => !sending && setOpenDelete({ open: false, row: null })} maxWidth="xs" fullWidth>
-        <DialogTitleWithClose onClose={() => !sending && setOpenDelete({ open: false, row: null })}>Eliminar compromiso</DialogTitleWithClose>
+        <DialogTitleWithClose onClose={() => !sending && setOpenDelete({ open: false, row: null })}>
+          {t('paymentCommitments.delete.title')}
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Typography>
-            ¿Deseas eliminar el compromiso #{openDelete.row?.paymentCommitmentId || '-'} de{' '}
-            <strong>{openDelete.row?.customerFullname || 'este cliente'}</strong>? Esta acción no se puede deshacer.
+            {t('paymentCommitments.delete.body', {
+              id: openDelete.row?.paymentCommitmentId || '-',
+              customer: openDelete.row?.customerFullname || t('paymentCommitments.labels.thisCustomer')
+            })}
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -983,7 +1001,7 @@ export default function PaymentCommitmentsLionTv() {
             {t('actions.cancel', 'Cancelar')}
           </Button>
           <Button onClick={confirmDelete} color="error" variant="contained" disabled={sending}>
-            {sending ? 'Eliminando...' : 'Eliminar'}
+            {sending ? t('common.deleting', 'Deleting...') : t('actions.delete')}
           </Button>
         </DialogActions>
       </Dialog>
