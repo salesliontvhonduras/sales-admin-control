@@ -2,8 +2,9 @@ import useSWR from 'swr';
 import { lionTvApi } from 'utils/api';
 
 const DEFAULT_REFRESH_INTERVAL = 180000;
-const AGGREGATE_OVERVIEW_ENABLED = String(import.meta.env.VITE_LIONTV_OVERVIEW_AGGREGATE_ENABLED || 'true').toLowerCase() !== 'false';
+const AGGREGATE_OVERVIEW_ENABLED = String(import.meta.env.VITE_LIONTV_OVERVIEW_AGGREGATE_ENABLED || 'false').toLowerCase() === 'true';
 const AGGREGATE_OVERVIEW_PATH = import.meta.env.VITE_LIONTV_OVERVIEW_AGGREGATE_PATH || '/dashboard/v1/overview';
+const AGGREGATE_OVERVIEW_TIMEOUT_MS = Number(import.meta.env.VITE_LIONTV_OVERVIEW_AGGREGATE_TIMEOUT_MS || 1200);
 const OVERVIEW_KEYS = [
   'customers',
   'subscriptions',
@@ -129,6 +130,7 @@ async function fetchAggregateOverview(scope = 'core') {
   try {
     const response = await lionTvApi.get(AGGREGATE_OVERVIEW_PATH, {
       params: { scope },
+      timeout: AGGREGATE_OVERVIEW_TIMEOUT_MS,
       skipAuthRedirect: true
     });
     const normalized = normalizeOverviewPayload(unwrap(response));

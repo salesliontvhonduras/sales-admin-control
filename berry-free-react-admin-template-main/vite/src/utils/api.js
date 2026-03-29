@@ -14,6 +14,7 @@ const API_SHOPIFY_DEMOS = import.meta.env.VITE_API_SHOPIFY_DEMOS;
 const COOKIE_MODE = isCookieSessionMode();
 const REFRESH_PATH = import.meta.env.VITE_AUTH_REFRESH_PATH || '/auth/v1/session/refresh';
 const REFRESH_ENABLED = String(import.meta.env.VITE_AUTH_REFRESH_ENABLED || 'true').toLowerCase() !== 'false';
+const REFRESH_TIMEOUT_MS = Number(import.meta.env.VITE_AUTH_REFRESH_TIMEOUT_MS || 2000);
 
 export const sagaApi = axios.create({
   baseURL: API_SAGA,
@@ -142,13 +143,20 @@ async function refreshSessionToken() {
 
   if (!refreshPromise) {
     const refreshUrl = getRefreshUrl();
+    const currentToken = getStoredAccessToken();
+    const refreshHeaders = { 'Content-Type': 'application/json' };
+    if (!COOKIE_MODE && currentToken) {
+      refreshHeaders.Authorization = `Bearer ${currentToken}`;
+    }
+
     refreshPromise = axios
       .post(
         refreshUrl,
         {},
         {
           withCredentials: true,
-          headers: { 'Content-Type': 'application/json' },
+          headers: refreshHeaders,
+          timeout: REFRESH_TIMEOUT_MS,
           skipAuthRedirect: true
         }
       )
