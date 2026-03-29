@@ -8,7 +8,7 @@ export default function OutlinedInput(theme, borderRadius, outlinedFilled) {
         root: {
           background: outlinedFilled ? theme.vars.palette.grey[50] : 'transparent',
           borderRadius: `${radius}px`,
-          transition: 'all 160ms ease',
+          transition: 'border-color 80ms ease, box-shadow 80ms ease',
 
           '& .MuiOutlinedInput-notchedOutline': {
             borderColor: theme.vars.palette.grey[400],

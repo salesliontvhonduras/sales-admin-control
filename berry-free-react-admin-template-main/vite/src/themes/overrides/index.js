@@ -22,6 +22,7 @@ import OutlinedInput from './OutlinedInput';
 import ListItemButton from './ListItemButton';
 import ListItemIcon from './ListItemIcon';
 import ListItemText from './ListItemText';
+import Menu from './Menu';
 import Paper from './Paper';
 import Select from './Select';
 import Slider from './Slider';
@@ -53,6 +54,7 @@ export default function ComponentsOverrides(theme, borderRadius, outlinedFilled)
     ListItemButton(theme),
     ListItemIcon(theme),
     ListItemText(theme),
+    Menu(),
     Paper(borderRadius),
     Select(),
     Slider(theme),
