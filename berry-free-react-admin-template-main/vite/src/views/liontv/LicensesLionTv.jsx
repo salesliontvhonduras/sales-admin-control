@@ -24,7 +24,6 @@ import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
 import Divider from '@mui/material/Divider';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import FormControl from '@mui/material/FormControl';
@@ -64,6 +63,7 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 
 import MainCard from 'ui-component/cards/MainCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -1198,7 +1198,7 @@ export default function LicensesLionTv() {
           })
         }}
       >
-        <DialogTitle sx={{ position: 'relative', pr: 5 }}>
+        <DialogTitleWithClose sx={{ position: 'relative', pr: 5 }} onClose={() => setOpenModal(false)}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Avatar
               sx={{
@@ -1219,7 +1219,7 @@ export default function LicensesLionTv() {
               </Typography>
             </Box>
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
 
         <DialogContent
           dividers
@@ -1532,7 +1532,9 @@ export default function LicensesLionTv() {
         maxWidth="sm"
         fullScreen={isMobile}
       >
-        <DialogTitle>{t('licenses.server.title', 'Change server')}</DialogTitle>
+        <DialogTitleWithClose onClose={() => setOpenServerChange({ open: false, row: null })}>
+          {t('licenses.server.title', 'Change server')}
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2}>
             <Typography variant="body2">
@@ -1647,7 +1649,9 @@ export default function LicensesLionTv() {
         fullWidth
         fullScreen={isMobile}
       >
-        <DialogTitle>{t('licenses.delete.title', 'Delete license')}</DialogTitle>
+        <DialogTitleWithClose onClose={() => setOpenDelete({ open: false, row: null })}>
+          {t('licenses.delete.title', 'Delete license')}
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Typography>
             {t('licenses.delete.body', 'Delete license {{name}}? This action cannot be undone.', {
@@ -1673,7 +1677,9 @@ export default function LicensesLionTv() {
         maxWidth="sm"
         fullScreen={isMobile}
       >
-        <DialogTitle>{t('licenses.transfer.title', 'Transfer license')}</DialogTitle>
+        <DialogTitleWithClose onClose={() => setOpenTransfer({ open: false, row: null, toCustomerId: '', typeLicense: 'USED' })}>
+          {t('licenses.transfer.title', 'Transfer license')}
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2}>
             <Typography variant="body2">
@@ -1738,7 +1744,7 @@ export default function LicensesLionTv() {
         maxWidth="md"
         fullScreen={isMobile}
       >
-        <DialogTitle sx={{ position: 'relative', pr: 5 }}>
+        <DialogTitleWithClose sx={{ position: 'relative', pr: 5 }} onClose={() => setHistoryOpen({ open: false, row: null })}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
             <Avatar
               sx={{
@@ -1759,7 +1765,7 @@ export default function LicensesLionTv() {
               </Typography>
             </Box>
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
 
         <DialogContent
           dividers

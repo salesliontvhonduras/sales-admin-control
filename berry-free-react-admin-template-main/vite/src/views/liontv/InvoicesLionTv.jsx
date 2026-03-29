@@ -22,7 +22,6 @@ import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import FormControl from '@mui/material/FormControl';
@@ -64,6 +63,7 @@ import AutorenewIcon from '@mui/icons-material/Autorenew';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 
 import MainCard from 'ui-component/cards/MainCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi, catalogsApi } from 'utils/api';
 
@@ -1010,7 +1010,8 @@ export default function InvoicesLionTv() {
           })
         }}
       >
-        <DialogTitle
+        <DialogTitleWithClose
+          onClose={() => setOpenModal(false)}
           sx={(theme) => ({
             position: 'relative',
             pb: 1,
@@ -1045,7 +1046,7 @@ export default function InvoicesLionTv() {
               sx={{ ml: 'auto', fontWeight: 700, borderRadius: 1.5 }}
             />
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent
           dividers
           sx={{
@@ -1420,7 +1421,8 @@ export default function InvoicesLionTv() {
         fullWidth
         fullScreen={isMobile}
       >
-        <DialogTitle
+        <DialogTitleWithClose
+          onClose={() => setOpenDelete({ open: false, row: null })}
           sx={(theme) => ({
             display: 'flex',
             alignItems: 'center',
@@ -1432,7 +1434,7 @@ export default function InvoicesLionTv() {
             <WarningAmberIcon fontSize="small" />
           </Avatar>
           <Typography variant="h6">{t('invoices.delete.title')}</Typography>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Typography variant="body2" sx={{ mb: 1 }}>
             {t('invoices.delete.body', { id: openDelete.row?.invoiceId || '' })}

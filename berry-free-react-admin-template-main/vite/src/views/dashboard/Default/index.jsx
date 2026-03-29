@@ -26,6 +26,7 @@ import AutorenewIcon from '@mui/icons-material/Autorenew';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 import { gridSpacing } from 'store/constant';
 import { useLionTvOverview } from 'api/liontv-overview';
@@ -146,12 +147,20 @@ function KpiCard({ title, value, helper, color = 'primary', icon }) {
       })}
     >
       <CardContent>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.5}>
-          <Box>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography variant="subtitle2" color="text.secondary">
               {title}
             </Typography>
-            <Typography variant="h2" sx={{ mt: 0.5 }}>
+            <Typography
+              variant="h2"
+              sx={{
+                mt: 0.5,
+                lineHeight: 1.15,
+                overflowWrap: 'anywhere',
+                fontSize: { xs: '1.5rem', md: '1.75rem' }
+              }}
+            >
               {value}
             </Typography>
             {helper ? (
@@ -165,6 +174,7 @@ function KpiCard({ title, value, helper, color = 'primary', icon }) {
             sx={(theme) => ({
               width: 46,
               height: 46,
+              flexShrink: 0,
               bgcolor: withAlpha(theme.vars.palette[color]?.main || theme.vars.palette.primary.main, 0.2),
               color: theme.vars.palette[color]?.main || theme.vars.palette.primary.main,
               border: `1px solid ${withAlpha(theme.vars.palette[color]?.main || theme.vars.palette.primary.main, 0.35)}`
@@ -213,7 +223,9 @@ export default function DashboardDefault() {
   const {
     data: overviewData,
     error: overviewError,
-    isLoading: loading
+    isLoading: loading,
+    isValidating,
+    refresh
   } = useLionTvOverview({
     enabled: Boolean(accessToken),
     scope: 'extended'
@@ -958,6 +970,20 @@ export default function DashboardDefault() {
 
   return (
     <Grid container spacing={gridSpacing}>
+      <Grid size={12}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+          <Box>
+            <Typography variant="h3">{t('dashboardDefault.title', 'Dashboard ejecutivo')}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {t('dashboardDefault.subtitle', 'KPIs financieros, operativos y comerciales en tiempo real.')}
+            </Typography>
+          </Box>
+          <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => refresh()} disabled={isValidating}>
+            {isValidating ? t('dashboardDefault.actions.refreshing', 'Actualizando...') : t('dashboardDefault.actions.refresh', 'Refrescar')}
+          </Button>
+        </Stack>
+      </Grid>
+
       <Grid size={12}>
         <Alert severity="info" variant="outlined" sx={infoAlertSx}>
           {t('dashboardDefault.states.kpiSubtitle')}

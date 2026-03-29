@@ -22,7 +22,6 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -37,6 +36,7 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import MainCard from 'ui-component/cards/MainCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { lionTvApi } from 'utils/api';
 
 function normalizeFeed(item = {}) {
@@ -405,7 +405,9 @@ export default function FeedCrudManager({
       </MainCard>
 
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="md">
-        <DialogTitle>{form.id ? t('feedCrud.dialogs.editTitle') : t('feedCrud.dialogs.createTitle')}</DialogTitle>
+        <DialogTitleWithClose onClose={() => setOpenModal(false)}>
+          {form.id ? t('feedCrud.dialogs.editTitle') : t('feedCrud.dialogs.createTitle')}
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2}>
             <TextField
@@ -442,7 +444,9 @@ export default function FeedCrudManager({
       </Dialog>
 
       <Dialog open={openDelete.open} onClose={() => setOpenDelete({ open: false, row: null })} fullWidth maxWidth="xs">
-        <DialogTitle>{t('feedCrud.dialogs.deleteTitle')}</DialogTitle>
+        <DialogTitleWithClose onClose={() => setOpenDelete({ open: false, row: null })}>
+          {t('feedCrud.dialogs.deleteTitle')}
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Typography variant="body2">
             {t('feedCrud.dialogs.deleteBody', { id: openDelete.row?.id ?? '-' })}

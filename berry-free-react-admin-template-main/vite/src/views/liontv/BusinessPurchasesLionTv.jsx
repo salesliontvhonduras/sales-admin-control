@@ -22,7 +22,6 @@ import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import FormControl from '@mui/material/FormControl';
@@ -70,8 +69,10 @@ import RepeatIcon from '@mui/icons-material/Repeat';
 import NoteAltIcon from '@mui/icons-material/NoteAlt';
 
 import MainCard from 'ui-component/cards/MainCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
+import { withAlpha } from 'utils/colorUtils';
 
 const statusColors = {
   PAID: 'success',
@@ -89,12 +90,16 @@ const glassCard = (theme) => ({
   p: 2,
   borderRadius: 2.5,
   border: '1px solid',
-  borderColor: 'divider',
-  boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
-  background:
-    theme.palette.mode === 'light'
-      ? `linear-gradient(135deg, ${theme.palette.primary.light}24 0%, ${theme.palette.secondary.main}12 45%, ${theme.palette.background.paper} 100%)`
-      : theme.palette.surface.sunken
+  borderColor: withAlpha(theme.vars?.palette?.divider || theme.palette.divider, 0.95),
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? `0 16px 36px ${withAlpha('#020817', 0.52)}`
+      : `0 14px 34px ${withAlpha('#0f172a', 0.12)}`,
+  backgroundColor: theme.vars?.palette?.surface?.card || theme.palette.background.paper,
+  backgroundImage:
+    theme.palette.mode === 'dark'
+      ? `linear-gradient(150deg, ${withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, 0.22)} 0%, ${withAlpha(theme.vars?.palette?.secondary?.main || theme.palette.secondary.main, 0.14)} 52%, ${theme.vars?.palette?.surface?.card || theme.palette.background.paper} 100%)`
+      : `linear-gradient(150deg, ${withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, 0.1)} 0%, ${withAlpha(theme.vars?.palette?.secondary?.main || theme.palette.secondary.main, 0.08)} 52%, ${theme.vars?.palette?.surface?.card || theme.palette.background.paper} 100%)`
 });
 
 const sectionSx = {
@@ -181,6 +186,24 @@ function optionLabel(options, value, fallback = '-') {
   return item?.label || value;
 }
 
+function toSafeNumber(value) {
+  if (value === null || value === undefined || value === '') return 0;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+
+  let normalized = String(value).trim();
+  if (!normalized) return 0;
+  normalized = normalized.replace(/[^\d,.-]/g, '');
+
+  if (normalized.includes(',') && normalized.includes('.')) {
+    normalized = normalized.replace(/,/g, '');
+  } else if (normalized.includes(',') && !normalized.includes('.')) {
+    normalized = normalized.replace(',', '.');
+  }
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function formatDate(value) {
   if (!value) return '-';
   const d = new Date(value);
@@ -204,8 +227,9 @@ function formatDateTimeInput(value) {
 }
 
 function StatusChip({ status }) {
+  const { t } = useTranslation();
   const color = statusColors[status] || 'default';
-  return <Chip size="small" color={color} label={optionLabel(statusOptions, status, '-')} />;
+  return <Chip size="small" color={color} label={t(`businessPurchases.enums.status.${status}`, optionLabel(statusOptions, status, '-'))} />;
 }
 
 function FormSection({ title, helper, icon: Icon, children }) {
@@ -215,18 +239,27 @@ function FormSection({ title, helper, icon: Icon, children }) {
         ...sectionSx,
         position: 'relative',
         overflow: 'hidden',
-        borderLeft: `4px solid ${theme.palette.primary.main}44`,
-        background:
-          theme.palette.mode === 'light'
-            ? `linear-gradient(135deg, ${theme.palette.primary.light}08 0%, ${theme.palette.secondary.light}08 100%)`
-            : theme.palette.background.paper
+        borderLeft: `4px solid ${withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.62 : 0.36)}`,
+        borderColor: withAlpha(theme.vars?.palette?.divider || theme.palette.divider, 0.9),
+        backgroundColor: theme.vars?.palette?.surface?.card || theme.palette.background.paper,
+        backgroundImage:
+          theme.palette.mode === 'dark'
+            ? `linear-gradient(145deg, ${withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, 0.08)} 0%, ${withAlpha(theme.vars?.palette?.secondary?.main || theme.palette.secondary.main, 0.04)} 100%)`
+            : `linear-gradient(145deg, ${withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, 0.05)} 0%, ${withAlpha(theme.vars?.palette?.secondary?.main || theme.palette.secondary.main, 0.03)} 100%)`
       })}
     >
       <Stack spacing={1.5}>
         <Box>
           <Stack direction="row" spacing={1} alignItems="center">
             {Icon ? (
-              <Avatar sx={{ width: 24, height: 24, bgcolor: 'primary.lighter', color: 'primary.main' }}>
+              <Avatar
+                sx={(theme) => ({
+                  width: 24,
+                  height: 24,
+                  bgcolor: withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.24 : 0.12),
+                  color: theme.vars?.palette?.primary?.main || theme.palette.primary.main
+                })}
+              >
                 <Icon fontSize="small" />
               </Avatar>
             ) : null}
@@ -245,6 +278,10 @@ function FormSection({ title, helper, icon: Icon, children }) {
 }
 
 function normalizePurchase(item = {}) {
+  const quantity = item.quantity === null || item.quantity === undefined || item.quantity === '' ? 1 : toSafeNumber(item.quantity);
+  const unitCost = toSafeNumber(item.unitCost ?? item.unit_cost);
+  const totalAmount = toSafeNumber(item.totalAmount ?? item.total_amount);
+
   return {
     id: item.id ?? null,
     purchaseCode: item.purchaseCode ?? item.purchase_code ?? '',
@@ -253,11 +290,11 @@ function normalizePurchase(item = {}) {
     providerName: item.providerName ?? item.provider_name ?? '',
     itemName: item.itemName ?? item.item_name ?? '',
     description: item.description ?? '',
-    quantity: item.quantity ?? 1,
-    unitCost: item.unitCost ?? item.unit_cost ?? 0,
-    totalAmount: item.totalAmount ?? item.total_amount ?? 0,
+    quantity,
+    unitCost,
+    totalAmount,
     currency: item.currency ?? 'HNL',
-    exchangeRate: item.exchangeRate ?? item.exchange_rate ?? null,
+    exchangeRate: toSafeNumber(item.exchangeRate ?? item.exchange_rate) || null,
     purchaseDate: item.purchaseDate ?? item.purchase_date ?? '',
     dueDate: item.dueDate ?? item.due_date ?? '',
     paidAt: item.paidAt ?? item.paid_at ?? null,
@@ -286,12 +323,15 @@ function RowActions({ row, onEdit, onDelete }) {
         size="small"
         onClick={(e) => setAnchorEl(e.currentTarget)}
         sx={(theme) => ({
-          bgcolor: theme.palette.primary.lighter,
-          color: theme.palette.primary.main,
+          bgcolor: withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.22 : 0.12),
+          color: theme.vars?.palette?.primary?.main || theme.palette.primary.main,
           '&:hover': {
-            bgcolor: theme.palette.primary.light
+            bgcolor: withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.34 : 0.2)
           },
-          boxShadow: '0 6px 14px rgba(0,0,0,0.12)'
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? `0 10px 20px ${withAlpha('#020617', 0.46)}`
+              : `0 8px 16px ${withAlpha('#0f172a', 0.12)}`
         })}
       >
         <MoreVertIcon fontSize="small" />
@@ -309,7 +349,7 @@ function RowActions({ row, onEdit, onDelete }) {
             onEdit?.(row);
           }}
         >
-          <EditOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#1e88e5' }} />
+          <EditOutlinedIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
           {t('actions.edit', 'Edit')}
         </MenuItem>
         <MenuItem
@@ -318,7 +358,7 @@ function RowActions({ row, onEdit, onDelete }) {
             onDelete?.(row);
           }}
         >
-          <DeleteOutlineIcon fontSize="small" style={{ marginRight: 8, color: '#e53935' }} />
+          <DeleteOutlineIcon fontSize="small" sx={{ mr: 1, color: 'error.main' }} />
           {t('actions.delete', 'Delete')}
         </MenuItem>
       </Menu>
@@ -378,6 +418,35 @@ export default function BusinessPurchasesLionTv() {
   const [form, setForm] = useState(() => createDefaultForm());
   const [sending, setSending] = useState(false);
 
+  const purchaseTypeOptionsT = useMemo(
+    () => purchaseTypeOptions.map((opt) => ({ ...opt, label: t(`businessPurchases.enums.purchaseType.${opt.value}`, opt.label) })),
+    [t]
+  );
+  const categoryOptionsT = useMemo(
+    () => categoryOptions.map((opt) => ({ ...opt, label: t(`businessPurchases.enums.category.${opt.value}`, opt.label) })),
+    [t]
+  );
+  const currencyOptionsT = useMemo(
+    () => currencyOptions.map((opt) => ({ ...opt, label: t(`businessPurchases.enums.currency.${opt.value}`, opt.label) })),
+    [t]
+  );
+  const paymentMethodOptionsT = useMemo(
+    () => paymentMethodOptions.map((opt) => ({ ...opt, label: t(`businessPurchases.enums.paymentMethod.${opt.value}`, opt.label) })),
+    [t]
+  );
+  const businessAreaOptionsT = useMemo(
+    () => businessAreaOptions.map((opt) => ({ ...opt, label: t(`businessPurchases.enums.businessArea.${opt.value}`, opt.label) })),
+    [t]
+  );
+  const statusOptionsT = useMemo(
+    () => statusOptions.map((opt) => ({ ...opt, label: t(`businessPurchases.enums.status.${opt.value}`, opt.label) })),
+    [t]
+  );
+  const recurrenceOptionsT = useMemo(
+    () => recurrenceOptions.map((opt) => ({ ...opt, label: t(`businessPurchases.enums.recurrence.${opt.value}`, opt.label) })),
+    [t]
+  );
+
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
     return status === 401;
@@ -398,14 +467,14 @@ export default function BusinessPurchasesLionTv() {
       setRows(list.map(normalizePurchase));
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudieron cargar las compras.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('businessPurchases.messages.loadError', 'Could not load purchases.'), {
           variant: 'error'
         });
       }
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar]);
+  }, [accessToken, enqueueSnackbar, t]);
 
   useEffect(() => {
     loadBusinessPurchases();
@@ -446,7 +515,7 @@ export default function BusinessPurchasesLionTv() {
       paid: rows.filter((r) => r.status === 'PAID').length,
       pending: rows.filter((r) => r.status === 'PENDING').length,
       recurring: rows.filter((r) => r.isRecurring).length,
-      totalAmount: rows.reduce((acc, row) => acc + Number(row.totalAmount || 0), 0)
+      totalAmount: rows.reduce((acc, row) => acc + toSafeNumber(row.totalAmount), 0)
     }),
     [rows]
   );
@@ -456,16 +525,16 @@ export default function BusinessPurchasesLionTv() {
   const resetForm = () => setForm(createDefaultForm());
 
   const handleFormChange = (field) => (event) => {
-    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
-    setForm((prev) => {
-      const next = { ...prev, [field]: value };
-      if (field === 'quantity' || field === 'unitCost') {
-        const qty = Number(field === 'quantity' ? value : next.quantity || 0);
-        const cost = Number(field === 'unitCost' ? value : next.unitCost || 0);
-        next.totalAmount = qty * cost;
-      }
-      if (field === 'isRecurring' && !value) {
-        next.recurrenceType = 'NONE';
+      const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
+      setForm((prev) => {
+        const next = { ...prev, [field]: value };
+        if (field === 'quantity' || field === 'unitCost') {
+          const qty = toSafeNumber(field === 'quantity' ? value : next.quantity);
+          const cost = toSafeNumber(field === 'unitCost' ? value : next.unitCost);
+          next.totalAmount = qty * cost;
+        }
+        if (field === 'isRecurring' && !value) {
+          next.recurrenceType = 'NONE';
       }
       return next;
     });
@@ -504,14 +573,14 @@ export default function BusinessPurchasesLionTv() {
 
   const handleSave = async () => {
     if (!form.purchaseCode || !form.purchaseType || !form.category || !form.itemName || !form.purchaseDate) {
-      enqueueSnackbar('Completa los campos requeridos.', { variant: 'warning' });
+      enqueueSnackbar(t('businessPurchases.messages.required', 'Complete required fields.'), { variant: 'warning' });
       return;
     }
 
     const paidAt = form.paidAt ? (String(form.paidAt).length === 16 ? `${form.paidAt}:00` : form.paidAt) : null;
-    const quantity = Number(form.quantity || 0);
-    const unitCost = Number(form.unitCost || 0);
-    const totalAmount = form.totalAmount === '' || form.totalAmount === null ? quantity * unitCost : Number(form.totalAmount || 0);
+    const quantity = toSafeNumber(form.quantity);
+    const unitCost = toSafeNumber(form.unitCost);
+    const totalAmount = form.totalAmount === '' || form.totalAmount === null ? quantity * unitCost : toSafeNumber(form.totalAmount);
 
     const payload = {
       purchaseCode: form.purchaseCode,
@@ -524,7 +593,7 @@ export default function BusinessPurchasesLionTv() {
       unitCost,
       totalAmount,
       currency: form.currency,
-      exchangeRate: form.exchangeRate ? Number(form.exchangeRate) : null,
+      exchangeRate: form.exchangeRate ? toSafeNumber(form.exchangeRate) : null,
       purchaseDate: form.purchaseDate || null,
       dueDate: form.dueDate || null,
       paidAt,
@@ -545,20 +614,20 @@ export default function BusinessPurchasesLionTv() {
           headers: { Authorization: `Bearer ${accessToken}` },
           skipAuthRedirect: true
         });
-        enqueueSnackbar('Compra actualizada.', { variant: 'success' });
+        enqueueSnackbar(t('businessPurchases.messages.updated', 'Purchase updated.'), { variant: 'success' });
       } else {
         await lionTvApi.post('/business-purchases/v1', payload, {
           headers: { Authorization: `Bearer ${accessToken}` },
           skipAuthRedirect: true
         });
-        enqueueSnackbar('Compra registrada.', { variant: 'success' });
+        enqueueSnackbar(t('businessPurchases.messages.created', 'Purchase created.'), { variant: 'success' });
       }
       setOpenModal(false);
       resetForm();
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo guardar la compra.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('businessPurchases.messages.saveError', 'Could not save purchase.'), {
           variant: 'error'
         });
       }
@@ -579,12 +648,12 @@ export default function BusinessPurchasesLionTv() {
         headers: { Authorization: `Bearer ${accessToken}` },
         skipAuthRedirect: true
       });
-      enqueueSnackbar('Compra eliminada.', { variant: 'success' });
+      enqueueSnackbar(t('businessPurchases.messages.deleted', 'Purchase deleted.'), { variant: 'success' });
       setOpenDelete({ open: false, row: null });
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo eliminar la compra.', {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('businessPurchases.messages.deleteError', 'Could not delete purchase.'), {
           variant: 'error'
         });
       }
@@ -611,7 +680,15 @@ export default function BusinessPurchasesLionTv() {
               variant="contained"
               startIcon={<AddCircleOutlineIcon />}
               onClick={() => setOpenModal(true)}
-              sx={{ borderRadius: 2, textTransform: 'none', px: 2.5, boxShadow: '0 10px 24px rgba(0,0,0,0.12)' }}
+              sx={(muiTheme) => ({
+                borderRadius: 2,
+                textTransform: 'none',
+                px: 2.5,
+                boxShadow:
+                  muiTheme.palette.mode === 'dark'
+                    ? `0 12px 26px ${withAlpha(muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main, 0.35)}`
+                    : `0 10px 22px ${withAlpha(muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main, 0.24)}`
+              })}
             >
               {t('businessPurchases.actions.new', 'New purchase')}
             </Button>
@@ -656,23 +733,25 @@ export default function BusinessPurchasesLionTv() {
                   px: 2,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 1.5,
-                  background:
-                    muiTheme.palette.mode === 'light'
-                      ? `linear-gradient(155deg, ${muiTheme.palette.primary.main}1F 0%, ${muiTheme.palette.secondary.main}20 55%, ${muiTheme.palette.background.paper} 100%)`
-                      : muiTheme.palette.background.paper
+                  gap: 1.5
                 })}
               >
                 <Avatar
                   sx={(muiTheme) => ({
                     width: 40,
                     height: 40,
-                    bgcolor: muiTheme.palette.mode === 'light' ? `${item.color}` : muiTheme.palette.primary.dark,
-                    color: muiTheme.palette.getContrastText(muiTheme.palette.primary.main),
+                    bgcolor: withAlpha(
+                      muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main,
+                      muiTheme.palette.mode === 'dark' ? 0.24 : 0.16
+                    ),
+                    color: item.color,
                     fontWeight: 700,
-                    boxShadow: 3,
+                    boxShadow:
+                      muiTheme.palette.mode === 'dark'
+                        ? `0 10px 20px ${withAlpha('#020617', 0.4)}`
+                        : `0 8px 16px ${withAlpha('#0f172a', 0.14)}`,
                     border: '2px solid',
-                    borderColor: 'background.paper'
+                    borderColor: withAlpha(muiTheme.vars?.palette?.divider || muiTheme.palette.divider, 0.9)
                   })}
                 >
                   <item.icon fontSize="small" />
@@ -700,12 +779,12 @@ export default function BusinessPurchasesLionTv() {
                 p: 1,
                 borderRadius: 2,
                 border: '1px solid',
-                borderColor: 'divider',
-                background:
-                  muiTheme.palette.mode === 'light'
-                    ? `linear-gradient(120deg, ${muiTheme.palette.primary.light}12 0%, ${muiTheme.palette.secondary.light}12 100%)`
-                    : muiTheme.palette.background.paper,
-                boxShadow: '0 8px 18px rgba(0,0,0,0.05)'
+                borderColor: withAlpha(muiTheme.vars?.palette?.divider || muiTheme.palette.divider, 0.95),
+                backgroundColor: muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper,
+                boxShadow:
+                  muiTheme.palette.mode === 'dark'
+                    ? `0 12px 26px ${withAlpha('#020617', 0.38)}`
+                    : `0 10px 20px ${withAlpha('#0f172a', 0.08)}`
               })}
             >
               <TextField
@@ -739,7 +818,7 @@ export default function BusinessPurchasesLionTv() {
                   <MenuItem value="">
                     <em>{t('businessPurchases.filters.all', 'All')}</em>
                   </MenuItem>
-                  {categoryOptions.map((opt) => (
+                  {categoryOptionsT.map((opt) => (
                     <MenuItem key={opt.value} value={opt.value}>
                       {opt.label}
                     </MenuItem>
@@ -756,7 +835,7 @@ export default function BusinessPurchasesLionTv() {
                   <MenuItem value="">
                     <em>{t('businessPurchases.filters.all', 'All')}</em>
                   </MenuItem>
-                  {purchaseTypeOptions.map((opt) => (
+                  {purchaseTypeOptionsT.map((opt) => (
                     <MenuItem key={opt.value} value={opt.value}>
                       {opt.label}
                     </MenuItem>
@@ -778,7 +857,7 @@ export default function BusinessPurchasesLionTv() {
                   <MenuItem value="">
                     <em>{t('businessPurchases.filters.all', 'All')}</em>
                   </MenuItem>
-                  {statusOptions.map((opt) => (
+                  {statusOptionsT.map((opt) => (
                     <MenuItem key={opt.value} value={opt.value}>
                       {opt.label}
                     </MenuItem>
@@ -804,15 +883,46 @@ export default function BusinessPurchasesLionTv() {
 
             {hasFilters ? (
               <Stack direction="row" spacing={0.75} flexWrap="wrap">
-                {search ? <Chip size="small" label={`Search: ${search}`} color="primary" variant="outlined" /> : null}
+                {search ? (
+                  <Chip
+                    size="small"
+                    label={t('businessPurchases.filters.searchChip', { defaultValue: 'Search: {{value}}', value: search })}
+                    color="primary"
+                    variant="outlined"
+                  />
+                ) : null}
                 {categoryFilter ? (
-                  <Chip size="small" label={`Category: ${optionLabel(categoryOptions, categoryFilter)}`} color="primary" variant="outlined" />
+                  <Chip
+                    size="small"
+                    label={t('businessPurchases.filters.categoryChip', {
+                      defaultValue: 'Category: {{value}}',
+                      value: optionLabel(categoryOptionsT, categoryFilter)
+                    })}
+                    color="primary"
+                    variant="outlined"
+                  />
                 ) : null}
                 {purchaseTypeFilter ? (
-                  <Chip size="small" label={`Type: ${optionLabel(purchaseTypeOptions, purchaseTypeFilter)}`} color="primary" variant="outlined" />
+                  <Chip
+                    size="small"
+                    label={t('businessPurchases.filters.typeChip', {
+                      defaultValue: 'Type: {{value}}',
+                      value: optionLabel(purchaseTypeOptionsT, purchaseTypeFilter)
+                    })}
+                    color="primary"
+                    variant="outlined"
+                  />
                 ) : null}
                 {statusFilter ? (
-                  <Chip size="small" label={`Status: ${optionLabel(statusOptions, statusFilter)}`} color="primary" variant="outlined" />
+                  <Chip
+                    size="small"
+                    label={t('businessPurchases.filters.statusChip', {
+                      defaultValue: 'Status: {{value}}',
+                      value: optionLabel(statusOptionsT, statusFilter)
+                    })}
+                    color="primary"
+                    variant="outlined"
+                  />
                 ) : null}
               </Stack>
             ) : null}
@@ -821,7 +931,17 @@ export default function BusinessPurchasesLionTv() {
       >
         <TableContainer
           component={Paper}
-          sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 12px 24px rgba(0,0,0,0.06)', border: '1px solid', borderColor: 'divider' }}
+          sx={(muiTheme) => ({
+            borderRadius: 3,
+            overflow: 'hidden',
+            boxShadow:
+              muiTheme.palette.mode === 'dark'
+                ? `0 16px 34px ${withAlpha('#020617', 0.44)}`
+                : `0 12px 24px ${withAlpha('#0f172a', 0.08)}`,
+            border: '1px solid',
+            borderColor: withAlpha(muiTheme.vars?.palette?.divider || muiTheme.palette.divider, 0.95),
+            backgroundColor: muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper
+          })}
         >
           <Table size="small">
             <TableHead>
@@ -844,10 +964,43 @@ export default function BusinessPurchasesLionTv() {
             </TableHead>
             <TableBody>
               {paginatedRows.map((row) => (
-                <TableRow key={row.id} hover sx={{ '&:nth-of-type(odd)': { bgcolor: 'background.paper' }, transition: 'background 0.2s ease' }}>
+                <TableRow
+                  key={row.id}
+                  hover
+                  sx={(muiTheme) => ({
+                    bgcolor: muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper,
+                    '&:nth-of-type(odd)': {
+                      bgcolor: withAlpha(
+                        muiTheme.vars?.palette?.surface?.muted || muiTheme.palette.action.hover,
+                        muiTheme.palette.mode === 'dark' ? 0.84 : 0.44
+                      )
+                    },
+                    '&:hover': {
+                      bgcolor: withAlpha(
+                        muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main,
+                        muiTheme.palette.mode === 'dark' ? 0.12 : 0.06
+                      )
+                    },
+                    transition: 'background-color 0.2s ease'
+                  })}
+                >
                   <TableCell>
                     <Stack direction="row" spacing={1.5} alignItems="center">
-                      <Avatar sx={{ width: 34, height: 34, bgcolor: 'secondary.light', color: 'secondary.dark', boxShadow: 2 }}>
+                      <Avatar
+                        sx={(muiTheme) => ({
+                          width: 34,
+                          height: 34,
+                          bgcolor: withAlpha(
+                            muiTheme.vars?.palette?.secondary?.main || muiTheme.palette.secondary.main,
+                            muiTheme.palette.mode === 'dark' ? 0.26 : 0.18
+                          ),
+                          color: muiTheme.vars?.palette?.secondary?.main || muiTheme.palette.secondary.main,
+                          boxShadow:
+                            muiTheme.palette.mode === 'dark'
+                              ? `0 8px 16px ${withAlpha('#020617', 0.4)}`
+                              : `0 6px 12px ${withAlpha('#0f172a', 0.12)}`
+                        })}
+                      >
                         <ReceiptLongIcon fontSize="small" />
                       </Avatar>
                       <Stack spacing={0.2}>
@@ -873,12 +1026,12 @@ export default function BusinessPurchasesLionTv() {
                       size="small"
                       variant="outlined"
                       icon={<ShoppingCartIcon fontSize="small" />}
-                      label={optionLabel(purchaseTypeOptions, row.purchaseType)}
+                      label={optionLabel(purchaseTypeOptionsT, row.purchaseType)}
                       sx={{ maxWidth: 240, '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }}
                     />
                   </TableCell>
                   <TableCell>
-                    <Chip size="small" label={optionLabel(categoryOptions, row.category)} variant="outlined" />
+                    <Chip size="small" label={optionLabel(categoryOptionsT, row.category)} variant="outlined" />
                   </TableCell>
                   <TableCell>
                     <Stack spacing={0.25}>
@@ -886,11 +1039,11 @@ export default function BusinessPurchasesLionTv() {
                         size="small"
                         variant="outlined"
                         icon={<AccountBalanceWalletIcon fontSize="small" color="success" />}
-                        label={`${row.currency || 'HNL'} ${Number(row.totalAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                        label={`${row.currency || 'HNL'} ${toSafeNumber(row.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
                         sx={{ fontWeight: 600 }}
                       />
                       <Typography variant="caption" color="text.secondary">
-                        {Number(row.quantity || 0).toLocaleString()} x {Number(row.unitCost || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        {toSafeNumber(row.quantity).toLocaleString()} x {toSafeNumber(row.unitCost).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                       </Typography>
                     </Stack>
                   </TableCell>
@@ -911,7 +1064,7 @@ export default function BusinessPurchasesLionTv() {
                       size="small"
                       variant="outlined"
                       color={paymentMethodChipColors[row.paymentMethod] || 'default'}
-                      label={optionLabel(paymentMethodOptions, row.paymentMethod)}
+                      label={optionLabel(paymentMethodOptionsT, row.paymentMethod)}
                     />
                   </TableCell>
                   <TableCell>
@@ -927,7 +1080,15 @@ export default function BusinessPurchasesLionTv() {
                 <TableRow>
                   <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
                     <Stack spacing={1} alignItems="center">
-                      <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                      <Avatar
+                        sx={(muiTheme) => ({
+                          bgcolor: withAlpha(
+                            muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main,
+                            muiTheme.palette.mode === 'dark' ? 0.24 : 0.12
+                          ),
+                          color: muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main
+                        })}
+                      >
                         <ShoppingCartIcon />
                       </Avatar>
                       <Typography variant="subtitle1">{t('businessPurchases.empty.title', 'No purchases yet')}</Typography>
@@ -946,7 +1107,15 @@ export default function BusinessPurchasesLionTv() {
                 <TableRow>
                   <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                     <Stack spacing={1} alignItems="center">
-                      <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                      <Avatar
+                        sx={(muiTheme) => ({
+                          bgcolor: withAlpha(
+                            muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main,
+                            muiTheme.palette.mode === 'dark' ? 0.24 : 0.12
+                          ),
+                          color: muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main
+                        })}
+                      >
                         <RefreshIcon />
                       </Avatar>
                       <Typography variant="body2" color="text.secondary">
@@ -981,27 +1150,50 @@ export default function BusinessPurchasesLionTv() {
         PaperProps={{
           sx: (muiTheme) => ({
             borderRadius: 3,
-            boxShadow: '0 18px 40px rgba(0,0,0,0.18)',
+            boxShadow:
+              muiTheme.palette.mode === 'dark'
+                ? `0 26px 56px ${withAlpha('#020617', 0.6)}`
+                : `0 18px 40px ${withAlpha('#0f172a', 0.2)}`,
             border: '1px solid',
-            borderColor: form.id ? muiTheme.palette.warning.light : muiTheme.palette.primary.light,
+            borderColor: withAlpha(
+              form.id
+                ? muiTheme.vars?.palette?.warning?.main || muiTheme.palette.warning.main
+                : muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main,
+              muiTheme.palette.mode === 'dark' ? 0.5 : 0.3
+            ),
+            backgroundColor: muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper,
             backgroundImage:
-              muiTheme.palette.mode === 'light'
-                ? `linear-gradient(150deg, ${muiTheme.palette.primary.light}18 0%, ${muiTheme.palette.secondary.light}10 45%, ${muiTheme.palette.background.paper} 100%)`
-                : undefined
+              muiTheme.palette.mode === 'dark'
+                ? `linear-gradient(155deg, ${withAlpha(muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main, 0.2)} 0%, ${withAlpha(muiTheme.vars?.palette?.secondary?.main || muiTheme.palette.secondary.main, 0.12)} 56%, ${muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper} 100%)`
+                : `linear-gradient(155deg, ${withAlpha(muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main, 0.09)} 0%, ${withAlpha(muiTheme.vars?.palette?.secondary?.main || muiTheme.palette.secondary.main, 0.06)} 56%, ${muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper} 100%)`
           })
         }}
       >
-        <DialogTitle
+        <DialogTitleWithClose
+          onClose={() => setOpenModal(false)}
           sx={(muiTheme) => ({
             position: 'relative',
             pb: 1,
-            background: form.id
-              ? `linear-gradient(135deg, ${muiTheme.palette.warning.light}40 0%, ${muiTheme.palette.secondary.light}20 45%, ${muiTheme.palette.background.paper} 100%)`
-              : `linear-gradient(135deg, ${muiTheme.palette.primary.light}40 0%, ${muiTheme.palette.secondary.light}20 45%, ${muiTheme.palette.background.paper} 100%)`
+            borderBottom: `1px solid ${withAlpha(muiTheme.vars?.palette?.divider || muiTheme.palette.divider, 0.9)}`,
+            background:
+              form.id
+                ? `linear-gradient(135deg, ${withAlpha(muiTheme.vars?.palette?.warning?.main || muiTheme.palette.warning.main, muiTheme.palette.mode === 'dark' ? 0.2 : 0.12)} 0%, ${withAlpha(muiTheme.vars?.palette?.secondary?.main || muiTheme.palette.secondary.main, muiTheme.palette.mode === 'dark' ? 0.14 : 0.08)} 55%, ${muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper} 100%)`
+                : `linear-gradient(135deg, ${withAlpha(muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main, muiTheme.palette.mode === 'dark' ? 0.2 : 0.12)} 0%, ${withAlpha(muiTheme.vars?.palette?.secondary?.main || muiTheme.palette.secondary.main, muiTheme.palette.mode === 'dark' ? 0.14 : 0.08)} 55%, ${muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper} 100%)`
           })}
         >
           <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Avatar sx={{ bgcolor: form.id ? 'warning.main' : 'primary.main', color: 'common.white', width: 40, height: 40, boxShadow: 3 }}>
+            <Avatar
+              sx={(muiTheme) => ({
+                bgcolor: form.id ? 'warning.main' : 'primary.main',
+                color: 'common.white',
+                width: 40,
+                height: 40,
+                boxShadow:
+                  muiTheme.palette.mode === 'dark'
+                    ? `0 12px 24px ${withAlpha('#020617', 0.5)}`
+                    : `0 10px 20px ${withAlpha('#0f172a', 0.18)}`
+              })}
+            >
               <ShoppingCartIcon fontSize="small" />
             </Avatar>
             <Box>
@@ -1017,18 +1209,19 @@ export default function BusinessPurchasesLionTv() {
               sx={{ ml: 'auto', fontWeight: 700, borderRadius: 1.5 }}
             />
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
 
         <DialogContent
           dividers
-          sx={{
+          sx={(muiTheme) => ({
             bgcolor: 'background.default',
             px: { xs: 1.5, sm: 3 },
             py: { xs: 1.5, sm: 2 },
-            background: (muiTheme) =>
-              muiTheme.palette.mode === 'light'
-                ? `linear-gradient(180deg, ${muiTheme.palette.primary.light}18 0%, ${muiTheme.palette.secondary.light}10 60%, ${muiTheme.palette.background.paper} 85%)`
-                : muiTheme.palette.surface.card,
+            backgroundColor: muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper,
+            backgroundImage:
+              muiTheme.palette.mode === 'dark'
+                ? `linear-gradient(180deg, ${withAlpha(muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main, 0.12)} 0%, ${withAlpha(muiTheme.vars?.palette?.secondary?.main || muiTheme.palette.secondary.main, 0.08)} 54%, ${muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper} 100%)`
+                : `linear-gradient(180deg, ${withAlpha(muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main, 0.08)} 0%, ${withAlpha(muiTheme.vars?.palette?.secondary?.main || muiTheme.palette.secondary.main, 0.05)} 54%, ${muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper} 100%)`,
             position: 'relative',
             '&:before': {
               content: '""',
@@ -1037,9 +1230,11 @@ export default function BusinessPurchasesLionTv() {
               zIndex: 0,
               borderRadius: 20,
               background:
-                'radial-gradient(circle at 18% 18%, rgba(33,150,243,0.10), transparent 45%), radial-gradient(circle at 82% 0%, rgba(156,39,176,0.10), transparent 35%)'
+                muiTheme.palette.mode === 'dark'
+                  ? `radial-gradient(circle at 18% 18%, ${withAlpha(muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main, 0.16)} 0%, transparent 45%), radial-gradient(circle at 82% 0%, ${withAlpha(muiTheme.vars?.palette?.secondary?.main || muiTheme.palette.secondary.main, 0.14)} 0%, transparent 35%)`
+                  : `radial-gradient(circle at 18% 18%, ${withAlpha(muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main, 0.08)} 0%, transparent 45%), radial-gradient(circle at 82% 0%, ${withAlpha(muiTheme.vars?.palette?.secondary?.main || muiTheme.palette.secondary.main, 0.07)} 0%, transparent 35%)`
             }
-          }}
+          })}
         >
           <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1, position: 'relative', zIndex: 1 }}>
             <Chip
@@ -1062,10 +1257,10 @@ export default function BusinessPurchasesLionTv() {
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              bgcolor: muiTheme.palette.info.lighter,
-              color: muiTheme.palette.info.dark,
+              bgcolor: withAlpha(muiTheme.vars?.palette?.info?.main || muiTheme.palette.info.main, muiTheme.palette.mode === 'dark' ? 0.18 : 0.1),
+              color: muiTheme.vars?.palette?.info?.main || muiTheme.palette.info.main,
               border: '1px dashed',
-              borderColor: muiTheme.palette.info.main
+              borderColor: withAlpha(muiTheme.vars?.palette?.info?.main || muiTheme.palette.info.main, 0.8)
             })}
           >
             <InfoOutlinedIcon fontSize="small" />
@@ -1088,7 +1283,7 @@ export default function BusinessPurchasesLionTv() {
               color="default"
               variant="outlined"
               icon={<ReceiptLongIcon fontSize="small" color="info" />}
-              label={`${t('businessPurchases.form.purchaseType', 'Purchase type')}: ${optionLabel(purchaseTypeOptions, form.purchaseType, '-')}`}
+              label={`${t('businessPurchases.form.purchaseType', 'Purchase type')}: ${optionLabel(purchaseTypeOptionsT, form.purchaseType, '-')}`}
               sx={{ bgcolor: 'background.paper' }}
             />
             <Chip
@@ -1096,14 +1291,14 @@ export default function BusinessPurchasesLionTv() {
               color="default"
               variant="outlined"
               icon={<CategoryIcon fontSize="small" color="secondary" />}
-              label={`${t('businessPurchases.form.category', 'Category')}: ${optionLabel(categoryOptions, form.category, '-')}`}
+              label={`${t('businessPurchases.form.category', 'Category')}: ${optionLabel(categoryOptionsT, form.category, '-')}`}
               sx={{ bgcolor: 'background.paper' }}
             />
             <Chip
               size="small"
               color={statusColors[form.status] || 'default'}
               icon={<PaidOutlinedIcon fontSize="small" />}
-              label={`${t('businessPurchases.form.status', 'Status')}: ${optionLabel(statusOptions, form.status, '-')}`}
+              label={`${t('businessPurchases.form.status', 'Status')}: ${optionLabel(statusOptionsT, form.status, '-')}`}
               sx={{ bgcolor: 'background.paper' }}
             />
           </Stack>
@@ -1145,7 +1340,7 @@ export default function BusinessPurchasesLionTv() {
                         </InputAdornment>
                       }
                     >
-                      {purchaseTypeOptions.map((opt) => (
+                      {purchaseTypeOptionsT.map((opt) => (
                         <MenuItem key={opt.value} value={opt.value}>
                           {opt.label}
                         </MenuItem>
@@ -1166,7 +1361,7 @@ export default function BusinessPurchasesLionTv() {
                         </InputAdornment>
                       }
                     >
-                      {categoryOptions.map((opt) => (
+                      {categoryOptionsT.map((opt) => (
                         <MenuItem key={opt.value} value={opt.value}>
                           {opt.label}
                         </MenuItem>
@@ -1187,7 +1382,7 @@ export default function BusinessPurchasesLionTv() {
                         </InputAdornment>
                       }
                     >
-                      {statusOptions.map((opt) => (
+                      {statusOptionsT.map((opt) => (
                         <MenuItem key={opt.value} value={opt.value}>
                           {opt.label}
                         </MenuItem>
@@ -1208,7 +1403,7 @@ export default function BusinessPurchasesLionTv() {
                         </InputAdornment>
                       }
                     >
-                      {businessAreaOptions.map((opt) => (
+                      {businessAreaOptionsT.map((opt) => (
                         <MenuItem key={opt.value} value={opt.value}>
                           {opt.label}
                         </MenuItem>
@@ -1338,7 +1533,7 @@ export default function BusinessPurchasesLionTv() {
                         </InputAdornment>
                       }
                     >
-                      {currencyOptions.map((opt) => (
+                      {currencyOptionsT.map((opt) => (
                         <MenuItem key={opt.value} value={opt.value}>
                           {opt.label}
                         </MenuItem>
@@ -1443,7 +1638,7 @@ export default function BusinessPurchasesLionTv() {
                       <MenuItem value="">
                         <em>{t('businessPurchases.form.none', 'None')}</em>
                       </MenuItem>
-                      {paymentMethodOptions.map((opt) => (
+                      {paymentMethodOptionsT.map((opt) => (
                         <MenuItem key={opt.value} value={opt.value}>
                           {opt.label}
                         </MenuItem>
@@ -1516,7 +1711,7 @@ export default function BusinessPurchasesLionTv() {
                         </InputAdornment>
                       }
                     >
-                      {recurrenceOptions.map((opt) => (
+                      {recurrenceOptionsT.map((opt) => (
                         <MenuItem key={opt.value} value={opt.value}>
                           {opt.label}
                         </MenuItem>
@@ -1557,7 +1752,14 @@ export default function BusinessPurchasesLionTv() {
             onClick={handleSave}
             disabled={sending}
             startIcon={<RocketLaunchIcon />}
-            sx={{ borderRadius: 2, boxShadow: '0 12px 28px rgba(0,0,0,0.16)', px: 2.4 }}
+            sx={(muiTheme) => ({
+              borderRadius: 2,
+              boxShadow:
+                muiTheme.palette.mode === 'dark'
+                  ? `0 14px 30px ${withAlpha(muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main, 0.34)}`
+                  : `0 12px 26px ${withAlpha(muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main, 0.24)}`,
+              px: 2.4
+            })}
           >
             {sending
               ? t('businessPurchases.actions.saving', 'Saving...')
@@ -1568,10 +1770,23 @@ export default function BusinessPurchasesLionTv() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openDelete.open} onClose={() => setOpenDelete({ open: false, row: null })} maxWidth="xs" fullWidth fullScreen={isMobile}>
-        <DialogTitle>
+      <Dialog
+        open={openDelete.open}
+        onClose={() => setOpenDelete({ open: false, row: null })}
+        maxWidth="xs"
+        fullWidth
+        fullScreen={isMobile}
+        PaperProps={{
+          sx: (muiTheme) => ({
+            border: '1px solid',
+            borderColor: withAlpha(muiTheme.vars?.palette?.error?.main || muiTheme.palette.error.main, muiTheme.palette.mode === 'dark' ? 0.5 : 0.25),
+            backgroundColor: muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper
+          })
+        }}
+      >
+        <DialogTitleWithClose onClose={() => setOpenDelete({ open: false, row: null })}>
           <Typography variant="h6">{t('businessPurchases.delete.title', 'Delete purchase')}</Typography>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Typography>
             {t('businessPurchases.delete.body', {

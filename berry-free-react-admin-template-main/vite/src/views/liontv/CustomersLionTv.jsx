@@ -26,7 +26,6 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import FormControl from '@mui/material/FormControl';
@@ -67,6 +66,7 @@ import BlockIcon from '@mui/icons-material/Block';
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 
 import MainCard from 'ui-component/cards/MainCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -1034,7 +1034,8 @@ export default function CustomersLionTv() {
           })
         }}
       >
-        <DialogTitle
+        <DialogTitleWithClose
+          onClose={() => setOpenCreate(false)}
           sx={(theme) => ({
             pb: 1,
             background: `linear-gradient(135deg, ${theme.vars.palette.primary.main}33 0%, ${theme.vars.palette.secondary.main}1F 45%, ${theme.vars.palette.surface.card} 100%)`
@@ -1066,7 +1067,7 @@ export default function CustomersLionTv() {
               sx={{ ml: 'auto', fontWeight: 700, borderRadius: 1.5 }}
             />
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent
           dividers
           sx={{
@@ -1393,7 +1394,8 @@ export default function CustomersLionTv() {
           })
         }}
       >
-        <DialogTitle
+        <DialogTitleWithClose
+          onClose={() => setOpenEdit(false)}
           sx={(theme) => ({
             pb: 1,
             background: `linear-gradient(135deg, ${theme.vars.palette.warning.main}33 0%, ${theme.vars.palette.secondary.main}1F 45%, ${theme.vars.palette.surface.card} 100%)`
@@ -1425,7 +1427,7 @@ export default function CustomersLionTv() {
               sx={{ ml: 'auto', fontWeight: 700, borderRadius: 1.5 }}
             />
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent
           dividers
           sx={{
@@ -1744,7 +1746,8 @@ export default function CustomersLionTv() {
           })
         }}
       >
-        <DialogTitle
+        <DialogTitleWithClose
+          onClose={() => setOpenDelete({ open: false, row: null })}
           sx={(theme) => ({
             display: 'flex',
             alignItems: 'center',
@@ -1761,7 +1764,7 @@ export default function CustomersLionTv() {
               {t('customers.form.deleteSubtitle')}
             </Typography>
           </Box>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent dividers>
             <Stack spacing={1.25}>
               <Box

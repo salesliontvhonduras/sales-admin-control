@@ -26,7 +26,6 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import FormControl from '@mui/material/FormControl';
@@ -56,6 +55,7 @@ import ContactPhoneOutlinedIcon from '@mui/icons-material/ContactPhoneOutlined';
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -874,7 +874,8 @@ export default function PotentialCustomersLionTv() {
           })
         }}
       >
-        <DialogTitle
+        <DialogTitleWithClose
+          onClose={() => setOpenModal(false)}
           sx={(theme) => ({
             position: 'relative',
             pb: 1,
@@ -913,7 +914,7 @@ export default function PotentialCustomersLionTv() {
               sx={{ ml: 'auto', fontWeight: 700, borderRadius: 1.5 }}
             />
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
 
         <DialogContent
           dividers
@@ -1090,9 +1091,9 @@ export default function PotentialCustomersLionTv() {
       </Dialog>
 
       <Dialog open={openDelete.open} onClose={() => setOpenDelete({ open: false, row: null })} maxWidth="xs" fullWidth fullScreen={isMobile}>
-        <DialogTitle>
+        <DialogTitleWithClose onClose={() => setOpenDelete({ open: false, row: null })}>
           <Typography variant="h6">{t('potentialCustomers.deleteTitle', 'Eliminar cliente potencial')}</Typography>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Typography>
             {t('potentialCustomers.deleteBody', {

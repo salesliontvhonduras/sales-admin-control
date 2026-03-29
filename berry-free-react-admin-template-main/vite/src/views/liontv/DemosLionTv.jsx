@@ -26,7 +26,6 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import FormControl from '@mui/material/FormControl';
@@ -54,6 +53,7 @@ import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 
 import MainCard from 'ui-component/cards/MainCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { shopifyDemosApi } from 'utils/api';
 
@@ -841,7 +841,8 @@ export default function DemosLionTv() {
           })
         }}
       >
-        <DialogTitle
+        <DialogTitleWithClose
+          onClose={() => setOpenModal(false)}
           sx={(theme) => ({
             pb: 1,
             background: `linear-gradient(135deg, ${theme.vars.palette.primary.main}33 0%, ${theme.vars.palette.secondary.main}1F 45%, ${theme.vars.palette.surface.card} 100%)`
@@ -874,7 +875,7 @@ export default function DemosLionTv() {
               sx={{ ml: 'auto', fontWeight: 700, borderRadius: 1.5 }}
             />
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
 
         <DialogContent
           dividers
@@ -1051,7 +1052,9 @@ export default function DemosLionTv() {
       </Dialog>
 
       <Dialog open={openDelete.open} onClose={() => setOpenDelete({ open: false, row: null })} maxWidth="xs" fullWidth>
-        <DialogTitle>{t('demos.delete.title', 'Eliminar demo')}</DialogTitle>
+        <DialogTitleWithClose onClose={() => setOpenDelete({ open: false, row: null })}>
+          {t('demos.delete.title', 'Eliminar demo')}
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Typography>
             {t('demos.delete.body', '¿Eliminar la demo con MAC {{mac}}?', { mac: openDelete.row?.macAddress })}

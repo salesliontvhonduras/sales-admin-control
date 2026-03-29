@@ -26,7 +26,6 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import FormControl from '@mui/material/FormControl';
@@ -56,6 +55,7 @@ import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -817,7 +817,7 @@ export default function PaymentCommitmentsLionTv() {
       </MainCard>
 
       <Dialog open={openModal} onClose={() => !sending && setOpenModal(false)} fullWidth maxWidth="md">
-        <DialogTitle sx={{ pb: 1 }}>
+        <DialogTitleWithClose sx={{ pb: 1 }} onClose={() => !sending && setOpenModal(false)}>
           <Stack direction="row" spacing={1.25} alignItems="center">
             <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
               {form.paymentCommitmentId ? <AutoAwesomeIcon /> : <RocketLaunchIcon />}
@@ -831,7 +831,7 @@ export default function PaymentCommitmentsLionTv() {
               </Typography>
             </Box>
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
 
         <DialogContent dividers>
           <Stack spacing={2}>
@@ -971,7 +971,7 @@ export default function PaymentCommitmentsLionTv() {
       </Dialog>
 
       <Dialog open={openDelete.open} onClose={() => !sending && setOpenDelete({ open: false, row: null })} maxWidth="xs" fullWidth>
-        <DialogTitle>Eliminar compromiso</DialogTitle>
+        <DialogTitleWithClose onClose={() => !sending && setOpenDelete({ open: false, row: null })}>Eliminar compromiso</DialogTitleWithClose>
         <DialogContent dividers>
           <Typography>
             ¿Deseas eliminar el compromiso #{openDelete.row?.paymentCommitmentId || '-'} de{' '}

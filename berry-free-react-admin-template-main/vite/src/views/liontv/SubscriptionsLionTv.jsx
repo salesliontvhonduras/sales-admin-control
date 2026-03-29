@@ -59,8 +59,10 @@ import LinkIcon from '@mui/icons-material/Link';
 import EmailIcon from '@mui/icons-material/Email';
 
 import MainCard from 'ui-component/cards/MainCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
+import { withAlpha } from 'utils/colorUtils';
 
 const statusColors = {
   ACTIVE: 'success',
@@ -86,12 +88,16 @@ const glassCard = (theme) => ({
   p: 2,
   borderRadius: 2.5,
   border: '1px solid',
-  borderColor: 'divider',
-  boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
-  background:
-    theme.palette.mode === 'light'
-      ? `linear-gradient(135deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}12 45%, ${theme.palette.background.paper} 100%)`
-      : theme.palette.surface.sunken
+  borderColor: withAlpha(theme.vars.palette.divider, 0.95),
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? `0 16px 36px ${withAlpha('#020817', 0.52)}`
+      : `0 14px 34px ${withAlpha('#0f172a', 0.12)}`,
+  backgroundColor: theme.vars.palette.surface.card,
+  backgroundImage:
+    theme.palette.mode === 'dark'
+      ? `linear-gradient(150deg, ${withAlpha(theme.vars.palette.primary.main, 0.22)} 0%, ${withAlpha(theme.vars.palette.secondary.main, 0.14)} 52%, ${theme.vars.palette.surface.card} 100%)`
+      : `linear-gradient(150deg, ${withAlpha(theme.vars.palette.primary.main, 0.14)} 0%, ${withAlpha(theme.vars.palette.secondary.main, 0.1)} 52%, ${theme.vars.palette.surface.card} 100%)`
 });
 
 function formatDate(value) {
@@ -176,7 +182,7 @@ function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengag
             onEdit?.(row);
           }}
         >
-          <EditOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#1e88e5' }} />
+          <EditOutlinedIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
           {t('actions.edit', 'Edit')}
         </MenuItem>
         <MenuItem
@@ -186,7 +192,7 @@ function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengag
             onNotifyExpiration?.(row);
           }}
         >
-          <EmailIcon fontSize="small" style={{ marginRight: 8, color: '#ff9800' }} />
+          <EmailIcon fontSize="small" sx={{ mr: 1, color: 'warning.main' }} />
           {t('subscriptions.actions.notifyExpiration', 'Enviar aviso vencimiento')}
         </MenuItem>
         <MenuItem
@@ -196,7 +202,7 @@ function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengag
             onNotifyReengage?.(row);
           }}
         >
-          <EmailIcon fontSize="small" style={{ marginRight: 8, color: '#7b1fa2' }} />
+          <EmailIcon fontSize="small" sx={{ mr: 1, color: 'secondary.main' }} />
           {t('subscriptions.actions.notifyReengage', 'Notificar reenganche')}
         </MenuItem>
         <MenuItem
@@ -206,7 +212,7 @@ function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengag
             onNotifyRenewed?.(row);
           }}
         >
-          <EmailIcon fontSize="small" style={{ marginRight: 8, color: '#2e7d32' }} />
+          <EmailIcon fontSize="small" sx={{ mr: 1, color: 'success.main' }} />
           {t('subscriptions.actions.notifyRenewed', 'Notificar renovación exitosa')}
         </MenuItem>
         <MenuItem
@@ -215,7 +221,7 @@ function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengag
             onDelete?.(row);
           }}
         >
-          <DeleteOutlineIcon fontSize="small" style={{ marginRight: 8, color: '#e53935' }} />
+          <DeleteOutlineIcon fontSize="small" sx={{ mr: 1, color: 'error.main' }} />
           {t('actions.delete', 'Delete')}
         </MenuItem>
       </Menu>
@@ -764,6 +770,24 @@ export default function SubscriptionsLionTv() {
     }
   };
 
+  const kpiCards = [
+    {
+      label: `${total} ${t('subscriptions.title').toLowerCase()}`,
+      color: theme.vars.palette.primary.main,
+      icon: <CreditCardIcon fontSize="small" />
+    },
+    {
+      label: `STATUS: ACTIVE ${rows.filter((r) => r.status === 'ACTIVE').length}`,
+      color: theme.vars.palette.success.main,
+      icon: <AutoAwesomeIcon fontSize="small" />
+    },
+    {
+      label: `${t('subscriptions.headers.autopay')}: ${rows.filter((r) => r.automaticPay).length}`,
+      color: theme.vars.palette.warning.main,
+      icon: <PriceChangeIcon fontSize="small" />
+    }
+  ];
+
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
       <MainCard
@@ -788,13 +812,13 @@ export default function SubscriptionsLionTv() {
               variant="contained"
               startIcon={<AddCircleOutlineIcon />}
               onClick={() => setOpenModal(true)}
-              sx={{
+              sx={(theme) => ({
                 borderRadius: 3,
                 textTransform: 'none',
                 fontWeight: 700,
                 px: 2.8,
-                boxShadow: '0 12px 24px rgba(0,133,255,0.35)'
-              }}
+                boxShadow: `0 12px 24px ${withAlpha(theme.vars.palette.primary.main, theme.palette.mode === 'dark' ? 0.42 : 0.32)}`
+              })}
             >
               {t('subscriptions.actions.new', 'New subscription')}
             </Button>
@@ -802,11 +826,7 @@ export default function SubscriptionsLionTv() {
         }
       >
         <Grid container spacing={gridSpacing}>
-            {[
-              { label: `${total} ${t('subscriptions.title').toLowerCase()}`, color: '#1e88ff', icon: <CreditCardIcon fontSize="small" /> },
-              { label: `STATUS: ACTIVE ${rows.filter((r) => r.status === 'ACTIVE').length}`, color: '#00c853', icon: <AutoAwesomeIcon fontSize="small" /> },
-              { label: `${t('subscriptions.headers.autopay')}: ${rows.filter((r) => r.automaticPay).length}`, color: '#ffd54f', icon: <PriceChangeIcon fontSize="small" /> }
-            ].map((item, idx) => (
+            {kpiCards.map((item, idx) => (
             <Grid item xs={12} sm={6} md={3} key={idx}>
               <Card
                 sx={(theme) => ({
@@ -816,30 +836,25 @@ export default function SubscriptionsLionTv() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1.5,
-                  background:
-                    theme.palette.mode === 'light'
-                      ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, ${theme.palette.background.paper} 100%)`
-                      : theme.palette.background.paper,
-                  boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
                   borderRadius: 2.5,
                   border: '1px solid',
-                  borderColor: 'divider'
+                  borderColor: withAlpha(theme.vars.palette.divider, 0.95)
                 })}
               >
                 <Avatar
-                  sx={(theme) => ({
+                  sx={{
                     width: 40,
                     height: 40,
                     bgcolor: item.color,
                     color: 'common.white',
-                    boxShadow: '0 10px 18px rgba(0,0,0,0.16)',
+                    boxShadow: `0 10px 20px ${withAlpha(item.color, 0.34)}`,
                     border: '2px solid',
                     borderColor: 'background.paper'
-                  })}
+                  }}
                 >
                   {item.icon}
                 </Avatar>
-                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#2d3748' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary' }}>
                   {item.label}
                 </Typography>
               </Card>
@@ -855,12 +870,13 @@ export default function SubscriptionsLionTv() {
             p: 2,
             borderRadius: 2.5,
             border: '1px solid',
-            borderColor: theme.palette.divider,
-            background:
-              theme.palette.mode === 'light'
-                ? `linear-gradient(135deg, ${theme.palette.primary.light}12 0%, ${theme.palette.secondary.light}10 100%)`
-                : theme.palette.background.paper,
-            boxShadow: '0 10px 28px rgba(0,0,0,0.08)'
+            borderColor: withAlpha(theme.vars.palette.divider, 0.95),
+            backgroundColor: theme.vars.palette.surface.sunken,
+            backgroundImage: `linear-gradient(135deg, ${withAlpha(theme.vars.palette.primary.main, theme.palette.mode === 'dark' ? 0.14 : 0.08)} 0%, ${withAlpha(theme.vars.palette.secondary.main, theme.palette.mode === 'dark' ? 0.1 : 0.06)} 100%)`,
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? `0 12px 28px ${withAlpha('#020817', 0.42)}`
+                : `0 10px 28px ${withAlpha('#0f172a', 0.1)}`
           })}
         >
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
@@ -982,7 +998,7 @@ export default function SubscriptionsLionTv() {
                     <TableRow key={row.subscriptionId || row.lineId} hover>
                       <TableCell>
                         <Stack direction="row" spacing={0.75} alignItems="center">
-                          <CreditCardIcon fontSize="small" sx={{ color: '#1e88ff' }} />
+                          <CreditCardIcon fontSize="small" sx={{ color: 'primary.main' }} />
                           <Typography variant="body2" sx={{ fontWeight: 700 }}>
                             {row.subscriptionId}
                           </Typography>
@@ -990,13 +1006,13 @@ export default function SubscriptionsLionTv() {
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={0.75} alignItems="center">
-                          <PersonOutlineIcon fontSize="small" sx={{ color: '#607d8b' }} />
+                          <PersonOutlineIcon fontSize="small" sx={{ color: 'text.secondary' }} />
                           <Typography variant="body2">{row.customerName || row.customer_name || '-'}</Typography>
                         </Stack>
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={0.75} alignItems="center">
-                          <WifiTetheringIcon fontSize="small" sx={{ color: '#00c853' }} />
+                          <WifiTetheringIcon fontSize="small" sx={{ color: 'success.main' }} />
                           <Typography variant="body2">
                             {lineNameMap[String(row.lineId ?? row.username_line ?? '')] || row.username_line || row.lineId || '-'}
                           </Typography>
@@ -1004,7 +1020,7 @@ export default function SubscriptionsLionTv() {
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={0.75} alignItems="center">
-                          <WifiTetheringIcon fontSize="small" sx={{ color: '#8e24aa' }} />
+                          <WifiTetheringIcon fontSize="small" sx={{ color: 'secondary.main' }} />
                           <Typography variant="body2">
                             {lineNameMap[String(row.linePlusId ?? '')] || row.linePlusId || '-'}
                           </Typography>
@@ -1013,7 +1029,7 @@ export default function SubscriptionsLionTv() {
                       <TableCell>
                         <Stack spacing={0.25}>
                           <Stack direction="row" spacing={0.5} alignItems="center">
-                            <Avatar sx={{ width: 22, height: 22, bgcolor: '#ffd54f', color: '#bf8f00' }}>
+                            <Avatar sx={{ width: 22, height: 22, bgcolor: 'warning.main', color: 'warning.contrastText' }}>
                               <BoltIcon fontSize="inherit" />
                             </Avatar>
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -1041,7 +1057,7 @@ export default function SubscriptionsLionTv() {
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" alignItems="center" spacing={0.5}>
-                          <PriceChangeIcon fontSize="small" sx={{ color: '#43a047' }} />
+                          <PriceChangeIcon fontSize="small" sx={{ color: 'success.main' }} />
                           <Typography variant="body2">
                             {Number(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                           </Typography>
@@ -1112,14 +1128,20 @@ export default function SubscriptionsLionTv() {
         PaperProps={{
           sx: (theme) => ({
             borderRadius: 3,
-            boxShadow: '0 18px 40px rgba(0,0,0,0.18)',
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? `0 18px 40px ${withAlpha('#020817', 0.58)}`
+                : `0 18px 40px ${withAlpha('#0f172a', 0.2)}`,
             overflow: 'hidden',
             border: '1px solid',
-            borderColor: form.subscriptionId ? theme.palette.warning.light : theme.palette.primary.light,
+            borderColor: form.subscriptionId
+              ? withAlpha(theme.vars.palette.warning.main, 0.45)
+              : withAlpha(theme.vars.palette.primary.main, 0.45),
+            backgroundColor: theme.vars.palette.surface.card,
             backgroundImage:
               theme.palette.mode === 'light'
                 ? `linear-gradient(150deg, ${theme.palette.primary.light}16 0%, ${theme.palette.secondary.light}10 45%, ${theme.palette.background.paper} 100%)`
-                : undefined
+                : `linear-gradient(150deg, ${withAlpha(theme.vars.palette.primary.main, 0.16)} 0%, ${withAlpha(theme.vars.palette.secondary.main, 0.1)} 45%, ${theme.vars.palette.surface.card} 100%)`
           })
         }}
       >
@@ -1127,7 +1149,10 @@ export default function SubscriptionsLionTv() {
           sx={(theme) => ({
             position: 'relative',
             pr: 5,
-            background: `linear-gradient(135deg, ${theme.palette.primary.light}28 0%, ${theme.palette.secondary.light}20 45%, ${theme.palette.background.paper} 100%)`,
+            background:
+              theme.palette.mode === 'dark'
+                ? `linear-gradient(135deg, ${withAlpha(theme.vars.palette.primary.main, 0.25)} 0%, ${withAlpha(theme.vars.palette.secondary.main, 0.18)} 45%, ${theme.vars.palette.surface.card} 100%)`
+                : `linear-gradient(135deg, ${theme.palette.primary.light}28 0%, ${theme.palette.secondary.light}20 45%, ${theme.palette.background.paper} 100%)`,
             pb: 1
           })}
         >
@@ -1175,16 +1200,16 @@ export default function SubscriptionsLionTv() {
             background: (theme) =>
               theme.palette.mode === 'light'
                 ? `linear-gradient(180deg, ${theme.palette.primary.light}14 0%, ${theme.palette.secondary.light}10 50%, ${theme.palette.background.paper} 82%)`
-                : theme.palette.surface.card,
+                : `linear-gradient(180deg, ${withAlpha(theme.vars.palette.primary.main, 0.15)} 0%, ${withAlpha(theme.vars.palette.secondary.main, 0.1)} 50%, ${theme.vars.palette.surface.card} 82%)`,
             position: 'relative',
-            '&:before': {
+            '&::before': {
               content: '\"\"',
               position: 'absolute',
               inset: 12,
               zIndex: 0,
               borderRadius: 20,
-              background:
-                'radial-gradient(circle at 20% 20%, rgba(33,150,243,0.10), transparent 45%), radial-gradient(circle at 78% 0%, rgba(156,39,176,0.10), transparent 35%)'
+              background: (theme) =>
+                `radial-gradient(circle at 20% 20%, ${withAlpha(theme.vars.palette.primary.main, theme.palette.mode === 'dark' ? 0.18 : 0.1)}, transparent 45%), radial-gradient(circle at 78% 0%, ${withAlpha(theme.vars.palette.secondary.main, theme.palette.mode === 'dark' ? 0.16 : 0.1)}, transparent 35%)`
             }
           }}
         >
@@ -1318,7 +1343,7 @@ export default function SubscriptionsLionTv() {
                           <MenuItem key={p.id} value={p.id}>
                             <Stack spacing={0.25}>
                               <Stack direction="row" spacing={0.75} alignItems="center">
-                                <Avatar sx={{ width: 22, height: 22, bgcolor: '#ffd54f', color: '#bf8f00' }}>
+                                <Avatar sx={{ width: 22, height: 22, bgcolor: 'warning.main', color: 'warning.contrastText' }}>
                                   <BoltIcon fontSize="inherit" />
                                 </Avatar>
                                 <Typography variant="body2" color="text.primary">
@@ -1675,7 +1700,14 @@ export default function SubscriptionsLionTv() {
             onClick={handleSave}
             disabled={sending}
             startIcon={<RocketLaunchIcon />}
-            sx={{ borderRadius: 2, boxShadow: '0 12px 28px rgba(0,0,0,0.16)', px: 2.4 }}
+            sx={(theme) => ({
+              borderRadius: 2,
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? `0 12px 28px ${withAlpha('#020817', 0.46)}`
+                  : `0 12px 28px ${withAlpha('#0f172a', 0.18)}`,
+              px: 2.4
+            })}
           >
             {sending
               ? t('common.saving', 'Saving...')
@@ -1693,7 +1725,9 @@ export default function SubscriptionsLionTv() {
         fullWidth
         fullScreen={isMobile}
       >
-        <DialogTitle>{t('subscriptions.delete.title', 'Delete subscription')}</DialogTitle>
+        <DialogTitleWithClose onClose={() => setOpenDelete({ open: false, row: null })}>
+          {t('subscriptions.delete.title', 'Delete subscription')}
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Typography>
             {t('subscriptions.delete.message', 'Delete subscription')} <strong>{openDelete.row?.subscriptionId ?? ''}</strong>? {t('subscriptions.delete.warning', 'This action cannot be undone.')}

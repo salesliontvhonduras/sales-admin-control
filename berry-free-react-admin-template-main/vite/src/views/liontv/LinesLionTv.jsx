@@ -54,6 +54,7 @@ import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 
 import MainCard from 'ui-component/cards/MainCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -891,7 +892,8 @@ export default function LinesLionTv() {
           })
         }}
       >
-        <DialogTitle
+        <DialogTitleWithClose
+          onClose={() => setDetail({ open: false, row: null })}
           sx={(theme) => ({
             pb: 1,
             background: `linear-gradient(135deg, ${theme.palette.primary.light}36 0%, ${theme.palette.secondary.light}26 40%, ${theme.palette.background.paper} 100%)`
@@ -922,7 +924,7 @@ export default function LinesLionTv() {
               sx={{ ml: 'auto', fontWeight: 700, borderRadius: 1.5 }}
             />
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent
           dividers
           sx={{
@@ -1570,7 +1572,9 @@ export default function LinesLionTv() {
       </Dialog>
 
       <Dialog open={openDelete.open} onClose={() => setOpenDelete({ open: false, row: null })} maxWidth="xs" fullWidth>
-        <DialogTitle>{t('lines.delete.title', 'Eliminar línea')}</DialogTitle>
+        <DialogTitleWithClose onClose={() => setOpenDelete({ open: false, row: null })}>
+          {t('lines.delete.title', 'Eliminar línea')}
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Typography>{t('lines.delete.body', '¿Eliminar la línea {{id}}?', { id: openDelete.row?.id })}</Typography>
         </DialogContent>

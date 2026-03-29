@@ -6,7 +6,6 @@ import Avatar from '@mui/material/Avatar';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import Divider from '@mui/material/Divider';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -25,6 +24,7 @@ import { useNavigate } from 'react-router-dom';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import Transitions from 'ui-component/extended/Transitions';
 import useConfig from 'hooks/useConfig';
 import useAuth from 'hooks/useAuth';
@@ -319,7 +319,8 @@ export default function ProfileSection() {
       </Popper>
 
       <Dialog open={openPwd} onClose={() => setOpenPwd(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle
+        <DialogTitleWithClose
+          onClose={() => setOpenPwd(false)}
           sx={{
             pb: 1,
             display: 'flex',
@@ -339,7 +340,7 @@ export default function ProfileSection() {
               Mantén tu cuenta segura con una contraseña fuerte.
             </Typography>
           </Box>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent
           dividers
           sx={{

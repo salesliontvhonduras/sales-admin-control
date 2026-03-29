@@ -23,7 +23,6 @@ import Paper from '@mui/material/Paper';
 import Autocomplete from '@mui/material/Autocomplete';
 import TablePagination from '@mui/material/TablePagination';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import IconButton from '@mui/material/IconButton';
@@ -73,6 +72,7 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import { useTranslation } from 'react-i18next';
 
 import MainCard from 'ui-component/cards/MainCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi, catalogsApi } from 'utils/api';
 
@@ -1559,7 +1559,8 @@ export default function CustomerCrmLionTv() {
           })
         }}
       >
-        <DialogTitle
+        <DialogTitleWithClose
+          onClose={() => setDetail({ open: false, type: null, row: null })}
           sx={(theme) => ({
             display: 'flex',
             alignItems: 'center',
@@ -1595,7 +1596,7 @@ export default function CustomerCrmLionTv() {
               {t('crm.detail.helper', 'Visualización enriquecida con íconos y descripciones.')}
             </Typography>
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent
           dividers
           sx={{
@@ -2120,7 +2121,12 @@ export default function CustomerCrmLionTv() {
           })
         }}
       >
-        <DialogTitle
+        <DialogTitleWithClose
+          onClose={() => {
+            setTableDialog({ open: false, title: '', description: '', rows: [], columns: [], onDetail: null });
+            setTablePage(0);
+            setTableSelectedKeys([]);
+          }}
           sx={(theme) => ({
             display: 'flex',
             alignItems: 'center',
@@ -2156,7 +2162,7 @@ export default function CustomerCrmLionTv() {
               </Typography>
             ) : null}
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent dividers sx={{ p: 2.5 }}>
           {tableDialog.description ? (
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>

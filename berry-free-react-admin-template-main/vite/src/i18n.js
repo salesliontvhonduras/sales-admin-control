@@ -178,6 +178,354 @@ const resources = {
           body: 'Delete invoice {{id}}? This action cannot be undone.'
         }
       },
+      businessPurchases: {
+        title: 'Business Purchases',
+        subtitle: 'Register business purchases and operational payments.',
+        searchTitle: 'Search purchases',
+        search: 'Search by code, item, provider, reference',
+        loading: 'Loading purchases...',
+        helper: 'Validate amounts and dates before saving.',
+        tip: 'Purchase code, type, category, item and purchase date are required.',
+        actions: {
+          new: 'New purchase',
+          edit: 'Edit purchase',
+          create: 'Create',
+          save: 'Save changes',
+          saving: 'Saving...',
+          delete: 'Delete',
+          deleting: 'Deleting...',
+          clear: 'Clear',
+          cancel: 'Cancel'
+        },
+        badge: {
+          new: 'New',
+          edit: 'Edit'
+        },
+        summary: {
+          total: '{{count}} purchases',
+          paid: 'Paid: {{count}}',
+          pending: 'Pending: {{count}} · Recurring: {{recurring}}',
+          totalAmount: 'Total: L {{amount}}'
+        },
+        empty: {
+          title: 'No purchases yet',
+          description: 'Create your first purchase record to see it here.'
+        },
+        filters: {
+          all: 'All',
+          category: 'Category',
+          type: 'Type',
+          status: 'Status',
+          clear: 'Clear',
+          searchChip: 'Search: {{value}}',
+          categoryChip: 'Category: {{value}}',
+          typeChip: 'Type: {{value}}',
+          statusChip: 'Status: {{value}}'
+        },
+        headers: {
+          code: 'Code',
+          item: 'Item',
+          type: 'Type',
+          category: 'Category',
+          amount: 'Amount',
+          date: 'Purchase date',
+          method: 'Method',
+          status: 'Status',
+          actions: 'Actions'
+        },
+        labels: {
+          paidAt: 'Paid',
+          due: 'Due'
+        },
+        sections: {
+          classification: 'Classification',
+          classificationHelper: 'Identify the purchase and accounting context.',
+          item: 'Item detail',
+          itemHelper: 'Provider, item, quantities and description.',
+          payment: 'Payment and dates',
+          paymentHelper: 'Amounts, currency and payment evidence.',
+          recurring: 'Recurrence',
+          recurringHelper: 'Set whether this purchase repeats over time.'
+        },
+        form: {
+          purchaseCode: 'Purchase code',
+          purchaseType: 'Purchase type',
+          category: 'Category',
+          providerName: 'Provider name',
+          itemName: 'Item name',
+          description: 'Description',
+          quantity: 'Quantity',
+          unitCost: 'Unit cost',
+          totalAmount: 'Total amount',
+          currency: 'Currency',
+          exchangeRate: 'Exchange rate',
+          purchaseDate: 'Purchase date',
+          dueDate: 'Due date',
+          paidAt: 'Paid at',
+          paymentMethod: 'Payment method',
+          paymentReference: 'Payment reference',
+          invoiceNumber: 'Invoice number',
+          businessArea: 'Business area',
+          status: 'Status',
+          isRecurring: 'Recurring purchase',
+          recurrenceType: 'Recurrence type',
+          recurrenceHelper: 'Choose frequency when recurrence is enabled.',
+          notes: 'Notes',
+          none: 'None'
+        },
+        delete: {
+          title: 'Delete purchase',
+          body: 'Delete purchase {{id}}? This action cannot be undone.'
+        },
+        messages: {
+          loadError: 'Could not load purchases.',
+          required: 'Complete required fields.',
+          created: 'Purchase created.',
+          updated: 'Purchase updated.',
+          saveError: 'Could not save purchase.',
+          deleted: 'Purchase deleted.',
+          deleteError: 'Could not delete purchase.'
+        },
+        enums: {
+          purchaseType: {
+            VIVO_PLAYER_CREDITS: 'Vivo Player Credits',
+            IBO_PLAYER_CREDITS: 'Ibo Player Credits',
+            SMART_ONE_CREDITS: 'Smart One Credits',
+            PANEL_TITAN_CREDITS: 'Panel Titan Credits',
+            LION_TV_CREDITS: 'Lion TV Credits',
+            SHOPIFY_PAYMENT: 'Shopify Payment',
+            BANRURAL_POS_PAYMENT: 'Banrural POS Payment',
+            DOMAIN_PAYMENT: 'Domain Payment',
+            DEMO_LICENSE_PAYMENT: 'Demo License Payment',
+            HOUSE_MONTHLY_LICENSE: 'House Monthly License',
+            OTHER: 'Other'
+          },
+          category: {
+            CREDITS: 'Credits',
+            PLATFORM_PAYMENT: 'Platform Payment',
+            DOMAIN: 'Domain',
+            LICENSE: 'License',
+            POS: 'POS',
+            OTHER: 'Other'
+          },
+          currency: {
+            HNL: 'HNL',
+            USD: 'USD',
+            GTQ: 'GTQ',
+            EUR: 'EUR'
+          },
+          paymentMethod: {
+            CASH: 'Cash',
+            BANK_TRANSFER: 'Bank transfer',
+            CARD: 'Card',
+            PAYPAL: 'PayPal',
+            BANRURAL_POS: 'Banrural POS',
+            SHOPIFY: 'Shopify',
+            CRYPTO: 'Crypto',
+            OTHER: 'Other'
+          },
+          businessArea: {
+            IPTV: 'IPTV',
+            WEB: 'Web',
+            BILLING: 'Billing',
+            MARKETING: 'Marketing',
+            OPERATIONS: 'Operations',
+            OTHER: 'Other'
+          },
+          status: {
+            PENDING: 'Pending',
+            PAID: 'Paid',
+            PARTIAL: 'Partial',
+            CANCELLED: 'Cancelled'
+          },
+          recurrence: {
+            NONE: 'None',
+            MONTHLY: 'Monthly',
+            YEARLY: 'Yearly',
+            WEEKLY: 'Weekly'
+          }
+        }
+      },
+      managedAccounts: {
+        title: 'Managed Accounts Control Center',
+        actions: {
+          refresh: 'Refresh',
+          newAccount: 'New',
+          newProvider: 'New Provider',
+          cancel: 'Cancel',
+          saving: 'Saving...',
+          saveProvider: 'Save Provider',
+          saveAccount: 'Save Account',
+          processing: 'Processing...',
+          processInbound: 'Process inbound'
+        },
+        hero: {
+          title: 'Operational tracking for accounts, expirations and mail distribution',
+          subtitle: 'Unified panel to control providers, alias-based accounts, and inbound flow. Prioritize due/expiring accounts and failed events.',
+          chips: {
+            due7: 'Due in 7 days: {{count}}',
+            expired: 'Expired: {{count}}',
+            distributionOn: 'Distribution ON: {{count}}',
+            inbound: 'Inbound events: {{count}}'
+          }
+        },
+        tabs: {
+          overview: 'Overview',
+          accounts: 'Managed Accounts',
+          providers: 'Providers',
+          inbound: 'Inbound',
+          reports: 'Reports'
+        },
+        metrics: {
+          totalAccounts: 'Total Accounts',
+          totalAccountsHelper: 'Registered accounts',
+          active: 'Active',
+          activeHelper: 'ACTIVE status',
+          dueToday: 'Due Today',
+          dueTodayHelper: 'Immediate action',
+          expired: 'Expired',
+          expiredHelper: 'Potential churn risk',
+          inboundDistributed: 'Inbound Distributed',
+          failedCount: 'Failed: {{count}}',
+          inboundUnresolved: 'Inbound Unresolved',
+          inboundUnresolvedHelper: 'Without resolved alias',
+          dueIn30: 'Due in 30 Days',
+          dueIn30Helper: 'Includes accounts due today',
+          total: 'Total',
+          distributed: 'Distributed',
+          failed: 'Failed',
+          unresolved: 'Unresolved',
+          inboundTotal: 'Inbound Total',
+          sent: 'Sent'
+        },
+        overview: {
+          expiringTitle: 'Accounts with near expiration',
+          expiringSubtitle: 'Next 30 days, sorted by criticality'
+        },
+        table: {
+          id: 'ID',
+          account: 'Account',
+          accountName: 'Account',
+          alias: 'Alias',
+          provider: 'Provider',
+          customer: 'Customer',
+          expiration: 'Expiration',
+          status: 'Status',
+          distribution: 'Distribution',
+          lastEmail: 'Last email',
+          createdBy: 'Created by',
+          actions: 'Actions'
+        },
+        statusValues: {
+          ACTIVE: 'ACTIVE',
+          INACTIVE: 'INACTIVE',
+          SUSPENDED: 'SUSPENDED',
+          EXPIRED: 'EXPIRED',
+          PENDING: 'PENDING',
+          CANCELLED: 'CANCELLED',
+          RECEIVED: 'RECEIVED',
+          ALIAS_RESOLVED: 'ALIAS_RESOLVED',
+          ACCOUNT_MATCHED: 'ACCOUNT_MATCHED',
+          PROCESSED: 'PROCESSED',
+          DISTRIBUTED: 'DISTRIBUTED',
+          FAILED: 'FAILED',
+          IGNORED: 'IGNORED',
+          SENT: 'SENT'
+        },
+        options: {
+          all: 'All',
+          on: 'ON',
+          off: 'OFF',
+          expired: 'Expired',
+          dueToday: 'Due today',
+          next7Days: 'Next 7 days',
+          next30Days: 'Next 30 days',
+          noDate: 'No date',
+          unresolved: 'UNRESOLVED',
+          unassigned: 'UNASSIGNED'
+        },
+        empty: {
+          noExpiring: 'No accounts due within 30 days',
+          noAccounts: 'No accounts for selected filters',
+          noProviders: 'No providers for selected filters',
+          noEvents: 'No events for selected filters',
+          noData: 'No data'
+        },
+        expiration: {
+          noDate: 'No date',
+          expiredAgo: 'Expired {{days}}d ago',
+          today: 'Due today',
+          inDays: 'Due in {{days}}d'
+        },
+        filters: {
+          searchAccount: 'Search account',
+          expiration: 'Expiration',
+          searchProvider: 'Search provider',
+          searchEvent: 'Search event'
+        },
+        inbound: {
+          processTitle: 'Process Inbound',
+          processSubtitle: 'Manual process for tests or specific reprocessing',
+          mailbox: 'Mailbox',
+          rawMessageId: 'Raw Message ID',
+          fromEmail: 'From Email',
+          toEmail: 'To Email',
+          subject: 'Subject',
+          receivedAt: 'Received At',
+          rawHeaders: 'Raw Headers',
+          bodyPlain: 'Body Plain',
+          received: 'Received',
+          error: 'Error',
+          retryMode: 'Retry Mode',
+          retry: 'Retry'
+        },
+        reports: {
+          byProvider: 'Inbound by Provider',
+          byAlias: 'Inbound by Alias',
+          inbound: 'Inbound'
+        },
+        provider: {
+          newTitle: 'New Provider',
+          editTitle: 'Edit Provider',
+          subtitle: 'Define the provider that groups aliases and managed accounts.',
+          code: 'Code',
+          name: 'Name',
+          description: 'Description'
+        },
+        account: {
+          newTitle: 'New Managed Account',
+          editTitle: 'Edit Managed Account',
+          subtitle: 'Configure identity, expiration and alias distribution rules.',
+          sectionIdentity: 'Identity and relationship',
+          sectionOperation: 'Validity and operation',
+          accountCode: 'Account Code',
+          displayName: 'Display Name',
+          aliasEmail: 'Alias Email',
+          principalReference: 'Principal Reference',
+          expirationDate: 'Expiration Date',
+          renewalDate: 'Renewal Date',
+          allowDistribution: 'Allow Distribution',
+          notes: 'Notes'
+        },
+        messages: {
+          loadModuleError: 'Could not load managed accounts module.',
+          providerRequired: 'Code and Name are required.',
+          providerSaved: 'Provider saved.',
+          providerSaveError: 'Could not save provider.',
+          providerStatusError: 'Could not change provider status.',
+          accountRequired: 'Complete required fields.',
+          accountSaved: 'Managed account saved.',
+          accountSaveError: 'Could not save managed account.',
+          accountStatusError: 'Could not change account status.',
+          distributionUpdateError: 'Could not update distribution setting.',
+          inboundRequired: 'mailboxAccount, rawMessageId, fromEmail and receivedAt are required.',
+          inboundProcessed: 'Inbound event processed.',
+          inboundProcessError: 'Could not process inbound event.',
+          retryExecuted: 'Retry executed successfully.',
+          retryError: 'Could not retry distribution.',
+          processExecuted: 'Process executed'
+        }
+      },
       subscriptions: {
         title: 'Subscriptions',
         search: 'Search (customer, line, package, status)',
@@ -1065,6 +1413,355 @@ const resources = {
         delete: {
           title: 'Eliminar factura',
           body: '¿Eliminar la factura {{id}}? Esta acción no se puede deshacer.'
+        }
+      },
+      businessPurchases: {
+        title: 'Compras del negocio',
+        subtitle: 'Registra compras del negocio y pagos operativos.',
+        searchTitle: 'Buscar compras',
+        search: 'Buscar por código, ítem, proveedor o referencia',
+        loading: 'Cargando compras...',
+        helper: 'Valida montos y fechas antes de guardar.',
+        tip: 'Código, tipo, categoría, ítem y fecha de compra son requeridos.',
+        actions: {
+          new: 'Nueva compra',
+          edit: 'Editar compra',
+          create: 'Crear',
+          save: 'Guardar cambios',
+          saving: 'Guardando...',
+          delete: 'Eliminar',
+          deleting: 'Eliminando...',
+          clear: 'Limpiar',
+          cancel: 'Cancelar'
+        },
+        badge: {
+          new: 'Nueva',
+          edit: 'Edición'
+        },
+        summary: {
+          total: '{{count}} compras',
+          paid: 'Pagadas: {{count}}',
+          pending: 'Pendientes: {{count}} · Recurrentes: {{recurring}}',
+          totalAmount: 'Total: L {{amount}}'
+        },
+        empty: {
+          title: 'No hay compras registradas',
+          description: 'Crea tu primera compra para verla aquí.'
+        },
+        filters: {
+          all: 'Todos',
+          category: 'Categoría',
+          type: 'Tipo',
+          status: 'Estado',
+          clear: 'Limpiar',
+          searchChip: 'Búsqueda: {{value}}',
+          categoryChip: 'Categoría: {{value}}',
+          typeChip: 'Tipo: {{value}}',
+          statusChip: 'Estado: {{value}}'
+        },
+        headers: {
+          code: 'Código',
+          item: 'Ítem',
+          type: 'Tipo',
+          category: 'Categoría',
+          amount: 'Monto',
+          date: 'Fecha compra',
+          method: 'Método',
+          status: 'Estado',
+          actions: 'Acciones'
+        },
+        labels: {
+          paidAt: 'Pagado',
+          due: 'Vence'
+        },
+        sections: {
+          classification: 'Clasificación',
+          classificationHelper: 'Identifica la compra y su contexto contable.',
+          item: 'Detalle del ítem',
+          itemHelper: 'Proveedor, ítem, cantidades y descripción.',
+          payment: 'Pago y fechas',
+          paymentHelper: 'Montos, moneda y evidencia del pago.',
+          recurring: 'Recurrencia',
+          recurringHelper: 'Define si la compra se repite en el tiempo.'
+        },
+        form: {
+          purchaseCode: 'Código de compra',
+          purchaseType: 'Tipo de compra',
+          category: 'Categoría',
+          providerName: 'Proveedor',
+          itemName: 'Nombre del ítem',
+          description: 'Descripción',
+          quantity: 'Cantidad',
+          unitCost: 'Costo unitario',
+          totalAmount: 'Monto total',
+          currency: 'Moneda',
+          exchangeRate: 'Tipo de cambio',
+          purchaseDate: 'Fecha de compra',
+          dueDate: 'Fecha de vencimiento',
+          paidAt: 'Fecha de pago',
+          paymentMethod: 'Método de pago',
+          paymentReference: 'Referencia de pago',
+          invoiceNumber: 'Número de factura',
+          businessArea: 'Área del negocio',
+          status: 'Estado',
+          isRecurring: 'Compra recurrente',
+          recurrenceType: 'Tipo de recurrencia',
+          recurrenceHelper: 'Selecciona frecuencia cuando habilites recurrencia.',
+          notes: 'Notas',
+          none: 'Ninguno'
+        },
+        delete: {
+          title: 'Eliminar compra',
+          body: '¿Eliminar la compra {{id}}? Esta acción no se puede deshacer.'
+        },
+        messages: {
+          loadError: 'No se pudieron cargar las compras.',
+          required: 'Completa los campos requeridos.',
+          created: 'Compra registrada.',
+          updated: 'Compra actualizada.',
+          saveError: 'No se pudo guardar la compra.',
+          deleted: 'Compra eliminada.',
+          deleteError: 'No se pudo eliminar la compra.'
+        },
+        enums: {
+          purchaseType: {
+            VIVO_PLAYER_CREDITS: 'Créditos Vivo Player',
+            IBO_PLAYER_CREDITS: 'Créditos Ibo Player',
+            SMART_ONE_CREDITS: 'Créditos Smart One',
+            PANEL_TITAN_CREDITS: 'Créditos Panel Titan',
+            LION_TV_CREDITS: 'Créditos Lion TV',
+            SHOPIFY_PAYMENT: 'Pago Shopify',
+            BANRURAL_POS_PAYMENT: 'Pago POS Banrural',
+            DOMAIN_PAYMENT: 'Pago de dominio',
+            DEMO_LICENSE_PAYMENT: 'Pago licencia demo',
+            HOUSE_MONTHLY_LICENSE: 'Licencia mensual House',
+            OTHER: 'Otro'
+          },
+          category: {
+            CREDITS: 'Créditos',
+            PLATFORM_PAYMENT: 'Pago de plataforma',
+            DOMAIN: 'Dominio',
+            LICENSE: 'Licencia',
+            POS: 'POS',
+            OTHER: 'Otro'
+          },
+          currency: {
+            HNL: 'HNL',
+            USD: 'USD',
+            GTQ: 'GTQ',
+            EUR: 'EUR'
+          },
+          paymentMethod: {
+            CASH: 'Efectivo',
+            BANK_TRANSFER: 'Transferencia bancaria',
+            CARD: 'Tarjeta',
+            PAYPAL: 'PayPal',
+            BANRURAL_POS: 'POS Banrural',
+            SHOPIFY: 'Shopify',
+            CRYPTO: 'Cripto',
+            OTHER: 'Otro'
+          },
+          businessArea: {
+            IPTV: 'IPTV',
+            WEB: 'Web',
+            BILLING: 'Facturación',
+            MARKETING: 'Marketing',
+            OPERATIONS: 'Operaciones',
+            OTHER: 'Otro'
+          },
+          status: {
+            PENDING: 'Pendiente',
+            PAID: 'Pagado',
+            PARTIAL: 'Parcial',
+            CANCELLED: 'Cancelado'
+          },
+          recurrence: {
+            NONE: 'Ninguno',
+            MONTHLY: 'Mensual',
+            YEARLY: 'Anual',
+            WEEKLY: 'Semanal'
+          }
+        }
+      },
+      managedAccounts: {
+        title: 'Centro de control de cuentas gestionadas',
+        actions: {
+          refresh: 'Refrescar',
+          newAccount: 'Nueva cuenta',
+          newProvider: 'Nuevo proveedor',
+          cancel: 'Cancelar',
+          saving: 'Guardando...',
+          saveProvider: 'Guardar proveedor',
+          saveAccount: 'Guardar cuenta',
+          processing: 'Procesando...',
+          processInbound: 'Procesar entrada'
+        },
+        hero: {
+          title: 'Monitoreo operativo de cuentas, vencimientos y distribución de correos',
+          subtitle:
+            'Panel unificado para controlar proveedores, cuentas por alias y flujo de entrada. Prioriza cuentas por vencer y eventos fallidos.',
+          chips: {
+            due7: 'Vencen en 7 días: {{count}}',
+            expired: 'Vencidas: {{count}}',
+            distributionOn: 'Distribución activa: {{count}}',
+            inbound: 'Eventos de entrada: {{count}}'
+          }
+        },
+        tabs: {
+          overview: 'Resumen',
+          accounts: 'Cuentas gestionadas',
+          providers: 'Proveedores',
+          inbound: 'Entradas',
+          reports: 'Reportes'
+        },
+        metrics: {
+          totalAccounts: 'Total de cuentas',
+          totalAccountsHelper: 'Cuentas registradas',
+          active: 'Activas',
+          activeHelper: 'Estado ACTIVO',
+          dueToday: 'Vencen hoy',
+          dueTodayHelper: 'Acción inmediata',
+          expired: 'Vencidas',
+          expiredHelper: 'Riesgo potencial de pérdida',
+          inboundDistributed: 'Entradas distribuidas',
+          failedCount: 'Fallidos: {{count}}',
+          inboundUnresolved: 'Entradas sin resolver',
+          inboundUnresolvedHelper: 'Sin alias resuelto',
+          dueIn30: 'Vencen en 30 días',
+          dueIn30Helper: 'Incluye las que vencen hoy',
+          total: 'Total',
+          distributed: 'Distribuido',
+          failed: 'Fallido',
+          unresolved: 'Sin resolver',
+          inboundTotal: 'Total entradas',
+          sent: 'Enviado'
+        },
+        overview: {
+          expiringTitle: 'Cuentas con vencimiento cercano',
+          expiringSubtitle: 'Próximos 30 días, ordenadas por criticidad'
+        },
+        table: {
+          id: 'ID',
+          account: 'Cuenta',
+          accountName: 'Cuenta',
+          alias: 'Alias',
+          provider: 'Proveedor',
+          customer: 'Cliente',
+          expiration: 'Vencimiento',
+          status: 'Estado',
+          distribution: 'Distribución',
+          lastEmail: 'Último correo',
+          createdBy: 'Creado por',
+          actions: 'Acciones'
+        },
+        statusValues: {
+          ACTIVE: 'ACTIVE',
+          INACTIVE: 'INACTIVE',
+          SUSPENDED: 'SUSPENDED',
+          EXPIRED: 'EXPIRED',
+          PENDING: 'PENDING',
+          CANCELLED: 'CANCELLED',
+          RECEIVED: 'RECEIVED',
+          ALIAS_RESOLVED: 'ALIAS_RESOLVED',
+          ACCOUNT_MATCHED: 'ACCOUNT_MATCHED',
+          PROCESSED: 'PROCESSED',
+          DISTRIBUTED: 'DISTRIBUTED',
+          FAILED: 'FAILED',
+          IGNORED: 'IGNORED',
+          SENT: 'SENT'
+        },
+        options: {
+          all: 'Todos',
+          on: 'ON',
+          off: 'OFF',
+          expired: 'Vencidas',
+          dueToday: 'Vence hoy',
+          next7Days: 'Próx. 7 días',
+          next30Days: 'Próx. 30 días',
+          noDate: 'Sin fecha',
+          unresolved: 'SIN_RESOLVER',
+          unassigned: 'SIN_ASIGNAR'
+        },
+        empty: {
+          noExpiring: 'Sin cuentas por vencer en 30 días',
+          noAccounts: 'Sin cuentas para los filtros seleccionados',
+          noProviders: 'Sin proveedores para los filtros seleccionados',
+          noEvents: 'Sin eventos para los filtros seleccionados',
+          noData: 'Sin datos'
+        },
+        expiration: {
+          noDate: 'Sin fecha',
+          expiredAgo: 'Vencida hace {{days}}d',
+          today: 'Vence hoy',
+          inDays: 'Vence en {{days}}d'
+        },
+        filters: {
+          searchAccount: 'Buscar cuenta',
+          expiration: 'Vencimiento',
+          searchProvider: 'Buscar proveedor',
+          searchEvent: 'Buscar evento'
+        },
+        inbound: {
+          processTitle: 'Procesar entrada',
+          processSubtitle: 'Proceso manual para pruebas o reprocesos puntuales',
+          mailbox: 'Bandeja',
+          rawMessageId: 'ID de mensaje bruto',
+          fromEmail: 'Correo origen',
+          toEmail: 'Correo destino',
+          subject: 'Asunto',
+          receivedAt: 'Recibido en',
+          rawHeaders: 'Encabezados originales',
+          bodyPlain: 'Cuerpo en texto',
+          received: 'Recibido',
+          error: 'Error',
+          retryMode: 'Modo de reintento',
+          retry: 'Reintentar'
+        },
+        reports: {
+          byProvider: 'Entradas por proveedor',
+          byAlias: 'Entradas por alias',
+          inbound: 'Entradas'
+        },
+        provider: {
+          newTitle: 'Nuevo proveedor',
+          editTitle: 'Editar proveedor',
+          subtitle: 'Define el proveedor que agrupa alias y cuentas gestionadas.',
+          code: 'Código',
+          name: 'Nombre',
+          description: 'Descripción'
+        },
+        account: {
+          newTitle: 'Nueva cuenta gestionada',
+          editTitle: 'Editar cuenta gestionada',
+          subtitle: 'Configura identidad, vencimiento y reglas de distribución del alias.',
+          sectionIdentity: 'Identidad y relación',
+          sectionOperation: 'Vigencia y operación',
+          accountCode: 'Código de cuenta',
+          displayName: 'Nombre visible',
+          aliasEmail: 'Correo alias',
+          principalReference: 'Referencia principal',
+          expirationDate: 'Fecha de vencimiento',
+          renewalDate: 'Fecha de renovación',
+          allowDistribution: 'Permitir distribución',
+          notes: 'Notas'
+        },
+        messages: {
+          loadModuleError: 'No se pudo cargar el módulo de cuentas gestionadas.',
+          providerRequired: 'Código y nombre son requeridos.',
+          providerSaved: 'Proveedor guardado.',
+          providerSaveError: 'No se pudo guardar el proveedor.',
+          providerStatusError: 'No se pudo cambiar el estado del proveedor.',
+          accountRequired: 'Completa campos obligatorios.',
+          accountSaved: 'Cuenta gestionada guardada.',
+          accountSaveError: 'No se pudo guardar la cuenta gestionada.',
+          accountStatusError: 'No se pudo cambiar el estado de la cuenta.',
+          distributionUpdateError: 'No se pudo cambiar la configuración de distribución.',
+          inboundRequired: 'mailboxAccount, rawMessageId, fromEmail y receivedAt son obligatorios.',
+          inboundProcessed: 'Entrada procesada.',
+          inboundProcessError: 'No se pudo procesar la entrada.',
+          retryExecuted: 'Reintento ejecutado correctamente.',
+          retryError: 'No se pudo reintentar la distribución.',
+          processExecuted: 'Proceso ejecutado'
         }
       },
       subscriptions: {

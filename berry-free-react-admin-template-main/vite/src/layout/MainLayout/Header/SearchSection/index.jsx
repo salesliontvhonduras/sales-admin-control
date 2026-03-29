@@ -488,6 +488,7 @@ function HeaderAvatar({ children, ...others }) {
 }
 
 function SearchInput({
+  inputId = 'input-search-header',
   value,
   onChange,
   onFocus,
@@ -501,7 +502,7 @@ function SearchInput({
 
   return (
     <OutlinedInput
-      id="input-search-header"
+      id={inputId}
       value={value}
       autoFocus={autoFocus}
       onChange={onChange}
@@ -516,19 +517,13 @@ function SearchInput({
       endAdornment={
         <InputAdornment position="end">
           <Stack direction="row" spacing={0.8} alignItems="center">
-            <HeaderAvatar>
+            <Box sx={{ display: 'inline-flex', color: 'text.secondary', opacity: 0.88 }}>
               <IconAdjustmentsHorizontal stroke={1.5} size="20px" />
-            </HeaderAvatar>
+            </Box>
             {showShortcut ? (
-              <Chip
-                size="small"
-                label="Ctrl + K"
-                variant="outlined"
-                sx={{
-                  borderStyle: 'dashed',
-                  color: theme.palette.text.secondary
-                }}
-              />
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, letterSpacing: 0.25 }}>
+                Ctrl + K
+              </Typography>
             ) : null}
           </Stack>
         </InputAdornment>
@@ -536,11 +531,23 @@ function SearchInput({
       sx={(theme) => ({
         width: fullWidth ? '100%' : { md: 280, lg: 470 },
         ml: fullWidth ? 0 : 2,
-        px: 1.6,
+        px: 1.4,
         borderRadius: 12,
+        border: '1px solid',
+        borderColor: theme.palette.divider,
         backgroundColor: theme.palette.mode === 'dark' ? theme.palette.surface.muted : theme.palette.surface.sunken,
+        '&:hover': {
+          borderColor: theme.palette.mode === 'dark' ? theme.palette.primary.dark : theme.palette.primary.light
+        },
+        '&.Mui-focused': {
+          borderColor: theme.palette.primary.main,
+          boxShadow: `0 0 0 1px ${theme.palette.primary.main}`
+        },
+        '& .MuiInputBase-input': {
+          py: 1.25
+        },
         '& .MuiOutlinedInput-notchedOutline': {
-          borderColor: theme.palette.divider
+          border: 'none'
         }
       })}
     />
@@ -863,6 +870,7 @@ export default function SearchSection() {
     <>
       <Box sx={{ display: { xs: 'none', md: 'block' } }} ref={desktopAnchorRef}>
         <SearchInput
+          inputId="input-search-header-desktop"
           value={query}
           onChange={(event) => {
             setQuery(event.target.value);
@@ -952,6 +960,7 @@ export default function SearchSection() {
         <DialogContent sx={{ pt: 0 }}>
           <Stack spacing={1.5}>
             <SearchInput
+              inputId="input-search-header-mobile"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               onFocus={() => refresh()}

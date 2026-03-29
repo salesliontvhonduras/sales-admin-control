@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
+import { useTranslation } from 'react-i18next';
 
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
@@ -12,7 +13,6 @@ import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
@@ -46,6 +46,7 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -85,29 +86,37 @@ const defaultInboundForm = {
 const cardGlassSx = (theme) => ({
   borderRadius: 2.5,
   border: '1px solid',
-  borderColor: 'divider',
-  boxShadow: '0 10px 26px rgba(18, 38, 63, 0.08)',
-  background:
-    theme.palette.mode === 'light'
-      ? `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${withAlpha(theme.palette.primary.light, 0.11)} 46%, ${withAlpha(theme.palette.success.light, 0.08)} 100%)`
-      : theme.palette.surface.sunken
+  borderColor: withAlpha(theme.vars?.palette?.divider || theme.palette.divider, 0.95),
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? `0 14px 34px ${withAlpha('#020817', 0.48)}`
+      : `0 10px 24px ${withAlpha('#0f172a', 0.1)}`,
+  backgroundColor: theme.vars?.palette?.surface?.card || theme.palette.background.paper,
+  backgroundImage:
+    theme.palette.mode === 'dark'
+      ? `linear-gradient(150deg, ${withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, 0.16)} 0%, ${withAlpha(theme.vars?.palette?.secondary?.main || theme.palette.secondary.main, 0.12)} 52%, ${theme.vars?.palette?.surface?.card || theme.palette.background.paper} 100%)`
+      : `linear-gradient(150deg, ${withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, 0.09)} 0%, ${withAlpha(theme.vars?.palette?.secondary?.main || theme.palette.secondary.main, 0.07)} 52%, ${theme.vars?.palette?.surface?.card || theme.palette.background.paper} 100%)`
 });
 
 const modalPaperSx = (theme) => ({
   borderRadius: 3,
-  border: `1px solid ${theme.palette.divider}`,
-  boxShadow: '0 24px 60px rgba(16, 24, 40, 0.2)',
+  border: `1px solid ${withAlpha(theme.vars?.palette?.divider || theme.palette.divider, 0.95)}`,
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? `0 26px 56px ${withAlpha('#020617', 0.62)}`
+      : `0 20px 44px ${withAlpha('#0f172a', 0.2)}`,
+  backgroundColor: theme.vars?.palette?.surface?.card || theme.palette.background.paper,
   overflow: 'hidden'
 });
 
 const modalHeaderSx = (theme) => ({
   px: 3,
   py: 2.2,
-  borderBottom: `1px solid ${theme.palette.divider}`,
+  borderBottom: `1px solid ${withAlpha(theme.vars?.palette?.divider || theme.palette.divider, 0.95)}`,
   background:
-    theme.palette.mode === 'light'
-      ? `linear-gradient(135deg, ${withAlpha(theme.palette.primary.light, 0.2)} 0%, ${withAlpha(theme.palette.info.light, 0.1)} 100%)`
-      : withAlpha(theme.palette.background.paper, 0.9)
+    theme.palette.mode === 'dark'
+      ? `linear-gradient(135deg, ${withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, 0.2)} 0%, ${withAlpha(theme.vars?.palette?.secondary?.main || theme.palette.secondary.main, 0.12)} 55%, ${theme.vars?.palette?.surface?.card || theme.palette.background.paper} 100%)`
+      : `linear-gradient(135deg, ${withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, 0.1)} 0%, ${withAlpha(theme.vars?.palette?.info?.main || theme.palette.info.main, 0.06)} 100%)`
 });
 
 const modalContentSx = {
@@ -118,28 +127,100 @@ const modalContentSx = {
 const modalActionsSx = (theme) => ({
   px: 3,
   py: 2,
-  borderTop: `1px solid ${theme.palette.divider}`,
-  backgroundColor: withAlpha(theme.palette.background.default, 0.6)
+  borderTop: `1px solid ${withAlpha(theme.vars?.palette?.divider || theme.palette.divider, 0.95)}`,
+  backgroundColor: withAlpha(theme.vars?.palette?.surface?.muted || theme.palette.background.default, theme.palette.mode === 'dark' ? 0.9 : 0.7)
 });
 
 const modalSectionSx = (theme) => ({
   p: 2,
   borderRadius: 2,
-  border: `1px solid ${theme.palette.divider}`,
+  border: `1px solid ${withAlpha(theme.vars?.palette?.divider || theme.palette.divider, 0.95)}`,
   background:
-    theme.palette.mode === 'light'
-      ? `linear-gradient(180deg, ${withAlpha(theme.palette.primary.light, 0.06)} 0%, ${withAlpha(theme.palette.background.paper, 0.9)} 100%)`
-      : withAlpha(theme.palette.background.paper, 0.5)
+    theme.palette.mode === 'dark'
+      ? `linear-gradient(180deg, ${withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, 0.1)} 0%, ${withAlpha(theme.vars?.palette?.surface?.card || theme.palette.background.paper, 0.92)} 100%)`
+      : `linear-gradient(180deg, ${withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, 0.05)} 0%, ${withAlpha(theme.vars?.palette?.surface?.card || theme.palette.background.paper, 0.92)} 100%)`
 });
 
-const fieldSx = {
+const panelCardSx = (theme) => ({
+  border: '1px solid',
+  borderColor: withAlpha(theme.vars?.palette?.divider || theme.palette.divider, 0.95),
+  backgroundColor: theme.vars?.palette?.surface?.card || theme.palette.background.paper,
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? `0 14px 34px ${withAlpha('#020817', 0.42)}`
+      : `0 10px 24px ${withAlpha('#0f172a', 0.08)}`
+});
+
+const tableContainerSx = (theme) => ({
+  ...panelCardSx(theme),
+  borderRadius: 2.4,
+  overflow: 'hidden'
+});
+
+const tableHeadRowSx = (theme) => ({
+  bgcolor: theme.vars?.palette?.surface?.sunken || theme.palette.action.hover,
+  borderBottom: `1px solid ${withAlpha(theme.vars?.palette?.divider || theme.palette.divider, 0.95)}`
+});
+
+const fieldSx = (theme) => ({
   '& .MuiInputBase-root': {
-    borderRadius: 1.8
+    borderRadius: 1.8,
+    backgroundColor: withAlpha(theme.vars?.palette?.surface?.sunken || theme.palette.background.default, theme.palette.mode === 'dark' ? 0.8 : 0.55)
+  },
+  '& .MuiOutlinedInput-notchedOutline': {
+    borderColor: withAlpha(theme.vars?.palette?.divider || theme.palette.divider, 0.95)
+  },
+  '&:hover .MuiOutlinedInput-notchedOutline': {
+    borderColor: withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.54 : 0.34)
   },
   '& .MuiInputLabel-root': {
-    fontWeight: 500
+    fontWeight: 500,
+    color: theme.palette.text.secondary
   }
-};
+});
+
+const tabsSx = (theme) => ({
+  borderRadius: 2.4,
+  border: '1px solid',
+  borderColor: withAlpha(theme.vars?.palette?.divider || theme.palette.divider, 0.95),
+  backgroundColor: withAlpha(theme.vars?.palette?.surface?.sunken || theme.palette.background.default, theme.palette.mode === 'dark' ? 0.78 : 0.58),
+  px: 0.8,
+  '& .MuiTab-root': {
+    minHeight: 42,
+    borderRadius: 1.6,
+    color: theme.palette.text.secondary,
+    fontWeight: 600
+  },
+  '& .MuiTab-root.Mui-selected': {
+    color: theme.palette.text.primary
+  },
+  '& .MuiTabs-indicator': {
+    height: 34,
+    borderRadius: 1.4,
+    backgroundColor: withAlpha(theme.vars?.palette?.primary?.main || theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.12),
+    zIndex: 0,
+    marginBottom: 4
+  },
+  '& .MuiTab-root > *': {
+    position: 'relative',
+    zIndex: 1
+  }
+});
+
+const tablePaginationSx = (theme) => ({
+  borderTop: `1px solid ${withAlpha(theme.vars?.palette?.divider || theme.palette.divider, 0.95)}`,
+  backgroundColor: withAlpha(theme.vars?.palette?.surface?.sunken || theme.palette.background.default, theme.palette.mode === 'dark' ? 0.84 : 0.62),
+  '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+    color: theme.palette.text.secondary,
+    fontWeight: 500
+  },
+  '& .MuiTablePagination-toolbar': {
+    minHeight: 54
+  },
+  '& .MuiTablePagination-actions .MuiIconButton-root': {
+    color: theme.palette.text.secondary
+  }
+});
 
 function unwrap(res) {
   return res?.data?.data ?? res?.data ?? null;
@@ -170,16 +251,16 @@ function parseDateValue(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function formatDate(value) {
+function formatDate(value, locale = 'es-HN') {
   const date = parseDateValue(value);
   if (!date) return '-';
-  return date.toLocaleDateString('es-HN');
+  return date.toLocaleDateString(locale);
 }
 
-function formatDateTime(value) {
+function formatDateTime(value, locale = 'es-HN') {
   const date = parseDateValue(value);
   if (!date) return '-';
-  return date.toLocaleString('es-HN');
+  return date.toLocaleString(locale);
 }
 
 function daysUntil(dateValue) {
@@ -199,21 +280,29 @@ function expirationMeta(expirationDate) {
   const days = daysUntil(expirationDate);
 
   if (days === null) {
-    return { days: null, label: 'Sin fecha', chipColor: 'default', rank: 5 };
+    return { days: null, state: 'NO_DATE', chipColor: 'default', rank: 5 };
   }
   if (days < 0) {
-    return { days, label: `Vencida hace ${Math.abs(days)}d`, chipColor: 'error', rank: 0 };
+    return { days, state: 'EXPIRED', chipColor: 'error', rank: 0 };
   }
   if (days === 0) {
-    return { days, label: 'Vence hoy', chipColor: 'error', rank: 1 };
+    return { days, state: 'TODAY', chipColor: 'error', rank: 1 };
   }
   if (days <= 7) {
-    return { days, label: `Vence en ${days}d`, chipColor: 'warning', rank: 2 };
+    return { days, state: 'DUE', chipColor: 'warning', rank: 2 };
   }
   if (days <= 30) {
-    return { days, label: `Vence en ${days}d`, chipColor: 'info', rank: 3 };
+    return { days, state: 'DUE', chipColor: 'info', rank: 3 };
   }
-  return { days, label: `Vence en ${days}d`, chipColor: 'success', rank: 4 };
+  return { days, state: 'DUE', chipColor: 'success', rank: 4 };
+}
+
+function expirationLabel(meta, t) {
+  if (!meta) return '-';
+  if (meta.state === 'NO_DATE') return t('managedAccounts.expiration.noDate', 'No date');
+  if (meta.state === 'EXPIRED') return t('managedAccounts.expiration.expiredAgo', { defaultValue: 'Expired {{days}}d ago', days: Math.abs(meta.days ?? 0) });
+  if (meta.state === 'TODAY') return t('managedAccounts.expiration.today', 'Due today');
+  return t('managedAccounts.expiration.inDays', { defaultValue: 'Due in {{days}}d', days: meta.days ?? 0 });
 }
 
 function MetricCard({ title, value, helper, color = 'primary', icon }) {
@@ -239,8 +328,12 @@ function MetricCard({ title, value, helper, color = 'primary', icon }) {
             sx={(theme) => ({
               width: 46,
               height: 46,
-              bgcolor: theme.palette[color]?.lighter || theme.palette.primary.lighter,
-              color: theme.palette[color]?.main || theme.palette.primary.main
+              bgcolor: withAlpha(theme.palette[color]?.main || theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.22 : 0.14),
+              color: theme.palette[color]?.main || theme.palette.primary.main,
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? `0 10px 22px ${withAlpha('#020617', 0.42)}`
+                  : `0 8px 16px ${withAlpha('#0f172a', 0.12)}`
             })}
           >
             {icon}
@@ -254,6 +347,11 @@ function MetricCard({ title, value, helper, color = 'primary', icon }) {
 export default function ManagedAccountsLionTv() {
   const { accessToken } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
+  const { t, i18n } = useTranslation();
+  const dateLocale = useMemo(
+    () => (String(i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('es') ? 'es-HN' : 'en-US'),
+    [i18n.language, i18n.resolvedLanguage]
+  );
 
   const [tab, setTab] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -371,11 +469,11 @@ export default function ManagedAccountsLionTv() {
         await Promise.all([loadReports(), loadAccounts()]);
       }
     } catch (error) {
-      onError(error, 'No se pudo cargar el módulo');
+      onError(error, t('managedAccounts.messages.loadModuleError', 'Could not load managed accounts module.'));
     } finally {
       setLoading(false);
     }
-  }, [accessToken, tab, loadProviders, loadAccounts, loadCustomers, loadEvents, loadReports, onError]);
+  }, [accessToken, tab, loadProviders, loadAccounts, loadCustomers, loadEvents, loadReports, onError, t]);
 
   useEffect(() => {
     reload();
@@ -395,7 +493,7 @@ export default function ManagedAccountsLionTv() {
 
   const saveProvider = async () => {
     if (!providerForm.code || !providerForm.name) {
-      enqueueSnackbar('Code y Name son requeridos', { variant: 'warning' });
+      enqueueSnackbar(t('managedAccounts.messages.providerRequired', 'Code and Name are required.'), { variant: 'warning' });
       return;
     }
 
@@ -415,10 +513,10 @@ export default function ManagedAccountsLionTv() {
 
       setProviderModalOpen(false);
       setProviderForm(defaultProviderForm);
-      enqueueSnackbar('Provider guardado', { variant: 'success' });
+      enqueueSnackbar(t('managedAccounts.messages.providerSaved', 'Provider saved.'), { variant: 'success' });
       await loadProviders();
     } catch (error) {
-      onError(error, 'No se pudo guardar provider');
+      onError(error, t('managedAccounts.messages.providerSaveError', 'Could not save provider.'));
     } finally {
       setProviderSaving(false);
     }
@@ -429,7 +527,7 @@ export default function ManagedAccountsLionTv() {
       await lionTvApi.patch(`/providers/v1/${id}/status`, { status }, { headers, skipAuthRedirect: true });
       await loadProviders();
     } catch (error) {
-      onError(error, 'No se pudo cambiar estado del provider');
+      onError(error, t('managedAccounts.messages.providerStatusError', 'Could not change provider status.'));
     }
   };
 
@@ -442,7 +540,7 @@ export default function ManagedAccountsLionTv() {
       !accountForm.aliasEmail ||
       !accountForm.expirationDate
     ) {
-      enqueueSnackbar('Completa campos obligatorios', { variant: 'warning' });
+      enqueueSnackbar(t('managedAccounts.messages.accountRequired', 'Complete required fields.'), { variant: 'warning' });
       return;
     }
 
@@ -470,10 +568,10 @@ export default function ManagedAccountsLionTv() {
 
       setAccountModalOpen(false);
       setAccountForm(defaultAccountForm);
-      enqueueSnackbar('Cuenta guardada', { variant: 'success' });
+      enqueueSnackbar(t('managedAccounts.messages.accountSaved', 'Managed account saved.'), { variant: 'success' });
       await loadAccounts();
     } catch (error) {
-      onError(error, 'No se pudo guardar cuenta gestionada');
+      onError(error, t('managedAccounts.messages.accountSaveError', 'Could not save managed account.'));
     } finally {
       setAccountSaving(false);
     }
@@ -484,7 +582,7 @@ export default function ManagedAccountsLionTv() {
       await lionTvApi.patch(`/managed-accounts/v1/${id}/status`, { status }, { headers, skipAuthRedirect: true });
       await loadAccounts();
     } catch (error) {
-      onError(error, 'No se pudo cambiar estado de la cuenta');
+      onError(error, t('managedAccounts.messages.accountStatusError', 'Could not change account status.'));
     }
   };
 
@@ -493,13 +591,15 @@ export default function ManagedAccountsLionTv() {
       await lionTvApi.patch(`/managed-accounts/v1/${id}/distribution`, { allowDistribution }, { headers, skipAuthRedirect: true });
       await loadAccounts();
     } catch (error) {
-      onError(error, 'No se pudo cambiar distribución');
+      onError(error, t('managedAccounts.messages.distributionUpdateError', 'Could not update distribution setting.'));
     }
   };
 
   const processInbound = async () => {
     if (!inboundForm.mailboxAccount || !inboundForm.rawMessageId || !inboundForm.fromEmail || !inboundForm.receivedAt) {
-      enqueueSnackbar('mailboxAccount, rawMessageId, fromEmail y receivedAt son obligatorios', { variant: 'warning' });
+      enqueueSnackbar(t('managedAccounts.messages.inboundRequired', 'mailboxAccount, rawMessageId, fromEmail and receivedAt are required.'), {
+        variant: 'warning'
+      });
       return;
     }
 
@@ -511,10 +611,10 @@ export default function ManagedAccountsLionTv() {
       };
       const res = await lionTvApi.post('/internal/inbound-emails/v1/process', payload, { headers, skipAuthRedirect: true });
       setLastProcessResult(unwrap(res));
-      enqueueSnackbar('Inbound procesado', { variant: 'success' });
+      enqueueSnackbar(t('managedAccounts.messages.inboundProcessed', 'Inbound event processed.'), { variant: 'success' });
       await loadEvents();
     } catch (error) {
-      onError(error, 'No se pudo procesar inbound');
+      onError(error, t('managedAccounts.messages.inboundProcessError', 'Could not process inbound event.'));
     } finally {
       setInboundProcessing(false);
     }
@@ -525,10 +625,10 @@ export default function ManagedAccountsLionTv() {
       const mode = retryModeById[eventId] || 'FORWARD_ALL';
       const res = await lionTvApi.post(`/inbound-emails/v1/${eventId}/retry-distribution`, { mode }, { headers, skipAuthRedirect: true });
       setLastProcessResult(unwrap(res));
-      enqueueSnackbar('Retry ejecutado', { variant: 'success' });
+      enqueueSnackbar(t('managedAccounts.messages.retryExecuted', 'Retry executed successfully.'), { variant: 'success' });
       await loadEvents();
     } catch (error) {
-      onError(error, 'No se pudo reintentar distribución');
+      onError(error, t('managedAccounts.messages.retryError', 'Could not retry distribution.'));
     }
   };
 
@@ -682,10 +782,10 @@ export default function ManagedAccountsLionTv() {
 
   return (
     <MainCard
-      title="Managed Accounts Control Center"
+      title={t('managedAccounts.title', 'Managed Accounts Control Center')}
       secondary={
         <Button variant="contained" startIcon={<RefreshIcon />} onClick={reload}>
-          Refrescar
+          {t('managedAccounts.actions.refresh', 'Refresh')}
         </Button>
       }
     >
@@ -693,32 +793,52 @@ export default function ManagedAccountsLionTv() {
         <Card sx={(theme) => cardGlassSx(theme)}>
           <CardContent>
             <Stack spacing={1.2}>
-              <Typography variant="h3">Monitoreo operativo de cuentas, vencimientos y distribución de correos</Typography>
+              <Typography variant="h3">{t('managedAccounts.hero.title', 'Operational tracking for accounts, expirations and mail distribution')}</Typography>
               <Typography variant="body2" color="text.secondary">
-                Panel unificado para controlar providers, cuentas por alias y flujo inbound. Prioriza cuentas que vencen hoy/pronto y
-                eventos fallidos.
+                {t(
+                  'managedAccounts.hero.subtitle',
+                  'Unified panel to control providers, alias-based accounts, and inbound flow. Prioritize due/expiring accounts and failed events.'
+                )}
               </Typography>
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                <Chip variant="outlined" color="warning" icon={<WarningAmberIcon />} label={`Vencen en 7 días: ${accountMetrics.dueIn7}`} />
-                <Chip variant="outlined" color="error" icon={<ReportProblemOutlinedIcon />} label={`Vencidas: ${accountMetrics.expired}`} />
+                <Chip
+                  variant="outlined"
+                  color="warning"
+                  icon={<WarningAmberIcon />}
+                  label={t('managedAccounts.hero.chips.due7', { defaultValue: 'Due in 7 days: {{count}}', count: accountMetrics.dueIn7 })}
+                />
+                <Chip
+                  variant="outlined"
+                  color="error"
+                  icon={<ReportProblemOutlinedIcon />}
+                  label={t('managedAccounts.hero.chips.expired', { defaultValue: 'Expired: {{count}}', count: accountMetrics.expired })}
+                />
                 <Chip
                   variant="outlined"
                   color="success"
                   icon={<CheckCircleOutlineIcon />}
-                  label={`Distribución ON: ${accountMetrics.distributionOn}`}
+                  label={t('managedAccounts.hero.chips.distributionOn', {
+                    defaultValue: 'Distribution ON: {{count}}',
+                    count: accountMetrics.distributionOn
+                  })}
                 />
-                <Chip variant="outlined" color="info" icon={<EmailOutlinedIcon />} label={`Eventos inbound: ${eventMetrics.total}`} />
+                <Chip
+                  variant="outlined"
+                  color="info"
+                  icon={<EmailOutlinedIcon />}
+                  label={t('managedAccounts.hero.chips.inbound', { defaultValue: 'Inbound events: {{count}}', count: eventMetrics.total })}
+                />
               </Stack>
             </Stack>
           </CardContent>
         </Card>
 
-        <Tabs value={tab} onChange={(_, next) => setTab(next)} variant="scrollable" scrollButtons="auto">
-          <Tab label="Overview" />
-          <Tab label="Managed Accounts" />
-          <Tab label="Providers" />
-          <Tab label="Inbound" />
-          <Tab label="Reports" />
+        <Tabs value={tab} onChange={(_, next) => setTab(next)} variant="scrollable" scrollButtons="auto" sx={tabsSx}>
+          <Tab label={t('managedAccounts.tabs.overview', 'Overview')} />
+          <Tab label={t('managedAccounts.tabs.accounts', 'Managed Accounts')} />
+          <Tab label={t('managedAccounts.tabs.providers', 'Providers')} />
+          <Tab label={t('managedAccounts.tabs.inbound', 'Inbound')} />
+          <Tab label={t('managedAccounts.tabs.reports', 'Reports')} />
         </Tabs>
 
         {loading ? <LinearProgress /> : null}
@@ -727,60 +847,60 @@ export default function ManagedAccountsLionTv() {
           <Grid container spacing={gridSpacing}>
             <Grid item xs={12} sm={6} lg={3}>
               <MetricCard
-                title="Total Accounts"
+                title={t('managedAccounts.metrics.totalAccounts', 'Total Accounts')}
                 value={accountMetrics.total}
-                helper="Cuentas registradas"
+                helper={t('managedAccounts.metrics.totalAccountsHelper', 'Registered accounts')}
                 icon={<HubOutlinedIcon />}
                 color="primary"
               />
             </Grid>
             <Grid item xs={12} sm={6} lg={3}>
               <MetricCard
-                title="Active"
+                title={t('managedAccounts.metrics.active', 'Active')}
                 value={accountMetrics.active}
-                helper="Estado ACTIVE"
+                helper={t('managedAccounts.metrics.activeHelper', 'ACTIVE status')}
                 icon={<CheckCircleOutlineIcon />}
                 color="success"
               />
             </Grid>
             <Grid item xs={12} sm={6} lg={3}>
               <MetricCard
-                title="Due Today"
+                title={t('managedAccounts.metrics.dueToday', 'Due Today')}
                 value={accountMetrics.dueToday}
-                helper="Acción inmediata"
+                helper={t('managedAccounts.metrics.dueTodayHelper', 'Immediate action')}
                 icon={<HourglassTopIcon />}
                 color="warning"
               />
             </Grid>
             <Grid item xs={12} sm={6} lg={3}>
               <MetricCard
-                title="Expired"
+                title={t('managedAccounts.metrics.expired', 'Expired')}
                 value={accountMetrics.expired}
-                helper="Riesgo de pérdida"
+                helper={t('managedAccounts.metrics.expiredHelper', 'Potential churn risk')}
                 icon={<ReportProblemOutlinedIcon />}
                 color="error"
               />
             </Grid>
 
             <Grid item xs={12} md={8}>
-              <Card>
+              <Card sx={(theme) => panelCardSx(theme)}>
                 <CardContent>
-                  <Typography variant="h4">Cuentas con vencimiento cercano</Typography>
+                  <Typography variant="h4">{t('managedAccounts.overview.expiringTitle', 'Accounts with near expiration')}</Typography>
                   <Typography variant="caption" color="text.secondary">
-                    Próximos 30 días, ordenadas por criticidad
+                    {t('managedAccounts.overview.expiringSubtitle', 'Next 30 days, sorted by criticality')}
                   </Typography>
                   <Divider sx={{ my: 1.5 }} />
 
-                  <TableContainer>
+                  <TableContainer sx={(theme) => tableContainerSx(theme)}>
                     <Table size="small">
                       <TableHead>
-                        <TableRow>
-                          <TableCell>Account</TableCell>
-                          <TableCell>Alias</TableCell>
-                          <TableCell>Provider</TableCell>
-                          <TableCell>Vence</TableCell>
-                          <TableCell>Estado</TableCell>
-                          <TableCell>Distribución</TableCell>
+                        <TableRow sx={(theme) => tableHeadRowSx(theme)}>
+                          <TableCell>{t('managedAccounts.table.account', 'Account')}</TableCell>
+                          <TableCell>{t('managedAccounts.table.alias', 'Alias')}</TableCell>
+                          <TableCell>{t('managedAccounts.table.provider', 'Provider')}</TableCell>
+                          <TableCell>{t('managedAccounts.table.expiration', 'Expiration')}</TableCell>
+                          <TableCell>{t('managedAccounts.table.status', 'Status')}</TableCell>
+                          <TableCell>{t('managedAccounts.table.distribution', 'Distribution')}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -800,18 +920,22 @@ export default function ManagedAccountsLionTv() {
                               <TableCell>{row.providerCode || row.providerName || row.providerId || '-'}</TableCell>
                               <TableCell>
                                 <Stack spacing={0.3}>
-                                  <Typography variant="body2">{formatDate(row.expirationDate)}</Typography>
-                                  <Chip size="small" color={meta.chipColor} label={meta.label} />
+                                  <Typography variant="body2">{formatDate(row.expirationDate, dateLocale)}</Typography>
+                                  <Chip size="small" color={meta.chipColor} label={expirationLabel(meta, t)} />
                                 </Stack>
                               </TableCell>
                               <TableCell>
-                                <Chip size="small" color={statusColor(row.accountStatus)} label={row.accountStatus || '-'} />
+                                <Chip
+                                  size="small"
+                                  color={statusColor(row.accountStatus)}
+                                  label={t(`managedAccounts.statusValues.${row.accountStatus}`, row.accountStatus || '-')}
+                                />
                               </TableCell>
                               <TableCell>
                                 <Chip
                                   size="small"
                                   color={row.allowDistribution ? 'success' : 'default'}
-                                  label={row.allowDistribution ? 'ON' : 'OFF'}
+                                  label={row.allowDistribution ? t('managedAccounts.options.on', 'ON') : t('managedAccounts.options.off', 'OFF')}
                                 />
                               </TableCell>
                             </TableRow>
@@ -819,7 +943,7 @@ export default function ManagedAccountsLionTv() {
                         })}
                         {!topExpiringAccounts.length ? (
                           <TableRow>
-                            <TableCell colSpan={6}>Sin cuentas por vencer en 30 días</TableCell>
+                            <TableCell colSpan={6}>{t('managedAccounts.empty.noExpiring', 'No accounts due within 30 days')}</TableCell>
                           </TableRow>
                         ) : null}
                       </TableBody>
@@ -832,23 +956,23 @@ export default function ManagedAccountsLionTv() {
             <Grid item xs={12} md={4}>
               <Stack spacing={2}>
                 <MetricCard
-                  title="Inbound Distributed"
+                  title={t('managedAccounts.metrics.inboundDistributed', 'Inbound Distributed')}
                   value={eventMetrics.distributed}
-                  helper={`Fallidos: ${eventMetrics.failed}`}
+                  helper={t('managedAccounts.metrics.failedCount', { defaultValue: 'Failed: {{count}}', count: eventMetrics.failed })}
                   icon={<MarkEmailReadOutlinedIcon />}
                   color="success"
                 />
                 <MetricCard
-                  title="Inbound Unresolved"
+                  title={t('managedAccounts.metrics.inboundUnresolved', 'Inbound Unresolved')}
                   value={eventMetrics.unresolved}
-                  helper="Sin alias resuelto"
+                  helper={t('managedAccounts.metrics.inboundUnresolvedHelper', 'Without resolved alias')}
                   icon={<ReportProblemOutlinedIcon />}
                   color="warning"
                 />
                 <MetricCard
-                  title="Due in 30 Days"
+                  title={t('managedAccounts.metrics.dueIn30', 'Due in 30 Days')}
                   value={accountMetrics.dueIn30}
-                  helper="Incluye las que vencen hoy"
+                  helper={t('managedAccounts.metrics.dueIn30Helper', 'Includes accounts due today')}
                   icon={<HourglassTopIcon />}
                   color="info"
                 />
@@ -860,14 +984,15 @@ export default function ManagedAccountsLionTv() {
         {tab === 1 ? (
           <Grid container spacing={gridSpacing}>
             <Grid item xs={12}>
-              <Card>
+              <Card sx={(theme) => panelCardSx(theme)}>
                 <CardContent>
                   <Grid container spacing={1.5} alignItems="center">
                     <Grid item xs={12} md={3.3}>
                       <TextField
                         fullWidth
                         size="small"
-                        label="Buscar cuenta"
+                        label={t('managedAccounts.filters.searchAccount', 'Search account')}
+                        sx={fieldSx}
                         value={accountSearch}
                         onChange={(event) => setAccountSearch(event.target.value)}
                         InputProps={{
@@ -884,14 +1009,15 @@ export default function ManagedAccountsLionTv() {
                         fullWidth
                         select
                         size="small"
-                        label="Status"
+                        label={t('managedAccounts.table.status', 'Status')}
+                        sx={fieldSx}
                         value={accountStatusFilter}
                         onChange={(event) => setAccountStatusFilter(event.target.value)}
                       >
-                        <MenuItem value="ALL">Todos</MenuItem>
+                        <MenuItem value="ALL">{t('managedAccounts.options.all', 'All')}</MenuItem>
                         {accountStatusOptions.map((it) => (
                           <MenuItem key={it} value={it}>
-                            {it}
+                            {t(`managedAccounts.statusValues.${it}`, it)}
                           </MenuItem>
                         ))}
                       </TextField>
@@ -901,11 +1027,12 @@ export default function ManagedAccountsLionTv() {
                         fullWidth
                         select
                         size="small"
-                        label="Provider"
+                        label={t('managedAccounts.table.provider', 'Provider')}
+                        sx={fieldSx}
                         value={accountProviderFilter}
                         onChange={(event) => setAccountProviderFilter(event.target.value)}
                       >
-                        <MenuItem value="ALL">Todos</MenuItem>
+                        <MenuItem value="ALL">{t('managedAccounts.options.all', 'All')}</MenuItem>
                         {providers.map((p) => (
                           <MenuItem key={p.id} value={String(p.id)}>
                             {p.code} - {p.name}
@@ -918,16 +1045,17 @@ export default function ManagedAccountsLionTv() {
                         fullWidth
                         select
                         size="small"
-                        label="Vencimiento"
+                        label={t('managedAccounts.filters.expiration', 'Expiration')}
+                        sx={fieldSx}
                         value={accountExpiryFilter}
                         onChange={(event) => setAccountExpiryFilter(event.target.value)}
                       >
-                        <MenuItem value="ALL">Todos</MenuItem>
-                        <MenuItem value="EXPIRED">Vencidas</MenuItem>
-                        <MenuItem value="TODAY">Vence hoy</MenuItem>
-                        <MenuItem value="7D">Próx. 7 días</MenuItem>
-                        <MenuItem value="30D">Próx. 30 días</MenuItem>
-                        <MenuItem value="NO_DATE">Sin fecha</MenuItem>
+                        <MenuItem value="ALL">{t('managedAccounts.options.all', 'All')}</MenuItem>
+                        <MenuItem value="EXPIRED">{t('managedAccounts.options.expired', 'Expired')}</MenuItem>
+                        <MenuItem value="TODAY">{t('managedAccounts.options.dueToday', 'Due today')}</MenuItem>
+                        <MenuItem value="7D">{t('managedAccounts.options.next7Days', 'Next 7 days')}</MenuItem>
+                        <MenuItem value="30D">{t('managedAccounts.options.next30Days', 'Next 30 days')}</MenuItem>
+                        <MenuItem value="NO_DATE">{t('managedAccounts.options.noDate', 'No date')}</MenuItem>
                       </TextField>
                     </Grid>
                     <Grid item xs={12} md={1.8}>
@@ -935,13 +1063,14 @@ export default function ManagedAccountsLionTv() {
                         fullWidth
                         select
                         size="small"
-                        label="Distribución"
+                        label={t('managedAccounts.table.distribution', 'Distribution')}
+                        sx={fieldSx}
                         value={accountDistributionFilter}
                         onChange={(event) => setAccountDistributionFilter(event.target.value)}
                       >
-                        <MenuItem value="ALL">Todos</MenuItem>
-                        <MenuItem value="ON">ON</MenuItem>
-                        <MenuItem value="OFF">OFF</MenuItem>
+                        <MenuItem value="ALL">{t('managedAccounts.options.all', 'All')}</MenuItem>
+                        <MenuItem value="ON">{t('managedAccounts.options.on', 'ON')}</MenuItem>
+                        <MenuItem value="OFF">{t('managedAccounts.options.off', 'OFF')}</MenuItem>
                       </TextField>
                     </Grid>
                     <Grid item xs={12} md={0.5}>
@@ -958,7 +1087,7 @@ export default function ManagedAccountsLionTv() {
                             setAccountModalOpen(true);
                           }}
                         >
-                          Nueva
+                          {t('managedAccounts.actions.newAccount', 'New')}
                         </Button>
                       </Stack>
                     </Grid>
@@ -968,21 +1097,21 @@ export default function ManagedAccountsLionTv() {
             </Grid>
 
             <Grid item xs={12}>
-              <TableContainer component={Card}>
+              <TableContainer component={Card} sx={(theme) => tableContainerSx(theme)}>
                 <Table size="small">
                   <TableHead>
-                    <TableRow>
-                      <TableCell>ID</TableCell>
-                      <TableCell>Cuenta</TableCell>
-                      <TableCell>Alias</TableCell>
-                      <TableCell>Provider</TableCell>
-                      <TableCell>Customer</TableCell>
-                      <TableCell>Vencimiento</TableCell>
-                      <TableCell>Último correo</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Distribución</TableCell>
-                      <TableCell>Created By</TableCell>
-                      <TableCell>Actions</TableCell>
+                    <TableRow sx={(theme) => tableHeadRowSx(theme)}>
+                      <TableCell>{t('managedAccounts.table.id', 'ID')}</TableCell>
+                      <TableCell>{t('managedAccounts.table.accountName', 'Account')}</TableCell>
+                      <TableCell>{t('managedAccounts.table.alias', 'Alias')}</TableCell>
+                      <TableCell>{t('managedAccounts.table.provider', 'Provider')}</TableCell>
+                      <TableCell>{t('managedAccounts.table.customer', 'Customer')}</TableCell>
+                      <TableCell>{t('managedAccounts.table.expiration', 'Expiration')}</TableCell>
+                      <TableCell>{t('managedAccounts.table.lastEmail', 'Last email')}</TableCell>
+                      <TableCell>{t('managedAccounts.table.status', 'Status')}</TableCell>
+                      <TableCell>{t('managedAccounts.table.distribution', 'Distribution')}</TableCell>
+                      <TableCell>{t('managedAccounts.table.createdBy', 'Created by')}</TableCell>
+                      <TableCell>{t('managedAccounts.table.actions', 'Actions')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -1017,13 +1146,17 @@ export default function ManagedAccountsLionTv() {
                           <TableCell>{row.customerFullname || row.customerId || '-'}</TableCell>
                           <TableCell>
                             <Stack spacing={0.4}>
-                              <Typography variant="body2">{formatDate(row.expirationDate)}</Typography>
-                              <Chip size="small" color={exp.chipColor} label={exp.label} />
+                              <Typography variant="body2">{formatDate(row.expirationDate, dateLocale)}</Typography>
+                              <Chip size="small" color={exp.chipColor} label={expirationLabel(exp, t)} />
                             </Stack>
                           </TableCell>
-                          <TableCell>{formatDateTime(row.lastEmailReceivedAt)}</TableCell>
+                          <TableCell>{formatDateTime(row.lastEmailReceivedAt, dateLocale)}</TableCell>
                           <TableCell>
-                            <Chip size="small" color={statusColor(row.accountStatus)} label={row.accountStatus || '-'} />
+                            <Chip
+                              size="small"
+                              color={statusColor(row.accountStatus)}
+                              label={t(`managedAccounts.statusValues.${row.accountStatus}`, row.accountStatus || '-')}
+                            />
                           </TableCell>
                           <TableCell>
                             <FormControlLabel
@@ -1034,7 +1167,7 @@ export default function ManagedAccountsLionTv() {
                                   onChange={(_, checked) => patchDistribution(row.id, checked)}
                                 />
                               }
-                              label={row.allowDistribution ? 'ON' : 'OFF'}
+                              label={row.allowDistribution ? t('managedAccounts.options.on', 'ON') : t('managedAccounts.options.off', 'OFF')}
                             />
                           </TableCell>
                           <TableCell>{row.createdBy || '-'}</TableCell>
@@ -1053,18 +1186,18 @@ export default function ManagedAccountsLionTv() {
                                   setAccountModalOpen(true);
                                 }}
                               >
-                                Editar
+                                {t('actions.edit', 'Edit')}
                               </Button>
                               <TextField
                                 select
                                 size="small"
                                 value={row.accountStatus || 'ACTIVE'}
                                 onChange={(event) => patchAccountStatus(row.id, event.target.value)}
-                                sx={{ minWidth: 140 }}
+                                sx={(theme) => ({ ...fieldSx(theme), minWidth: 140 })}
                               >
                                 {accountStatusOptions.map((it) => (
                                   <MenuItem key={it} value={it}>
-                                    {it}
+                                    {t(`managedAccounts.statusValues.${it}`, it)}
                                   </MenuItem>
                                 ))}
                               </TextField>
@@ -1075,7 +1208,7 @@ export default function ManagedAccountsLionTv() {
                     })}
                     {!pagedAccounts.length ? (
                       <TableRow>
-                        <TableCell colSpan={11}>Sin cuentas para los filtros seleccionados</TableCell>
+                        <TableCell colSpan={11}>{t('managedAccounts.empty.noAccounts', 'No accounts for selected filters')}</TableCell>
                       </TableRow>
                     ) : null}
                   </TableBody>
@@ -1086,6 +1219,7 @@ export default function ManagedAccountsLionTv() {
                   count={filteredAccounts.length}
                   rowsPerPage={accountRowsPerPage}
                   page={accountPage}
+                  sx={tablePaginationSx}
                   onPageChange={(_, nextPage) => setAccountPage(nextPage)}
                   onRowsPerPageChange={(event) => {
                     setAccountRowsPerPage(Number(event.target.value));
@@ -1100,14 +1234,15 @@ export default function ManagedAccountsLionTv() {
         {tab === 2 ? (
           <Grid container spacing={gridSpacing}>
             <Grid item xs={12}>
-              <Card>
+              <Card sx={(theme) => panelCardSx(theme)}>
                 <CardContent>
                   <Grid container spacing={1.5} alignItems="center">
                     <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
                         size="small"
-                        label="Buscar provider"
+                        label={t('managedAccounts.filters.searchProvider', 'Search provider')}
+                        sx={fieldSx}
                         value={providerSearch}
                         onChange={(event) => setProviderSearch(event.target.value)}
                         InputProps={{
@@ -1129,7 +1264,7 @@ export default function ManagedAccountsLionTv() {
                             setProviderModalOpen(true);
                           }}
                         >
-                          Nuevo Provider
+                          {t('managedAccounts.actions.newProvider', 'New Provider')}
                         </Button>
                       </Stack>
                     </Grid>
@@ -1139,17 +1274,17 @@ export default function ManagedAccountsLionTv() {
             </Grid>
 
             <Grid item xs={12}>
-              <TableContainer component={Card}>
+              <TableContainer component={Card} sx={(theme) => tableContainerSx(theme)}>
                 <Table size="small">
                   <TableHead>
-                    <TableRow>
-                      <TableCell>ID</TableCell>
-                      <TableCell>Code</TableCell>
-                      <TableCell>Name</TableCell>
-                      <TableCell>Description</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Created By</TableCell>
-                      <TableCell>Actions</TableCell>
+                    <TableRow sx={(theme) => tableHeadRowSx(theme)}>
+                      <TableCell>{t('managedAccounts.table.id', 'ID')}</TableCell>
+                      <TableCell>{t('managedAccounts.provider.code', 'Code')}</TableCell>
+                      <TableCell>{t('managedAccounts.provider.name', 'Name')}</TableCell>
+                      <TableCell>{t('managedAccounts.provider.description', 'Description')}</TableCell>
+                      <TableCell>{t('managedAccounts.table.status', 'Status')}</TableCell>
+                      <TableCell>{t('managedAccounts.table.createdBy', 'Created by')}</TableCell>
+                      <TableCell>{t('managedAccounts.table.actions', 'Actions')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -1160,7 +1295,7 @@ export default function ManagedAccountsLionTv() {
                         <TableCell>{row.name}</TableCell>
                         <TableCell>{row.description || '-'}</TableCell>
                         <TableCell>
-                          <Chip size="small" color={statusColor(row.status)} label={row.status || '-'} />
+                          <Chip size="small" color={statusColor(row.status)} label={t(`managedAccounts.statusValues.${row.status}`, row.status || '-')} />
                         </TableCell>
                         <TableCell>{row.createdBy || '-'}</TableCell>
                         <TableCell>
@@ -1177,18 +1312,18 @@ export default function ManagedAccountsLionTv() {
                                 setProviderModalOpen(true);
                               }}
                             >
-                              Editar
+                              {t('actions.edit', 'Edit')}
                             </Button>
                             <TextField
                               select
                               size="small"
                               value={row.status || 'ACTIVE'}
                               onChange={(event) => patchProviderStatus(row.id, event.target.value)}
-                              sx={{ minWidth: 130 }}
+                              sx={(theme) => ({ ...fieldSx(theme), minWidth: 130 })}
                             >
                               {providerStatusOptions.map((it) => (
                                 <MenuItem key={it} value={it}>
-                                  {it}
+                                  {t(`managedAccounts.statusValues.${it}`, it)}
                                 </MenuItem>
                               ))}
                             </TextField>
@@ -1198,7 +1333,7 @@ export default function ManagedAccountsLionTv() {
                     ))}
                     {!pagedProviders.length ? (
                       <TableRow>
-                        <TableCell colSpan={7}>Sin providers para los filtros seleccionados</TableCell>
+                        <TableCell colSpan={7}>{t('managedAccounts.empty.noProviders', 'No providers for selected filters')}</TableCell>
                       </TableRow>
                     ) : null}
                   </TableBody>
@@ -1209,6 +1344,7 @@ export default function ManagedAccountsLionTv() {
                   count={filteredProviders.length}
                   rowsPerPage={providerRowsPerPage}
                   page={providerPage}
+                  sx={tablePaginationSx}
                   onPageChange={(_, nextPage) => setProviderPage(nextPage)}
                   onRowsPerPageChange={(event) => {
                     setProviderRowsPerPage(Number(event.target.value));
@@ -1223,71 +1359,81 @@ export default function ManagedAccountsLionTv() {
         {tab === 3 ? (
           <Grid container spacing={gridSpacing}>
             <Grid item xs={12} md={4.5}>
-              <Card>
+              <Card sx={(theme) => panelCardSx(theme)}>
                 <CardContent>
                   <Stack spacing={1.2}>
-                    <Typography variant="h4">Process Inbound</Typography>
+                    <Typography variant="h4">{t('managedAccounts.inbound.processTitle', 'Process Inbound')}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Proceso manual para pruebas o reprocesos puntuales
+                      {t('managedAccounts.inbound.processSubtitle', 'Manual process for tests or specific reprocessing')}
                     </Typography>
                     <Divider />
                     <TextField
-                      label="Mailbox"
+                      label={t('managedAccounts.inbound.mailbox', 'Mailbox')}
                       size="small"
+                      sx={fieldSx}
                       value={inboundForm.mailboxAccount}
                       onChange={(event) => setInboundForm((prev) => ({ ...prev, mailboxAccount: event.target.value }))}
                     />
                     <TextField
-                      label="Raw Message ID"
+                      label={t('managedAccounts.inbound.rawMessageId', 'Raw Message ID')}
                       size="small"
+                      sx={fieldSx}
                       value={inboundForm.rawMessageId}
                       onChange={(event) => setInboundForm((prev) => ({ ...prev, rawMessageId: event.target.value }))}
                     />
                     <TextField
-                      label="From Email"
+                      label={t('managedAccounts.inbound.fromEmail', 'From Email')}
                       size="small"
+                      sx={fieldSx}
                       value={inboundForm.fromEmail}
                       onChange={(event) => setInboundForm((prev) => ({ ...prev, fromEmail: event.target.value }))}
                     />
                     <TextField
-                      label="To Email"
+                      label={t('managedAccounts.inbound.toEmail', 'To Email')}
                       size="small"
+                      sx={fieldSx}
                       value={inboundForm.toEmail}
                       onChange={(event) => setInboundForm((prev) => ({ ...prev, toEmail: event.target.value }))}
                     />
                     <TextField
-                      label="Subject"
+                      label={t('managedAccounts.inbound.subject', 'Subject')}
                       size="small"
+                      sx={fieldSx}
                       value={inboundForm.subject}
                       onChange={(event) => setInboundForm((prev) => ({ ...prev, subject: event.target.value }))}
                     />
                     <TextField
-                      label="Received At"
+                      label={t('managedAccounts.inbound.receivedAt', 'Received At')}
                       type="datetime-local"
                       size="small"
+                      sx={fieldSx}
                       value={inboundForm.receivedAt}
                       onChange={(event) => setInboundForm((prev) => ({ ...prev, receivedAt: event.target.value }))}
                       InputLabelProps={{ shrink: true }}
                     />
                     <TextField
-                      label="Raw Headers"
+                      label={t('managedAccounts.inbound.rawHeaders', 'Raw Headers')}
                       size="small"
                       multiline
                       minRows={4}
+                      sx={fieldSx}
                       value={inboundForm.rawHeaders}
                       onChange={(event) => setInboundForm((prev) => ({ ...prev, rawHeaders: event.target.value }))}
                     />
                     <TextField
-                      label="Body Plain"
+                      label={t('managedAccounts.inbound.bodyPlain', 'Body Plain')}
                       size="small"
                       multiline
                       minRows={4}
+                      sx={fieldSx}
                       value={inboundForm.bodyPlain}
                       onChange={(event) => setInboundForm((prev) => ({ ...prev, bodyPlain: event.target.value }))}
                     />
 
                     <Button variant="contained" onClick={processInbound} disabled={inboundProcessing}>
-                      {inboundProcessing ? 'Procesando...' : 'Procesar inbound'}
+                      {inboundProcessing
+                        ? t('managedAccounts.actions.processing', 'Processing...')
+                        : t('managedAccounts.actions.processInbound', 'Process inbound')}
                     </Button>
                   </Stack>
                 </CardContent>
@@ -1298,27 +1444,38 @@ export default function ManagedAccountsLionTv() {
               <Stack spacing={2}>
                 <Grid container spacing={1.5}>
                   <Grid item xs={12} sm={6} md={3}>
-                    <MetricCard title="Total" value={eventMetrics.total} icon={<EmailOutlinedIcon />} color="info" />
+                    <MetricCard title={t('managedAccounts.metrics.total', 'Total')} value={eventMetrics.total} icon={<EmailOutlinedIcon />} color="info" />
                   </Grid>
                   <Grid item xs={12} sm={6} md={3}>
-                    <MetricCard title="Distributed" value={eventMetrics.distributed} icon={<MarkEmailReadOutlinedIcon />} color="success" />
+                    <MetricCard
+                      title={t('managedAccounts.metrics.distributed', 'Distributed')}
+                      value={eventMetrics.distributed}
+                      icon={<MarkEmailReadOutlinedIcon />}
+                      color="success"
+                    />
                   </Grid>
                   <Grid item xs={12} sm={6} md={3}>
-                    <MetricCard title="Failed" value={eventMetrics.failed} icon={<ReportProblemOutlinedIcon />} color="error" />
+                    <MetricCard title={t('managedAccounts.metrics.failed', 'Failed')} value={eventMetrics.failed} icon={<ReportProblemOutlinedIcon />} color="error" />
                   </Grid>
                   <Grid item xs={12} sm={6} md={3}>
-                    <MetricCard title="Unresolved" value={eventMetrics.unresolved} icon={<WarningAmberIcon />} color="warning" />
+                    <MetricCard
+                      title={t('managedAccounts.metrics.unresolved', 'Unresolved')}
+                      value={eventMetrics.unresolved}
+                      icon={<WarningAmberIcon />}
+                      color="warning"
+                    />
                   </Grid>
                 </Grid>
 
-                <Card>
+                <Card sx={(theme) => panelCardSx(theme)}>
                   <CardContent>
                     <Stack spacing={1.5}>
                       <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
                         <TextField
                           fullWidth
                           size="small"
-                          label="Buscar evento"
+                          label={t('managedAccounts.filters.searchEvent', 'Search event')}
+                          sx={fieldSx}
                           value={eventSearch}
                           onChange={(event) => setEventSearch(event.target.value)}
                           InputProps={{
@@ -1332,16 +1489,16 @@ export default function ManagedAccountsLionTv() {
                         <TextField
                           select
                           size="small"
-                          label="Status"
+                          label={t('managedAccounts.table.status', 'Status')}
                           value={eventStatusFilter}
                           onChange={(event) => setEventStatusFilter(event.target.value)}
-                          sx={{ minWidth: 200 }}
+                          sx={(theme) => ({ ...fieldSx(theme), minWidth: 200 })}
                         >
-                          <MenuItem value="ALL">Todos</MenuItem>
+                          <MenuItem value="ALL">{t('managedAccounts.options.all', 'All')}</MenuItem>
                           {Array.from(new Set(events.map((it) => String(it.processingStatus || '').toUpperCase()).filter(Boolean))).map(
                             (status) => (
                               <MenuItem key={status} value={status}>
-                                {status}
+                                {t(`managedAccounts.statusValues.${status}`, status)}
                               </MenuItem>
                             )
                           )}
@@ -1350,31 +1507,35 @@ export default function ManagedAccountsLionTv() {
 
                       {lastProcessResult ? (
                         <Alert severity={lastProcessResult.processingStatus === 'FAILED' ? 'error' : 'success'}>
-                          {lastProcessResult.message || 'Proceso ejecutado'}
+                          {lastProcessResult.message || t('managedAccounts.messages.processExecuted', 'Process executed')}
                         </Alert>
                       ) : null}
 
-                      <TableContainer>
+                      <TableContainer sx={(theme) => tableContainerSx(theme)}>
                         <Table size="small">
                           <TableHead>
-                            <TableRow>
-                              <TableCell>ID</TableCell>
-                              <TableCell>Recibido</TableCell>
-                              <TableCell>Alias</TableCell>
-                              <TableCell>Status</TableCell>
-                              <TableCell>Error</TableCell>
-                              <TableCell>Retry Mode</TableCell>
-                              <TableCell>Retry</TableCell>
+                            <TableRow sx={(theme) => tableHeadRowSx(theme)}>
+                              <TableCell>{t('managedAccounts.table.id', 'ID')}</TableCell>
+                              <TableCell>{t('managedAccounts.inbound.received', 'Received')}</TableCell>
+                              <TableCell>{t('managedAccounts.table.alias', 'Alias')}</TableCell>
+                              <TableCell>{t('managedAccounts.table.status', 'Status')}</TableCell>
+                              <TableCell>{t('managedAccounts.inbound.error', 'Error')}</TableCell>
+                              <TableCell>{t('managedAccounts.inbound.retryMode', 'Retry Mode')}</TableCell>
+                              <TableCell>{t('managedAccounts.inbound.retry', 'Retry')}</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
                             {pagedEvents.map((row) => (
                               <TableRow key={row.id}>
                                 <TableCell>{row.id}</TableCell>
-                                <TableCell>{formatDateTime(row.receivedAt || row.createdAt)}</TableCell>
-                                <TableCell>{row.resolvedAlias || 'UNRESOLVED'}</TableCell>
+                                <TableCell>{formatDateTime(row.receivedAt || row.createdAt, dateLocale)}</TableCell>
+                                <TableCell>{row.resolvedAlias || t('managedAccounts.options.unresolved', 'UNRESOLVED')}</TableCell>
                                 <TableCell>
-                                  <Chip size="small" color={statusColor(row.processingStatus)} label={row.processingStatus || '-'} />
+                                  <Chip
+                                    size="small"
+                                    color={statusColor(row.processingStatus)}
+                                    label={t(`managedAccounts.statusValues.${row.processingStatus}`, row.processingStatus || '-')}
+                                  />
                                 </TableCell>
                                 <TableCell>
                                   <Typography variant="caption" color="text.secondary">
@@ -1387,7 +1548,7 @@ export default function ManagedAccountsLionTv() {
                                     size="small"
                                     value={retryModeById[row.id] || 'FORWARD_ALL'}
                                     onChange={(event) => setRetryModeById((prev) => ({ ...prev, [row.id]: event.target.value }))}
-                                    sx={{ minWidth: 165 }}
+                                    sx={(theme) => ({ ...fieldSx(theme), minWidth: 165 })}
                                   >
                                     {retryModes.map((it) => (
                                       <MenuItem key={it} value={it}>
@@ -1402,14 +1563,14 @@ export default function ManagedAccountsLionTv() {
                                     disabled={String(row.processingStatus || '').toUpperCase() !== 'FAILED'}
                                     onClick={() => retryDistribution(row.id)}
                                   >
-                                    Retry
+                                    {t('managedAccounts.inbound.retry', 'Retry')}
                                   </Button>
                                 </TableCell>
                               </TableRow>
                             ))}
                             {!pagedEvents.length ? (
                               <TableRow>
-                                <TableCell colSpan={7}>Sin eventos para los filtros seleccionados</TableCell>
+                                <TableCell colSpan={7}>{t('managedAccounts.empty.noEvents', 'No events for selected filters')}</TableCell>
                               </TableRow>
                             ) : null}
                           </TableBody>
@@ -1421,6 +1582,7 @@ export default function ManagedAccountsLionTv() {
                         count={filteredEvents.length}
                         rowsPerPage={eventRowsPerPage}
                         page={eventPage}
+                        sx={tablePaginationSx}
                         onPageChange={(_, nextPage) => setEventPage(nextPage)}
                         onRowsPerPageChange={(event) => {
                           setEventRowsPerPage(Number(event.target.value));
@@ -1438,45 +1600,45 @@ export default function ManagedAccountsLionTv() {
         {tab === 4 ? (
           <Grid container spacing={gridSpacing}>
             <Grid item xs={12} sm={6} md={3}>
-              <MetricCard title="Inbound Total" value={inboundSummary?.total || 0} icon={<EmailOutlinedIcon />} color="info" />
+              <MetricCard title={t('managedAccounts.metrics.inboundTotal', 'Inbound Total')} value={inboundSummary?.total || 0} icon={<EmailOutlinedIcon />} color="info" />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <MetricCard
-                title="Inbound Distributed"
+                title={t('managedAccounts.metrics.inboundDistributed', 'Inbound Distributed')}
                 value={inboundSummary?.distributed || 0}
                 icon={<CheckCircleOutlineIcon />}
                 color="success"
               />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <MetricCard title="Sent" value={distributionSummary?.sent || 0} icon={<MarkEmailReadOutlinedIcon />} color="success" />
+              <MetricCard title={t('managedAccounts.metrics.sent', 'Sent')} value={distributionSummary?.sent || 0} icon={<MarkEmailReadOutlinedIcon />} color="success" />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <MetricCard title="Failed" value={distributionSummary?.failed || 0} icon={<ReportProblemOutlinedIcon />} color="error" />
+              <MetricCard title={t('managedAccounts.metrics.failed', 'Failed')} value={distributionSummary?.failed || 0} icon={<ReportProblemOutlinedIcon />} color="error" />
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <Card>
+              <Card sx={(theme) => panelCardSx(theme)}>
                 <CardContent>
-                  <Typography variant="h4">Inbound por Provider</Typography>
+                  <Typography variant="h4">{t('managedAccounts.reports.byProvider', 'Inbound by Provider')}</Typography>
                   <Divider sx={{ my: 1.5 }} />
                   <Table size="small">
                     <TableHead>
-                      <TableRow>
-                        <TableCell>Provider</TableCell>
-                        <TableCell align="right">Inbound</TableCell>
+                      <TableRow sx={(theme) => tableHeadRowSx(theme)}>
+                        <TableCell>{t('managedAccounts.table.provider', 'Provider')}</TableCell>
+                        <TableCell align="right">{t('managedAccounts.reports.inbound', 'Inbound')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {providerSummary.map((it, idx) => (
                         <TableRow key={`${it.providerId || idx}-${it.providerCode || 'x'}`}>
-                          <TableCell>{it.providerCode || 'UNASSIGNED'}</TableCell>
+                          <TableCell>{it.providerCode || t('managedAccounts.options.unassigned', 'UNASSIGNED')}</TableCell>
                           <TableCell align="right">{it.totalInbound}</TableCell>
                         </TableRow>
                       ))}
                       {!providerSummary.length ? (
                         <TableRow>
-                          <TableCell colSpan={2}>Sin datos</TableCell>
+                          <TableCell colSpan={2}>{t('managedAccounts.empty.noData', 'No data')}</TableCell>
                         </TableRow>
                       ) : null}
                     </TableBody>
@@ -1486,27 +1648,27 @@ export default function ManagedAccountsLionTv() {
             </Grid>
 
             <Grid item xs={12} md={6}>
-              <Card>
+              <Card sx={(theme) => panelCardSx(theme)}>
                 <CardContent>
-                  <Typography variant="h4">Inbound por Alias</Typography>
+                  <Typography variant="h4">{t('managedAccounts.reports.byAlias', 'Inbound by Alias')}</Typography>
                   <Divider sx={{ my: 1.5 }} />
                   <Table size="small">
                     <TableHead>
-                      <TableRow>
-                        <TableCell>Alias</TableCell>
-                        <TableCell align="right">Inbound</TableCell>
+                      <TableRow sx={(theme) => tableHeadRowSx(theme)}>
+                        <TableCell>{t('managedAccounts.table.alias', 'Alias')}</TableCell>
+                        <TableCell align="right">{t('managedAccounts.reports.inbound', 'Inbound')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {aliasSummary.map((it, idx) => (
                         <TableRow key={`${it.resolvedAlias || idx}`}>
-                          <TableCell>{it.resolvedAlias || 'UNRESOLVED'}</TableCell>
+                          <TableCell>{it.resolvedAlias || t('managedAccounts.options.unresolved', 'UNRESOLVED')}</TableCell>
                           <TableCell align="right">{it.totalInbound}</TableCell>
                         </TableRow>
                       ))}
                       {!aliasSummary.length ? (
                         <TableRow>
-                          <TableCell colSpan={2}>Sin datos</TableCell>
+                          <TableCell colSpan={2}>{t('managedAccounts.empty.noData', 'No data')}</TableCell>
                         </TableRow>
                       ) : null}
                     </TableBody>
@@ -1525,34 +1687,36 @@ export default function ManagedAccountsLionTv() {
         maxWidth="sm"
         PaperProps={{ sx: modalPaperSx }}
       >
-        <DialogTitle sx={modalHeaderSx}>
+        <DialogTitleWithClose sx={modalHeaderSx} onClose={() => setProviderModalOpen(false)}>
           <Stack spacing={0.5}>
-            <Typography variant="h4">{providerForm.id ? 'Editar Provider' : 'Nuevo Provider'}</Typography>
+            <Typography variant="h4">
+              {providerForm.id ? t('managedAccounts.provider.editTitle', 'Edit Provider') : t('managedAccounts.provider.newTitle', 'New Provider')}
+            </Typography>
             <Typography variant="caption" color="text.secondary">
-              Define el proveedor que agrupará cuentas y aliases.
+              {t('managedAccounts.provider.subtitle', 'Define the provider that groups aliases and managed accounts.')}
             </Typography>
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent sx={modalContentSx}>
           <Box sx={modalSectionSx}>
             <Stack spacing={1.6}>
               <TextField
                 size="small"
-                label="Code"
+                label={t('managedAccounts.provider.code', 'Code')}
                 sx={fieldSx}
                 value={providerForm.code}
                 onChange={(event) => setProviderForm((prev) => ({ ...prev, code: event.target.value }))}
               />
               <TextField
                 size="small"
-                label="Name"
+                label={t('managedAccounts.provider.name', 'Name')}
                 sx={fieldSx}
                 value={providerForm.name}
                 onChange={(event) => setProviderForm((prev) => ({ ...prev, name: event.target.value }))}
               />
               <TextField
                 size="small"
-                label="Description"
+                label={t('managedAccounts.provider.description', 'Description')}
                 multiline
                 minRows={3}
                 sx={fieldSx}
@@ -1564,34 +1728,38 @@ export default function ManagedAccountsLionTv() {
         </DialogContent>
         <DialogActions sx={modalActionsSx}>
           <Button color="inherit" onClick={() => setProviderModalOpen(false)}>
-            Cancelar
+            {t('managedAccounts.actions.cancel', 'Cancel')}
           </Button>
           <Button variant="contained" onClick={saveProvider} disabled={providerSaving}>
-            {providerSaving ? 'Guardando...' : 'Guardar Provider'}
+            {providerSaving ? t('managedAccounts.actions.saving', 'Saving...') : t('managedAccounts.actions.saveProvider', 'Save Provider')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={accountModalOpen} onClose={() => setAccountModalOpen(false)} fullWidth maxWidth="md" PaperProps={{ sx: modalPaperSx }}>
-        <DialogTitle sx={modalHeaderSx}>
+        <DialogTitleWithClose sx={modalHeaderSx} onClose={() => setAccountModalOpen(false)}>
           <Stack spacing={0.5}>
-            <Typography variant="h4">{accountForm.id ? 'Editar Cuenta Gestionada' : 'Nueva Cuenta Gestionada'}</Typography>
+            <Typography variant="h4">
+              {accountForm.id
+                ? t('managedAccounts.account.editTitle', 'Edit Managed Account')
+                : t('managedAccounts.account.newTitle', 'New Managed Account')}
+            </Typography>
             <Typography variant="caption" color="text.secondary">
-              Configura identidad, vencimiento y reglas de distribución del alias.
+              {t('managedAccounts.account.subtitle', 'Configure identity, expiration and alias distribution rules.')}
             </Typography>
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent sx={modalContentSx}>
           <Stack spacing={2}>
             <Box sx={modalSectionSx}>
               <Stack spacing={1.6}>
-                <Typography variant="subtitle2">Identidad y Relación</Typography>
+                <Typography variant="subtitle2">{t('managedAccounts.account.sectionIdentity', 'Identity and relationship')}</Typography>
                 <Grid container spacing={1.6}>
                   <Grid item xs={12} md={6}>
                     <TextField
                       fullWidth
                       size="small"
-                      label="Account Code"
+                      label={t('managedAccounts.account.accountCode', 'Account Code')}
                       sx={fieldSx}
                       value={accountForm.accountCode}
                       onChange={(event) => setAccountForm((prev) => ({ ...prev, accountCode: event.target.value }))}
@@ -1601,7 +1769,7 @@ export default function ManagedAccountsLionTv() {
                     <TextField
                       fullWidth
                       size="small"
-                      label="Display Name"
+                      label={t('managedAccounts.account.displayName', 'Display Name')}
                       sx={fieldSx}
                       value={accountForm.displayName}
                       onChange={(event) => setAccountForm((prev) => ({ ...prev, displayName: event.target.value }))}
@@ -1612,7 +1780,7 @@ export default function ManagedAccountsLionTv() {
                       fullWidth
                       size="small"
                       select
-                      label="Provider"
+                      label={t('managedAccounts.table.provider', 'Provider')}
                       sx={fieldSx}
                       value={accountForm.providerId}
                       onChange={(event) => setAccountForm((prev) => ({ ...prev, providerId: event.target.value }))}
@@ -1629,7 +1797,7 @@ export default function ManagedAccountsLionTv() {
                       fullWidth
                       size="small"
                       select
-                      label="Customer"
+                      label={t('managedAccounts.table.customer', 'Customer')}
                       sx={fieldSx}
                       value={accountForm.customerId}
                       onChange={(event) => setAccountForm((prev) => ({ ...prev, customerId: event.target.value }))}
@@ -1645,7 +1813,7 @@ export default function ManagedAccountsLionTv() {
                     <TextField
                       fullWidth
                       size="small"
-                      label="Alias Email"
+                      label={t('managedAccounts.account.aliasEmail', 'Alias Email')}
                       sx={fieldSx}
                       value={accountForm.aliasEmail}
                       onChange={(event) => setAccountForm((prev) => ({ ...prev, aliasEmail: event.target.value }))}
@@ -1655,7 +1823,7 @@ export default function ManagedAccountsLionTv() {
                     <TextField
                       fullWidth
                       size="small"
-                      label="Principal Reference"
+                      label={t('managedAccounts.account.principalReference', 'Principal Reference')}
                       sx={fieldSx}
                       value={accountForm.principalReference}
                       onChange={(event) => setAccountForm((prev) => ({ ...prev, principalReference: event.target.value }))}
@@ -1667,21 +1835,21 @@ export default function ManagedAccountsLionTv() {
 
             <Box sx={modalSectionSx}>
               <Stack spacing={1.6}>
-                <Typography variant="subtitle2">Vigencia y Operación</Typography>
+                <Typography variant="subtitle2">{t('managedAccounts.account.sectionOperation', 'Validity and operation')}</Typography>
                 <Grid container spacing={1.6}>
                   <Grid item xs={12} md={4}>
                     <TextField
                       fullWidth
                       size="small"
                       select
-                      label="Status"
+                      label={t('managedAccounts.table.status', 'Status')}
                       sx={fieldSx}
                       value={accountForm.accountStatus}
                       onChange={(event) => setAccountForm((prev) => ({ ...prev, accountStatus: event.target.value }))}
                     >
                       {accountStatusOptions.map((it) => (
                         <MenuItem key={it} value={it}>
-                          {it}
+                          {t(`managedAccounts.statusValues.${it}`, it)}
                         </MenuItem>
                       ))}
                     </TextField>
@@ -1691,7 +1859,7 @@ export default function ManagedAccountsLionTv() {
                       fullWidth
                       size="small"
                       type="date"
-                      label="Expiration Date"
+                      label={t('managedAccounts.account.expirationDate', 'Expiration Date')}
                       sx={fieldSx}
                       InputLabelProps={{ shrink: true }}
                       value={accountForm.expirationDate}
@@ -1703,7 +1871,7 @@ export default function ManagedAccountsLionTv() {
                       fullWidth
                       size="small"
                       type="date"
-                      label="Renewal Date"
+                      label={t('managedAccounts.account.renewalDate', 'Renewal Date')}
                       sx={fieldSx}
                       InputLabelProps={{ shrink: true }}
                       value={accountForm.renewalDate}
@@ -1716,8 +1884,8 @@ export default function ManagedAccountsLionTv() {
                         px: 1.5,
                         py: 1,
                         borderRadius: 1.5,
-                        border: `1px dashed ${theme.palette.divider}`,
-                        backgroundColor: withAlpha(theme.palette.success.main, 0.04)
+                        border: `1px dashed ${withAlpha(theme.vars?.palette?.divider || theme.palette.divider, 0.95)}`,
+                        backgroundColor: withAlpha(theme.vars?.palette?.success?.main || theme.palette.success.main, theme.palette.mode === 'dark' ? 0.14 : 0.08)
                       })}
                     >
                       <FormControlLabel
@@ -1727,7 +1895,7 @@ export default function ManagedAccountsLionTv() {
                             onChange={(_, checked) => setAccountForm((prev) => ({ ...prev, allowDistribution: checked }))}
                           />
                         }
-                        label="Allow Distribution"
+                        label={t('managedAccounts.account.allowDistribution', 'Allow Distribution')}
                       />
                     </Box>
                   </Grid>
@@ -1737,7 +1905,7 @@ export default function ManagedAccountsLionTv() {
                       size="small"
                       multiline
                       minRows={3}
-                      label="Notes"
+                      label={t('managedAccounts.account.notes', 'Notes')}
                       sx={fieldSx}
                       value={accountForm.notes}
                       onChange={(event) => setAccountForm((prev) => ({ ...prev, notes: event.target.value }))}
@@ -1750,10 +1918,10 @@ export default function ManagedAccountsLionTv() {
         </DialogContent>
         <DialogActions sx={modalActionsSx}>
           <Button color="inherit" onClick={() => setAccountModalOpen(false)}>
-            Cancelar
+            {t('managedAccounts.actions.cancel', 'Cancel')}
           </Button>
           <Button variant="contained" onClick={saveAccount} disabled={accountSaving}>
-            {accountSaving ? 'Guardando...' : 'Guardar Cuenta'}
+            {accountSaving ? t('managedAccounts.actions.saving', 'Saving...') : t('managedAccounts.actions.saveAccount', 'Save Account')}
           </Button>
         </DialogActions>
       </Dialog>

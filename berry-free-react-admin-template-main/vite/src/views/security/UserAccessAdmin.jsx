@@ -14,7 +14,6 @@ import Checkbox from '@mui/material/Checkbox';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import Grid from '@mui/material/Grid';
@@ -48,6 +47,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
 import MainCard from 'ui-component/cards/MainCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import {
   createAdminUser,
@@ -667,7 +667,9 @@ export default function UserAccessAdmin() {
         maxWidth="md"
         PaperProps={{ sx: modalPaperSx }}
       >
-        <DialogTitle sx={modalHeaderSx}>{t('userAccess.dialogs.create.title')}</DialogTitle>
+        <DialogTitleWithClose sx={modalHeaderSx} onClose={() => !createSaving && setCreateOpen(false)}>
+          {t('userAccess.dialogs.create.title')}
+        </DialogTitleWithClose>
         <DialogContent sx={modalContentSx}>
           <Stack spacing={2}>
             <Alert severity="info" variant="outlined" sx={infoAlertSx}>
@@ -768,7 +770,9 @@ export default function UserAccessAdmin() {
         maxWidth="md"
         PaperProps={{ sx: modalPaperSx }}
       >
-        <DialogTitle sx={modalHeaderSx}>{t('userAccess.dialogs.access.title')}</DialogTitle>
+        <DialogTitleWithClose sx={modalHeaderSx} onClose={() => !accessSaving && setAccessOpen(false)}>
+          {t('userAccess.dialogs.access.title')}
+        </DialogTitleWithClose>
         <DialogContent sx={modalContentSx}>
           <Stack spacing={2}>
             <Typography variant="subtitle2">
@@ -830,7 +834,9 @@ export default function UserAccessAdmin() {
         maxWidth="sm"
         PaperProps={{ sx: modalPaperSx }}
       >
-        <DialogTitle sx={modalHeaderSx}>{t('userAccess.dialogs.status.title')}</DialogTitle>
+        <DialogTitleWithClose sx={modalHeaderSx} onClose={() => !statusSaving && setStatusOpen(false)}>
+          {t('userAccess.dialogs.status.title')}
+        </DialogTitleWithClose>
         <DialogContent sx={modalContentSx}>
           <Stack spacing={2}>
             <Typography variant="subtitle2">
