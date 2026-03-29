@@ -25,6 +25,7 @@ const BusinessPurchasesLionTv = Loadable(lazy(() => import('views/liontv/Busines
 const LicensesLionTv = Loadable(lazy(() => import('views/liontv/LicensesLionTv')));
 const LinesLionTv = Loadable(lazy(() => import('views/liontv/LinesLionTv')));
 const PlusLinesExplorer = Loadable(lazy(() => import('views/liontv/PlusLinesExplorer')));
+const UserAccessAdmin = Loadable(lazy(() => import('views/security/UserAccessAdmin')));
 
 const MainRoutes = {
   path: '/',
@@ -131,6 +132,15 @@ const MainRoutes = {
                   element: <SmsManagement />
                 }
               ]
+            }
+          ]
+        },
+        {
+          element: <RequirePermission permission={{ any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] }} />,
+          children: [
+            {
+              path: '/admin/users-access',
+              element: <UserAccessAdmin />
             }
           ]
         }
