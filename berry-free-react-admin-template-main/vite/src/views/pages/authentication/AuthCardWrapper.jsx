@@ -13,6 +13,9 @@ export default function AuthCardWrapper({ children, ...other }) {
       sx={{
         maxWidth: { xs: 400, lg: 475 },
         margin: { xs: 2.5, md: 3 },
+        border: '1px solid',
+        borderColor: 'divider',
+        backdropFilter: 'blur(10px)',
         '& > *': {
           flexGrow: 1,
           flexBasis: '50%'

@@ -128,7 +128,15 @@ export default function ProfileSection() {
       <Avatar
         src={User1}
         alt="user-images"
-        sx={{ typography: 'mediumAvatar', marginLeft: 2, cursor: 'pointer', boxShadow: theme.shadows[3] }}
+        sx={{
+          typography: 'mediumAvatar',
+          marginLeft: 2,
+          cursor: 'pointer',
+          boxShadow: theme.shadows[3],
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper'
+        }}
         ref={anchorRef}
         aria-controls={open ? 'menu-list-grow' : undefined}
         aria-haspopup="true"

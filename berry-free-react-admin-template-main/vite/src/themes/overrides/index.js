@@ -54,7 +54,7 @@ export default function ComponentsOverrides(theme, borderRadius, outlinedFilled)
     ListItemButton(theme),
     ListItemIcon(theme),
     ListItemText(theme),
-    Menu(),
+    Menu(theme),
     Paper(borderRadius),
     Select(),
     Slider(theme),

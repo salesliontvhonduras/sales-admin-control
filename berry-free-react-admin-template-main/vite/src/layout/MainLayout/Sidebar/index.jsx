@@ -80,12 +80,13 @@ function Sidebar() {
           slotProps={{
             paper: {
               sx: {
-                mt: downMD ? 0 : 11,
+                mt: downMD ? 0 : 9.5,
                 zIndex: 1099,
                 width: drawerWidth,
-                bgcolor: 'background.default',
+                bgcolor: 'surface.sidebar',
                 color: 'text.primary',
-                borderRight: 'none'
+                borderRight: '1px solid',
+                borderColor: 'divider'
               }
             }
           }}

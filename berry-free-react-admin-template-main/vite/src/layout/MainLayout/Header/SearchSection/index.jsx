@@ -471,11 +471,13 @@ function HeaderAvatar({ children, ...others }) {
       sx={{
         ...theme.typography.commonAvatar,
         ...theme.typography.mediumAvatar,
-        color: theme.vars.palette.secondary.dark,
-        background: theme.vars.palette.secondary.light,
+        color: theme.vars.palette.primary.main,
+        background: theme.palette.mode === 'dark' ? theme.vars.palette.surface.muted : theme.vars.palette.surface.sunken,
+        border: '1px solid',
+        borderColor: 'divider',
         '&:hover': {
-          color: theme.vars.palette.secondary.light,
-          background: theme.vars.palette.secondary.dark
+          color: theme.vars.palette.primary.contrastText,
+          background: theme.vars.palette.primary.main
         }
       }}
       {...others}
@@ -531,7 +533,16 @@ function SearchInput({
           </Stack>
         </InputAdornment>
       }
-      sx={{ width: fullWidth ? '100%' : { md: 280, lg: 470 }, ml: fullWidth ? 0 : 2, px: 2 }}
+      sx={(theme) => ({
+        width: fullWidth ? '100%' : { md: 280, lg: 470 },
+        ml: fullWidth ? 0 : 2,
+        px: 1.6,
+        borderRadius: 12,
+        backgroundColor: theme.palette.mode === 'dark' ? theme.palette.surface.muted : theme.palette.surface.sunken,
+        '& .MuiOutlinedInput-notchedOutline': {
+          borderColor: theme.palette.divider
+        }
+      })}
     />
   );
 }
@@ -890,7 +901,16 @@ export default function SearchSection() {
         {({ TransitionProps }) => (
           <ClickAwayListener onClickAway={() => setOpenDesktop(false)}>
             <Transitions type="zoom" {...TransitionProps} sx={{ transformOrigin: 'center top' }}>
-              <Paper sx={{ width: 620, maxWidth: 'calc(100vw - 32px)', borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}>
+              <Paper
+                sx={{
+                  width: 620,
+                  maxWidth: 'calc(100vw - 32px)',
+                  borderRadius: 2.5,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: 'surface.card'
+                }}
+              >
                 <SearchPanel
                   query={query}
                   loading={loading}

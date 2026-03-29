@@ -1,3 +1,5 @@
+import { withAlpha } from 'utils/colorUtils';
+
 // ==============================|| OVERRIDES - OUTLINED INPUT ||============================== //
 
 export default function OutlinedInput(theme, borderRadius, outlinedFilled) {
@@ -6,24 +8,37 @@ export default function OutlinedInput(theme, borderRadius, outlinedFilled) {
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          background: outlinedFilled ? theme.vars.palette.grey[50] : 'transparent',
+          background: outlinedFilled
+            ? theme.palette.mode === 'dark'
+              ? withAlpha(theme.vars.palette.surface.muted, 0.86)
+              : theme.vars.palette.surface.sunken
+            : 'transparent',
           borderRadius: `${radius}px`,
-          transition: 'border-color 80ms ease, box-shadow 80ms ease',
+          transition: 'border-color 80ms ease, box-shadow 80ms ease, background-color 80ms ease',
 
           '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.vars.palette.grey[400],
+            borderColor: theme.vars.palette.divider,
             borderWidth: 1
           },
 
           '&:hover .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.vars.palette.primary.light
+            borderColor: withAlpha(theme.vars.palette.primary.main, 0.7)
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
             borderColor: theme.vars.palette.primary.main,
             borderWidth: 1.6
           },
+          '&.Mui-focused': {
+            boxShadow: `0 0 0 3px ${withAlpha(theme.vars.palette.primary.main, theme.palette.mode === 'dark' ? 0.3 : 0.18)}`
+          },
           '&.Mui-error .MuiOutlinedInput-notchedOutline': {
             borderWidth: 1.4
+          },
+          '&.Mui-disabled': {
+            backgroundColor:
+              theme.palette.mode === 'dark'
+                ? withAlpha(theme.vars.palette.surface.muted, 0.6)
+                : withAlpha(theme.vars.palette.grey[100], 0.75)
           },
 
           '&.MuiInputBase-multiline': {
@@ -32,7 +47,7 @@ export default function OutlinedInput(theme, borderRadius, outlinedFilled) {
         },
         input: {
           fontWeight: 500,
-          background: outlinedFilled ? theme.vars.palette.grey[50] : 'transparent',
+          background: 'transparent',
           padding: '15.5px 14px',
           borderRadius: `${radius}px`,
 

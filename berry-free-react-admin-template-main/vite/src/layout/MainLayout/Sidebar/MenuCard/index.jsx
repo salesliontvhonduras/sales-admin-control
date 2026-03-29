@@ -11,6 +11,7 @@ import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import { withAlpha } from 'utils/colorUtils';
 
 // project imports
 import useAuth from 'hooks/useAuth';
@@ -229,7 +230,10 @@ function MenuCard() {
         borderRadius: 2.5,
         border: '1px solid',
         borderColor: 'divider',
-        background: `linear-gradient(165deg, ${theme.palette.primary.lighter || theme.palette.primary.light}35 0%, ${theme.palette.background.paper} 72%)`
+        background:
+          theme.palette.mode === 'dark'
+            ? `linear-gradient(165deg, ${withAlpha(theme.palette.primary.main, 0.24)} 0%, ${theme.palette.surface.card} 72%)`
+            : `linear-gradient(165deg, ${theme.palette.primary.lighter || theme.palette.primary.light}35 0%, ${theme.palette.background.paper} 72%)`
       }}
     >
       <Box sx={{ p: 2 }}>

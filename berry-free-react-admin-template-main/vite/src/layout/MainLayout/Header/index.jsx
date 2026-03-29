@@ -38,12 +38,14 @@ export default function Header() {
             ...theme.typography.commonAvatar,
             ...theme.typography.mediumAvatar,
             overflow: 'hidden',
-            transition: 'all .2s ease-in-out',
-            color: theme.vars.palette.secondary.dark,
-            background: theme.vars.palette.secondary.light,
+            transition: 'all .15s ease-in-out',
+            color: theme.vars.palette.primary.main,
+            background: theme.palette.mode === 'dark' ? theme.vars.palette.surface.muted : theme.vars.palette.surface.sunken,
+            border: '1px solid',
+            borderColor: 'divider',
             '&:hover': {
-              color: theme.vars.palette.secondary.light,
-              background: theme.vars.palette.secondary.dark
+              color: theme.vars.palette.primary.contrastText,
+              background: theme.vars.palette.primary.main
             }
           }}
           onClick={() => handlerDrawerOpen(!drawerOpen)}
@@ -54,7 +56,6 @@ export default function Header() {
 
       {/* header search */}
       <SearchSection />
-      <Box sx={{ flexGrow: 1 }} />
       <Box sx={{ flexGrow: 1 }} />
 
       {/* notification */}

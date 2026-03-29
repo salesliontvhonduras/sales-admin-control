@@ -1,6 +1,10 @@
+import { withAlpha } from 'utils/colorUtils';
+
 // ==============================|| OVERRIDES - DATA GRID ||============================== //
 
 export default function DataGrid(theme) {
+  const isDark = theme.palette.mode === 'dark';
+
   return {
     MuiDataGrid: {
       defaultProps: {
@@ -8,7 +12,10 @@ export default function DataGrid(theme) {
       },
       styleOverrides: {
         root: {
-          borderWidth: 0,
+          borderWidth: 1,
+          borderColor: theme.vars.palette.divider,
+          borderRadius: 14,
+          backgroundColor: theme.vars.palette.surface.card,
 
           '& .MuiDataGrid-columnHeader--filledGroup': {
             borderBottomWidth: 0
@@ -19,8 +26,15 @@ export default function DataGrid(theme) {
           },
 
           '& .MuiFormControl-root>.MuiInputBase-root': {
-            backgroundColor: `${theme.vars.palette.background.default} !important`,
+            backgroundColor: `${theme.vars.palette.surface.sunken} !important`,
             borderColor: `${theme.vars.palette.divider} !important`
+          },
+          '& .MuiDataGrid-columnHeaders': {
+            backgroundColor: isDark ? withAlpha(theme.vars.palette.surface.muted, 0.92) : theme.vars.palette.surface.sunken,
+            borderBottom: `1px solid ${theme.vars.palette.divider}`
+          },
+          '& .MuiDataGrid-row:hover': {
+            backgroundColor: withAlpha(theme.vars.palette.primary.main, isDark ? 0.16 : 0.08)
           }
         },
         withBorderColor: {
@@ -33,7 +47,7 @@ export default function DataGrid(theme) {
           }
         },
         columnHeader: {
-          color: theme.vars.palette.grey[600],
+          color: theme.vars.palette.text.secondary,
           paddingLeft: 24,
           paddingRight: 24
         },

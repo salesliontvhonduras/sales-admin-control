@@ -15,20 +15,20 @@ import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 
 const StyledChip = styled(Chip)(({ theme }) => ({
   borderRadius: 18,
-  height: 38,
+  height: 36,
   padding: '0 10px',
   fontWeight: 700,
   letterSpacing: 0.1,
   background:
     theme.palette.mode === 'dark'
-      ? alpha(theme.palette.primary.main, 0.16)
+      ? alpha(theme.palette.primary.main, 0.2)
       : `linear-gradient(120deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(
           theme.palette.primary.light,
           0.16
         )} 45%, ${alpha(theme.palette.background.paper, 0.92)} 100%)`,
-  borderColor: alpha(theme.palette.primary.main, 0.5),
+  borderColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.7 : 0.5),
   color: theme.palette.text.primary,
-  boxShadow: '0 8px 18px rgba(0,0,0,0.12)',
+  boxShadow: theme.palette.mode === 'dark' ? '0 10px 20px rgba(2,8,23,0.32)' : '0 8px 18px rgba(15,23,42,0.12)',
   '&:hover': {
     background: theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.24) : alpha(theme.palette.primary.light, 0.3)
   }

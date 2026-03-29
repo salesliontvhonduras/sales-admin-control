@@ -26,16 +26,17 @@ export default function Chip(theme) {
 
                 return {
                   color: paletteColor.main,
-                  backgroundColor: paletteColor.light,
+                  backgroundColor: theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.2) : paletteColor.light,
 
                   ...(ownerState.color === 'error' && {
-                    backgroundColor: withAlpha(paletteColor.light, 0.25)
+                    backgroundColor:
+                      theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.22) : withAlpha(paletteColor.light, 0.25)
                   }),
                   ...(ownerState.color === 'success' && {
-                    backgroundColor: withAlpha(paletteColor.light, 0.5)
+                    backgroundColor: theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.2) : withAlpha(paletteColor.light, 0.5)
                   }),
                   ...((ownerState.color === 'warning' || ownerState.color === 'success') && {
-                    color: paletteColor.dark
+                    color: theme.palette.mode === 'dark' ? paletteColor.main : paletteColor.dark
                   }),
 
                   '&.MuiChip-clickable': {

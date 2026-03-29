@@ -53,13 +53,13 @@ export default function MainLayout() {
         color="inherit"
         elevation={0}
         sx={{
-          bgcolor: 'background.paper',
+          bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(15, 26, 47, 0.84)' : 'rgba(255, 255, 255, 0.9)'),
           borderBottom: '1px solid',
           borderColor: 'divider',
-          backdropFilter: 'saturate(1.2) blur(8px)'
+          backdropFilter: 'saturate(1.15) blur(12px)'
         }}
       >
-        <Toolbar sx={{ p: 2, minHeight: '72px !important' }}>
+        <Toolbar sx={{ p: 1.75, minHeight: '66px !important' }}>
           <Header />
         </Toolbar>
       </AppBar>
@@ -72,7 +72,7 @@ export default function MainLayout() {
         <Box
           sx={{
             ...{ px: { xs: 0 } },
-            minHeight: 'calc(100vh - 128px)',
+            minHeight: 'calc(100vh - 116px)',
             display: 'flex',
             flexDirection: 'column'
           }}

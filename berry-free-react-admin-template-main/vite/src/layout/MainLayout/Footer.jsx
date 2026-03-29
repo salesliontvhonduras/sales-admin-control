@@ -7,7 +7,17 @@ import Typography from '@mui/material/Typography';
 
 export default function Footer() {
   return (
-    <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', pt: 3, mt: 'auto' }}>
+    <Stack
+      direction="row"
+      sx={{
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        pt: 3,
+        mt: 'auto',
+        borderTop: '1px solid',
+        borderColor: 'divider'
+      }}
+    >
       <Typography variant="caption">
         &copy; All rights reserved{' '}
         <Typography component={Link} href="https://liontvpremium.com" underline="hover" target="_blank" sx={{ color: 'secondary.main' }}>

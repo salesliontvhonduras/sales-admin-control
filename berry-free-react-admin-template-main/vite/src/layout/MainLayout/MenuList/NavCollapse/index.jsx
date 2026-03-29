@@ -24,6 +24,7 @@ import Transitions from 'ui-component/extended/Transitions';
 import { useGetMenuMaster } from 'api/menu';
 import useConfig from 'hooks/useConfig';
 import useMenuCollapse from 'hooks/useMenuCollapse';
+import { withAlpha } from 'utils/colorUtils';
 
 // assets
 import { IconChevronDown, IconChevronRight, IconChevronUp } from '@tabler/icons-react';
@@ -139,10 +140,24 @@ export default function NavCollapse({ menu, level, parentId }) {
       <ListItemButton
         sx={{
           zIndex: 1201,
-          borderRadius: `${borderRadius}px`,
+          borderRadius: `${Math.max(Number(borderRadius || 8), 8)}px`,
           mb: 0.5,
           ...(drawerOpen && level !== 1 && { ml: `${level * 18}px` }),
           ...(!drawerOpen && { pl: 1.25 }),
+          ...(drawerOpen && {
+            py: level === 1 ? 1 : 0.9,
+            '&:hover': {
+              bgcolor: withAlpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.1)
+            },
+            '&.Mui-selected': {
+              bgcolor: withAlpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.28 : 0.16),
+              border: '1px solid',
+              borderColor: withAlpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.56 : 0.22),
+              '&:hover': {
+                bgcolor: withAlpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.32 : 0.2)
+              }
+            }
+          }),
           ...((!drawerOpen || level !== 1) && {
             py: level === 1 ? 0 : 1,
             '&:hover': { bgcolor: 'transparent' },
@@ -158,7 +173,7 @@ export default function NavCollapse({ menu, level, parentId }) {
           <ListItemIcon
             sx={{
               minWidth: level === 1 ? 36 : 18,
-              color: isSelected ? 'secondary.main' : 'text.primary',
+              color: isSelected ? 'primary.main' : 'text.primary',
               ...(!drawerOpen &&
                 level === 1 && {
                   borderRadius: `${borderRadius}px`,
@@ -166,11 +181,11 @@ export default function NavCollapse({ menu, level, parentId }) {
                   height: 46,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  '&:hover': { bgcolor: 'secondary.light' },
+                  '&:hover': { bgcolor: withAlpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.08) },
 
                   ...((isSelected || anchorEl) && {
-                    bgcolor: 'secondary.light',
-                    '&:hover': { bgcolor: 'secondary.light' }
+                    bgcolor: withAlpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.28 : 0.16),
+                    '&:hover': { bgcolor: withAlpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.28 : 0.16) }
                   })
                 })
             }}
@@ -280,7 +295,7 @@ export default function NavCollapse({ menu, level, parentId }) {
                   height: '100%',
                   width: '1px',
                   opacity: 1,
-                  bgcolor: 'primary.light'
+                  bgcolor: (theme) => withAlpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.44 : 0.34)
                 }
               }}
             >

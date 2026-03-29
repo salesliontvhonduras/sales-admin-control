@@ -1,3 +1,5 @@
+import { withAlpha } from 'utils/colorUtils';
+
 // ==============================|| OVERRIDES - BUTTON ||============================== //
 
 export default function Button(theme) {
@@ -9,15 +11,21 @@ export default function Button(theme) {
       styleOverrides: {
         root: {
           borderRadius: 12,
-          fontWeight: 600,
+          fontWeight: 650,
           letterSpacing: '0.01em',
-          transition: 'all 180ms ease',
+          transition: 'all 120ms ease',
           textTransform: 'none'
         },
         contained: {
-          boxShadow: '0 8px 18px rgba(15, 23, 42, 0.14)',
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? `0 12px 26px ${withAlpha(theme.vars.palette.primary.main, 0.35)}`
+              : `0 8px 20px ${withAlpha(theme.vars.palette.primary.main, 0.26)}`,
           '&:hover': {
-            boxShadow: '0 10px 22px rgba(15, 23, 42, 0.2)',
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? `0 14px 30px ${withAlpha(theme.vars.palette.primary.main, 0.42)}`
+                : `0 10px 24px ${withAlpha(theme.vars.palette.primary.main, 0.34)}`,
             transform: 'translateY(-1px)'
           },
           '&:active': {
@@ -28,12 +36,18 @@ export default function Button(theme) {
           borderWidth: 1.2,
           '&:hover': {
             borderWidth: 1.2,
-            backgroundColor: theme.vars.palette.secondary.light
+            backgroundColor:
+              theme.palette.mode === 'dark'
+                ? withAlpha(theme.vars.palette.primary.main, 0.14)
+                : withAlpha(theme.vars.palette.primary.main, 0.08)
           }
         },
         text: {
           '&:hover': {
-            backgroundColor: theme.vars.palette.secondary.light
+            backgroundColor:
+              theme.palette.mode === 'dark'
+                ? withAlpha(theme.vars.palette.primary.main, 0.14)
+                : withAlpha(theme.vars.palette.primary.main, 0.08)
           }
         },
         sizeSmall: {

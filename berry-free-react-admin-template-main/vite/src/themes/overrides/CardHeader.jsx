@@ -5,7 +5,7 @@ export default function CardHeader(theme) {
     MuiCardHeader: {
       styleOverrides: {
         root: {
-          color: theme.vars.palette.text.dark,
+          color: theme.vars.palette.text.primary,
           padding: '18px 20px'
         },
         title: {

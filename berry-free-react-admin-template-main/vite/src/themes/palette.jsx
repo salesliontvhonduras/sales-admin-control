@@ -16,23 +16,29 @@ export function buildPalette(presetColor) {
 
   const lightColors = {
     primary: {
-      light: colors.primaryLight,
-      main: colors.primaryMain,
-      dark: colors.primaryDark,
+      lighter: '#e8f1ff',
+      light: '#d7e8ff',
+      main: '#3b82f6',
+      dark: '#2563eb',
+      darker: '#1d4ed8',
       200: colors.primary200,
       800: colors.primary800
     },
     secondary: {
-      light: colors.secondaryLight,
-      main: colors.secondaryMain,
-      dark: colors.secondaryDark,
+      lighter: '#f3e8ff',
+      light: '#e9d5ff',
+      main: '#8b5cf6',
+      dark: '#7c3aed',
+      darker: '#6d28d9',
       200: colors.secondary200,
       800: colors.secondary800
     },
     error: {
-      light: colors.errorLight,
-      main: colors.errorMain,
-      dark: colors.errorDark
+      lighter: '#fee2e2',
+      light: '#fecaca',
+      main: '#ef4444',
+      dark: '#dc2626',
+      darker: '#b91c1c'
     },
     orange: {
       light: colors.orangeLight,
@@ -40,23 +46,31 @@ export function buildPalette(presetColor) {
       dark: colors.orangeDark
     },
     warning: {
-      light: colors.warningLight,
-      main: colors.warningMain,
-      dark: colors.warningDark,
+      lighter: '#fff7d6',
+      light: '#ffec99',
+      main: '#f59e0b',
+      dark: '#d97706',
+      darker: '#b45309',
       contrastText: colors.grey700
     },
     success: {
-      light: colors.successLight,
+      lighter: '#dcfce7',
+      light: '#bbf7d0',
       200: colors.success200,
-      main: colors.successMain,
-      dark: colors.successDark
+      main: '#22c55e',
+      dark: '#16a34a',
+      darker: '#15803d'
     },
     grey: {
-      50: colors.grey50,
-      100: colors.grey100,
+      50: '#f8fafc',
+      100: '#f1f5f9',
+      200: '#e2e8f0',
+      300: '#cbd5e1',
+      400: '#94a3b8',
       500: colors.grey500,
       600: colors.grey600,
-      700: colors.grey700,
+      700: '#334155',
+      800: '#1e293b',
       900: colors.grey900
     },
     dark: {
@@ -67,44 +81,57 @@ export function buildPalette(presetColor) {
       900: colors.darkPaper
     },
     text: {
-      primary: colors.grey700,
-      secondary: colors.grey500,
-      dark: colors.grey900,
+      primary: '#111827',
+      secondary: '#64748b',
+      dark: '#0f172a',
       hint: colors.grey100,
-      heading: colors.grey900
+      heading: '#0b1220'
     },
-    divider: colors.grey200,
+    divider: 'rgba(15, 23, 42, 0.1)',
     background: {
-      paper: colors.paper,
-      default: '#f6f8fc'
+      paper: '#ffffff',
+      default: '#f4f7fb'
+    },
+    surface: {
+      sunken: '#edf3fb',
+      card: '#ffffff',
+      sidebar: '#f8fbff',
+      header: '#ffffff',
+      muted: '#f1f5fb'
     },
     action: {
-      hover: 'rgba(25, 118, 210, 0.06)',
-      selected: 'rgba(25, 118, 210, 0.12)',
-      focus: 'rgba(25, 118, 210, 0.18)',
-      disabledBackground: colors.grey100
+      hover: 'rgba(59, 130, 246, 0.08)',
+      selected: 'rgba(59, 130, 246, 0.14)',
+      focus: 'rgba(59, 130, 246, 0.22)',
+      disabledBackground: '#e5e7eb'
     }
   };
 
   const darkColors = {
     primary: {
-      light: colors.darkPrimaryLight,
-      main: colors.darkPrimaryMain,
-      dark: colors.darkPrimaryDark,
+      lighter: '#1d3a6a',
+      light: '#315fa5',
+      main: '#60a5fa',
+      dark: '#3b82f6',
+      darker: '#2563eb',
       200: colors.darkPrimary200,
       800: colors.darkPrimary800
     },
     secondary: {
-      light: colors.darkSecondaryLight,
-      main: colors.darkSecondaryMain,
-      dark: colors.darkSecondaryDark,
+      lighter: '#3b2b66',
+      light: '#5b3d9d',
+      main: '#a78bfa',
+      dark: '#8b5cf6',
+      darker: '#7c3aed',
       200: colors.darkSecondary200,
       800: colors.darkSecondary800
     },
     error: {
-      light: colors.errorLight,
-      main: colors.errorMain,
-      dark: colors.errorDark
+      lighter: '#4b1f26',
+      light: '#7f1d1d',
+      main: '#f87171',
+      dark: '#ef4444',
+      darker: '#dc2626'
     },
     orange: {
       light: colors.orangeLight,
@@ -112,55 +139,68 @@ export function buildPalette(presetColor) {
       dark: colors.orangeDark
     },
     warning: {
-      light: colors.warningLight,
-      main: colors.warningMain,
-      dark: colors.warningDark,
-      contrastText: colors.darkPaper
+      lighter: '#4b3b1a',
+      light: '#7c5a10',
+      main: '#fbbf24',
+      dark: '#f59e0b',
+      darker: '#d97706',
+      contrastText: '#111827'
     },
     success: {
-      light: colors.successLight,
+      lighter: '#15372a',
+      light: '#1f5b41',
       200: colors.success200,
-      main: colors.successMain,
-      dark: colors.successDark
+      main: '#4ade80',
+      dark: '#22c55e',
+      darker: '#16a34a'
     },
     grey: {
-      50: '#182039',
-      100: '#1e2742',
-      200: '#273153',
-      300: '#33406a',
-      500: colors.darkTextSecondary,
-      600: colors.darkTextPrimary,
-      700: colors.darkTextTitle,
-      900: '#f4f7ff'
+      50: '#0f172a',
+      100: '#111b32',
+      200: '#1b2741',
+      300: '#273451',
+      400: '#3b4a68',
+      500: '#94a3b8',
+      600: '#c3d0e5',
+      700: '#d7dfef',
+      800: '#e5eaf5',
+      900: '#f8fbff'
     },
     dark: {
-      light: colors.darkTextPrimary,
-      main: colors.darkLevel1,
-      dark: colors.darkLevel2,
-      800: colors.darkBackground,
-      900: colors.darkPaper
+      light: '#22304b',
+      main: '#101a30',
+      dark: '#0b1324',
+      800: '#0b1220',
+      900: '#101a30'
     },
     text: {
-      primary: colors.darkTextTitle,
-      secondary: colors.darkTextPrimary,
-      dark: '#ffffff',
-      hint: withAlpha(colors.darkTextSecondary, 0.58),
-      heading: '#f5f7ff'
+      primary: '#e6ecf8',
+      secondary: '#9fb0cc',
+      dark: '#f8fbff',
+      hint: withAlpha('#9fb0cc', 0.6),
+      heading: '#f8fbff'
     },
-    divider: withAlpha(colors.darkTextSecondary, 0.22),
+    divider: withAlpha('#a5b4d6', 0.22),
     background: {
-      paper: colors.darkPaper,
-      default: colors.darkBackground
+      paper: '#111a2e',
+      default: '#0b1220'
+    },
+    surface: {
+      sunken: '#0d1729',
+      card: '#121f35',
+      sidebar: '#0f1a2f',
+      header: '#0f1a2f',
+      muted: '#15233b'
     },
     action: {
-      hover: withAlpha(colors.darkPrimaryMain, 0.16),
-      selected: withAlpha(colors.darkPrimaryMain, 0.24),
-      focus: withAlpha(colors.darkPrimaryMain, 0.34),
-      disabledBackground: withAlpha(colors.darkTextSecondary, 0.16)
+      hover: withAlpha('#60a5fa', 0.16),
+      selected: withAlpha('#60a5fa', 0.24),
+      focus: withAlpha('#60a5fa', 0.34),
+      disabledBackground: withAlpha('#94a3b8', 0.2)
     }
   };
 
-  const commonColor = { common: { black: colors.darkPaper, white: '#fff' } };
+  const commonColor = { common: { black: '#0b1220', white: '#ffffff' } };
 
   const extendedLight = extendPaletteWithChannels(lightColors);
   const extendedDark = extendPaletteWithChannels(darkColors);

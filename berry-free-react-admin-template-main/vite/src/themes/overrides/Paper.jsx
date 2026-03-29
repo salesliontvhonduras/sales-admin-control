@@ -1,3 +1,5 @@
+import { withAlpha } from 'utils/colorUtils';
+
 // ==============================|| OVERRIDES - PAPER ||============================== //
 
 export default function Paper(borderRadius) {
@@ -8,16 +10,18 @@ export default function Paper(borderRadius) {
         elevation: 0
       },
       styleOverrides: {
-        root: {
-          backgroundImage: 'none'
-        },
+        root: ({ theme }) => ({
+          backgroundImage: 'none',
+          backgroundColor: theme.vars.palette.surface.card
+        }),
         rounded: {
           borderRadius: `${radius}px`
         },
-        elevation1: {
-          border: '1px solid rgba(15, 23, 42, 0.06)',
-          boxShadow: '0 8px 18px rgba(15, 23, 42, 0.08)'
-        }
+        elevation1: ({ theme }) => ({
+          border: `1px solid ${withAlpha(theme.vars.palette.divider, 0.95)}`,
+          boxShadow:
+            theme.palette.mode === 'dark' ? `0 14px 34px ${withAlpha('#020817', 0.45)}` : `0 10px 24px ${withAlpha('#0f172a', 0.1)}`
+        })
       }
     }
   };

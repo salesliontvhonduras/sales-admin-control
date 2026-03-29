@@ -1,3 +1,5 @@
+import { withAlpha } from 'utils/colorUtils';
+
 // ==============================|| OVERRIDES - DIALOG ||============================== //
 
 export default function Dialog(theme) {
@@ -9,14 +11,17 @@ export default function Dialog(theme) {
       styleOverrides: {
         root: {
           '& .MuiBackdrop-root': {
-            backdropFilter: 'blur(2px)'
+            backdropFilter: 'blur(5px)',
+            backgroundColor: withAlpha('#020617', theme.palette.mode === 'dark' ? 0.68 : 0.4)
           }
         },
         paper: {
           padding: '0',
           borderRadius: 18,
           border: `1px solid ${theme.vars.palette.divider}`,
-          boxShadow: '0 26px 60px rgba(2, 8, 20, 0.28)'
+          backgroundColor: theme.vars.palette.surface.card,
+          boxShadow:
+            theme.palette.mode === 'dark' ? `0 30px 70px ${withAlpha('#020617', 0.62)}` : `0 24px 56px ${withAlpha('#0f172a', 0.26)}`
         }
       }
     }

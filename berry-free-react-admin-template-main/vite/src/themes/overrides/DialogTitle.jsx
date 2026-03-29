@@ -1,3 +1,5 @@
+import { withAlpha } from 'utils/colorUtils';
+
 // ==============================|| OVERRIDES - DIALOG TITLE ||============================== //
 
 export default function DialogTitle(theme) {
@@ -9,7 +11,10 @@ export default function DialogTitle(theme) {
           fontWeight: 700,
           padding: '16px 20px',
           borderBottom: `1px solid ${theme.vars.palette.divider}`,
-          background: `linear-gradient(120deg, ${theme.vars.palette.primary.light}25 0%, ${theme.vars.palette.background.paper} 75%)`
+          background:
+            theme.palette.mode === 'dark'
+              ? `linear-gradient(120deg, ${withAlpha(theme.vars.palette.primary.main, 0.24)} 0%, ${theme.vars.palette.surface.card} 80%)`
+              : `linear-gradient(120deg, ${theme.vars.palette.primary.light}25 0%, ${theme.vars.palette.background.paper} 75%)`
         }
       }
     },
@@ -25,7 +30,7 @@ export default function DialogTitle(theme) {
         root: {
           padding: '14px 20px',
           borderTop: `1px solid ${theme.vars.palette.divider}`,
-          background: theme.vars.palette.grey[50]
+          background: theme.palette.mode === 'dark' ? withAlpha(theme.vars.palette.surface.muted, 0.88) : theme.vars.palette.grey[50]
         }
       }
     }
