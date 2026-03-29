@@ -37,6 +37,7 @@ const resources = {
         crm: 'Customer CRM',
         lines: 'Lines',
         plusLines: 'Plus Lines',
+        subscriptionSharing: 'Shared Subscriptions',
         licenses: 'Licenses',
         managedAccounts: 'Managed Accounts',
         moviesFeed: 'Movies Feed',
@@ -574,11 +575,17 @@ const resources = {
         search: 'Search (customer, line, package, status)',
         filters: { status: 'Status', all: 'All' },
         kpi: {
-          activeStatus: 'STATUS: ACTIVE {{count}}'
+          activeStatus: 'STATUS: ACTIVE {{count}}',
+          sharedStatus: 'SHARED {{count}}'
         },
         labels: {
           packageFallback: 'Package {{id}}',
           providerFallback: 'LION_TV'
+        },
+        sharing: {
+          host: 'HOST',
+          shared: 'SHARED',
+          none: 'Not shared'
         },
         messages: {
           packagesLoadError: 'Could not load packages.',
@@ -612,6 +619,61 @@ const resources = {
           renewal: 'Renewal',
           autopay: 'Auto pay',
           actions: 'Actions'
+        }
+      },
+      subscriptionSharing: {
+        title: 'Shared subscriptions monitoring',
+        subtitle: 'Visual monitoring based on subscriptions that reuse the same line_id across different customers.',
+        kpi: {
+          totalSubscriptions: 'Total subscriptions',
+          activeSubscriptions: 'Active',
+          sharedClusters: 'Shared clusters',
+          hosts: 'Hosts',
+          sharedSubscriptions: 'Shared subscriptions',
+          eligibleSubscriptions: 'Eligible'
+        },
+        filters: {
+          searchPlaceholder: 'Search by subscription, customer, line, status',
+          status: 'Sharing role',
+          eligible: 'Eligible',
+          options: {
+            all: 'All',
+            host: 'Host',
+            shared: 'Shared',
+            none: 'None'
+          },
+          eligibleOptions: {
+            all: 'All',
+            yes: 'Yes',
+            no: 'No'
+          }
+        },
+        sections: {
+          sharedClusters: 'Shared clusters (host + beneficiaries)',
+          noSharedClusters: 'No shared clusters found with current filters.',
+          eligibleNotShared: 'Eligible and not shared',
+          noEligible: 'No eligible subscriptions pending share.'
+        },
+        role: {
+          host: 'HOST',
+          shared: 'SHARED',
+          none: 'NONE'
+        },
+        card: {
+          hostSubscription: 'Host subscription',
+          eligible: 'Eligible',
+          notEligible: 'Not eligible',
+          clusterSize: 'Cluster: {{count}}',
+          line: 'Line',
+          renewal: 'Renewal',
+          capacity: 'Capacity {{activated}} · Usage {{used}} · Available {{available}}',
+          term: 'Term {{months}} months',
+          status: 'Status',
+          beneficiaries: 'Beneficiaries',
+          noBeneficiaries: 'No SHARED subscriptions linked to this host.'
+        },
+        errors: {
+          loadError: 'Could not load shared overview.'
         }
       },
       licenses: {
@@ -2196,6 +2258,7 @@ const resources = {
         crm: 'CRM Clientes',
         lines: 'Líneas',
         plusLines: 'Líneas Plus',
+        subscriptionSharing: 'Suscripciones compartidas',
         licenses: 'Licencias',
         managedAccounts: 'Managed Accounts',
         moviesFeed: 'Feed de Películas',
@@ -2733,11 +2796,17 @@ const resources = {
         search: 'Buscar (cliente, línea, paquete, estado)',
         filters: { status: 'Estado', all: 'Todos' },
         kpi: {
-          activeStatus: 'ESTADO: ACTIVA {{count}}'
+          activeStatus: 'ESTADO: ACTIVA {{count}}',
+          sharedStatus: 'COMPARTIDAS {{count}}'
         },
         labels: {
           packageFallback: 'Paquete {{id}}',
           providerFallback: 'LION_TV'
+        },
+        sharing: {
+          host: 'HOST',
+          shared: 'SHARED',
+          none: 'No compartida'
         },
         messages: {
           packagesLoadError: 'No se pudieron cargar los paquetes.',
@@ -2771,6 +2840,61 @@ const resources = {
           renewal: 'Renovación',
           autopay: 'Débito automático',
           actions: 'Acciones'
+        }
+      },
+      subscriptionSharing: {
+        title: 'Seguimiento de suscripciones compartidas',
+        subtitle: 'Monitoreo visual basado en suscripciones que reutilizan el mismo line_id entre clientes distintos.',
+        kpi: {
+          totalSubscriptions: 'Suscripciones totales',
+          activeSubscriptions: 'Activas',
+          sharedClusters: 'Clústeres compartidos',
+          hosts: 'Hosts',
+          sharedSubscriptions: 'Suscripciones SHARED',
+          eligibleSubscriptions: 'Elegibles'
+        },
+        filters: {
+          searchPlaceholder: 'Buscar por suscripción, cliente, línea o estado',
+          status: 'Rol de compartición',
+          eligible: 'Elegible',
+          options: {
+            all: 'Todas',
+            host: 'Host',
+            shared: 'Shared',
+            none: 'Ninguna'
+          },
+          eligibleOptions: {
+            all: 'Todas',
+            yes: 'Sí',
+            no: 'No'
+          }
+        },
+        sections: {
+          sharedClusters: 'Clústeres compartidos (host + beneficiarios)',
+          noSharedClusters: 'No se encontraron clústeres compartidos con los filtros actuales.',
+          eligibleNotShared: 'Elegibles sin compartir',
+          noEligible: 'No hay suscripciones elegibles pendientes de compartir.'
+        },
+        role: {
+          host: 'HOST',
+          shared: 'SHARED',
+          none: 'NONE'
+        },
+        card: {
+          hostSubscription: 'Suscripción host',
+          eligible: 'Elegible',
+          notEligible: 'No elegible',
+          clusterSize: 'Clúster: {{count}}',
+          line: 'Línea',
+          renewal: 'Renovación',
+          capacity: 'Capacidad {{activated}} · Uso {{used}} · Disponible {{available}}',
+          term: 'Duración {{months}} meses',
+          status: 'Estado',
+          beneficiaries: 'Beneficiarios',
+          noBeneficiaries: 'No hay suscripciones SHARED vinculadas a este host.'
+        },
+        errors: {
+          loadError: 'No se pudo cargar el overview de suscripciones compartidas.'
         }
       },
       licenses: {

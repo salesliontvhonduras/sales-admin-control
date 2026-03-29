@@ -91,6 +91,14 @@ const liontv = {
           permission: { any: ['LIONTV_SUBSCRIPTIONS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         },
         {
+          id: 'liontv-subscription-sharing',
+          title: 'menu.subscriptionSharing',
+          type: 'item',
+          url: '/liontv/subscription-sharing',
+          breadcrumbs: true,
+          permission: { any: ['LIONTV_SUBSCRIPTION_SHARING_VIEW', 'LIONTV_SUBSCRIPTIONS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+        },
+        {
           id: 'liontv-invoices',
           title: 'menu.invoices',
           type: 'item',

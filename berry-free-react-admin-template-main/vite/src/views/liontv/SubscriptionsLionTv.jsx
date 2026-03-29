@@ -148,6 +148,10 @@ function normalizeSubscription(item = {}) {
     customer_name: item.customer_name ?? '',
     username_line: item.username_line ?? '',
     provider: item.provider ?? item.lineProvider ?? item.line_provider ?? '',
+    sharingRole: String(item.sharingRole || 'NONE').toUpperCase(),
+    isSharedCluster: Boolean(item.isSharedCluster),
+    sharedHostSubscriptionId: item.sharedHostSubscriptionId ?? null,
+    sharedClusterSize: Number(item.sharedClusterSize || 0)
   };
 }
 
@@ -785,6 +789,11 @@ export default function SubscriptionsLionTv() {
       label: `${t('subscriptions.headers.autopay')}: ${rows.filter((r) => r.automaticPay).length}`,
       color: theme.vars.palette.warning.main,
       icon: <PriceChangeIcon fontSize="small" />
+    },
+    {
+      label: t('subscriptions.kpi.sharedStatus', { count: rows.filter((r) => r.sharingRole && r.sharingRole !== 'NONE').length }),
+      color: theme.vars.palette.info.main,
+      icon: <LinkIcon fontSize="small" />
     }
   ];
 
@@ -1053,7 +1062,27 @@ export default function SubscriptionsLionTv() {
                         />
                       </TableCell>
                       <TableCell>
-                        <StatusChip status={row.status} />
+                        <Stack direction="row" spacing={0.75} alignItems="center">
+                          <StatusChip status={row.status} />
+                          {row.sharingRole === 'HOST' && (
+                            <Chip
+                              size="small"
+                              color="warning"
+                              variant="filled"
+                              label={t('subscriptions.sharing.host', 'HOST')}
+                              sx={{ fontWeight: 700 }}
+                            />
+                          )}
+                          {row.sharingRole === 'SHARED' && (
+                            <Chip
+                              size="small"
+                              color="info"
+                              variant="filled"
+                              label={t('subscriptions.sharing.shared', 'SHARED')}
+                              sx={{ fontWeight: 700 }}
+                            />
+                          )}
+                        </Stack>
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" alignItems="center" spacing={0.5}>

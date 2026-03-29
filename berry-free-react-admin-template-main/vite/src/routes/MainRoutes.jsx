@@ -20,6 +20,7 @@ const FutbolEventsFeedLionTv = Loadable(lazy(() => import('views/liontv/FutbolEv
 const ManagedAccountsLionTv = Loadable(lazy(() => import('views/liontv/ManagedAccountsLionTv')));
 const CustomerCrmLionTv = Loadable(lazy(() => import('views/liontv/CustomerCrmLionTv')));
 const SubscriptionsLionTv = Loadable(lazy(() => import('views/liontv/SubscriptionsLionTv')));
+const SubscriptionSharingLionTv = Loadable(lazy(() => import('views/liontv/SubscriptionSharingLionTv')));
 const InvoicesLionTv = Loadable(lazy(() => import('views/liontv/InvoicesLionTv')));
 const BusinessPurchasesLionTv = Loadable(lazy(() => import('views/liontv/BusinessPurchasesLionTv')));
 const LicensesLionTv = Loadable(lazy(() => import('views/liontv/LicensesLionTv')));
@@ -111,6 +112,13 @@ const MainRoutes = {
         {
           path: '/liontv/subscriptions',
           element: protectPage({ any: ['LIONTV_SUBSCRIPTIONS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <SubscriptionsLionTv />)
+        },
+        {
+          path: '/liontv/subscription-sharing',
+          element: protectPage(
+            { any: ['LIONTV_SUBSCRIPTION_SHARING_VIEW', 'LIONTV_SUBSCRIPTIONS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+            <SubscriptionSharingLionTv />
+          )
         },
         {
           path: '/liontv/invoices',
