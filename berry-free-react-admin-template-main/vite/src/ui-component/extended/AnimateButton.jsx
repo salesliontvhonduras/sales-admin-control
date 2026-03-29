@@ -6,6 +6,7 @@ import { motion, useCycle } from 'framer-motion';
 // ==============================|| ANIMATION BUTTON ||============================== //
 
 export default function AnimateButton({ children, type = 'scale', direction = 'right', offset = 10, scale = { hover: 1, tap: 0.9 } }) {
+  const animationsEnabled = String(import.meta.env.VITE_UI_ANIMATIONS_ENABLED || 'false').toLowerCase() === 'true';
   let offset1;
   let offset2;
   switch (direction) {
@@ -24,6 +25,10 @@ export default function AnimateButton({ children, type = 'scale', direction = 'r
 
   const [x, cycleX] = useCycle(offset1, offset2);
   const [y, cycleY] = useCycle(offset1, offset2);
+
+  if (!animationsEnabled) {
+    return children;
+  }
 
   switch (type) {
     case 'rotate':

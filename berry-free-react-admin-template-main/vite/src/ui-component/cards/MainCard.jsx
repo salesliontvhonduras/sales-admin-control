@@ -39,10 +39,10 @@ export default function MainCard({
         borderColor: 'divider',
         borderRadius: 3,
         boxShadow: border ? 'none' : '0 10px 24px rgba(15, 23, 42, 0.08)',
-        transition: 'all 180ms ease',
+        transition: 'box-shadow 120ms ease',
         ':hover': {
           boxShadow: boxShadow ? shadow || defaultShadow : '0 14px 28px rgba(15, 23, 42, 0.12)',
-          transform: boxShadow ? 'translateY(-1px)' : 'none'
+          transform: 'none'
         },
         ...(typeof sx === 'function' ? sx(theme) : sx || {})
       })}

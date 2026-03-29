@@ -264,10 +264,7 @@ export default function UserAccessAdmin() {
   }, [loadCatalog]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      loadUsers();
-    }, 250);
-    return () => clearTimeout(timer);
+    loadUsers();
   }, [loadUsers]);
 
   const metrics = useMemo(() => {
