@@ -359,9 +359,14 @@ const resources = {
       crm: {
         title: 'Customer CRM',
         search: { label: 'Search customer', placeholder: 'Name, email or user' },
+        actions: { retry: 'Retry', selectFirstCustomer: 'Select first customer' },
         empty: {
           title: 'Pick a customer to see their 360° view',
           subtitle: 'You will find their subscriptions, billing, licenses and key metrics.'
+        },
+        emptyRecords: {
+          title: 'This customer has no operational records yet',
+          subtitle: 'We did not find subscriptions, invoices, licenses, or managed accounts for this customer.'
         },
         stats: {
           billed: 'Total billed',
@@ -370,7 +375,11 @@ const resources = {
           subscriptionsActive: 'Active: {{val}}',
           licenses: 'Licenses',
           licensesActive: 'Active: {{val}}',
+          managedAccounts: 'Managed Accounts',
+          managedAccountsActive: 'Active: {{val}}',
           nextRenewal: 'Next renewal',
+          nextManagedExpiration: 'Next account expiration',
+          managedAccountsAlias: 'Based on managed aliases',
           none: 'Not defined',
           closest: 'Closest date',
           lastPayment: 'Last payment',
@@ -384,6 +393,10 @@ const resources = {
         tables: {
           subscriptions: { title: 'All subscriptions', desc: 'Full view of lines, packages, billing and dates for the customer.' },
           licenses: { title: 'All licenses', desc: 'License detail: app, type, validity and status.' },
+          managedAccounts: {
+            title: 'Managed accounts',
+            desc: 'Complete view of aliases, providers, expiration, status, and distribution settings.'
+          },
           invoices: { title: 'All invoices', desc: 'Full billing history in Lempiras with method and status.' }
         },
         headers: {
@@ -399,25 +412,63 @@ const resources = {
           mac: 'MAC',
           app: 'App',
           type: 'Type',
-          expire: 'Expire'
+          expire: 'Expire',
+          accountCode: 'Account',
+          alias: 'Alias',
+          provider: 'Provider',
+          distribution: 'Distribution'
+        },
+        timeline: {
+          title: 'Customer 360 timeline',
+          subtitle: 'Unified timeline with commercial and operational events for the selected customer.',
+          filters: {
+            all: 'All',
+            expirations: 'Expirations',
+            payments: 'Payments',
+            activity: 'Activity'
+          },
+          empty: {
+            title: 'No events for this filter',
+            subtitle: 'Try changing the filter or refreshing data to update the timeline.'
+          },
+          actions: {
+            resetFilter: 'Show all'
+          },
+          events: {
+            customerOpened: {
+              title: 'Customer created',
+              subtitle: 'Customer onboarding date'
+            },
+            subscriptionStart: { title: 'Subscription started' },
+            subscriptionRenewal: { title: 'Scheduled renewal' },
+            invoicePayment: { title: 'Invoice movement' },
+            licenseCreated: { title: 'License created' },
+            licenseExpiration: { title: 'License expiration' },
+            managedAccountExpiration: { title: 'Managed account expiration' },
+            managedAccountEmail: { title: 'Last inbound email received' }
+          }
         },
         modules: {
           title: 'Detailed modules',
           subtitle: 'Open dedicated submodules with context, icons and colors for each entity.',
           subscriptions: 'View subscriptions',
           invoices: 'View billing',
-          licenses: 'View licenses'
+          licenses: 'View licenses',
+          managedAccounts: 'View managed accounts'
         },
         detail: {
           subscription: 'Subscription detail',
+          managedAccount: 'Managed account detail',
           invoice: 'Invoice detail',
           license: 'License detail',
           helper: 'Enriched view with icons and descriptions.',
           summary: {
             subscription: 'Subscription summary',
+            managedAccount: 'Managed account summary',
             license: 'License summary',
             invoice: 'Invoice summary',
             subscriptionHelper: 'See line, package, dates and auto-pay state of the selected subscription.',
+            managedAccountHelper: 'See alias, provider, expiration, and distribution settings of the selected managed account.',
             licenseHelper: 'Key license info: app, type, cycle, validity and current owner.',
             invoiceHelper: 'Amount paid in Lps, method, bank and notes for the selected invoice.'
           }
@@ -473,16 +524,33 @@ const resources = {
         },
         datasets: {
           customers: 'Loaded customers: {{count}}',
+          managedAccounts: 'Managed accounts: {{count}}',
           label: 'Datasets: {{state}}',
           loading: 'Loading...',
           ready: 'Ready'
         },
+        bulk: {
+          selected: 'Selected: {{count}}',
+          visible: 'Visible: {{count}}',
+          selectVisible: 'Select visible',
+          unselectVisible: 'Unselect visible',
+          clearSelection: 'Clear selection',
+          copyIds: 'Copy IDs',
+          exportCsv: 'Export CSV',
+          emptySelection: 'Select at least one record.',
+          copySuccess: 'IDs copied to clipboard.',
+          copyFailed: 'Could not copy to clipboard.',
+          emptyExport: 'No records available for export.',
+          exportSuccess: 'Export completed ({{count}} records).',
+          id: 'ID'
+        },
         errors: {
           load: 'Could not load information.',
           banks: 'Could not load banks.',
-          services: 'Could not load services.'
+          services: 'Could not load services.',
+          partialData: 'Some data sources failed. Retry to complete the 360 view.'
         },
-        table: { detail: 'Detail', empty: 'No data' }
+        table: { detail: 'Detail', empty: 'No data', emptyHelp: 'No records were found for this customer in this module.' }
       },
       common: { close: 'Close', yes: 'Yes', no: 'No' },
       sms: {
@@ -891,9 +959,14 @@ const resources = {
       crm: {
         title: 'CRM Clientes',
         search: { label: 'Buscar cliente', placeholder: 'Nombre, correo o usuario' },
+        actions: { retry: 'Reintentar', selectFirstCustomer: 'Seleccionar primer cliente' },
         empty: {
           title: 'Selecciona un cliente para ver su panorama 360°',
           subtitle: 'Encontrarás sus suscripciones, facturación, licencias y métricas clave.'
+        },
+        emptyRecords: {
+          title: 'Este cliente aún no tiene movimientos',
+          subtitle: 'No encontramos suscripciones, facturas, licencias ni managed accounts para este cliente.'
         },
         stats: {
           billed: 'Total facturado',
@@ -902,7 +975,11 @@ const resources = {
           subscriptionsActive: 'Activas: {{val}}',
           licenses: 'Licencias',
           licensesActive: 'Activas: {{val}}',
+          managedAccounts: 'Managed Accounts',
+          managedAccountsActive: 'Activas: {{val}}',
           nextRenewal: 'Próxima renovación',
+          nextManagedExpiration: 'Próx. vencimiento account',
+          managedAccountsAlias: 'Basado en alias gestionados',
           none: 'Sin definir',
           closest: 'Fecha más cercana',
           lastPayment: 'Último pago',
@@ -916,6 +993,10 @@ const resources = {
         tables: {
           subscriptions: { title: 'Todas las suscripciones', desc: 'Vista completa de líneas, paquetes, billing y fechas del cliente.' },
           licenses: { title: 'Todas las licencias', desc: 'Detalle de licencias: app, tipo, vigencia y estado actual.' },
+          managedAccounts: {
+            title: 'Cuentas gestionadas',
+            desc: 'Vista completa de aliases, provider, vigencia, estado y configuración de distribución.'
+          },
           invoices: { title: 'Todas las facturas', desc: 'Historial completo de facturación en Lempiras con método y estado.' }
         },
         headers: {
@@ -931,25 +1012,63 @@ const resources = {
           mac: 'MAC',
           app: 'App',
           type: 'Tipo',
-          expire: 'Expira'
+          expire: 'Expira',
+          accountCode: 'Account',
+          alias: 'Alias',
+          provider: 'Provider',
+          distribution: 'Distribución'
+        },
+        timeline: {
+          title: 'Timeline 360 del cliente',
+          subtitle: 'Cronología unificada con eventos comerciales y operativos del cliente seleccionado.',
+          filters: {
+            all: 'Todo',
+            expirations: 'Vencimientos',
+            payments: 'Pagos',
+            activity: 'Actividad'
+          },
+          empty: {
+            title: 'No hay eventos para este filtro',
+            subtitle: 'Prueba cambiar el filtro o recargar datos para actualizar la cronología.'
+          },
+          actions: {
+            resetFilter: 'Ver todo'
+          },
+          events: {
+            customerOpened: {
+              title: 'Cliente creado',
+              subtitle: 'Fecha de alta del cliente'
+            },
+            subscriptionStart: { title: 'Suscripción iniciada' },
+            subscriptionRenewal: { title: 'Renovación programada' },
+            invoicePayment: { title: 'Movimiento de factura' },
+            licenseCreated: { title: 'Licencia creada' },
+            licenseExpiration: { title: 'Vencimiento de licencia' },
+            managedAccountExpiration: { title: 'Vencimiento de managed account' },
+            managedAccountEmail: { title: 'Último correo recibido' }
+          }
         },
         modules: {
           title: 'Módulos detallados',
           subtitle: 'Abre submódulos dedicados con contexto, iconos y colores para identificar cada entidad.',
           subscriptions: 'Ver suscripciones',
           invoices: 'Ver facturación',
-          licenses: 'Ver licencias'
+          licenses: 'Ver licencias',
+          managedAccounts: 'Ver managed accounts'
         },
         detail: {
           subscription: 'Detalle de suscripción',
+          managedAccount: 'Detalle de managed account',
           invoice: 'Detalle de factura',
           license: 'Detalle de licencia',
           helper: 'Visualización enriquecida con íconos y descripciones.',
           summary: {
             subscription: 'Resumen de la suscripción',
+            managedAccount: 'Resumen de la cuenta gestionada',
             license: 'Resumen de la licencia',
             invoice: 'Resumen de la factura',
             subscriptionHelper: 'Visualiza línea, paquete, fechas y estado de pago automático de la suscripción seleccionada.',
+            managedAccountHelper: 'Visualiza alias, proveedor, vigencia y reglas de distribución de la cuenta gestionada seleccionada.',
             licenseHelper: 'Información clave de la licencia: aplicación, tipo, ciclo, vigencia y propietario actual.',
             invoiceHelper: 'Monto pagado en Lps, método, banco y notas relevantes para la factura elegida.'
           }
@@ -1005,16 +1124,33 @@ const resources = {
         },
         datasets: {
           customers: 'Clientes cargados: {{count}}',
+          managedAccounts: 'Managed accounts: {{count}}',
           label: 'Datasets: {{state}}',
           loading: 'Cargando...',
           ready: 'Listos'
         },
+        bulk: {
+          selected: 'Seleccionados: {{count}}',
+          visible: 'Visibles: {{count}}',
+          selectVisible: 'Seleccionar visibles',
+          unselectVisible: 'Deseleccionar visibles',
+          clearSelection: 'Limpiar selección',
+          copyIds: 'Copiar IDs',
+          exportCsv: 'Exportar CSV',
+          emptySelection: 'Selecciona al menos un registro.',
+          copySuccess: 'IDs copiados al portapapeles.',
+          copyFailed: 'No se pudo copiar al portapapeles.',
+          emptyExport: 'No hay registros para exportar.',
+          exportSuccess: 'Exportación completada ({{count}} registros).',
+          id: 'ID'
+        },
         errors: {
           load: 'No se pudo cargar la información.',
           banks: 'No se pudieron cargar los bancos.',
-          services: 'No se pudieron cargar los servicios.'
+          services: 'No se pudieron cargar los servicios.',
+          partialData: 'Algunas fuentes fallaron. Puedes reintentar para completar la vista 360.'
         },
-        table: { detail: 'Detalle', empty: 'No hay datos' }
+        table: { detail: 'Detalle', empty: 'No hay datos', emptyHelp: 'No hay registros para este cliente en este módulo.' }
       },
       common: { close: 'Cerrar', yes: 'Sí', no: 'No' },
       sms: {

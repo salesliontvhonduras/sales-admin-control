@@ -7,6 +7,7 @@ import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Grid';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
@@ -28,6 +29,7 @@ import DialogActions from '@mui/material/DialogActions';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import FormHelperText from '@mui/material/FormHelperText';
+import Checkbox from '@mui/material/Checkbox';
 
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
@@ -60,6 +62,14 @@ import NoteAltIcon from '@mui/icons-material/NoteAlt';
 import PaidIcon from '@mui/icons-material/Paid';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 import AlternateEmailIcon from '@mui/icons-material/AlternateEmail';
+import DownloadIcon from '@mui/icons-material/Download';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import DeselectIcon from '@mui/icons-material/Deselect';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import { useTranslation } from 'react-i18next';
 
 import MainCard from 'ui-component/cards/MainCard';
@@ -93,9 +103,43 @@ function formatDate(value) {
   return d.toLocaleDateString();
 }
 
+function formatDateTime(value) {
+  if (!value) return '-';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleString('es-HN');
+}
+
 function formatCurrency(value) {
   const n = Number(value) || 0;
   return n.toLocaleString('es-HN', { style: 'currency', currency: 'HNL', minimumFractionDigits: 2 });
+}
+
+function dateValue(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+}
+
+function getRowKey(row = {}) {
+  const base =
+    row.managedAccountId ??
+    row.subscriptionId ??
+    row.invoiceId ??
+    row.licenseId ??
+    row.id ??
+    row.accountCode ??
+    row.aliasEmail ??
+    row.macAddress;
+  if (base !== undefined && base !== null && base !== '') return String(base);
+  return JSON.stringify(row);
+}
+
+function csvCell(value) {
+  const stringValue = String(value ?? '');
+  const escaped = stringValue.replace(/"/g, '""');
+  return `"${escaped}"`;
 }
 
 function ContactActions({ phone, mail }) {
@@ -342,6 +386,49 @@ function InfoBlock({ title, icon, color = 'primary', children, helper }) {
   );
 }
 
+function ActionableState({ icon, title, subtitle, actions = [] }) {
+  return (
+    <Box
+      sx={{
+        py: 4,
+        px: 2,
+        textAlign: 'center',
+        border: '1px dashed',
+        borderColor: 'divider',
+        borderRadius: 2,
+        background: (theme) =>
+          theme.palette.mode === 'light'
+            ? `linear-gradient(145deg, ${theme.palette.primary.light}10, ${theme.palette.secondary.light}10)`
+            : theme.palette.background.default
+      }}
+    >
+      <Avatar sx={{ mx: 'auto', mb: 1.5, bgcolor: 'primary.main', color: 'primary.contrastText' }}>{icon}</Avatar>
+      <Typography variant="h6" sx={{ fontWeight: 700 }}>
+        {title}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+        {subtitle}
+      </Typography>
+      {actions.length ? (
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="center" sx={{ mt: 2 }}>
+          {actions.map((action) => (
+            <Button
+              key={action.id}
+              variant={action.variant || 'outlined'}
+              color={action.color || 'primary'}
+              startIcon={action.icon || null}
+              onClick={action.onClick}
+              disabled={Boolean(action.disabled)}
+            >
+              {action.label}
+            </Button>
+          ))}
+        </Stack>
+      ) : null}
+    </Box>
+  );
+}
+
 export default function CustomerCrmLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
@@ -367,8 +454,20 @@ export default function CustomerCrmLionTv() {
     banks: false,
     services: false
   });
+  const [loadErrors, setLoadErrors] = useState({
+    customers: '',
+    subscriptions: '',
+    invoices: '',
+    licenses: '',
+    managedAccounts: '',
+    packages: '',
+    lines: '',
+    banks: '',
+    services: ''
+  });
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [timelineFilter, setTimelineFilter] = useState('ALL');
   const [detail, setDetail] = useState({ open: false, type: null, row: null });
   const [tableDialog, setTableDialog] = useState({
     open: false,
@@ -380,6 +479,7 @@ export default function CustomerCrmLionTv() {
   });
   const [tablePage, setTablePage] = useState(0);
   const [tableRpp, setTableRpp] = useState(10);
+  const [tableSelectedKeys, setTableSelectedKeys] = useState([]);
 
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
@@ -400,9 +500,12 @@ export default function CustomerCrmLionTv() {
         const raw = payload.data ?? payload.items ?? payload.content ?? payload ?? [];
         const normalized = (Array.isArray(raw) ? raw : []).map(normalizer);
         setter(normalized);
+        setLoadErrors((prev) => ({ ...prev, [key]: '' }));
       } catch (err) {
         if (!handleUnauthorized(err)) {
-          enqueueSnackbar(err?.response?.data?.message || t('crm.errors.load', 'No se pudo cargar la información.'), { variant: 'error' });
+          const message = err?.response?.data?.message || t('crm.errors.load', 'No se pudo cargar la información.');
+          enqueueSnackbar(message, { variant: 'error' });
+          setLoadErrors((prev) => ({ ...prev, [key]: message }));
         }
       } finally {
         setLoading((prev) => ({ ...prev, [key]: false }));
@@ -434,8 +537,11 @@ export default function CustomerCrmLionTv() {
       const res = await catalogsApi.get('/banks/v1', { headers: { Authorization: `Bearer ${accessToken}` } });
       const payload = res?.data?.data ?? res?.data ?? [];
       setBanks(Array.isArray(payload) ? payload : []);
+      setLoadErrors((prev) => ({ ...prev, banks: '' }));
     } catch {
-      enqueueSnackbar(t('crm.errors.banks', 'No se pudieron cargar los bancos.'), { variant: 'warning' });
+      const message = t('crm.errors.banks', 'No se pudieron cargar los bancos.');
+      enqueueSnackbar(message, { variant: 'warning' });
+      setLoadErrors((prev) => ({ ...prev, banks: message }));
     } finally {
       setLoading((prev) => ({ ...prev, banks: false }));
     }
@@ -448,8 +554,11 @@ export default function CustomerCrmLionTv() {
       const res = await catalogsApi.get('/services/v1', { headers: { Authorization: `Bearer ${accessToken}` } });
       const payload = res?.data?.data ?? res?.data ?? [];
       setServices(Array.isArray(payload) ? payload : []);
+      setLoadErrors((prev) => ({ ...prev, services: '' }));
     } catch {
-      enqueueSnackbar(t('crm.errors.services', 'No se pudieron cargar los servicios.'), { variant: 'warning' });
+      const message = t('crm.errors.services', 'No se pudieron cargar los servicios.');
+      enqueueSnackbar(message, { variant: 'warning' });
+      setLoadErrors((prev) => ({ ...prev, services: message }));
     } finally {
       setLoading((prev) => ({ ...prev, services: false }));
     }
@@ -569,7 +678,240 @@ export default function CustomerCrmLionTv() {
     };
   }, [customerSubscriptions, customerLicenses, customerInvoices, customerManagedAccounts]);
 
+  const hasBlockingErrors = useMemo(() => Object.values(loadErrors).some(Boolean), [loadErrors]);
+
+  const customerHasRecords = useMemo(
+    () =>
+      customerSubscriptions.length > 0 || customerInvoices.length > 0 || customerLicenses.length > 0 || customerManagedAccounts.length > 0,
+    [customerSubscriptions.length, customerInvoices.length, customerLicenses.length, customerManagedAccounts.length]
+  );
+
+  const retryAll = useCallback(() => {
+    setRefreshKey((value) => value + 1);
+  }, []);
+
+  const timelineItems = useMemo(() => {
+    if (!selectedCustomer) return [];
+
+    const events = [];
+    const pushEvent = ({ id, date, kind, title, subtitle, status, source }) => {
+      const parsedDate = dateValue(date);
+      events.push({
+        id,
+        date: parsedDate,
+        rawDate: date,
+        kind,
+        title,
+        subtitle,
+        status,
+        source
+      });
+    };
+
+    if (selectedCustomer.openingDate) {
+      pushEvent({
+        id: `customer-open-${selectedCustomer.id}`,
+        date: selectedCustomer.openingDate,
+        kind: 'ACTIVITY',
+        title: t('crm.timeline.events.customerOpened.title', 'Cliente creado'),
+        subtitle: t('crm.timeline.events.customerOpened.subtitle', 'Fecha de alta del cliente'),
+        status: selectedCustomer.status || 'ACTIVE',
+        source: 'CUSTOMER'
+      });
+    }
+
+    customerSubscriptions.forEach((item) => {
+      if (item.startDate) {
+        pushEvent({
+          id: `sub-start-${item.subscriptionId}`,
+          date: item.startDate,
+          kind: 'ACTIVITY',
+          title: t('crm.timeline.events.subscriptionStart.title', 'Suscripción iniciada'),
+          subtitle: `${item.packageName || item.packageId || '-'} · ${item.lineLabel || item.lineId || '-'}`,
+          status: item.status,
+          source: 'SUBSCRIPTION'
+        });
+      }
+
+      if (item.renewalDate) {
+        pushEvent({
+          id: `sub-renew-${item.subscriptionId}`,
+          date: item.renewalDate,
+          kind: 'EXPIRATIONS',
+          title: t('crm.timeline.events.subscriptionRenewal.title', 'Renovación programada'),
+          subtitle: `${item.packageName || item.packageId || '-'} · ${item.lineLabel || item.lineId || '-'}`,
+          status: item.status,
+          source: 'SUBSCRIPTION'
+        });
+      }
+    });
+
+    customerInvoices.forEach((item) => {
+      if (!item.paymentDate) return;
+      pushEvent({
+        id: `inv-${item.invoiceId}`,
+        date: item.paymentDate,
+        kind: 'PAYMENTS',
+        title: t('crm.timeline.events.invoicePayment.title', 'Movimiento de factura'),
+        subtitle: `${item.paymentMethod || '-'} · ${formatCurrency(Number(item.amountPaid || 0) - Number(item.amountDiscount || 0))}`,
+        status: item.status,
+        source: 'INVOICE'
+      });
+    });
+
+    customerLicenses.forEach((item) => {
+      if (item.createdAt) {
+        pushEvent({
+          id: `license-created-${item.licenseId}`,
+          date: item.createdAt,
+          kind: 'ACTIVITY',
+          title: t('crm.timeline.events.licenseCreated.title', 'Licencia creada'),
+          subtitle: `${item.app || '-'} · ${item.macAddress || '-'}`,
+          status: item.status,
+          source: 'LICENSE'
+        });
+      }
+      if (item.expireAt) {
+        pushEvent({
+          id: `license-expire-${item.licenseId}`,
+          date: item.expireAt,
+          kind: 'EXPIRATIONS',
+          title: t('crm.timeline.events.licenseExpiration.title', 'Vencimiento de licencia'),
+          subtitle: `${item.app || '-'} · ${item.macAddress || '-'}`,
+          status: item.status,
+          source: 'LICENSE'
+        });
+      }
+    });
+
+    customerManagedAccounts.forEach((item) => {
+      if (item.expirationDate) {
+        pushEvent({
+          id: `account-expire-${item.managedAccountId}`,
+          date: item.expirationDate,
+          kind: 'EXPIRATIONS',
+          title: t('crm.timeline.events.managedAccountExpiration.title', 'Vencimiento de managed account'),
+          subtitle: `${item.aliasEmail || '-'} · ${item.accountCode || '-'}`,
+          status: item.accountStatus,
+          source: 'MANAGED_ACCOUNT'
+        });
+      }
+
+      if (item.lastEmailReceivedAt) {
+        pushEvent({
+          id: `account-email-${item.managedAccountId}`,
+          date: item.lastEmailReceivedAt,
+          kind: 'ACTIVITY',
+          title: t('crm.timeline.events.managedAccountEmail.title', 'Último correo recibido'),
+          subtitle: `${item.aliasEmail || '-'} · ${item.providerCode || item.providerName || '-'}`,
+          status: item.accountStatus,
+          source: 'MANAGED_ACCOUNT'
+        });
+      }
+    });
+
+    return events.sort((a, b) => {
+      const left = a.date ? a.date.getTime() : 0;
+      const right = b.date ? b.date.getTime() : 0;
+      return right - left;
+    });
+  }, [selectedCustomer, customerSubscriptions, customerInvoices, customerLicenses, customerManagedAccounts, t]);
+
+  const timelineFilteredItems = useMemo(() => {
+    if (timelineFilter === 'ALL') return timelineItems;
+    return timelineItems.filter((item) => item.kind === timelineFilter);
+  }, [timelineFilter, timelineItems]);
+
+  const paginatedTableRows = useMemo(
+    () => tableDialog.rows.slice(tablePage * tableRpp, tablePage * tableRpp + tableRpp),
+    [tableDialog.rows, tablePage, tableRpp]
+  );
+
+  const selectedTableRows = useMemo(() => {
+    if (!tableSelectedKeys.length) return [];
+    return tableDialog.rows.filter((row) => tableSelectedKeys.includes(getRowKey(row)));
+  }, [tableDialog.rows, tableSelectedKeys]);
+
+  const allVisibleRowsSelected = useMemo(() => {
+    if (!paginatedTableRows.length) return false;
+    return paginatedTableRows.every((row) => tableSelectedKeys.includes(getRowKey(row)));
+  }, [paginatedTableRows, tableSelectedKeys]);
+
+  const toggleRowSelection = useCallback((row) => {
+    const key = getRowKey(row);
+    setTableSelectedKeys((prev) => (prev.includes(key) ? prev.filter((item) => item !== key) : [...prev, key]));
+  }, []);
+
+  const toggleVisibleRowsSelection = useCallback(() => {
+    const visibleKeys = paginatedTableRows.map((row) => getRowKey(row));
+    setTableSelectedKeys((prev) => {
+      const allSelected = visibleKeys.every((key) => prev.includes(key));
+      if (allSelected) return prev.filter((key) => !visibleKeys.includes(key));
+      const next = new Set([...prev, ...visibleKeys]);
+      return Array.from(next);
+    });
+  }, [paginatedTableRows]);
+
+  const clearTableSelection = useCallback(() => {
+    setTableSelectedKeys([]);
+  }, []);
+
+  const copySelectedIds = useCallback(async () => {
+    if (!selectedTableRows.length) {
+      enqueueSnackbar(t('crm.bulk.emptySelection', 'Selecciona al menos un registro.'), { variant: 'warning' });
+      return;
+    }
+    const ids = selectedTableRows.map((row) => getRowKey(row));
+    try {
+      await navigator.clipboard.writeText(ids.join('\n'));
+      enqueueSnackbar(t('crm.bulk.copySuccess', 'IDs copiados al portapapeles.'), { variant: 'success' });
+    } catch {
+      enqueueSnackbar(t('crm.bulk.copyFailed', 'No se pudo copiar al portapapeles.'), { variant: 'error' });
+    }
+  }, [enqueueSnackbar, selectedTableRows, t]);
+
+  const exportSelectedToCsv = useCallback(() => {
+    const rows = selectedTableRows.length ? selectedTableRows : tableDialog.rows;
+    if (!rows.length) {
+      enqueueSnackbar(t('crm.bulk.emptyExport', 'No hay registros para exportar.'), { variant: 'warning' });
+      return;
+    }
+
+    const headers = [t('crm.bulk.id', 'ID'), ...tableDialog.columns.map((column) => column.title || column.field)];
+    const csvRows = rows.map((row) => [
+      getRowKey(row),
+      ...tableDialog.columns.map((column) => {
+        const raw = row[column.field];
+        if (raw === null || raw === undefined) return '';
+        if (typeof raw === 'object') return JSON.stringify(raw);
+        return String(raw);
+      })
+    ]);
+
+    const csv = [headers, ...csvRows].map((line) => line.map(csvCell).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const baseName = (tableDialog.title || 'crm-export').toLowerCase().replace(/[^a-z0-9]+/gi, '-');
+    link.href = url;
+    link.setAttribute('download', `${baseName}-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    enqueueSnackbar(
+      t('crm.bulk.exportSuccess', {
+        defaultValue: 'Exportación completada ({{count}} registros).',
+        count: rows.length
+      }),
+      { variant: 'success' }
+    );
+  }, [enqueueSnackbar, selectedTableRows, tableDialog.columns, tableDialog.rows, tableDialog.title, t]);
+
   const openFullModule = (type) => {
+    setTableSelectedKeys([]);
+    setTablePage(0);
     if (type === 'subscriptions') {
       setTableDialog({
         open: true,
@@ -747,27 +1089,43 @@ export default function CustomerCrmLionTv() {
           </Stack>
         }
       >
-        {!selectedCustomer ? (
-          <Box
-            sx={{
-              py: 6,
-              textAlign: 'center',
-              border: '1px dashed',
-              borderColor: 'divider',
-              borderRadius: 2,
-              background: (theme) =>
-                theme.palette.mode === 'light'
-                  ? `linear-gradient(145deg, ${theme.palette.primary.light}12, ${theme.palette.secondary.light}10)`
-                  : theme.palette.background.default
-            }}
+        {hasBlockingErrors ? (
+          <Alert
+            severity="warning"
+            sx={{ mb: 2 }}
+            action={
+              <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={retryAll}>
+                {t('crm.actions.retry', 'Reintentar')}
+              </Button>
+            }
           >
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              {t('crm.empty.title', 'Selecciona un cliente para ver su panorama 360°')}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              {t('crm.empty.subtitle', 'Encontrarás sus suscripciones, managed accounts, facturación, licencias y métricas clave.')}
-            </Typography>
-          </Box>
+            {t('crm.errors.partialData', 'Algunas fuentes fallaron. Puedes reintentar para completar la vista 360.')}
+          </Alert>
+        ) : null}
+        {!selectedCustomer ? (
+          <ActionableState
+            icon={<PersonIcon />}
+            title={t('crm.empty.title', 'Selecciona un cliente para ver su panorama 360°')}
+            subtitle={t('crm.empty.subtitle', 'Encontrarás sus suscripciones, managed accounts, facturación, licencias y métricas clave.')}
+            actions={[
+              {
+                id: 'select-first-customer',
+                label: t('crm.actions.selectFirstCustomer', 'Seleccionar primer cliente'),
+                icon: <DoneAllIcon />,
+                disabled: customers.length === 0,
+                onClick: () => {
+                  if (customers[0]) setSelectedCustomer(customers[0]);
+                }
+              },
+              {
+                id: 'retry-data',
+                label: t('actions.refresh', 'Recargar'),
+                icon: <RefreshIcon />,
+                variant: 'outlined',
+                onClick: retryAll
+              }
+            ]}
+          />
         ) : loading.customers ? (
           <Stack spacing={3}>
             <Skeleton variant="rounded" height={160} />
@@ -927,6 +1285,151 @@ export default function CustomerCrmLionTv() {
                 </Grid>
               </Box>
             </MainCard>
+
+            {!customerHasRecords ? (
+              <ActionableState
+                icon={<TimelineIcon />}
+                title={t('crm.emptyRecords.title', 'El cliente aún no tiene movimientos')}
+                subtitle={t(
+                  'crm.emptyRecords.subtitle',
+                  'No encontramos suscripciones, facturas, licencias ni managed accounts para este cliente.'
+                )}
+                actions={[
+                  {
+                    id: 'refresh-customer-records',
+                    label: t('actions.refresh', 'Recargar'),
+                    icon: <RefreshIcon />,
+                    onClick: retryAll
+                  }
+                ]}
+              />
+            ) : (
+              <MainCard>
+                <Stack spacing={2}>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between" alignItems={{ sm: 'center' }}>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <TimelineIcon color="primary" />
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                        {t('crm.timeline.title', 'Timeline 360 del cliente')}
+                      </Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                      {[
+                        { value: 'ALL', label: t('crm.timeline.filters.all', 'Todo') },
+                        { value: 'EXPIRATIONS', label: t('crm.timeline.filters.expirations', 'Vencimientos') },
+                        { value: 'PAYMENTS', label: t('crm.timeline.filters.payments', 'Pagos') },
+                        { value: 'ACTIVITY', label: t('crm.timeline.filters.activity', 'Actividad') }
+                      ].map((option) => (
+                        <Chip
+                          key={option.value}
+                          size="small"
+                          label={option.label}
+                          color={timelineFilter === option.value ? 'primary' : 'default'}
+                          variant={timelineFilter === option.value ? 'filled' : 'outlined'}
+                          onClick={() => setTimelineFilter(option.value)}
+                        />
+                      ))}
+                    </Stack>
+                  </Stack>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('crm.timeline.subtitle', 'Cronología unificada con eventos comerciales y operativos del cliente seleccionado.')}
+                  </Typography>
+
+                  <Stack spacing={1.2}>
+                    {timelineFilteredItems.length === 0 ? (
+                      <ActionableState
+                        icon={<WarningAmberIcon />}
+                        title={t('crm.timeline.empty.title', 'No hay eventos para este filtro')}
+                        subtitle={t(
+                          'crm.timeline.empty.subtitle',
+                          'Prueba cambiar el filtro o recargar datos para actualizar la cronología.'
+                        )}
+                        actions={[
+                          {
+                            id: 'timeline-reset-filter',
+                            label: t('crm.timeline.actions.resetFilter', 'Ver todo'),
+                            icon: <DoneAllIcon />,
+                            onClick: () => setTimelineFilter('ALL')
+                          },
+                          {
+                            id: 'timeline-refresh',
+                            label: t('actions.refresh', 'Recargar'),
+                            icon: <RefreshIcon />,
+                            variant: 'outlined',
+                            onClick: retryAll
+                          }
+                        ]}
+                      />
+                    ) : (
+                      timelineFilteredItems.slice(0, 18).map((event) => {
+                        const icon =
+                          event.kind === 'EXPIRATIONS' ? (
+                            <WarningAmberIcon fontSize="small" />
+                          ) : event.kind === 'PAYMENTS' ? (
+                            <AttachMoneyIcon fontSize="small" />
+                          ) : (
+                            <TrendingUpIcon fontSize="small" />
+                          );
+
+                        const accentColor = event.kind === 'EXPIRATIONS' ? 'warning' : event.kind === 'PAYMENTS' ? 'success' : 'info';
+                        const kindLabel =
+                          event.kind === 'EXPIRATIONS'
+                            ? t('crm.timeline.filters.expirations', 'Vencimientos')
+                            : event.kind === 'PAYMENTS'
+                              ? t('crm.timeline.filters.payments', 'Pagos')
+                              : t('crm.timeline.filters.activity', 'Actividad');
+
+                        return (
+                          <Box
+                            key={event.id}
+                            sx={(theme) => ({
+                              borderRadius: 2,
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              p: 1.4,
+                              background:
+                                theme.palette.mode === 'light'
+                                  ? `linear-gradient(140deg, ${theme.palette[accentColor].light}1A, ${theme.palette.background.paper})`
+                                  : theme.palette.background.default
+                            })}
+                          >
+                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>
+                              <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: { sm: 160 } }}>
+                                <Avatar
+                                  sx={(theme) => ({
+                                    width: 28,
+                                    height: 28,
+                                    bgcolor: theme.palette[accentColor].main,
+                                    color: theme.palette[accentColor].contrastText
+                                  })}
+                                >
+                                  {icon}
+                                </Avatar>
+                                <Typography variant="caption" color="text.secondary">
+                                  {formatDateTime(event.rawDate)}
+                                </Typography>
+                              </Stack>
+                              <Stack spacing={0.4} sx={{ flex: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                  {event.title}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {event.subtitle}
+                                </Typography>
+                              </Stack>
+                              <Stack direction="row" spacing={0.8} alignItems="center" sx={{ minWidth: { sm: 180 } }}>
+                                <Chip size="small" label={kindLabel} color={accentColor} variant="outlined" />
+                                <StatusChip status={event.status} />
+                              </Stack>
+                            </Stack>
+                          </Box>
+                        );
+                      })
+                    )}
+                  </Stack>
+                </Stack>
+              </MainCard>
+            )}
 
             <MainCard
               sx={{
@@ -1602,6 +2105,7 @@ export default function CustomerCrmLionTv() {
         onClose={() => {
           setTableDialog({ open: false, title: '', description: '', rows: [], columns: [], onDetail: null });
           setTablePage(0);
+          setTableSelectedKeys([]);
         }}
         fullWidth
         maxWidth="lg"
@@ -1659,6 +2163,56 @@ export default function CustomerCrmLionTv() {
               {tableDialog.description}
             </Typography>
           ) : null}
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={1}
+            justifyContent="space-between"
+            alignItems={{ md: 'center' }}
+            sx={{ mb: 1.5 }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+              <Chip
+                size="small"
+                color={tableSelectedKeys.length ? 'primary' : 'default'}
+                label={t('crm.bulk.selected', {
+                  defaultValue: 'Seleccionados: {{count}}',
+                  count: tableSelectedKeys.length
+                })}
+              />
+              <Chip
+                size="small"
+                variant="outlined"
+                label={t('crm.bulk.visible', {
+                  defaultValue: 'Visibles: {{count}}',
+                  count: paginatedTableRows.length
+                })}
+              />
+            </Stack>
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+              <Button size="small" variant="outlined" startIcon={<DoneAllIcon />} onClick={toggleVisibleRowsSelection}>
+                {allVisibleRowsSelected
+                  ? t('crm.bulk.unselectVisible', 'Deseleccionar visibles')
+                  : t('crm.bulk.selectVisible', 'Seleccionar visibles')}
+              </Button>
+              <Button size="small" variant="outlined" startIcon={<DeselectIcon />} onClick={clearTableSelection}>
+                {t('crm.bulk.clearSelection', 'Limpiar selección')}
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<ContentCopyIcon />}
+                onClick={copySelectedIds}
+                disabled={tableSelectedKeys.length === 0}
+              >
+                {t('crm.bulk.copyIds', 'Copiar IDs')}
+              </Button>
+              <Button size="small" variant="contained" startIcon={<DownloadIcon />} onClick={exportSelectedToCsv}>
+                {t('crm.bulk.exportCsv', 'Exportar CSV')}
+              </Button>
+            </Stack>
+          </Stack>
+
           <TableContainer
             component={Paper}
             sx={{
@@ -1672,6 +2226,14 @@ export default function CustomerCrmLionTv() {
             <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      size="small"
+                      checked={allVisibleRowsSelected}
+                      indeterminate={tableSelectedKeys.length > 0 && !allVisibleRowsSelected}
+                      onChange={toggleVisibleRowsSelection}
+                    />
+                  </TableCell>
                   {tableDialog.columns.map((col) => (
                     <TableCell key={col.field}>{col.title}</TableCell>
                   ))}
@@ -1679,8 +2241,15 @@ export default function CustomerCrmLionTv() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {tableDialog.rows.slice(tablePage * tableRpp, tablePage * tableRpp + tableRpp).map((row) => (
-                  <TableRow key={row.id || row.subscriptionId || row.invoiceId || row.licenseId}>
+                {paginatedTableRows.map((row) => (
+                  <TableRow key={getRowKey(row)}>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        size="small"
+                        checked={tableSelectedKeys.includes(getRowKey(row))}
+                        onChange={() => toggleRowSelection(row)}
+                      />
+                    </TableCell>
                     {tableDialog.columns.map((col) => (
                       <TableCell key={col.field}>{typeof col.render === 'function' ? col.render(row) : (row[col.field] ?? '-')}</TableCell>
                     ))}
@@ -1697,8 +2266,20 @@ export default function CustomerCrmLionTv() {
                 ))}
                 {tableDialog.rows.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={tableDialog.columns.length + (tableDialog.onDetail ? 1 : 0)} align="center">
-                      {t('crm.table.empty', 'No hay datos')}
+                    <TableCell colSpan={tableDialog.columns.length + (tableDialog.onDetail ? 2 : 1)} align="center" sx={{ py: 4 }}>
+                      <ActionableState
+                        icon={<TimelineIcon />}
+                        title={t('crm.table.empty', 'No hay datos')}
+                        subtitle={t('crm.table.emptyHelp', 'No hay registros para este cliente en este módulo.')}
+                        actions={[
+                          {
+                            id: 'table-retry',
+                            label: t('actions.refresh', 'Recargar'),
+                            icon: <RefreshIcon />,
+                            onClick: retryAll
+                          }
+                        ]}
+                      />
                     </TableCell>
                   </TableRow>
                 )}
@@ -1719,7 +2300,12 @@ export default function CustomerCrmLionTv() {
             }}
             rowsPerPageOptions={[5, 10, 25, 50, 100]}
           />
-          <Button onClick={() => setTableDialog({ open: false, title: '', rows: [], columns: [], onDetail: null })}>
+          <Button
+            onClick={() => {
+              setTableDialog({ open: false, title: '', rows: [], columns: [], onDetail: null });
+              setTableSelectedKeys([]);
+            }}
+          >
             {t('common.close', 'Cerrar')}
           </Button>
         </DialogActions>
