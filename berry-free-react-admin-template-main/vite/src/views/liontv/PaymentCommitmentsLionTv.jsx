@@ -85,7 +85,7 @@ const glassCard = (theme) => ({
   boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
   background:
     theme.palette.mode === 'light'
-      ? `linear-gradient(135deg, ${theme.palette.primary.light}24 0%, ${theme.palette.secondary.main}12 45%, ${muiTheme.palette.background.paper} 100%)`
+      ? `linear-gradient(135deg, ${theme.palette.primary.light}24 0%, ${theme.palette.secondary.main}12 45%, ${theme.palette.background.paper} 100%)`
       : theme.palette.surface.sunken
 });
 

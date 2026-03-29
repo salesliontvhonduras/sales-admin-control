@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import Chip from '@mui/material/Chip';
 import Avatar from '@mui/material/Avatar';
-import { styled, alpha } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
+import { withAlpha } from 'utils/colorUtils';
 
 const StyledChip = styled(Chip)(({ theme }) => ({
   borderRadius: 18,
@@ -11,19 +12,19 @@ const StyledChip = styled(Chip)(({ theme }) => ({
   letterSpacing: 0.1,
   background:
     theme.palette.mode === 'dark'
-      ? alpha(theme.palette.primary.main, 0.14)
-      : `linear-gradient(120deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(
+      ? withAlpha(theme.palette.primary.main, 0.14)
+      : `linear-gradient(120deg, ${withAlpha(theme.palette.primary.main, 0.12)} 0%, ${withAlpha(
           theme.palette.primary.light,
           0.16
-        )} 45%, ${alpha(theme.palette.background.paper, 0.92)} 100%)`,
-  borderColor: alpha(theme.palette.primary.main, 0.5),
+        )} 45%, ${withAlpha(theme.palette.background.paper, 0.92)} 100%)`,
+  borderColor: withAlpha(theme.palette.primary.main, 0.5),
   color: theme.palette.text.primary,
   boxShadow: '0 8px 18px rgba(0,0,0,0.12)',
   '&:hover': {
     background:
       theme.palette.mode === 'dark'
-        ? alpha(theme.palette.primary.main, 0.22)
-        : alpha(theme.palette.primary.light, 0.28)
+        ? withAlpha(theme.palette.primary.main, 0.22)
+        : withAlpha(theme.palette.primary.light, 0.28)
   }
 }));
 

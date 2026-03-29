@@ -24,6 +24,39 @@
   }
 }
 
+.apexcharts-tooltip,
+.apexcharts-xaxistooltip,
+.apexcharts-yaxistooltip {
+  background: var(--palette-surface-card) !important;
+  border: 1px solid var(--palette-divider) !important;
+  color: var(--palette-text-primary) !important;
+  box-shadow: 0 12px 28px rgba(2, 8, 23, 0.38) !important;
+}
+
+.apexcharts-tooltip-title {
+  background: var(--palette-surface-muted) !important;
+  border-bottom: 1px solid var(--palette-divider) !important;
+  color: var(--palette-text-secondary) !important;
+}
+
+.apexcharts-tooltip-text-y-label,
+.apexcharts-tooltip-text-y-value,
+.apexcharts-tooltip-text-z-label,
+.apexcharts-tooltip-text-z-value,
+.apexcharts-tooltip-text-x-label {
+  color: var(--palette-text-primary) !important;
+}
+
+.apexcharts-xaxistooltip-bottom:before,
+.apexcharts-xaxistooltip-bottom:after {
+  border-bottom-color: var(--palette-surface-card) !important;
+}
+
+.apexcharts-xaxistooltip-top:before,
+.apexcharts-xaxistooltip-top:after {
+  border-top-color: var(--palette-surface-card) !important;
+}
+
 .apexcharts-menu-icon svg,
 .apexcharts-reset-icon svg,
 .apexcharts-zoom-icon svg,

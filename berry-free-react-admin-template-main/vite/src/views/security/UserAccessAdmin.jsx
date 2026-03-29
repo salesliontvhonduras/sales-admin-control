@@ -34,7 +34,7 @@ import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { alpha } from '@mui/material/styles';
+import { withAlpha } from 'utils/colorUtils';
 
 import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import BadgeOutlinedIcon from '@mui/icons-material/BadgeOutlined';
@@ -77,17 +77,33 @@ const cardGlassSx = (theme) => ({
   borderRadius: 2.5,
   border: '1px solid',
   borderColor: 'divider',
-  boxShadow: '0 10px 26px rgba(18, 38, 63, 0.08)',
-  background:
-    theme.palette.mode === 'light'
-      ? `linear-gradient(145deg, #ffffff 0%, ${alpha(theme.palette.primary.light, 0.11)} 46%, ${alpha(theme.palette.success.light, 0.08)} 100%)`
-      : theme.palette.background.default
+  boxShadow: `0 14px 32px ${withAlpha('#020617', 0.5)}`,
+  background: `linear-gradient(145deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 100%)`,
+  ...theme.applyStyles('light', {
+    boxShadow: `0 12px 26px ${withAlpha('#0f172a', 0.1)}`,
+    background: `linear-gradient(145deg, ${theme.vars.palette.surface.card} 0%, ${withAlpha(theme.vars.palette.primary.main, 0.08)} 46%, ${theme.vars.palette.surface.muted} 100%)`
+  })
+});
+
+const sectionCardSx = (theme) => ({
+  border: '1px solid',
+  borderColor: 'divider',
+  borderRadius: 3,
+  background: `linear-gradient(180deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 100%)`,
+  boxShadow: `0 16px 34px ${withAlpha('#020617', 0.44)}`,
+  ...theme.applyStyles('light', {
+    boxShadow: `0 14px 30px ${withAlpha('#0f172a', 0.11)}`
+  })
 });
 
 const modalPaperSx = (theme) => ({
   borderRadius: 3,
   border: `1px solid ${theme.palette.divider}`,
-  boxShadow: '0 24px 60px rgba(16, 24, 40, 0.2)',
+  backgroundColor: theme.vars.palette.surface.card,
+  boxShadow: `0 24px 60px ${withAlpha('#020617', 0.58)}`,
+  ...theme.applyStyles('light', {
+    boxShadow: `0 24px 60px ${withAlpha('#0f172a', 0.2)}`
+  }),
   overflow: 'hidden'
 });
 
@@ -95,10 +111,7 @@ const modalHeaderSx = (theme) => ({
   px: 3,
   py: 2.2,
   borderBottom: `1px solid ${theme.palette.divider}`,
-  background:
-    theme.palette.mode === 'light'
-      ? `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.2)} 0%, ${alpha(theme.palette.info.light, 0.1)} 100%)`
-      : alpha(theme.palette.background.paper, 0.9)
+  background: `linear-gradient(135deg, ${withAlpha(theme.vars.palette.primary.main, 0.18)} 0%, ${withAlpha(theme.vars.palette.secondary.main, 0.14)} 100%)`
 });
 
 const modalContentSx = {
@@ -110,7 +123,56 @@ const modalActionsSx = (theme) => ({
   px: 3,
   py: 2,
   borderTop: `1px solid ${theme.palette.divider}`,
-  backgroundColor: alpha(theme.palette.background.default, 0.6)
+  backgroundColor: withAlpha(theme.vars.palette.surface.muted, 0.86)
+});
+
+const filterPanelSx = (theme) => ({
+  borderRadius: 2.5,
+  border: '1px solid',
+  borderColor: 'divider',
+  p: 2,
+  backgroundColor: withAlpha(theme.vars.palette.surface.muted, 0.56)
+});
+
+const tableContainerSx = (theme) => ({
+  borderRadius: 2.5,
+  border: '1px solid',
+  borderColor: 'divider',
+  background: `linear-gradient(180deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 100%)`,
+  '& .MuiTableCell-head': {
+    backgroundColor: withAlpha(theme.vars.palette.background.default, 0.56),
+    color: theme.vars.palette.text.secondary,
+    borderBottom: `1px solid ${theme.palette.divider}`,
+    fontWeight: 700,
+    letterSpacing: 0.2
+  },
+  '& .MuiTableCell-root': {
+    borderBottom: `1px solid ${withAlpha(theme.palette.divider, 0.7)}`
+  },
+  '& .MuiTableRow-root:last-of-type .MuiTableCell-root': {
+    borderBottom: 'none'
+  },
+  '& .MuiTableRow-hover:hover': {
+    backgroundColor: withAlpha(theme.vars.palette.primary.main, 0.11)
+  }
+});
+
+const infoAlertSx = (theme) => ({
+  borderColor: withAlpha(theme.vars.palette.info.main, 0.34),
+  backgroundColor: withAlpha(theme.vars.palette.info.main, 0.1),
+  color: theme.vars.palette.text.primary,
+  '& .MuiAlert-icon': {
+    color: theme.vars.palette.info.main
+  }
+});
+
+const warningAlertSx = (theme) => ({
+  borderColor: withAlpha(theme.vars.palette.warning.main, 0.34),
+  backgroundColor: withAlpha(theme.vars.palette.warning.main, 0.1),
+  color: theme.vars.palette.text.primary,
+  '& .MuiAlert-icon': {
+    color: theme.vars.palette.warning.main
+  }
 });
 
 function boolFilter(value) {
@@ -368,6 +430,7 @@ export default function UserAccessAdmin() {
     <Grid container spacing={gridSpacing}>
       <Grid item xs={12}>
         <MainCard
+          sx={sectionCardSx}
           title="Administración de Usuarios y Accesos"
           secondary={
             <Stack direction="row" spacing={1}>
@@ -424,52 +487,54 @@ export default function UserAccessAdmin() {
       </Grid>
 
       <Grid item xs={12}>
-        <MainCard title="Listado de Usuarios">
+        <MainCard title="Listado de Usuarios" sx={sectionCardSx}>
           <Stack spacing={2.5}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={5}>
-                <TextField
-                  fullWidth
-                  value={search}
-                  label="Buscar por nombre o email"
-                  onChange={(event) => {
-                    setIndex(0);
-                    setSearch(event.target.value);
-                  }}
-                  InputProps={{
-                    startAdornment: <SearchIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                  }}
-                />
+            <Box sx={filterPanelSx}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={5}>
+                  <TextField
+                    fullWidth
+                    value={search}
+                    label="Buscar por nombre o email"
+                    onChange={(event) => {
+                      setIndex(0);
+                      setSearch(event.target.value);
+                    }}
+                    InputProps={{
+                      startAdornment: <SearchIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="Estado"
+                    value={statusFilter}
+                    onChange={(event) => {
+                      setIndex(0);
+                      setStatusFilter(event.target.value);
+                    }}
+                  >
+                    {statusFilterOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Alert severity="info" variant="outlined" sx={infoAlertSx}>
+                    Catálogo cargado:{' '}
+                    {catalogLoading ? 'cargando...' : `${roleTemplates.length} roles plantilla / ${permissionCatalog.length} permisos`}
+                  </Alert>
+                </Grid>
               </Grid>
-              <Grid item xs={12} md={3}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Estado"
-                  value={statusFilter}
-                  onChange={(event) => {
-                    setIndex(0);
-                    setStatusFilter(event.target.value);
-                  }}
-                >
-                  {statusFilterOptions.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Alert severity="info" variant="outlined">
-                  Catálogo cargado:{' '}
-                  {catalogLoading ? 'cargando...' : `${roleTemplates.length} roles plantilla / ${permissionCatalog.length} permisos`}
-                </Alert>
-              </Grid>
-            </Grid>
+            </Box>
 
-            {(loading || refreshing) && <LinearProgress />}
+            {(loading || refreshing) && <LinearProgress sx={{ borderRadius: 999, height: 7 }} />}
 
-            <TableContainer>
+            <TableContainer sx={tableContainerSx}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -553,7 +618,7 @@ export default function UserAccessAdmin() {
                   {!loading && users.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={6}>
-                        <Alert severity="warning" variant="outlined">
+                        <Alert severity="warning" variant="outlined" sx={warningAlertSx}>
                           No hay usuarios para los filtros actuales.
                         </Alert>
                       </TableCell>
@@ -589,7 +654,7 @@ export default function UserAccessAdmin() {
         <DialogTitle sx={modalHeaderSx}>Nuevo Usuario</DialogTitle>
         <DialogContent sx={modalContentSx}>
           <Stack spacing={2}>
-            <Alert severity="info" variant="outlined">
+            <Alert severity="info" variant="outlined" sx={infoAlertSx}>
               Este alta usa el flujo actual con serial/licencia, por lo tanto el usuario quedará listo para autenticarse según su licencia.
             </Alert>
             <Grid container spacing={2}>
@@ -755,7 +820,24 @@ export default function UserAccessAdmin() {
             <Typography variant="subtitle2">
               {statusTargetUser?.name} ({statusTargetUser?.email})
             </Typography>
-            <Alert severity={nextStatusValue ? 'success' : 'warning'} variant="outlined">
+            <Alert
+              severity={nextStatusValue ? 'success' : 'warning'}
+              variant="outlined"
+              sx={(theme) => ({
+                borderColor: withAlpha(
+                  nextStatusValue ? theme.vars.palette.success.main : theme.vars.palette.warning.main,
+                  0.35
+                ),
+                backgroundColor: withAlpha(
+                  nextStatusValue ? theme.vars.palette.success.main : theme.vars.palette.warning.main,
+                  0.1
+                ),
+                color: theme.vars.palette.text.primary,
+                '& .MuiAlert-icon': {
+                  color: nextStatusValue ? theme.vars.palette.success.main : theme.vars.palette.warning.main
+                }
+              })}
+            >
               Nuevo estado: {nextStatusValue ? 'ACTIVO' : 'INACTIVO'}
             </Alert>
           </Stack>

@@ -87,6 +87,16 @@ export default function ThemeCustomization({ children }) {
 
   const themes = createTheme(themeOptions);
 
+  // Keep frequently used surface/text tokens aligned with active CSS variables.
+  // This avoids stale light values in custom sx callbacks during dark mode.
+  if (themes.vars?.palette) {
+    themes.palette.background = themes.vars.palette.background;
+    themes.palette.surface = themes.vars.palette.surface;
+    themes.palette.grey = themes.vars.palette.grey;
+    themes.palette.text = themes.vars.palette.text;
+    themes.palette.divider = themes.vars.palette.divider;
+  }
+
   // In CSS variables mode, some components rely on `theme.palette.mode` to branch styles.
   // We normalize it to the active `data-color-scheme` so light/dark branches stay accurate.
   const initialMode = themes.palette.mode;

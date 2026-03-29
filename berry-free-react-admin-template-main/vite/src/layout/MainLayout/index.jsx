@@ -53,10 +53,10 @@ export default function MainLayout() {
         color="inherit"
         elevation={0}
         sx={{
-          bgcolor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(15, 26, 47, 0.84)' : 'rgba(255, 255, 255, 0.9)'),
+          bgcolor: (theme) => theme.vars.palette.surface.header,
           borderBottom: '1px solid',
           borderColor: 'divider',
-          backdropFilter: 'saturate(1.15) blur(12px)'
+          backdropFilter: 'none'
         }}
       >
         <Toolbar sx={{ p: 1.75, minHeight: '66px !important' }}>

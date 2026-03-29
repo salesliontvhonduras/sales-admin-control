@@ -50,17 +50,22 @@ export function extendPaletteWithChannels(palette) {
 }
 
 export function withAlpha(color, opacity) {
-  // Case 1: normal color (hex, rgb, hsl…)
-  if (/^#|rgb|hsl|color/i.test(color)) {
-    return alpha(color, opacity);
+  if (!color || typeof color !== 'string') return color;
+
+  const trimmed = color.trim();
+
+  // Case 1: CSS variable, including fallback:
+  // var(--palette-divider) or var(--palette-divider, rgba(...))
+  if (trimmed.startsWith('var(')) {
+    const match = trimmed.match(/^var\(\s*(--[a-zA-Z0-9-_]+)\s*(?:,\s*.+)?\)$/);
+    if (!match?.[1]) return trimmed;
+    return `rgba(var(${match[1]}Channel) / ${opacity})`;
   }
 
-  // Case 2: CSS Var: var(--mui-palette-xxx) or var(--palette-xxx, #hex)
-  if (color.startsWith('var(')) {
-    // inject "Channel" *before the closing parenthesis of the var name only*
-    return color.replace(/(--[a-zA-Z0-9-]+)(.*)\)/, `$1Channel$2)`).replace(/^var\((.+)\)$/, `rgba(var($1) / ${opacity})`);
+  // Case 2: plain CSS color values
+  if (/^\s*(#|rgb\(|rgba\(|hsl\(|hsla\(|color\()/i.test(trimmed)) {
+    return alpha(trimmed, opacity);
   }
 
-  // Fallback
-  return color;
+  return trimmed;
 }

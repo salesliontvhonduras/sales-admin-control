@@ -36,23 +36,26 @@ export default function MainCard({
       ref={ref}
       {...others}
       sx={(theme) => ({
+        ...theme.applyStyles('light', {
+          boxShadow: border ? 'none' : `0 10px 24px ${withAlpha('#0f172a', 0.1)}`
+        }),
         border: border ? '1px solid' : 'none',
         borderColor: 'divider',
         borderRadius: 3.5,
-        backgroundColor: theme.palette.surface?.card || theme.palette.background.paper,
+        backgroundColor: theme.vars.palette.surface.card,
         boxShadow: border
           ? 'none'
-          : theme.palette.mode === 'dark'
-            ? `0 14px 32px ${withAlpha('#020617', 0.5)}`
-            : `0 10px 24px ${withAlpha('#0f172a', 0.1)}`,
+          : `0 14px 32px ${withAlpha('#020617', 0.5)}`,
         transition: 'box-shadow 120ms ease, border-color 120ms ease',
         ':hover': {
+          ...theme.applyStyles('light', {
+            boxShadow: boxShadow ? shadow || defaultShadow : `0 14px 30px ${withAlpha('#0f172a', 0.14)}`,
+            borderColor: withAlpha(theme.vars.palette.primary.main, 0.18)
+          }),
           boxShadow: boxShadow
             ? shadow || defaultShadow
-            : theme.palette.mode === 'dark'
-              ? `0 16px 36px ${withAlpha('#020617', 0.56)}`
-              : `0 14px 30px ${withAlpha('#0f172a', 0.14)}`,
-          borderColor: withAlpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.45 : 0.18),
+            : `0 16px 36px ${withAlpha('#020617', 0.56)}`,
+          borderColor: withAlpha(theme.vars.palette.primary.main, 0.45),
           transform: 'none'
         },
         ...(typeof sx === 'function' ? sx(theme) : sx || {})

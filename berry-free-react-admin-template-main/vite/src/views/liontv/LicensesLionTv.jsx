@@ -216,7 +216,7 @@ function LicenseStatusChip({ status }) {
 
   const cfg =
     map[status] || {
-      bg: theme.palette.grey[100],
+      bg: theme.palette.surface?.muted || theme.palette.background.paper,
       color: theme.palette.text.secondary,
       border: theme.palette.divider,
       icon: <PauseCircleOutlineIcon fontSize="small" />
@@ -850,10 +850,10 @@ export default function LicensesLionTv() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1.5,
-                  background:
-                    theme.palette.mode === 'light'
-                      ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, ${theme.palette.background.paper} 100%)`
-                      : theme.palette.background.paper
+                  background: `linear-gradient(155deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 100%)`,
+                  ...theme.applyStyles('light', {
+                    background: `linear-gradient(155deg, ${theme.vars.palette.primary.main}1F 0%, ${theme.vars.palette.secondary.main}20 55%, ${theme.vars.palette.background.paper} 100%)`
+                  })
                 })}
               >
                 <Avatar
@@ -894,10 +894,10 @@ export default function LicensesLionTv() {
               borderRadius: 2,
               border: '1px solid',
               borderColor: 'divider',
-              background:
-                theme.palette.mode === 'light'
-                  ? `linear-gradient(120deg, ${theme.palette.primary.light}12 0%, ${theme.palette.secondary.light}12 100%)`
-                  : theme.palette.background.paper,
+              background: theme.vars.palette.surface.card,
+              ...theme.applyStyles('light', {
+                background: `linear-gradient(120deg, ${theme.vars.palette.primary.light}12 0%, ${theme.vars.palette.secondary.light}12 100%)`
+              }),
               boxShadow: '0 8px 18px rgba(0,0,0,0.05)'
             })}
           >
@@ -1067,8 +1067,8 @@ export default function LicensesLionTv() {
                       icon={<AppsIcon fontSize="small" />}
                       label={row.app || '-'}
                       sx={(theme) => ({
-                        bgcolor: theme.palette.mode === 'light' ? theme.palette.info.lighter : theme.palette.info.dark,
-                        color: theme.palette.mode === 'light' ? theme.palette.info.darker : theme.palette.info.contrastText,
+                        bgcolor: theme.palette.info.lighter,
+                        color: theme.palette.info.darker,
                         fontWeight: 600
                       })}
                     />
@@ -1191,10 +1191,10 @@ export default function LicensesLionTv() {
             boxShadow: '0 18px 40px rgba(0,0,0,0.18)',
             border: '1px solid',
             borderColor: form.licenseId ? theme.palette.warning.light : theme.palette.primary.light,
-            backgroundImage:
-              theme.palette.mode === 'light'
-                ? `linear-gradient(150deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}08 40%, ${theme.palette.background.paper} 100%)`
-                : undefined
+            backgroundImage: `linear-gradient(150deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 100%)`,
+            ...theme.applyStyles('light', {
+              backgroundImage: `linear-gradient(150deg, ${theme.vars.palette.primary.light}18 0%, ${theme.vars.palette.secondary.light}08 40%, ${theme.vars.palette.background.paper} 100%)`
+            })
           })
         }}
       >
@@ -1228,10 +1228,10 @@ export default function LicensesLionTv() {
             px: { xs: 1.5, sm: 3 },
             py: { xs: 1.5, sm: 2 },
             position: 'relative',
-            background: (theme) =>
-              theme.palette.mode === 'light'
-                ? `linear-gradient(180deg, ${theme.palette.primary.light}16 0%, ${theme.palette.secondary.light}10 55%, ${theme.palette.background.paper} 85%)`
-                : theme.palette.surface.card,
+            background: (theme) => `linear-gradient(180deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 85%)`,
+            ...theme.applyStyles('light', {
+              background: `linear-gradient(180deg, ${theme.vars.palette.primary.light}16 0%, ${theme.vars.palette.secondary.light}10 55%, ${theme.vars.palette.background.paper} 85%)`
+            }),
             '&:before': {
               content: '\"\"',
               position: 'absolute',

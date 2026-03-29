@@ -6,7 +6,8 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { alpha, styled, useColorScheme } from '@mui/material/styles';
+import { styled, useColorScheme } from '@mui/material/styles';
+import { withAlpha } from 'utils/colorUtils';
 
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded';
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded';
@@ -21,16 +22,16 @@ const StyledChip = styled(Chip)(({ theme }) => ({
   letterSpacing: 0.1,
   background:
     theme.palette.mode === 'dark'
-      ? alpha(theme.palette.primary.main, 0.2)
-      : `linear-gradient(120deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(
+      ? withAlpha(theme.palette.primary.main, 0.2)
+      : `linear-gradient(120deg, ${withAlpha(theme.palette.primary.main, 0.12)} 0%, ${withAlpha(
           theme.palette.primary.light,
           0.16
-        )} 45%, ${alpha(theme.palette.background.paper, 0.92)} 100%)`,
-  borderColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.7 : 0.5),
+        )} 45%, ${withAlpha(theme.palette.background.paper, 0.92)} 100%)`,
+  borderColor: withAlpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.7 : 0.5),
   color: theme.palette.text.primary,
   boxShadow: theme.palette.mode === 'dark' ? '0 10px 20px rgba(2,8,23,0.32)' : '0 8px 18px rgba(15,23,42,0.12)',
   '&:hover': {
-    background: theme.palette.mode === 'dark' ? alpha(theme.palette.primary.main, 0.24) : alpha(theme.palette.primary.light, 0.3)
+    background: theme.palette.mode === 'dark' ? withAlpha(theme.palette.primary.main, 0.24) : withAlpha(theme.palette.primary.light, 0.3)
   }
 }));
 

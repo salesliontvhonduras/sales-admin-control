@@ -31,6 +31,7 @@ import { gridSpacing } from 'store/constant';
 import { useLionTvOverview } from 'api/liontv-overview';
 import LazyApexChart from 'ui-component/charts/LazyApexChart';
 import { PageEmptyState, PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
+import { withAlpha } from 'utils/colorUtils';
 
 function toUpper(value) {
   return String(value || '')
@@ -98,18 +99,50 @@ function isTruthyFlag(raw) {
   return raw === true || raw === 1 || raw === '1' || String(raw).toLowerCase() === 'true';
 }
 
+const surfaceCardSx = (theme) => ({
+  borderRadius: 2.5,
+  border: '1px solid',
+  borderColor: 'divider',
+  background: `linear-gradient(180deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 100%)`,
+  boxShadow: `0 14px 34px ${withAlpha('#020617', 0.44)}`,
+  ...theme.applyStyles('light', {
+    boxShadow: `0 12px 28px ${withAlpha('#0f172a', 0.1)}`
+  })
+});
+
+const infoAlertSx = (theme) => ({
+  borderColor: withAlpha(theme.vars.palette.info.main, 0.34),
+  backgroundColor: withAlpha(theme.vars.palette.info.main, 0.1),
+  color: theme.vars.palette.text.primary,
+  '& .MuiAlert-icon': {
+    color: theme.vars.palette.info.main
+  }
+});
+
+const warningAlertSx = (theme) => ({
+  borderColor: withAlpha(theme.vars.palette.warning.main, 0.34),
+  backgroundColor: withAlpha(theme.vars.palette.warning.main, 0.1),
+  color: theme.vars.palette.text.primary,
+  '& .MuiAlert-icon': {
+    color: theme.vars.palette.warning.main
+  }
+});
+
+const errorAlertSx = (theme) => ({
+  borderColor: withAlpha(theme.vars.palette.error.main, 0.34),
+  backgroundColor: withAlpha(theme.vars.palette.error.main, 0.1),
+  color: theme.vars.palette.text.primary,
+  '& .MuiAlert-icon': {
+    color: theme.vars.palette.error.main
+  }
+});
+
 function KpiCard({ title, value, helper, color = 'primary', icon }) {
   return (
     <Card
       sx={(theme) => ({
-        borderRadius: 2.5,
-        border: '1px solid',
-        borderColor: 'divider',
-        boxShadow: '0 10px 26px rgba(15, 23, 42, 0.08)',
-        background:
-          theme.palette.mode === 'light'
-            ? `linear-gradient(135deg, ${theme.palette[color]?.light || theme.palette.primary.light}1f 0%, ${theme.palette.background.paper} 70%)`
-            : theme.palette.background.paper
+        ...surfaceCardSx(theme),
+        background: `linear-gradient(135deg, ${withAlpha(theme.vars.palette[color]?.main || theme.vars.palette.primary.main, 0.16)} 0%, ${theme.vars.palette.surface.card} 58%, ${theme.vars.palette.surface.muted} 100%)`
       })}
     >
       <CardContent>
@@ -132,8 +165,9 @@ function KpiCard({ title, value, helper, color = 'primary', icon }) {
             sx={(theme) => ({
               width: 46,
               height: 46,
-              bgcolor: theme.palette[color]?.lighter || theme.palette.primary.lighter,
-              color: theme.palette[color]?.main || theme.palette.primary.main
+              bgcolor: withAlpha(theme.vars.palette[color]?.main || theme.vars.palette.primary.main, 0.2),
+              color: theme.vars.palette[color]?.main || theme.vars.palette.primary.main,
+              border: `1px solid ${withAlpha(theme.vars.palette[color]?.main || theme.vars.palette.primary.main, 0.35)}`
             })}
           >
             {icon}
@@ -146,7 +180,12 @@ function KpiCard({ title, value, helper, color = 'primary', icon }) {
 
 function ChartCard({ title, helper, children }) {
   return (
-    <Card sx={{ borderRadius: 2.5, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+    <Card
+      sx={(theme) => ({
+        ...surfaceCardSx(theme),
+        height: '100%'
+      })}
+    >
       <CardContent>
         <Stack spacing={1.5}>
           <Box>
@@ -208,6 +247,73 @@ export default function DashboardDefault() {
       potentialCustomers.length,
     [customers, subscriptions, invoices, licenses, lines, commitments, managedAccounts, purchases, potentialCustomers]
   );
+
+  const chartTheme = useMemo(() => {
+    const textSecondary = theme.vars.palette.text.secondary;
+    const dividerColor = withAlpha(theme.vars.palette.divider, 0.72);
+    const crosshairFill = withAlpha(theme.vars.palette.primary.main, theme.palette.mode === 'dark' ? 0.16 : 0.08);
+
+    return {
+      baseChart: {
+        fontFamily: theme.typography.fontFamily,
+        foreColor: textSecondary,
+        toolbar: { show: false },
+        background: 'transparent'
+      },
+      states: {
+        hover: { filter: { type: 'none' } },
+        active: { filter: { type: 'none' } }
+      },
+      legend: (position = 'bottom', horizontalAlign = 'center') => ({
+        position,
+        horizontalAlign,
+        labels: { colors: textSecondary },
+        itemMargin: { horizontal: 10, vertical: 4 }
+      }),
+      xaxis: (categories) => ({
+        categories,
+        axisBorder: { color: dividerColor },
+        axisTicks: { color: dividerColor },
+        crosshairs: {
+          show: true,
+          position: 'back',
+          stroke: {
+            color: dividerColor,
+            width: 1,
+            dashArray: 0
+          },
+          fill: {
+            type: 'solid',
+            color: crosshairFill
+          }
+        },
+        tooltip: {
+          enabled: true,
+          style: {
+            color: textSecondary
+          }
+        },
+        labels: {
+          style: {
+            colors: Array.isArray(categories) ? categories.map(() => textSecondary) : [textSecondary]
+          }
+        }
+      }),
+      yaxis: (formatter) => ({
+        labels: {
+          style: { colors: [textSecondary] },
+          formatter
+        }
+      }),
+      grid: {
+        borderColor: dividerColor,
+        strokeDashArray: 4
+      },
+      tooltip: {
+        theme: theme.palette.mode === 'dark' ? 'dark' : 'light'
+      }
+    };
+  }, [theme]);
 
   const metrics = useMemo(() => {
     const now = new Date();
@@ -405,11 +511,12 @@ export default function DashboardDefault() {
     return {
       series,
       options: {
-        chart: { type: 'donut', fontFamily: theme.typography.fontFamily },
+        chart: { ...chartTheme.baseChart, type: 'donut' },
+        states: chartTheme.states,
         labels,
         dataLabels: { enabled: false },
-        legend: { position: 'bottom' },
-        stroke: { colors: [theme.palette.background.paper] },
+        legend: chartTheme.legend('bottom', 'center'),
+        stroke: { colors: [theme.vars.palette.surface.card] },
         colors: [
           theme.palette.primary.main,
           theme.palette.success.main,
@@ -419,13 +526,14 @@ export default function DashboardDefault() {
           theme.palette.error.main
         ],
         tooltip: {
+          ...chartTheme.tooltip,
           y: {
             formatter: (value) => `${value}`
           }
         }
       }
     };
-  }, [customers.length, subscriptions.length, invoices.length, lines.length, licenses.length, managedAccounts.length, theme]);
+  }, [customers.length, subscriptions.length, invoices.length, lines.length, licenses.length, managedAccounts.length, theme, chartTheme]);
 
   const statusBar = useMemo(() => {
     const subsRisk = subscriptions.filter((s) => {
@@ -461,16 +569,19 @@ export default function DashboardDefault() {
         { name: 'Riesgo/Pendiente', data: [subsRisk, invoiceRisk, licenseRisk, commitRisk, managedRisk] }
       ],
       options: {
-        chart: { type: 'bar', stacked: true, fontFamily: theme.typography.fontFamily, toolbar: { show: false } },
+        chart: { ...chartTheme.baseChart, type: 'bar', stacked: true },
+        states: chartTheme.states,
         plotOptions: { bar: { columnWidth: '42%', borderRadius: 4 } },
-        xaxis: { categories: ['Subs', 'Facturas', 'Licencias', 'Compromisos', 'Managed'] },
-        yaxis: { labels: { formatter: (v) => Math.round(v) } },
+        xaxis: chartTheme.xaxis(['Subs', 'Facturas', 'Licencias', 'Compromisos', 'Managed']),
+        yaxis: chartTheme.yaxis((v) => Math.round(v)),
+        grid: chartTheme.grid,
         colors: [theme.palette.success.main, theme.palette.warning.main],
-        legend: { position: 'top', horizontalAlign: 'right' },
-        dataLabels: { enabled: false }
+        legend: chartTheme.legend('top', 'right'),
+        dataLabels: { enabled: false },
+        tooltip: chartTheme.tooltip
       }
     };
-  }, [subscriptions, invoices, licenses, commitments, managedAccounts, metrics.subActive, metrics.invoicePaid, theme]);
+  }, [subscriptions, invoices, licenses, commitments, managedAccounts, metrics.subActive, metrics.invoicePaid, theme, chartTheme]);
 
   const monthlyTrend = useMemo(() => {
     const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -496,25 +607,23 @@ export default function DashboardDefault() {
         { name: 'Gastos', data: expenses.map((v) => Number(v.toFixed(2))) }
       ],
       options: {
-        chart: { type: 'area', fontFamily: theme.typography.fontFamily, toolbar: { show: false } },
+        chart: { ...chartTheme.baseChart, type: 'area' },
+        states: chartTheme.states,
         stroke: { curve: 'smooth', width: 3 },
         fill: { type: 'gradient', gradient: { shadeIntensity: 0.3, opacityFrom: 0.45, opacityTo: 0.08, stops: [0, 90, 100] } },
         dataLabels: { enabled: false },
-        xaxis: { categories: months },
-        yaxis: {
-          labels: {
-            formatter: (v) => {
-              if (Math.abs(v) >= 1000) return `${(v / 1000).toFixed(1)}k`;
-              return `${Math.round(v)}`;
-            }
-          }
-        },
-        tooltip: { y: { formatter: (v) => formatMoney(v) } },
+        xaxis: chartTheme.xaxis(months),
+        yaxis: chartTheme.yaxis((v) => {
+          if (Math.abs(v) >= 1000) return `${(v / 1000).toFixed(1)}k`;
+          return `${Math.round(v)}`;
+        }),
+        grid: chartTheme.grid,
+        tooltip: { ...chartTheme.tooltip, y: { formatter: (v) => formatMoney(v) } },
         colors: [theme.palette.success.main, theme.palette.error.main],
-        legend: { position: 'top', horizontalAlign: 'right' }
+        legend: chartTheme.legend('top', 'right')
       }
     };
-  }, [invoices, purchases, theme]);
+  }, [invoices, purchases, theme, chartTheme]);
 
   const expiryChart = useMemo(() => {
     const sub = bucketByDays(subscriptions.map((s) => s.renewalDate ?? s.renewal_date ?? s.expDate ?? s.exp_date));
@@ -528,15 +637,19 @@ export default function DashboardDefault() {
         { name: 'Managed', data: [managed.overdue, managed.today, managed.week, managed.month] }
       ],
       options: {
-        chart: { type: 'bar', fontFamily: theme.typography.fontFamily, toolbar: { show: false } },
+        chart: { ...chartTheme.baseChart, type: 'bar' },
+        states: chartTheme.states,
         plotOptions: { bar: { horizontal: false, borderRadius: 3, columnWidth: '45%' } },
-        xaxis: { categories: ['Vencidos', 'Hoy', '1-7 días', '8-30 días'] },
+        xaxis: chartTheme.xaxis(['Vencidos', 'Hoy', '1-7 días', '8-30 días']),
+        yaxis: chartTheme.yaxis((v) => Math.round(v)),
+        grid: chartTheme.grid,
         colors: [theme.palette.primary.main, theme.palette.secondary.main, theme.palette.info.main],
         dataLabels: { enabled: false },
-        legend: { position: 'top', horizontalAlign: 'right' }
+        legend: chartTheme.legend('top', 'right'),
+        tooltip: chartTheme.tooltip
       }
     };
-  }, [subscriptions, licenses, managedAccounts, theme]);
+  }, [subscriptions, licenses, managedAccounts, theme, chartTheme]);
 
   const providerMixChart = useMemo(() => {
     const providerCount = new Map();
@@ -560,14 +673,19 @@ export default function DashboardDefault() {
     return {
       series: [{ name: 'Registros', data: sorted.map((x) => x.count) }],
       options: {
-        chart: { type: 'bar', fontFamily: theme.typography.fontFamily, toolbar: { show: false } },
+        chart: { ...chartTheme.baseChart, type: 'bar' },
+        states: chartTheme.states,
         plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '42%' } },
-        xaxis: { categories: sorted.map((x) => x.name) },
+        xaxis: chartTheme.xaxis(sorted.map((x) => x.name)),
+        yaxis: chartTheme.yaxis((v) => `${v}`),
+        grid: chartTheme.grid,
         dataLabels: { enabled: false },
-        colors: [theme.palette.primary.main]
+        colors: [theme.palette.primary.main],
+        legend: chartTheme.legend('top', 'right'),
+        tooltip: chartTheme.tooltip
       }
     };
-  }, [lines, subscriptions, theme]);
+  }, [lines, subscriptions, theme, chartTheme]);
 
   const commitmentsChart = useMemo(() => {
     const pending = Math.max(metrics.commitmentTotal - metrics.commitmentPaid - metrics.commitmentOverdue, 0);
@@ -575,14 +693,17 @@ export default function DashboardDefault() {
     return {
       series: [metrics.commitmentPaid, pending, metrics.commitmentOverdue],
       options: {
-        chart: { type: 'donut', fontFamily: theme.typography.fontFamily },
+        chart: { ...chartTheme.baseChart, type: 'donut' },
+        states: chartTheme.states,
         labels: ['Pagados', 'Pendientes', 'Vencidos'],
-        legend: { position: 'bottom' },
+        legend: chartTheme.legend('bottom', 'center'),
         dataLabels: { enabled: false },
-        colors: [theme.palette.success.main, theme.palette.warning.main, theme.palette.error.main]
+        colors: [theme.palette.success.main, theme.palette.warning.main, theme.palette.error.main],
+        stroke: { colors: [theme.vars.palette.surface.card] },
+        tooltip: chartTheme.tooltip
       }
     };
-  }, [metrics.commitmentOverdue, metrics.commitmentPaid, metrics.commitmentTotal, theme]);
+  }, [metrics.commitmentOverdue, metrics.commitmentPaid, metrics.commitmentTotal, theme, chartTheme]);
 
   const funnelChart = useMemo(() => {
     return {
@@ -593,14 +714,19 @@ export default function DashboardDefault() {
         }
       ],
       options: {
-        chart: { type: 'bar', fontFamily: theme.typography.fontFamily, toolbar: { show: false } },
+        chart: { ...chartTheme.baseChart, type: 'bar' },
+        states: chartTheme.states,
         plotOptions: { bar: { borderRadius: 4, columnWidth: '48%' } },
-        xaxis: { categories: ['Prospectos', 'Clientes', 'Clientes Activos', 'Subs Activas', 'Facturas Pagadas'] },
+        xaxis: chartTheme.xaxis(['Prospectos', 'Clientes', 'Clientes Activos', 'Subs Activas', 'Facturas Pagadas']),
+        yaxis: chartTheme.yaxis((v) => Math.round(v)),
+        grid: chartTheme.grid,
         dataLabels: { enabled: false },
-        colors: [theme.palette.info.main]
+        colors: [theme.palette.info.main],
+        legend: chartTheme.legend('top', 'right'),
+        tooltip: chartTheme.tooltip
       }
     };
-  }, [metrics.customerActive, metrics.customerTotal, metrics.invoicePaid, metrics.potentialTotal, metrics.subActive, theme]);
+  }, [metrics.customerActive, metrics.customerTotal, metrics.invoicePaid, metrics.potentialTotal, metrics.subActive, theme, chartTheme]);
 
   const executiveKpis = useMemo(
     () => [
@@ -784,14 +910,14 @@ export default function DashboardDefault() {
   return (
     <Grid container spacing={gridSpacing}>
       <Grid size={12}>
-        <Alert severity="info" variant="outlined">
+        <Alert severity="info" variant="outlined" sx={infoAlertSx}>
           {t('dashboard.kpiSubtitle', 'Dashboard con KPI y gráficos en tiempo real del ecosistema LionTV.')}
         </Alert>
       </Grid>
 
       {overviewData?.meta?.partial ? (
         <Grid size={12}>
-          <Alert severity="warning" variant="outlined">
+          <Alert severity="warning" variant="outlined" sx={warningAlertSx}>
             {t('dashboard.partial', 'Se cargaron datos parciales para los KPI.')}
           </Alert>
         </Grid>
@@ -799,7 +925,7 @@ export default function DashboardDefault() {
 
       {overviewError ? (
         <Grid size={12}>
-          <Alert severity="error" variant="outlined">
+          <Alert severity="error" variant="outlined" sx={errorAlertSx}>
             {overviewError?.response?.data?.message || t('dashboard.loadError', 'No se pudo cargar el dashboard.')}
           </Alert>
         </Grid>

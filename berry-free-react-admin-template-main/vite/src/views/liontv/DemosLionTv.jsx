@@ -67,11 +67,12 @@ const glassCard = (theme) => ({
   borderRadius: 2.5,
   border: '1px solid',
   borderColor: 'divider',
-  boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
-  background:
-    theme.palette.mode === 'light'
-      ? `linear-gradient(135deg, ${theme.palette.primary.light}24 0%, ${theme.palette.secondary.main}12 45%, ${theme.palette.background.paper} 100%)`
-      : theme.palette.surface.sunken
+  boxShadow: '0 14px 34px rgba(2,8,23,0.34)',
+  background: `linear-gradient(135deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 100%)`,
+  ...theme.applyStyles('light', {
+    boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
+    background: `linear-gradient(135deg, ${theme.vars.palette.primary.light}24 0%, ${theme.vars.palette.secondary.main}12 45%, ${theme.vars.palette.background.paper} 100%)`
+  })
 });
 
 const sectionSx = {
@@ -164,7 +165,7 @@ function StatusChip({ status }) {
   const map = statusTokens(theme);
   const cfg =
     map[status] || {
-      bg: theme.palette.grey[100],
+      bg: theme.palette.surface?.muted || theme.palette.background.paper,
       color: theme.palette.text.secondary,
       border: theme.palette.divider,
       icon: <PendingOutlinedIcon fontSize="small" />
@@ -272,10 +273,10 @@ function SectionCard({ title, helper, children }) {
         position: 'relative',
         overflow: 'hidden',
         borderLeft: `4px solid ${theme.palette.primary.main}44`,
-        background:
-          theme.palette.mode === 'light'
-            ? `linear-gradient(135deg, ${theme.palette.primary.light}08 0%, ${theme.palette.secondary.light}08 100%)`
-            : theme.palette.background.paper
+        background: theme.vars.palette.surface.card,
+        ...theme.applyStyles('light', {
+          background: `linear-gradient(135deg, ${theme.vars.palette.primary.light}08 0%, ${theme.vars.palette.secondary.light}08 100%)`
+        })
       })}
     >
       <Stack spacing={1.5}>
@@ -548,10 +549,10 @@ export default function DemosLionTv() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1.5,
-                  background:
-                    theme.palette.mode === 'light'
-                      ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, ${theme.palette.background.paper} 100%)`
-                      : theme.palette.background.paper
+                  background: `linear-gradient(155deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 100%)`,
+                  ...theme.applyStyles('light', {
+                    background: `linear-gradient(155deg, ${theme.vars.palette.primary.main}1F 0%, ${theme.vars.palette.secondary.main}20 55%, ${theme.vars.palette.background.paper} 100%)`
+                  })
                 })}
               >
                 <Avatar
@@ -591,10 +592,10 @@ export default function DemosLionTv() {
               borderRadius: 2,
               border: '1px solid',
               borderColor: 'divider',
-              background:
-                theme.palette.mode === 'light'
-                  ? `linear-gradient(120deg, ${theme.palette.primary.light}12 0%, ${theme.palette.secondary.light}12 100%)`
-                  : theme.palette.background.paper,
+              background: theme.vars.palette.surface.card,
+              ...theme.applyStyles('light', {
+                background: `linear-gradient(120deg, ${theme.vars.palette.primary.light}12 0%, ${theme.vars.palette.secondary.light}12 100%)`
+              }),
               boxShadow: '0 8px 18px rgba(0,0,0,0.05)'
             })}
           >
@@ -747,8 +748,8 @@ export default function DemosLionTv() {
                       icon={<AppsIcon fontSize="small" />}
                       label={row.appCode || '-'}
                       sx={(theme) => ({
-                        bgcolor: theme.palette.mode === 'light' ? theme.palette.info.lighter : theme.palette.info.dark,
-                        color: theme.palette.mode === 'light' ? theme.palette.info.darker : theme.palette.info.contrastText,
+                        bgcolor: theme.palette.info.lighter,
+                        color: theme.palette.info.darker,
                         fontWeight: 700
                       })}
                     />
@@ -833,17 +834,17 @@ export default function DemosLionTv() {
             boxShadow: '0 18px 40px rgba(0,0,0,0.18)',
             border: '1px solid',
             borderColor: theme.palette.primary.light,
-            backgroundImage:
-              theme.palette.mode === 'light'
-                ? `linear-gradient(150deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}08 40%, ${theme.palette.background.paper} 100%)`
-                : undefined
+            backgroundImage: `linear-gradient(150deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 100%)`,
+            ...theme.applyStyles('light', {
+              backgroundImage: `linear-gradient(150deg, ${theme.vars.palette.primary.light}18 0%, ${theme.vars.palette.secondary.light}08 40%, ${theme.vars.palette.background.paper} 100%)`
+            })
           })
         }}
       >
         <DialogTitle
           sx={(theme) => ({
             pb: 1,
-            background: `linear-gradient(135deg, ${theme.palette.primary.light}40 0%, ${theme.palette.secondary.light}20 45%, ${theme.palette.background.paper} 100%)`
+            background: `linear-gradient(135deg, ${theme.vars.palette.primary.main}33 0%, ${theme.vars.palette.secondary.main}1F 45%, ${theme.vars.palette.surface.card} 100%)`
           })}
         >
           <Stack direction="row" alignItems="center" spacing={1.5}>
@@ -882,10 +883,10 @@ export default function DemosLionTv() {
             px: { xs: 1.5, sm: 3 },
             py: { xs: 1.5, sm: 2 },
             position: 'relative',
-            background: (theme) =>
-              theme.palette.mode === 'light'
-                ? `linear-gradient(180deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}10 50%, ${theme.palette.background.paper} 80%)`
-                : theme.palette.surface.card,
+            background: (theme) => `linear-gradient(180deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 80%)`,
+            ...theme.applyStyles('light', {
+              background: `linear-gradient(180deg, ${theme.vars.palette.primary.light}18 0%, ${theme.vars.palette.secondary.light}10 50%, ${theme.vars.palette.background.paper} 80%)`
+            }),
             '&:before': {
               content: '""',
               position: 'absolute',

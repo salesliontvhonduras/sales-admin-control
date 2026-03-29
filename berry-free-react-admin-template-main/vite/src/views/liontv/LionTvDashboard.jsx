@@ -251,14 +251,15 @@ function radarStats(items, dateField, statusField = 'status') {
 
 function metricCardStyle(theme, color = 'primary') {
   return {
+    ...theme.applyStyles('light', {
+      boxShadow: '0 10px 24px rgba(15, 23, 42, 0.08)',
+      background: `linear-gradient(135deg, ${theme.vars.palette[color]?.light || theme.vars.palette.primary.light}1f 0%, ${theme.vars.palette.background.paper} 70%)`
+    }),
     borderRadius: 2.5,
     border: '1px solid',
     borderColor: 'divider',
-    boxShadow: '0 10px 24px rgba(15, 23, 42, 0.08)',
-    background:
-      theme.palette.mode === 'light'
-        ? `linear-gradient(135deg, ${theme.palette[color]?.light || theme.palette.primary.light}1f 0%, ${theme.palette.background.paper} 70%)`
-        : theme.palette.background.paper
+    boxShadow: '0 12px 26px rgba(2, 8, 23, 0.38)',
+    background: `linear-gradient(135deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 100%)`
   };
 }
 

@@ -32,7 +32,7 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { alpha } from '@mui/material/styles';
+import { withAlpha } from 'utils/colorUtils';
 
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
@@ -89,7 +89,7 @@ const cardGlassSx = (theme) => ({
   boxShadow: '0 10px 26px rgba(18, 38, 63, 0.08)',
   background:
     theme.palette.mode === 'light'
-      ? `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.primary.light, 0.11)} 46%, ${alpha(theme.palette.success.light, 0.08)} 100%)`
+      ? `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${withAlpha(theme.palette.primary.light, 0.11)} 46%, ${withAlpha(theme.palette.success.light, 0.08)} 100%)`
       : theme.palette.surface.sunken
 });
 
@@ -106,8 +106,8 @@ const modalHeaderSx = (theme) => ({
   borderBottom: `1px solid ${theme.palette.divider}`,
   background:
     theme.palette.mode === 'light'
-      ? `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.2)} 0%, ${alpha(theme.palette.info.light, 0.1)} 100%)`
-      : alpha(theme.palette.background.paper, 0.9)
+      ? `linear-gradient(135deg, ${withAlpha(theme.palette.primary.light, 0.2)} 0%, ${withAlpha(theme.palette.info.light, 0.1)} 100%)`
+      : withAlpha(theme.palette.background.paper, 0.9)
 });
 
 const modalContentSx = {
@@ -119,7 +119,7 @@ const modalActionsSx = (theme) => ({
   px: 3,
   py: 2,
   borderTop: `1px solid ${theme.palette.divider}`,
-  backgroundColor: alpha(theme.palette.background.default, 0.6)
+  backgroundColor: withAlpha(theme.palette.background.default, 0.6)
 });
 
 const modalSectionSx = (theme) => ({
@@ -128,8 +128,8 @@ const modalSectionSx = (theme) => ({
   border: `1px solid ${theme.palette.divider}`,
   background:
     theme.palette.mode === 'light'
-      ? `linear-gradient(180deg, ${alpha(theme.palette.primary.light, 0.06)} 0%, ${alpha(theme.palette.background.paper, 0.9)} 100%)`
-      : alpha(theme.palette.background.paper, 0.5)
+      ? `linear-gradient(180deg, ${withAlpha(theme.palette.primary.light, 0.06)} 0%, ${withAlpha(theme.palette.background.paper, 0.9)} 100%)`
+      : withAlpha(theme.palette.background.paper, 0.5)
 });
 
 const fieldSx = {
@@ -996,8 +996,8 @@ export default function ManagedAccountsLionTv() {
                           sx={(theme) => ({
                             bgcolor: rowAlert
                               ? exp.chipColor === 'error'
-                                ? alpha(theme.palette.error.main, 0.09)
-                                : alpha(theme.palette.warning.main, 0.1)
+                                ? withAlpha(theme.palette.error.main, 0.09)
+                                : withAlpha(theme.palette.warning.main, 0.1)
                               : 'transparent'
                           })}
                         >
@@ -1717,7 +1717,7 @@ export default function ManagedAccountsLionTv() {
                         py: 1,
                         borderRadius: 1.5,
                         border: `1px dashed ${theme.palette.divider}`,
-                        backgroundColor: alpha(theme.palette.success.main, 0.04)
+                        backgroundColor: withAlpha(theme.palette.success.main, 0.04)
                       })}
                     >
                       <FormControlLabel
