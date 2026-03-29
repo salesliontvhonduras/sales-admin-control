@@ -108,7 +108,7 @@ function KpiCard({ title, value, helper, color = 'primary', icon }) {
         boxShadow: '0 10px 26px rgba(15, 23, 42, 0.08)',
         background:
           theme.palette.mode === 'light'
-            ? `linear-gradient(135deg, ${theme.palette[color]?.light || theme.palette.primary.light}1f 0%, #ffffff 70%)`
+            ? `linear-gradient(135deg, ${theme.palette[color]?.light || theme.palette.primary.light}1f 0%, ${theme.palette.background.paper} 70%)`
             : theme.palette.background.paper
       })}
     >

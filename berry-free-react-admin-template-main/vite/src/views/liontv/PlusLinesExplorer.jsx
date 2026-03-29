@@ -46,7 +46,7 @@ const glassCard = (theme) => ({
   backdropFilter: 'blur(6px)',
   background:
     theme.palette.mode === 'light'
-      ? `linear-gradient(135deg, ${theme.palette.primary.light}22 0%, ${theme.palette.secondary.light}12 45%, #ffffff 100%)`
+      ? `linear-gradient(135deg, ${theme.palette.primary.light}22 0%, ${theme.palette.secondary.light}12 45%, ${theme.palette.background.paper} 100%)`
       : `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.primary.dark}30 100%)`
 });
 
@@ -181,18 +181,23 @@ export default function PlusLinesExplorer() {
           ].map((item, idx) => (
             <Grid item xs={12} sm={6} md={4} key={idx}>
               <Card
-                sx={{
+                sx={(muiTheme) => ({
                   borderRadius: 3,
                   p: 2.2,
                   display: 'flex',
                   gap: 1.5,
                   alignItems: 'center',
-                  background: `linear-gradient(135deg, ${item.color}12 0%, #ffffff 100%)`,
-                  border: '1px solid rgba(0,0,0,0.06)',
-                  boxShadow: '0 12px 28px rgba(0,0,0,0.08)',
+                  background:
+                    muiTheme.palette.mode === 'light'
+                      ? `linear-gradient(135deg, ${item.color}12 0%, ${muiTheme.palette.background.paper} 100%)`
+                      : muiTheme.palette.surface.card,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  boxShadow:
+                    muiTheme.palette.mode === 'dark' ? '0 14px 30px rgba(2,8,23,0.45)' : '0 10px 24px rgba(15,23,42,0.08)',
                   position: 'relative',
                   overflow: 'hidden'
-                }}
+                })}
               >
                 <Box
                   sx={{
@@ -205,11 +210,12 @@ export default function PlusLinesExplorer() {
                 <Avatar
                   sx={{
                     bgcolor: item.color,
-                    color: '#fff',
+                    color: 'common.white',
                     width: 52,
                     height: 52,
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
-                    border: '2px solid #fff',
+                    boxShadow: '0 8px 20px rgba(2,8,23,0.2)',
+                    border: '2px solid',
+                    borderColor: 'background.paper',
                     position: 'relative',
                     zIndex: 1
                   }}
@@ -341,7 +347,7 @@ export default function PlusLinesExplorer() {
                   })}
                 >
                   <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1 }}>
-                    <Avatar sx={{ bgcolor: 'primary.main', color: '#fff' }}>{countryFlag(line.country)}</Avatar>
+                    <Avatar sx={{ bgcolor: 'primary.main', color: 'common.white' }}>{countryFlag(line.country)}</Avatar>
                     <Box>
                       <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
                         {line.lineName || line.linePlusId}

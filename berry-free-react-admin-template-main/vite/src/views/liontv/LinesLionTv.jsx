@@ -140,7 +140,7 @@ const glassCard = (theme) => ({
   borderColor: theme.palette.divider,
   boxShadow: '0 16px 42px rgba(0,0,0,0.14)',
   background: theme.palette.mode === 'light'
-    ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.primary.light}15 60%, #fff 100%)`
+    ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.primary.light}15 60%, ${theme.palette.background.paper} 100%)`
     : `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.primary.dark}30 100%)`
 });
 
@@ -613,7 +613,7 @@ export default function LinesLionTv() {
                     gap: 1.5,
                     background:
                       theme.palette.mode === 'light'
-                        ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, #ffffff 100%)`
+                        ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, ${theme.palette.background.paper} 100%)`
                         : theme.palette.background.paper
                   })}
                 >
@@ -886,7 +886,7 @@ export default function LinesLionTv() {
             borderColor: theme.palette.primary.light,
             backgroundImage:
               theme.palette.mode === 'light'
-                ? `linear-gradient(150deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}08 45%, #ffffff 100%)`
+                ? `linear-gradient(150deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}08 45%, ${theme.palette.background.paper} 100%)`
                 : undefined
           })
         }}
@@ -932,7 +932,7 @@ export default function LinesLionTv() {
             background: (theme) =>
               theme.palette.mode === 'light'
                 ? `linear-gradient(180deg, ${theme.palette.primary.light}14 0%, ${theme.palette.secondary.light}10 50%, ${theme.palette.background.paper} 80%)`
-                : theme.palette.background.default,
+                : theme.palette.surface.card,
             position: 'relative',
             '&:before': {
               content: '\"\"',
@@ -1204,7 +1204,7 @@ export default function LinesLionTv() {
             borderColor: form._isEdit ? theme.palette.warning.light : theme.palette.primary.light,
             backgroundImage:
               theme.palette.mode === 'light'
-                ? `linear-gradient(150deg, ${theme.palette.primary.light}16 0%, ${theme.palette.secondary.light}10 45%, #ffffff 100%)`
+                ? `linear-gradient(150deg, ${theme.palette.primary.light}16 0%, ${theme.palette.secondary.light}10 45%, ${theme.palette.background.paper} 100%)`
                 : undefined
           })
         }}
@@ -1221,7 +1221,7 @@ export default function LinesLionTv() {
             <Avatar
               sx={{
                 bgcolor: form._isEdit ? 'warning.main' : 'primary.main',
-                color: '#fff',
+                color: 'common.white',
                 width: 40,
                 height: 40,
                 boxShadow: 4
@@ -1261,7 +1261,7 @@ export default function LinesLionTv() {
             background: (theme) =>
               theme.palette.mode === 'light'
                 ? `linear-gradient(180deg, ${theme.palette.primary.light}14 0%, ${theme.palette.secondary.light}10 50%, ${theme.palette.background.paper} 82%)`
-                : theme.palette.background.default,
+                : theme.palette.surface.card,
             position: 'relative',
             '&:before': {
               content: '\"\"',

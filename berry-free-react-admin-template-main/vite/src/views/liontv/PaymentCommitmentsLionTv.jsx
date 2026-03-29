@@ -85,8 +85,8 @@ const glassCard = (theme) => ({
   boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
   background:
     theme.palette.mode === 'light'
-      ? `linear-gradient(135deg, ${theme.palette.primary.light}24 0%, ${theme.palette.secondary.main}12 45%, #ffffff 100%)`
-      : theme.palette.background.default
+      ? `linear-gradient(135deg, ${theme.palette.primary.light}24 0%, ${theme.palette.secondary.main}12 45%, ${muiTheme.palette.background.paper} 100%)`
+      : theme.palette.surface.sunken
 });
 
 const sectionSx = {
@@ -586,7 +586,7 @@ export default function PaymentCommitmentsLionTv() {
                   gap: 1.5,
                   background:
                     muiTheme.palette.mode === 'light'
-                      ? `linear-gradient(155deg, ${muiTheme.palette.primary.main}1F 0%, ${muiTheme.palette.secondary.main}20 55%, #ffffff 100%)`
+                      ? `linear-gradient(155deg, ${muiTheme.palette.primary.main}1F 0%, ${muiTheme.palette.secondary.main}20 55%, ${muiTheme.palette.background.paper} 100%)`
                       : muiTheme.palette.background.paper
                 })}
               >
@@ -926,7 +926,7 @@ export default function PaymentCommitmentsLionTv() {
                         background:
                           muiTheme.palette.mode === 'light'
                             ? `linear-gradient(140deg, ${muiTheme.palette.primary.light}10 0%, ${muiTheme.palette.secondary.light}10 100%)`
-                            : muiTheme.palette.background.default
+                            : muiTheme.palette.surface.card
                       })}
                     >
                       <Stack spacing={1.25}>

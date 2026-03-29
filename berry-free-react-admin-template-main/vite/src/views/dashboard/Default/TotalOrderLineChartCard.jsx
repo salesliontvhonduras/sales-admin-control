@@ -51,7 +51,7 @@ export default function TotalOrderLineChartCard({ isLoading }) {
           content={false}
           sx={{
             bgcolor: 'primary.dark',
-            color: '#fff',
+            color: 'common.white',
             overflow: 'hidden',
             position: 'relative',
             '&>div': {

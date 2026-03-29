@@ -353,7 +353,7 @@ function InfoBlock({ title, icon, color = 'primary', children, helper }) {
         background:
           theme.palette.mode === 'light'
             ? `linear-gradient(135deg, ${theme.palette[color]?.light}18, ${theme.palette.background.paper})`
-            : theme.palette.background.default,
+            : theme.palette.surface.card,
         p: 2,
         boxShadow: 2,
         display: 'flex',
@@ -399,7 +399,7 @@ function ActionableState({ icon, title, subtitle, actions = [] }) {
         background: (theme) =>
           theme.palette.mode === 'light'
             ? `linear-gradient(145deg, ${theme.palette.primary.light}10, ${theme.palette.secondary.light}10)`
-            : theme.palette.background.default
+            : theme.palette.surface.card
       }}
     >
       <Avatar sx={{ mx: 'auto', mb: 1.5, bgcolor: 'primary.main', color: 'primary.contrastText' }}>{icon}</Avatar>
@@ -1390,7 +1390,7 @@ export default function CustomerCrmLionTv() {
                               background:
                                 theme.palette.mode === 'light'
                                   ? `linear-gradient(140deg, ${theme.palette[accentColor].light}1A, ${theme.palette.background.paper})`
-                                  : theme.palette.background.default
+                                  : theme.palette.surface.card
                             })}
                           >
                             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>

@@ -93,8 +93,8 @@ const glassCard = (theme) => ({
   boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
   background:
     theme.palette.mode === 'light'
-      ? `linear-gradient(135deg, ${theme.palette.primary.light}24 0%, ${theme.palette.secondary.main}12 45%, #ffffff 100%)`
-      : theme.palette.background.default
+      ? `linear-gradient(135deg, ${theme.palette.primary.light}24 0%, ${theme.palette.secondary.main}12 45%, ${muiTheme.palette.background.paper} 100%)`
+      : theme.palette.surface.sunken
 });
 
 const sectionSx = {
@@ -659,7 +659,7 @@ export default function BusinessPurchasesLionTv() {
                   gap: 1.5,
                   background:
                     muiTheme.palette.mode === 'light'
-                      ? `linear-gradient(155deg, ${muiTheme.palette.primary.main}1F 0%, ${muiTheme.palette.secondary.main}20 55%, #ffffff 100%)`
+                      ? `linear-gradient(155deg, ${muiTheme.palette.primary.main}1F 0%, ${muiTheme.palette.secondary.main}20 55%, ${muiTheme.palette.background.paper} 100%)`
                       : muiTheme.palette.background.paper
                 })}
               >
@@ -827,7 +827,7 @@ export default function BusinessPurchasesLionTv() {
             <TableHead>
               <TableRow
                 sx={(muiTheme) => ({
-                  bgcolor: muiTheme.palette.mode === 'light' ? '#f7f9fc' : muiTheme.palette.background.default,
+                  bgcolor: muiTheme.palette.surface.sunken,
                   borderBottom: `1px solid ${muiTheme.palette.divider}`
                 })}
               >
@@ -986,7 +986,7 @@ export default function BusinessPurchasesLionTv() {
             borderColor: form.id ? muiTheme.palette.warning.light : muiTheme.palette.primary.light,
             backgroundImage:
               muiTheme.palette.mode === 'light'
-                ? `linear-gradient(150deg, ${muiTheme.palette.primary.light}18 0%, ${muiTheme.palette.secondary.light}10 45%, #ffffff 100%)`
+                ? `linear-gradient(150deg, ${muiTheme.palette.primary.light}18 0%, ${muiTheme.palette.secondary.light}10 45%, ${muiTheme.palette.background.paper} 100%)`
                 : undefined
           })
         }}
@@ -1001,7 +1001,7 @@ export default function BusinessPurchasesLionTv() {
           })}
         >
           <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Avatar sx={{ bgcolor: form.id ? 'warning.main' : 'primary.main', color: '#fff', width: 40, height: 40, boxShadow: 3 }}>
+            <Avatar sx={{ bgcolor: form.id ? 'warning.main' : 'primary.main', color: 'common.white', width: 40, height: 40, boxShadow: 3 }}>
               <ShoppingCartIcon fontSize="small" />
             </Avatar>
             <Box>
@@ -1028,7 +1028,7 @@ export default function BusinessPurchasesLionTv() {
             background: (muiTheme) =>
               muiTheme.palette.mode === 'light'
                 ? `linear-gradient(180deg, ${muiTheme.palette.primary.light}18 0%, ${muiTheme.palette.secondary.light}10 60%, ${muiTheme.palette.background.paper} 85%)`
-                : muiTheme.palette.background.default,
+                : muiTheme.palette.surface.card,
             position: 'relative',
             '&:before': {
               content: '""',

@@ -103,8 +103,8 @@ const glassCard = (theme) => ({
   boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
   background:
     theme.palette.mode === 'light'
-      ? `linear-gradient(135deg, ${theme.palette.primary.light}24 0%, ${theme.palette.secondary.main}12 45%, #ffffff 100%)`
-      : theme.palette.background.default
+      ? `linear-gradient(135deg, ${theme.palette.primary.light}24 0%, ${theme.palette.secondary.main}12 45%, ${theme.palette.background.paper} 100%)`
+      : theme.palette.surface.sunken
 });
 
 const sectionSx = {
@@ -696,7 +696,7 @@ export default function InvoicesLionTv() {
                   gap: 1.5,
                   background:
                     theme.palette.mode === 'light'
-                      ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, #ffffff 100%)`
+                      ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, ${theme.palette.background.paper} 100%)`
                       : theme.palette.background.paper
                 })}
               >
@@ -814,7 +814,7 @@ export default function InvoicesLionTv() {
             <TableHead>
               <TableRow
                 sx={(theme) => ({
-                  bgcolor: theme.palette.mode === 'light' ? '#f7f9fc' : theme.palette.background.default,
+                  bgcolor: theme.palette.surface.sunken,
                   borderBottom: `1px solid ${theme.palette.divider}`
                 })}
               >
@@ -1005,7 +1005,7 @@ export default function InvoicesLionTv() {
             borderColor: form.invoiceId ? theme.palette.warning.light : theme.palette.primary.light,
             backgroundImage:
               theme.palette.mode === 'light'
-                ? `linear-gradient(150deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}10 45%, #ffffff 100%)`
+                ? `linear-gradient(150deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}10 45%, ${theme.palette.background.paper} 100%)`
                 : undefined
           })
         }}
@@ -1055,7 +1055,7 @@ export default function InvoicesLionTv() {
             background: (theme) =>
               theme.palette.mode === 'light'
                 ? `linear-gradient(180deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}10 60%, ${theme.palette.background.paper} 85%)`
-                : theme.palette.background.default,
+                : theme.palette.surface.card,
             position: 'relative',
             '&:before': {
               content: '\"\"',

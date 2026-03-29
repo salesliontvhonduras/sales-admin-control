@@ -89,8 +89,8 @@ const cardGlassSx = (theme) => ({
   boxShadow: '0 10px 26px rgba(18, 38, 63, 0.08)',
   background:
     theme.palette.mode === 'light'
-      ? `linear-gradient(145deg, #ffffff 0%, ${alpha(theme.palette.primary.light, 0.11)} 46%, ${alpha(theme.palette.success.light, 0.08)} 100%)`
-      : theme.palette.background.default
+      ? `linear-gradient(145deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.primary.light, 0.11)} 46%, ${alpha(theme.palette.success.light, 0.08)} 100%)`
+      : theme.palette.surface.sunken
 });
 
 const modalPaperSx = (theme) => ({

@@ -90,8 +90,8 @@ const glassCard = (theme) => ({
   boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
   background:
     theme.palette.mode === 'light'
-      ? `linear-gradient(135deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}12 45%, #ffffff 100%)`
-      : theme.palette.background.default
+      ? `linear-gradient(135deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}12 45%, ${theme.palette.background.paper} 100%)`
+      : theme.palette.surface.sunken
 });
 
 function formatDate(value) {
@@ -818,7 +818,7 @@ export default function SubscriptionsLionTv() {
                   gap: 1.5,
                   background:
                     theme.palette.mode === 'light'
-                      ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, #ffffff 100%)`
+                      ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, ${theme.palette.background.paper} 100%)`
                       : theme.palette.background.paper,
                   boxShadow: '0 14px 34px rgba(0,0,0,0.10)',
                   borderRadius: 2.5,
@@ -831,7 +831,7 @@ export default function SubscriptionsLionTv() {
                     width: 40,
                     height: 40,
                     bgcolor: item.color,
-                    color: '#fff',
+                    color: 'common.white',
                     boxShadow: '0 10px 18px rgba(0,0,0,0.16)',
                     border: '2px solid',
                     borderColor: 'background.paper'
@@ -1118,7 +1118,7 @@ export default function SubscriptionsLionTv() {
             borderColor: form.subscriptionId ? theme.palette.warning.light : theme.palette.primary.light,
             backgroundImage:
               theme.palette.mode === 'light'
-                ? `linear-gradient(150deg, ${theme.palette.primary.light}16 0%, ${theme.palette.secondary.light}10 45%, #ffffff 100%)`
+                ? `linear-gradient(150deg, ${theme.palette.primary.light}16 0%, ${theme.palette.secondary.light}10 45%, ${theme.palette.background.paper} 100%)`
                 : undefined
           })
         }}
@@ -1135,7 +1135,7 @@ export default function SubscriptionsLionTv() {
             <Avatar
               sx={{
                 bgcolor: form.subscriptionId ? 'warning.main' : 'primary.main',
-                color: '#fff',
+                color: 'common.white',
                 width: 40,
                 height: 40,
                 boxShadow: 4
@@ -1175,7 +1175,7 @@ export default function SubscriptionsLionTv() {
             background: (theme) =>
               theme.palette.mode === 'light'
                 ? `linear-gradient(180deg, ${theme.palette.primary.light}14 0%, ${theme.palette.secondary.light}10 50%, ${theme.palette.background.paper} 82%)`
-                : theme.palette.background.default,
+                : theme.palette.surface.card,
             position: 'relative',
             '&:before': {
               content: '\"\"',

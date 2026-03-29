@@ -48,7 +48,7 @@ export default function EarningCard({ isLoading }) {
           content={false}
           sx={{
             bgcolor: 'secondary.dark',
-            color: '#fff',
+            color: 'common.white',
             overflow: 'hidden',
             position: 'relative',
             '&:after': {

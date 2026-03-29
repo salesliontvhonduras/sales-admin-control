@@ -47,7 +47,7 @@ export default function BajajAreaChartCard() {
 
   return (
     <Card sx={{ bgcolor: 'secondary.light', mt: -1 }}>
-      <Grid container sx={{ p: 2, pb: 0, color: '#fff' }}>
+      <Grid container sx={{ p: 2, pb: 0, color: 'common.white' }}>
         <Grid size={12}>
           <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
             <Grid>
