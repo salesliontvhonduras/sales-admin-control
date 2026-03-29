@@ -10,6 +10,7 @@ const dashboard = {
   id: 'dashboard',
   title: 'menu.dashboard',
   type: 'group',
+  permission: { any: ['DASHBOARD_VIEW', 'ROLE_DASHBOARD_VIEW'] },
   children: [
     {
       id: 'default',
@@ -17,7 +18,8 @@ const dashboard = {
       type: 'item',
       url: '/dashboard/default',
       icon: icons.IconDashboard,
-      breadcrumbs: false
+      breadcrumbs: false,
+      permission: { any: ['DASHBOARD_VIEW', 'ROLE_DASHBOARD_VIEW'] }
     }
   ]
 };

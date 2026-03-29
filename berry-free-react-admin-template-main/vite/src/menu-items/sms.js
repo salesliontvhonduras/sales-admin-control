@@ -7,6 +7,7 @@ const sms = {
   id: 'sms',
   title: 'menu.sms',
   type: 'group',
+  permission: { any: ['SMS_VIEW', 'ROLE_SMS_VIEW'] },
   children: [
     {
       id: 'sms-management',
@@ -14,7 +15,8 @@ const sms = {
       type: 'item',
       url: '/sms/management',
       icon: icons.IconMessages,
-      breadcrumbs: true
+      breadcrumbs: true,
+      permission: { any: ['SMS_VIEW', 'ROLE_SMS_VIEW', 'SMS_MANAGEMENT_VIEW'] }
     }
   ]
 };

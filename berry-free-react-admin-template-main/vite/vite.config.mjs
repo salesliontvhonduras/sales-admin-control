@@ -17,7 +17,19 @@ export default defineConfig(({ mode }) => {
       host: true
     },
     build: {
-      chunkSizeWarningLimit: 1600
+      chunkSizeWarningLimit: 1400,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return;
+            if (id.includes('apexcharts') || id.includes('react-apexcharts')) return 'vendor-apexcharts';
+            if (id.includes('@mui') || id.includes('@emotion')) return 'vendor-mui';
+            if (id.includes('react-router')) return 'vendor-router';
+            if (id.includes('swr') || id.includes('axios')) return 'vendor-data';
+            if (id.includes('@tabler/icons-react')) return 'vendor-icons';
+          }
+        }
+      }
     },
     preview: {
       open: true,

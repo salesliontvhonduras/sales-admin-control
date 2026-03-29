@@ -39,6 +39,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import LaunchIcon from '@mui/icons-material/Launch';
 
 import MainCard from 'ui-component/cards/MainCard';
+import { PageEmptyState, PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
 import { gridSpacing } from 'store/constant';
 import { useLionTvOverview } from 'api/liontv-overview';
 
@@ -636,6 +637,15 @@ export default function LionTvDashboard() {
       }
     };
   }, [licenses, subscriptions, lines, managedAccounts, invoices, commitments, horizonDays, criticalOnly, customerNameMap]);
+  const hasSourceData =
+    customers.length +
+      subscriptions.length +
+      licenses.length +
+      lines.length +
+      managedAccounts.length +
+      invoices.length +
+      commitments.length >
+    0;
 
   return (
     <MainCard
@@ -678,334 +688,349 @@ export default function LionTvDashboard() {
           />
         </Stack>
 
-        {loading ? <LinearProgress /> : null}
+        {loading && !hasSourceData ? <PageLoadingState label={t('liontvDashboard.loading', 'Cargando seguimiento operativo...')} /> : null}
+        {overviewError && !hasSourceData ? (
+          <PageErrorState
+            message={
+              overviewError?.response?.data?.message || t('liontvDashboard.loadError', 'No se pudo cargar el módulo de seguimiento.')
+            }
+            onRetry={() => refresh()}
+          />
+        ) : null}
+        {!loading && !overviewError && !hasSourceData ? (
+          <PageEmptyState message={t('liontvDashboard.empty', 'No hay datos suficientes para construir alertas todavía.')} />
+        ) : null}
 
-        <Grid container spacing={gridSpacing}>
-          <Grid size={12}>
-            <Typography variant="h4">Seguimiento por fecha</Typography>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <MetricCard
-              title="Alertas de hoy"
-              value={tracking.todayCount}
-              helper="vence hoy"
-              color="error"
-              icon={<CalendarMonthIcon fontSize="small" />}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <MetricCard
-              title="Alertas de mañana"
-              value={tracking.tomorrowCount}
-              helper="vence en 1 día"
-              color="warning"
-              icon={<CalendarMonthIcon fontSize="small" />}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <MetricCard
-              title="Alertas a 7 días"
-              value={tracking.in7DaysCount}
-              helper="desde 2 hasta 7 días"
-              color="info"
-              icon={<CalendarMonthIcon fontSize="small" />}
-            />
-          </Grid>
+        {loading && hasSourceData ? <LinearProgress /> : null}
 
-          <Grid size={12}>
-            <Divider />
-          </Grid>
+        {hasSourceData ? (
+          <Grid container spacing={gridSpacing}>
+            <Grid size={12}>
+              <Typography variant="h4">Seguimiento por fecha</Typography>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <MetricCard
+                title="Alertas de hoy"
+                value={tracking.todayCount}
+                helper="vence hoy"
+                color="error"
+                icon={<CalendarMonthIcon fontSize="small" />}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <MetricCard
+                title="Alertas de mañana"
+                value={tracking.tomorrowCount}
+                helper="vence en 1 día"
+                color="warning"
+                icon={<CalendarMonthIcon fontSize="small" />}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <MetricCard
+                title="Alertas a 7 días"
+                value={tracking.in7DaysCount}
+                helper="desde 2 hasta 7 días"
+                color="info"
+                icon={<CalendarMonthIcon fontSize="small" />}
+              />
+            </Grid>
 
-          <Grid size={12}>
-            <Typography variant="h4">Detalle por fecha</Typography>
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <AlertsBucketCard
-              title="Detalle de hoy"
-              helper="Casos que vencen hoy"
-              alerts={tracking.todayAlerts}
-              onOpenAlert={(alert) => navigate(alert.route)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <AlertsBucketCard
-              title="Detalle de mañana"
-              helper="Casos que vencen en 1 día"
-              alerts={tracking.tomorrowAlerts}
-              onOpenAlert={(alert) => navigate(alert.route)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <AlertsBucketCard
-              title="Detalle próximos 7 días"
-              helper="Casos que vencen entre 2 y 7 días"
-              alerts={tracking.in7DaysAlerts}
-              onOpenAlert={(alert) => navigate(alert.route)}
-            />
-          </Grid>
+            <Grid size={12}>
+              <Divider />
+            </Grid>
 
-          <Grid size={12}>
-            <Divider />
-          </Grid>
+            <Grid size={12}>
+              <Typography variant="h4">Detalle por fecha</Typography>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <AlertsBucketCard
+                title="Detalle de hoy"
+                helper="Casos que vencen hoy"
+                alerts={tracking.todayAlerts}
+                onOpenAlert={(alert) => navigate(alert.route)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <AlertsBucketCard
+                title="Detalle de mañana"
+                helper="Casos que vencen en 1 día"
+                alerts={tracking.tomorrowAlerts}
+                onOpenAlert={(alert) => navigate(alert.route)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <AlertsBucketCard
+                title="Detalle próximos 7 días"
+                helper="Casos que vencen entre 2 y 7 días"
+                alerts={tracking.in7DaysAlerts}
+                onOpenAlert={(alert) => navigate(alert.route)}
+              />
+            </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="Alertas críticas"
-              value={tracking.criticalCount}
-              helper={`${tracking.todayOrTomorrowCount} vencen hoy/1 día`}
-              color="error"
-              icon={<ErrorOutlineIcon fontSize="small" />}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="Alertas altas"
-              value={tracking.highCount}
-              helper={`${tracking.overdueActiveCount} vencidas recientes`}
-              color="warning"
-              icon={<WarningAmberIcon fontSize="small" />}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title={`Próximos ${horizonDays} días`}
-              value={tracking.queue.length}
-              helper={`${tracking.next7Count} en 7 días`}
-              color="info"
-              icon={<NotificationsActiveIcon fontSize="small" />}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="Facturas pendientes"
-              value={tracking.pendingInvoices.length}
-              helper={formatMoney(tracking.invoicesPendingAmount)}
-              color="secondary"
-              icon={<ReceiptLongIcon fontSize="small" />}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="Compromisos pendientes"
-              value={tracking.pendingCommitments.length}
-              helper={formatMoney(tracking.commitmentsPendingAmount)}
-              color="warning"
-              icon={<PriceCheckIcon fontSize="small" />}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title="Clientes perdidos"
-              value={tracking.lostCount}
-              helper={`vencidos > ${Math.abs(LOST_THRESHOLD_DAYS)} días`}
-              color="secondary"
-              icon={<FactCheckIcon fontSize="small" />}
-            />
-          </Grid>
+            <Grid size={12}>
+              <Divider />
+            </Grid>
 
-          <Grid size={12}>
-            <Typography variant="h4">Radar de vencimientos</Typography>
-          </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+              <MetricCard
+                title="Alertas críticas"
+                value={tracking.criticalCount}
+                helper={`${tracking.todayOrTomorrowCount} vencen hoy/1 día`}
+                color="error"
+                icon={<ErrorOutlineIcon fontSize="small" />}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+              <MetricCard
+                title="Alertas altas"
+                value={tracking.highCount}
+                helper={`${tracking.overdueActiveCount} vencidas recientes`}
+                color="warning"
+                icon={<WarningAmberIcon fontSize="small" />}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+              <MetricCard
+                title={`Próximos ${horizonDays} días`}
+                value={tracking.queue.length}
+                helper={`${tracking.next7Count} en 7 días`}
+                color="info"
+                icon={<NotificationsActiveIcon fontSize="small" />}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+              <MetricCard
+                title="Facturas pendientes"
+                value={tracking.pendingInvoices.length}
+                helper={formatMoney(tracking.invoicesPendingAmount)}
+                color="secondary"
+                icon={<ReceiptLongIcon fontSize="small" />}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+              <MetricCard
+                title="Compromisos pendientes"
+                value={tracking.pendingCommitments.length}
+                helper={formatMoney(tracking.commitmentsPendingAmount)}
+                color="warning"
+                icon={<PriceCheckIcon fontSize="small" />}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+              <MetricCard
+                title="Clientes perdidos"
+                value={tracking.lostCount}
+                helper={`vencidos > ${Math.abs(LOST_THRESHOLD_DAYS)} días`}
+                color="secondary"
+                icon={<FactCheckIcon fontSize="small" />}
+              />
+            </Grid>
 
-          <Grid size={{ xs: 12, md: 6 }}>
-            <RadarCard
-              title="Licencias"
-              icon={<VpnKeyIcon fontSize="small" />}
-              color="secondary"
-              stats={tracking.radar.licenses}
-              onOpen={() => navigate(ROUTES.licenses)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <RadarCard
-              title="Suscripciones"
-              icon={<CreditCardIcon fontSize="small" />}
-              color="success"
-              stats={tracking.radar.subscriptions}
-              onOpen={() => navigate(ROUTES.subscriptions)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <RadarCard
-              title="Líneas"
-              icon={<RouterIcon fontSize="small" />}
-              color="info"
-              stats={tracking.radar.lines}
-              onOpen={() => navigate(ROUTES.lines)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <RadarCard
-              title="Managed Accounts"
-              icon={<MarkEmailReadIcon fontSize="small" />}
-              color="primary"
-              stats={tracking.radar.managed}
-              onOpen={() => navigate(ROUTES.managedAccounts)}
-            />
-          </Grid>
+            <Grid size={12}>
+              <Typography variant="h4">Radar de vencimientos</Typography>
+            </Grid>
 
-          <Grid size={12}>
-            <Card sx={{ borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}>
-              <CardContent>
-                <Stack spacing={1.4}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography variant="h4">Cola de alertas priorizada</Typography>
-                    <Chip size="small" color="primary" variant="outlined" label={`${tracking.queueFiltered.length} alertas`} />
-                  </Stack>
-                  <Divider />
-                  <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Prioridad</TableCell>
-                          <TableCell>Tipo</TableCell>
-                          <TableCell>Referencia</TableCell>
-                          <TableCell>Cliente</TableCell>
-                          <TableCell>Fecha objetivo</TableCell>
-                          <TableCell>Estado</TableCell>
-                          <TableCell>Detalle</TableCell>
-                          <TableCell align="right">Acción</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {tracking.queueFiltered.slice(0, 200).map((row) => {
-                          const sev = severityMeta(row.severity);
-                          return (
-                            <TableRow key={`${row.type}-${row.entityId}-${row.reference}`}>
-                              <TableCell>
-                                <Chip size="small" color={sev.color} variant="outlined" label={sev.label} />
-                              </TableCell>
-                              <TableCell>{row.type}</TableCell>
-                              <TableCell>{row.reference}</TableCell>
-                              <TableCell>{row.customerName || '-'}</TableCell>
-                              <TableCell>{formatDate(row.targetDate)}</TableCell>
-                              <TableCell>
-                                <Chip size="small" variant="outlined" label={row.status || '-'} />
-                              </TableCell>
-                              <TableCell>{row.detail}</TableCell>
-                              <TableCell align="right">
-                                <Button
-                                  size="small"
-                                  variant="outlined"
-                                  endIcon={<LaunchIcon fontSize="small" />}
-                                  onClick={() => navigate(row.route)}
-                                >
-                                  Ver
-                                </Button>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <RadarCard
+                title="Licencias"
+                icon={<VpnKeyIcon fontSize="small" />}
+                color="secondary"
+                stats={tracking.radar.licenses}
+                onOpen={() => navigate(ROUTES.licenses)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <RadarCard
+                title="Suscripciones"
+                icon={<CreditCardIcon fontSize="small" />}
+                color="success"
+                stats={tracking.radar.subscriptions}
+                onOpen={() => navigate(ROUTES.subscriptions)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <RadarCard
+                title="Líneas"
+                icon={<RouterIcon fontSize="small" />}
+                color="info"
+                stats={tracking.radar.lines}
+                onOpen={() => navigate(ROUTES.lines)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <RadarCard
+                title="Managed Accounts"
+                icon={<MarkEmailReadIcon fontSize="small" />}
+                color="primary"
+                stats={tracking.radar.managed}
+                onOpen={() => navigate(ROUTES.managedAccounts)}
+              />
+            </Grid>
+
+            <Grid size={12}>
+              <Card sx={{ borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}>
+                <CardContent>
+                  <Stack spacing={1.4}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography variant="h4">Cola de alertas priorizada</Typography>
+                      <Chip size="small" color="primary" variant="outlined" label={`${tracking.queueFiltered.length} alertas`} />
+                    </Stack>
+                    <Divider />
+                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Prioridad</TableCell>
+                            <TableCell>Tipo</TableCell>
+                            <TableCell>Referencia</TableCell>
+                            <TableCell>Cliente</TableCell>
+                            <TableCell>Fecha objetivo</TableCell>
+                            <TableCell>Estado</TableCell>
+                            <TableCell>Detalle</TableCell>
+                            <TableCell align="right">Acción</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {tracking.queueFiltered.slice(0, 200).map((row) => {
+                            const sev = severityMeta(row.severity);
+                            return (
+                              <TableRow key={`${row.type}-${row.entityId}-${row.reference}`}>
+                                <TableCell>
+                                  <Chip size="small" color={sev.color} variant="outlined" label={sev.label} />
+                                </TableCell>
+                                <TableCell>{row.type}</TableCell>
+                                <TableCell>{row.reference}</TableCell>
+                                <TableCell>{row.customerName || '-'}</TableCell>
+                                <TableCell>{formatDate(row.targetDate)}</TableCell>
+                                <TableCell>
+                                  <Chip size="small" variant="outlined" label={row.status || '-'} />
+                                </TableCell>
+                                <TableCell>{row.detail}</TableCell>
+                                <TableCell align="right">
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    endIcon={<LaunchIcon fontSize="small" />}
+                                    onClick={() => navigate(row.route)}
+                                  >
+                                    Ver
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                          {tracking.queueFiltered.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={8}>
+                                <Alert severity="success" variant="outlined">
+                                  No hay alertas en este rango. Todo está bajo control.
+                                </Alert>
                               </TableCell>
                             </TableRow>
-                          );
-                        })}
-                        {tracking.queueFiltered.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={8}>
-                              <Alert severity="success" variant="outlined">
-                                No hay alertas en este rango. Todo está bajo control.
-                              </Alert>
-                            </TableCell>
-                          </TableRow>
-                        ) : null}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card sx={{ borderRadius: 2.5, border: '1px solid', borderColor: 'divider', height: '100%' }}>
-              <CardContent>
-                <Stack spacing={1.2}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography variant="h4">Facturas pendientes</Typography>
-                    <Button size="small" variant="outlined" onClick={() => navigate(ROUTES.invoices)}>
-                      Abrir facturas
-                    </Button>
+                          ) : null}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   </Stack>
-                  <Divider />
-                  <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>ID</TableCell>
-                          <TableCell>Cliente</TableCell>
-                          <TableCell>Monto pendiente</TableCell>
-                          <TableCell>Vence</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {tracking.pendingInvoices.slice(0, 10).map((row) => (
-                          <TableRow key={`inv-${row.id}`}>
-                            <TableCell>#{row.id}</TableCell>
-                            <TableCell>{customerNameMap[row.customerId] || '-'}</TableCell>
-                            <TableCell>{formatMoney(row.pendingAmount)}</TableCell>
-                            <TableCell>{formatDate(row.dueDate || row.createdAt || row.paymentDate)}</TableCell>
-                          </TableRow>
-                        ))}
-                        {tracking.pendingInvoices.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={4}>No hay facturas pendientes.</TableCell>
-                          </TableRow>
-                        ) : null}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
 
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card sx={{ borderRadius: 2.5, border: '1px solid', borderColor: 'divider', height: '100%' }}>
-              <CardContent>
-                <Stack spacing={1.2}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
-                    <Typography variant="h4">Compromisos de pago pendientes</Typography>
-                    <Button size="small" variant="outlined" onClick={() => navigate(ROUTES.commitments)}>
-                      Abrir compromisos
-                    </Button>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Card sx={{ borderRadius: 2.5, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+                <CardContent>
+                  <Stack spacing={1.2}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography variant="h4">Facturas pendientes</Typography>
+                      <Button size="small" variant="outlined" onClick={() => navigate(ROUTES.invoices)}>
+                        Abrir facturas
+                      </Button>
+                    </Stack>
+                    <Divider />
+                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>ID</TableCell>
+                            <TableCell>Cliente</TableCell>
+                            <TableCell>Monto pendiente</TableCell>
+                            <TableCell>Vence</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {tracking.pendingInvoices.slice(0, 10).map((row) => (
+                            <TableRow key={`inv-${row.id}`}>
+                              <TableCell>#{row.id}</TableCell>
+                              <TableCell>{customerNameMap[row.customerId] || '-'}</TableCell>
+                              <TableCell>{formatMoney(row.pendingAmount)}</TableCell>
+                              <TableCell>{formatDate(row.dueDate || row.createdAt || row.paymentDate)}</TableCell>
+                            </TableRow>
+                          ))}
+                          {tracking.pendingInvoices.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={4}>No hay facturas pendientes.</TableCell>
+                            </TableRow>
+                          ) : null}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   </Stack>
-                  <Divider />
-                  <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>ID</TableCell>
-                          <TableCell>Cliente</TableCell>
-                          <TableCell>Monto pendiente</TableCell>
-                          <TableCell>Fecha promesa</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {tracking.pendingCommitments.slice(0, 10).map((row) => (
-                          <TableRow key={`commit-${row.id}`}>
-                            <TableCell>#{row.id}</TableCell>
-                            <TableCell>{customerNameMap[row.customerId] || '-'}</TableCell>
-                            <TableCell>{formatMoney(row.pendingAmount)}</TableCell>
-                            <TableCell>{formatDate(row.promisedDate)}</TableCell>
-                          </TableRow>
-                        ))}
-                        {tracking.pendingCommitments.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={4}>No hay compromisos pendientes.</TableCell>
-                          </TableRow>
-                        ) : null}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
 
-          <Grid size={12}>
-            <Alert severity="warning" variant="outlined" icon={<FactCheckIcon />}>
-              Recomendación operativa: revisa primero alertas <strong>Críticas</strong> y luego <strong>Altas</strong>. Los vencidos muy
-              antiguos pasan a <strong>Perdido</strong> para seguimiento comercial y ya no saturan la prioridad crítica.
-            </Alert>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Card sx={{ borderRadius: 2.5, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+                <CardContent>
+                  <Stack spacing={1.2}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography variant="h4">Compromisos de pago pendientes</Typography>
+                      <Button size="small" variant="outlined" onClick={() => navigate(ROUTES.commitments)}>
+                        Abrir compromisos
+                      </Button>
+                    </Stack>
+                    <Divider />
+                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>ID</TableCell>
+                            <TableCell>Cliente</TableCell>
+                            <TableCell>Monto pendiente</TableCell>
+                            <TableCell>Fecha promesa</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {tracking.pendingCommitments.slice(0, 10).map((row) => (
+                            <TableRow key={`commit-${row.id}`}>
+                              <TableCell>#{row.id}</TableCell>
+                              <TableCell>{customerNameMap[row.customerId] || '-'}</TableCell>
+                              <TableCell>{formatMoney(row.pendingAmount)}</TableCell>
+                              <TableCell>{formatDate(row.promisedDate)}</TableCell>
+                            </TableRow>
+                          ))}
+                          {tracking.pendingCommitments.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={4}>No hay compromisos pendientes.</TableCell>
+                            </TableRow>
+                          ) : null}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid size={12}>
+              <Alert severity="warning" variant="outlined" icon={<FactCheckIcon />}>
+                Recomendación operativa: revisa primero alertas <strong>Críticas</strong> y luego <strong>Altas</strong>. Los vencidos muy
+                antiguos pasan a <strong>Perdido</strong> para seguimiento comercial y ya no saturan la prioridad crítica.
+              </Alert>
+            </Grid>
           </Grid>
-        </Grid>
+        ) : null}
       </Stack>
     </MainCard>
   );

@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import RequireAuth from '../routes/RequireAuth';
+import RequirePermission from '../routes/RequirePermission';
 
 // project imports
 import MainLayout from 'layout/MainLayout';
@@ -33,88 +34,103 @@ const MainRoutes = {
       element: <MainLayout />, // tu layout solo si está autenticado
       children: [
         {
-          path: '/',
-          element: <DashboardDefault />
-        },
-        {
-          path: 'dashboard',
+          element: <RequirePermission permission={{ any: ['DASHBOARD_VIEW', 'ROLE_DASHBOARD_VIEW'] }} />,
           children: [
             {
-              path: 'default',
+              path: '/',
               element: <DashboardDefault />
+            },
+            {
+              path: 'dashboard',
+              children: [
+                {
+                  path: 'default',
+                  element: <DashboardDefault />
+                }
+              ]
             }
           ]
         },
         {
-          path: '/liontv/dashboard',
-          element: <LionTvDashboard />
-        },
-        {
-          path: '/liontv/demos',
-          element: <DemosLionTv />
-        },
-        {
-          path: '/liontv/customers',
-          element: <CustomersLionTv />
-        },
-        {
-          path: '/liontv/potential-customers',
-          element: <PotentialCustomersLionTv />
-        },
-        {
-          path: '/liontv/payment-commitments',
-          element: <PaymentCommitmentsLionTv />
-        },
-        {
-          path: '/liontv/movies-feed',
-          element: <MoviesFeedLionTv />
-        },
-        {
-          path: '/liontv/series-feed',
-          element: <SeriesFeedLionTv />
-        },
-        {
-          path: '/liontv/futbol-events-feed',
-          element: <FutbolEventsFeedLionTv />
-        },
-        {
-          path: '/liontv/managed-accounts',
-          element: <ManagedAccountsLionTv />
-        },
-        {
-          path: '/liontv/crm',
-          element: <CustomerCrmLionTv />
-        },
-        {
-          path: '/liontv/subscriptions',
-          element: <SubscriptionsLionTv />
-        },
-        {
-          path: '/liontv/invoices',
-          element: <InvoicesLionTv />
-        },
-        {
-          path: '/liontv/business-purchases',
-          element: <BusinessPurchasesLionTv />
-        },
-        {
-          path: '/liontv/licenses',
-          element: <LicensesLionTv />
-        },
-        {
-          path: '/liontv/lines',
-          element: <LinesLionTv />
-        },
-        {
-          path: '/liontv/plus-lines',
-          element: <PlusLinesExplorer />
-        },
-        {
-          path: 'sms',
+          element: <RequirePermission permission={{ any: ['LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }} />,
           children: [
             {
-              path: 'management',
-              element: <SmsManagement />
+              path: '/liontv/dashboard',
+              element: <LionTvDashboard />
+            },
+            {
+              path: '/liontv/demos',
+              element: <DemosLionTv />
+            },
+            {
+              path: '/liontv/customers',
+              element: <CustomersLionTv />
+            },
+            {
+              path: '/liontv/potential-customers',
+              element: <PotentialCustomersLionTv />
+            },
+            {
+              path: '/liontv/payment-commitments',
+              element: <PaymentCommitmentsLionTv />
+            },
+            {
+              path: '/liontv/movies-feed',
+              element: <MoviesFeedLionTv />
+            },
+            {
+              path: '/liontv/series-feed',
+              element: <SeriesFeedLionTv />
+            },
+            {
+              path: '/liontv/futbol-events-feed',
+              element: <FutbolEventsFeedLionTv />
+            },
+            {
+              path: '/liontv/managed-accounts',
+              element: <ManagedAccountsLionTv />
+            },
+            {
+              path: '/liontv/crm',
+              element: <CustomerCrmLionTv />
+            },
+            {
+              path: '/liontv/subscriptions',
+              element: <SubscriptionsLionTv />
+            },
+            {
+              path: '/liontv/invoices',
+              element: <InvoicesLionTv />
+            },
+            {
+              path: '/liontv/business-purchases',
+              element: <BusinessPurchasesLionTv />
+            },
+            {
+              path: '/liontv/licenses',
+              element: <LicensesLionTv />
+            },
+            {
+              path: '/liontv/lines',
+              element: <LinesLionTv />
+            },
+            {
+              path: '/liontv/plus-lines',
+              element: <PlusLinesExplorer />
+            }
+          ]
+        },
+        {
+          element: <RequirePermission permission={{ any: ['SMS_VIEW', 'ROLE_SMS_VIEW'] }} />,
+          children: [
+            {
+              path: 'sms',
+              children: [
+                {
+                  path: 'management',
+                  element: <SmsManagement />
+                }
+              ]
             }
           ]
         }

@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import Chart from 'react-apexcharts';
 import useAuth from 'hooks/useAuth';
 
 import Grid from '@mui/material/Grid';
@@ -11,7 +10,6 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
-import LinearProgress from '@mui/material/LinearProgress';
 import Alert from '@mui/material/Alert';
 import Avatar from '@mui/material/Avatar';
 import { useTheme } from '@mui/material/styles';
@@ -31,6 +29,8 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 
 import { gridSpacing } from 'store/constant';
 import { useLionTvOverview } from 'api/liontv-overview';
+import LazyApexChart from 'ui-component/charts/LazyApexChart';
+import { PageEmptyState, PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
 
 function toUpper(value) {
   return String(value || '')
@@ -195,6 +195,19 @@ export default function DashboardDefault() {
   );
 
   const { customers, subscriptions, invoices, licenses, lines, commitments, managedAccounts, purchases, potentialCustomers } = collections;
+  const totalRecords = useMemo(
+    () =>
+      customers.length +
+      subscriptions.length +
+      invoices.length +
+      licenses.length +
+      lines.length +
+      commitments.length +
+      managedAccounts.length +
+      purchases.length +
+      potentialCustomers.length,
+    [customers, subscriptions, invoices, licenses, lines, commitments, managedAccounts, purchases, potentialCustomers]
+  );
 
   const metrics = useMemo(() => {
     const now = new Date();
@@ -751,6 +764,23 @@ export default function DashboardDefault() {
     [metrics]
   );
 
+  if (loading && totalRecords === 0) {
+    return <PageLoadingState label={t('dashboard.loading', 'Cargando dashboard...')} />;
+  }
+
+  if (overviewError && totalRecords === 0) {
+    return (
+      <PageErrorState
+        message={overviewError?.response?.data?.message || t('dashboard.loadError', 'No se pudo cargar el dashboard.')}
+        onRetry={() => window.location.reload()}
+      />
+    );
+  }
+
+  if (!loading && !overviewError && totalRecords === 0) {
+    return <PageEmptyState message={t('dashboard.empty', 'No hay información para construir los KPI todavía.')} />;
+  }
+
   return (
     <Grid container spacing={gridSpacing}>
       <Grid size={12}>
@@ -772,12 +802,6 @@ export default function DashboardDefault() {
           <Alert severity="error" variant="outlined">
             {overviewError?.response?.data?.message || t('dashboard.loadError', 'No se pudo cargar el dashboard.')}
           </Alert>
-        </Grid>
-      ) : null}
-
-      {loading ? (
-        <Grid size={12}>
-          <LinearProgress />
         </Grid>
       ) : null}
 
@@ -813,7 +837,7 @@ export default function DashboardDefault() {
           title={t('dashboard.charts.portfolio', 'Portafolio por módulo')}
           helper={t('dashboard.charts.portfolioHelper', 'Volumen de registros por entidad')}
         >
-          <Chart options={donutChart.options} series={donutChart.series} type="donut" height={330} />
+          <LazyApexChart options={donutChart.options} series={donutChart.series} type="donut" height={330} />
         </ChartCard>
       </Grid>
 
@@ -822,7 +846,7 @@ export default function DashboardDefault() {
           title={t('dashboard.charts.status', 'Estado operativo por módulo')}
           helper={t('dashboard.charts.statusHelper', 'Comparativo entre OK y riesgo/pendiente')}
         >
-          <Chart options={statusBar.options} series={statusBar.series} type="bar" height={330} />
+          <LazyApexChart options={statusBar.options} series={statusBar.series} type="bar" height={330} />
         </ChartCard>
       </Grid>
 
@@ -831,7 +855,7 @@ export default function DashboardDefault() {
           title={t('dashboard.charts.cashflow', 'Tendencia mensual: ingresos vs gastos')}
           helper={t('dashboard.charts.cashflowHelper', 'Año actual consolidado')}
         >
-          <Chart options={monthlyTrend.options} series={monthlyTrend.series} type="area" height={350} />
+          <LazyApexChart options={monthlyTrend.options} series={monthlyTrend.series} type="area" height={350} />
         </ChartCard>
       </Grid>
 
@@ -840,7 +864,7 @@ export default function DashboardDefault() {
           title={t('dashboard.charts.expiry', 'Vencimientos próximos')}
           helper={t('dashboard.charts.expiryHelper', 'Buckets de riesgo de 30 días')}
         >
-          <Chart options={expiryChart.options} series={expiryChart.series} type="bar" height={350} />
+          <LazyApexChart options={expiryChart.options} series={expiryChart.series} type="bar" height={350} />
           <Divider />
           <Stack spacing={0.8} sx={{ mt: 0.5 }}>
             <Chip size="small" color="success" variant="outlined" label={`Autopay: ${metrics.subAutoPay}/${metrics.subTotal}`} />
@@ -862,7 +886,7 @@ export default function DashboardDefault() {
 
       <Grid size={{ xs: 12, md: 4 }}>
         <ChartCard title="Compromisos de pago" helper="Distribución por estado operativo">
-          <Chart options={commitmentsChart.options} series={commitmentsChart.series} type="donut" height={330} />
+          <LazyApexChart options={commitmentsChart.options} series={commitmentsChart.series} type="donut" height={330} />
           <Divider />
           <Stack spacing={0.8} sx={{ mt: 0.5 }}>
             <Chip size="small" color="success" variant="outlined" label={`Recuperado: ${formatMoney(metrics.commitmentRecoveredAmount)}`} />
@@ -873,7 +897,7 @@ export default function DashboardDefault() {
 
       <Grid size={{ xs: 12, md: 4 }}>
         <ChartCard title="Mix por proveedor" helper="Top proveedores por volumen de líneas/subs">
-          <Chart options={providerMixChart.options} series={providerMixChart.series} type="bar" height={330} />
+          <LazyApexChart options={providerMixChart.options} series={providerMixChart.series} type="bar" height={330} />
           <Divider />
           <Stack spacing={0.8} sx={{ mt: 0.5 }}>
             <Chip size="small" color="primary" variant="outlined" label={`Line Plus: ${metrics.linePlusCount}`} />
@@ -884,7 +908,7 @@ export default function DashboardDefault() {
 
       <Grid size={12}>
         <ChartCard title="Embudo comercial-operativo" helper="Del prospecto hasta facturación cobrada">
-          <Chart options={funnelChart.options} series={funnelChart.series} type="bar" height={290} />
+          <LazyApexChart options={funnelChart.options} series={funnelChart.series} type="bar" height={290} />
           <Divider />
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
             <Chip size="small" color="info" variant="outlined" label={`Prospectos abiertos: ${metrics.potentialOpen}`} />

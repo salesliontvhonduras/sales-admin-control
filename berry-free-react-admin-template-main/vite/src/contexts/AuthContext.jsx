@@ -1,10 +1,18 @@
 import { createContext, useState, useEffect } from 'react';
 import { authApi } from '../utils/api';
+import {
+  clearSessionStorage,
+  getStoredAccessToken,
+  getStoredUser,
+  isCookieSessionMode,
+  listenAuthLogout,
+  persistSession
+} from '../utils/authSession';
 
 export const AuthContext = createContext(null);
 
 const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
-const getStoredValue = (key) => localStorage.getItem(key) ?? sessionStorage.getItem(key);
+const COOKIE_MODE = isCookieSessionMode();
 
 // Extrae metadatos de 2FA de una respuesta flexible (permite varios nombres de campos)
 const parseTwoFactor = (payload = {}) => {
@@ -29,40 +37,33 @@ const parseTwoFactor = (payload = {}) => {
       payload.tempToken ||
       payload.ticket ||
       null,
-    destination:
-      payload.destination ||
-      payload.maskedDestination ||
-      payload.maskedPhone ||
-      payload.maskedEmail ||
-      payload.to ||
-      null,
+    destination: payload.destination || payload.maskedDestination || payload.maskedPhone || payload.maskedEmail || payload.to || null,
     channel: payload.channel || payload.deliveryMethod || payload.via || null
   };
 };
 
-const persistSession = (accessToken, user, remember = true) => {
-  const storage = remember ? localStorage : sessionStorage;
-  storage.setItem('token', accessToken);
-  storage.setItem('user', JSON.stringify(user));
-};
-
 export default function AuthProvider({ children }) {
-  // Inicializar desde localStorage
-  const [accessToken, setAccessToken] = useState(() => getStoredValue('token'));
-  const [user, setUser] = useState(() => {
-    const storedUser = getStoredValue('user');
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
+  const [accessToken, setAccessToken] = useState(() => getStoredAccessToken());
+  const [user, setUser] = useState(() => getStoredUser());
   // Si se requiere 2FA, guardamos el desafío pendiente aquí
   const [pendingTwoFactor, setPendingTwoFactor] = useState(null);
 
   useEffect(() => {
-    if (!accessToken) {
+    if (!accessToken && !COOKIE_MODE) {
       setUser(null);
       return;
     }
     // Aquí podrías llamar /auth/me para validar token si quisieras
   }, [accessToken]);
+
+  useEffect(() => {
+    const unsubscribe = listenAuthLogout(() => {
+      setAccessToken(null);
+      setUser(null);
+      setPendingTwoFactor(null);
+    });
+    return unsubscribe;
+  }, []);
 
   // ======================
   // LOGIN NORMAL (luego lo haremos)
@@ -85,7 +86,7 @@ export default function AuthProvider({ children }) {
 
     const { accessToken: token, user: userData } = payload;
 
-    persistSession(token, userData, remember);
+    persistSession({ accessToken: token, user: userData, remember });
 
     setAccessToken(token);
     setUser(userData);
@@ -110,7 +111,7 @@ export default function AuthProvider({ children }) {
     const { accessToken: token, user: userData } = payload;
 
     const remember = pendingTwoFactor?.remember ?? true;
-    persistSession(token, userData, remember);
+    persistSession({ accessToken: token, user: userData, remember });
 
     setAccessToken(token);
     setUser(userData);
@@ -143,8 +144,7 @@ export default function AuthProvider({ children }) {
 
     const { accessToken, user } = res.data.data;
 
-    localStorage.setItem('token', accessToken);
-    localStorage.setItem('user', JSON.stringify(user));
+    persistSession({ accessToken, user, remember: true });
 
     setAccessToken(accessToken);
     setUser(user);
@@ -156,7 +156,6 @@ export default function AuthProvider({ children }) {
   // SIGN UP (REGISTRO)
   // ======================
   const register = async ({ name, email, serialCode, password }) => {
-
     const res = await authApi.post('/auth/v1/register', { name, email, serialCode, password });
 
     return res;
@@ -166,20 +165,15 @@ export default function AuthProvider({ children }) {
   // LOGOUT
   // ======================
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
+    clearSessionStorage();
     setAccessToken(null);
     setUser(null);
     setPendingTwoFactor(null);
-    window.location.replace(BASE_URL + '/pages/login');
+    window.location.replace(`${BASE_URL}/pages/login`);
   };
 
   return (
-    <AuthContext.Provider
-      value={{ user, accessToken, pendingTwoFactor, login, verifyOtp, resendOtp, loginWithGoogle, register, logout }}
-    >
+    <AuthContext.Provider value={{ user, accessToken, pendingTwoFactor, login, verifyOtp, resendOtp, loginWithGoogle, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

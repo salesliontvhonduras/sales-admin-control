@@ -1,5 +1,5 @@
 import axios from 'axios';
-
+import { clearSessionStorage, dispatchAuthLogout, getStoredAccessToken, isCookieSessionMode, persistAccessToken } from './authSession';
 
 const API_AUTH = import.meta.env.VITE_API_AUTH;
 const API_USERS = import.meta.env.VITE_API_USERS;
@@ -11,53 +11,62 @@ const API_CATALOGS = import.meta.env.VITE_API_CATALOGS;
 const API_LIONTV = import.meta.env.VITE_API_LIONTV;
 const API_SAGA = import.meta.env.VITE_API_SAGA;
 const API_SHOPIFY_DEMOS = import.meta.env.VITE_API_SHOPIFY_DEMOS;
-
+const COOKIE_MODE = isCookieSessionMode();
+const REFRESH_PATH = import.meta.env.VITE_AUTH_REFRESH_PATH || '/auth/v1/session/refresh';
+const REFRESH_ENABLED = String(import.meta.env.VITE_AUTH_REFRESH_ENABLED || 'true').toLowerCase() !== 'false';
 
 export const sagaApi = axios.create({
   baseURL: API_SAGA,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: COOKIE_MODE
 });
-
 
 export const lionTvApi = axios.create({
   baseURL: API_LIONTV,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: COOKIE_MODE
 });
 
 export const catalogsApi = axios.create({
   baseURL: API_CATALOGS,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: COOKIE_MODE
 });
 
 export const shopifyDemosApi = axios.create({
   baseURL: API_SHOPIFY_DEMOS,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: COOKIE_MODE
 });
-
 
 export const authApi = axios.create({
   baseURL: API_AUTH,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: COOKIE_MODE
 });
 
 export const usersApi = axios.create({
   baseURL: API_USERS,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: COOKIE_MODE
 });
 
 export const productsApi = axios.create({
   baseURL: API_PRODUCTS,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: COOKIE_MODE
 });
 
 export const reservationsApi = axios.create({
   baseURL: API_RESERVATIONS,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: COOKIE_MODE
 });
 
 export const smsApi = axios.create({
   baseURL: API_SMS,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: COOKIE_MODE
 });
 
 // =======================
@@ -66,8 +75,10 @@ export const smsApi = axios.create({
 
 // Función general para añadir el token (intenta localStorage y sessionStorage)
 const attachToken = (config) => {
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  if (config?.skipAuthHeader || COOKIE_MODE) return config;
+  const token = getStoredAccessToken();
   if (token) {
+    config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -83,8 +94,6 @@ lionTvApi.interceptors.request.use(attachToken);
 catalogsApi.interceptors.request.use(attachToken);
 sagaApi.interceptors.request.use(attachToken);
 shopifyDemosApi.interceptors.request.use(attachToken);
-
-
 
 // (Opcional) Manejo global de errores
 authApi.interceptors.response.use(
@@ -111,35 +120,91 @@ smsApi.interceptors.response.use(
   }
 );
 
+const apiClients = [authApi, usersApi, productsApi, reservationsApi, smsApi, lionTvApi, catalogsApi, sagaApi, shopifyDemosApi];
+
+let refreshPromise = null;
+
+function getRefreshUrl() {
+  if (!API_AUTH) return null;
+  if (REFRESH_PATH.startsWith('http://') || REFRESH_PATH.startsWith('https://')) return REFRESH_PATH;
+  return `${API_AUTH}${REFRESH_PATH}`;
+}
+
+function extractAccessToken(responseData) {
+  const data = responseData?.data ?? responseData;
+  return data?.accessToken || data?.token || data?.jwt || data?.sessionToken || data?.authToken || null;
+}
+
+async function refreshSessionToken() {
+  if (!REFRESH_ENABLED || !API_AUTH) {
+    return null;
+  }
+
+  if (!refreshPromise) {
+    const refreshUrl = getRefreshUrl();
+    refreshPromise = axios
+      .post(
+        refreshUrl,
+        {},
+        {
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' },
+          skipAuthRedirect: true
+        }
+      )
+      .then((response) => {
+        const nextToken = extractAccessToken(response?.data);
+        if (nextToken) {
+          persistAccessToken(nextToken);
+        }
+        return nextToken || getStoredAccessToken();
+      })
+      .catch(() => null)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+}
+
 // Redireccionar a login en 401 (evita loops)
 let isRedirecting401 = false;
-const handleUnauthorized = (error) => {
+const handleUnauthorized = async (error) => {
+  const originalRequest = error?.config || {};
   const status = error?.response?.status ?? error?.request?.status;
   const isNetworkErr =
-    (!status || status === 0) &&
-    (error?.code === 'ERR_NETWORK' || (error?.message || '').toLowerCase().includes('network'));
+    (!status || status === 0) && (error?.code === 'ERR_NETWORK' || (error?.message || '').toLowerCase().includes('network'));
 
-  if ((status === 401 || isNetworkErr) && !isRedirecting401) {
+  const unauthorized = status === 401 || isNetworkErr;
+  if (!unauthorized || originalRequest?.skipAuthRedirect) {
+    return Promise.reject(error);
+  }
+
+  if (!originalRequest?._retry && status === 401) {
+    originalRequest._retry = true;
+    const refreshedToken = await refreshSessionToken();
+    if (COOKIE_MODE || refreshedToken) {
+      if (!COOKIE_MODE && refreshedToken) {
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers.Authorization = `Bearer ${refreshedToken}`;
+      }
+      return axios(originalRequest);
+    }
+  }
+
+  if (!isRedirecting401) {
     isRedirecting401 = true;
-    // Limpia estado local antes de salir
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
-    window.location.replace(BASE_URL + '/pages/login');
+    clearSessionStorage();
+    dispatchAuthLogout(status === 401 ? 'UNAUTHORIZED' : 'NETWORK');
+    window.location.replace(`${BASE_URL}/pages/login`);
   }
   return Promise.reject(error);
 };
 
-authApi.interceptors.response.use((res) => res, handleUnauthorized);
-usersApi.interceptors.response.use((res) => res, handleUnauthorized);
-productsApi.interceptors.response.use((res) => res, handleUnauthorized);
-reservationsApi.interceptors.response.use((res) => res, handleUnauthorized);
-smsApi.interceptors.response.use((res) => res, handleUnauthorized);
-lionTvApi.interceptors.response.use((res) => res, handleUnauthorized);
-catalogsApi.interceptors.response.use((res) => res, handleUnauthorized);
-sagaApi.interceptors.response.use((res) => res, handleUnauthorized);
-shopifyDemosApi.interceptors.response.use((res) => res, handleUnauthorized);
+apiClients.forEach((client) => {
+  client.interceptors.response.use((response) => response, handleUnauthorized);
+});
 
 // Catch-all por si se usa axios directo en algún punto
 axios.interceptors.response.use((res) => res, handleUnauthorized);

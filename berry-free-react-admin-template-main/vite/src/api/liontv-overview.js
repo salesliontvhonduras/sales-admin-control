@@ -2,6 +2,19 @@ import useSWR from 'swr';
 import { lionTvApi } from 'utils/api';
 
 const DEFAULT_REFRESH_INTERVAL = 180000;
+const AGGREGATE_OVERVIEW_ENABLED = String(import.meta.env.VITE_LIONTV_OVERVIEW_AGGREGATE_ENABLED || 'true').toLowerCase() !== 'false';
+const AGGREGATE_OVERVIEW_PATH = import.meta.env.VITE_LIONTV_OVERVIEW_AGGREGATE_PATH || '/dashboard/v1/overview';
+const OVERVIEW_KEYS = [
+  'customers',
+  'subscriptions',
+  'licenses',
+  'lines',
+  'managedAccounts',
+  'invoices',
+  'commitments',
+  'purchases',
+  'potentialCustomers'
+];
 
 const CORE_RESOURCES = [
   { key: 'customers', path: '/customers/v1', params: { index: 0, size: 5000 } },
@@ -33,7 +46,8 @@ const EMPTY_OVERVIEW = {
     scope: 'core',
     partial: false,
     failedEndpoints: [],
-    fetchedAt: null
+    fetchedAt: null,
+    source: 'empty'
   }
 };
 
@@ -50,6 +64,29 @@ function parseCollection(res) {
   return [];
 }
 
+function toArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function normalizeOverviewPayload(rawPayload = {}) {
+  const payload = rawPayload?.overview || rawPayload?.kpis || rawPayload?.datasets || rawPayload;
+  return {
+    customers: toArray(payload?.customers),
+    subscriptions: toArray(payload?.subscriptions),
+    licenses: toArray(payload?.licenses),
+    lines: toArray(payload?.lines),
+    managedAccounts: toArray(payload?.managedAccounts),
+    invoices: toArray(payload?.invoices),
+    commitments: toArray(payload?.commitments),
+    purchases: toArray(payload?.purchases),
+    potentialCustomers: toArray(payload?.potentialCustomers)
+  };
+}
+
+function hasOverviewPayload(payload) {
+  return OVERVIEW_KEYS.some((key) => Array.isArray(payload?.[key]));
+}
+
 async function fetchCollection(resource) {
   const res = await lionTvApi.get(resource.path, {
     params: resource.params,
@@ -58,22 +95,10 @@ async function fetchCollection(resource) {
   return parseCollection(res);
 }
 
-async function fetchOverview(scope = 'core') {
+async function fetchCollectionsFallback(scope = 'core') {
   const resources = scope === 'extended' ? EXTENDED_RESOURCES : CORE_RESOURCES;
   const tasks = await Promise.allSettled(resources.map((resource) => fetchCollection(resource)));
-
-  const result = {
-    customers: [],
-    subscriptions: [],
-    licenses: [],
-    lines: [],
-    managedAccounts: [],
-    invoices: [],
-    commitments: [],
-    purchases: [],
-    potentialCustomers: []
-  };
-
+  const result = normalizeOverviewPayload();
   const failedEndpoints = [];
 
   tasks.forEach((task, index) => {
@@ -82,7 +107,6 @@ async function fetchOverview(scope = 'core') {
       result[resource.key] = task.value;
       return;
     }
-
     failedEndpoints.push(resource.path);
     result[resource.key] = [];
   });
@@ -93,9 +117,42 @@ async function fetchOverview(scope = 'core') {
       scope,
       partial: failedEndpoints.length > 0,
       failedEndpoints,
-      fetchedAt: new Date().toISOString()
+      fetchedAt: new Date().toISOString(),
+      source: 'fallback'
     }
   };
+}
+
+async function fetchAggregateOverview(scope = 'core') {
+  if (!AGGREGATE_OVERVIEW_ENABLED) return null;
+
+  try {
+    const response = await lionTvApi.get(AGGREGATE_OVERVIEW_PATH, {
+      params: { scope },
+      skipAuthRedirect: true
+    });
+    const normalized = normalizeOverviewPayload(unwrap(response));
+    if (!hasOverviewPayload(normalized)) return null;
+
+    return {
+      ...normalized,
+      meta: {
+        scope,
+        partial: false,
+        failedEndpoints: [],
+        fetchedAt: new Date().toISOString(),
+        source: 'aggregate'
+      }
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchOverview(scope = 'core') {
+  const aggregateOverview = await fetchAggregateOverview(scope);
+  if (aggregateOverview) return aggregateOverview;
+  return fetchCollectionsFallback(scope);
 }
 
 export function useLionTvOverview({ enabled = true, scope = 'core', refreshInterval = DEFAULT_REFRESH_INTERVAL } = {}) {
