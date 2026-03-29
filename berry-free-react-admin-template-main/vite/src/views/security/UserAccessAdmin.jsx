@@ -221,7 +221,9 @@ export default function UserAccessAdmin() {
     try {
       const payload = await fetchAccessCatalog({ headers, skipAuthRedirect: true });
       setRoleTemplates(Array.isArray(payload?.roleTemplates) ? payload.roleTemplates : []);
-      setPermissionCatalog(Array.isArray(payload?.permissionCatalog) ? payload.permissionCatalog : []);
+      setPermissionCatalog(
+        Array.isArray(payload?.permissionCatalog) ? [...payload.permissionCatalog].sort((a, b) => String(a).localeCompare(String(b))) : []
+      );
     } catch (error) {
       onError(error, 'No se pudo cargar el catálogo de acceso.');
     } finally {
