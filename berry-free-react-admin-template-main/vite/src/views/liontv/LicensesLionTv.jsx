@@ -142,7 +142,7 @@ function RowActions({ row, onEdit, onTransfer, onServer, onHistory, onDelete, t 
 }
 
 const STATUS_OPTIONS = ['ACTIVE', 'EXPIRED', 'AVAILABLE', 'EMERGENCY', 'NOT_TRANSFERRABLE'];
-const APPS = ['Vivo Player', 'Smart One', 'IboPro Player','Bob Player','9xtream4k'];
+const APPS = ['Vivo Player', 'Smart One', 'IboPro Player', 'Bob Player', '9xtream4k'];
 const LICENSE_PERIOD = ['ANNUAL', 'LIFETIME'];
 const TYPE_LICENSE = ['PRIMARY', 'USED'];
 const PAYMENT_FILTER_OPTIONS = ['PAID', 'PENDING'];
