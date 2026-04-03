@@ -71,6 +71,7 @@ const countryOptions = [
 const statusIcon = {
   ACTIVE: <CheckCircleOutlineIcon fontSize="small" color="success" />,
   ACTIVATED: <CheckCircleOutlineIcon fontSize="small" color="success" />,
+  INACTIVE: <CancelIcon fontSize="small" color="warning" />,
   PENDING: <PendingActionsIcon fontSize="small" color="warning" />,
   EXPIRED: <CancelIcon fontSize="small" color="error" />,
   CANCELLED: <CancelIcon fontSize="small" color="error" />
@@ -84,9 +85,47 @@ const formatDate = (val) => {
   return Number.isNaN(d.getTime()) ? val : d.toLocaleDateString();
 };
 
+const normalizePlusStatus = (value) => {
+  const raw = String(value ?? '').trim().toUpperCase();
+  if (!raw) return 'UNKNOWN';
+  if (raw === '1' || raw === 'TRUE' || raw === 'ACTIVE' || raw === 'ACTIVA' || raw === 'ENABLED') return 'ACTIVE';
+  if (raw === '0' || raw === 'FALSE' || raw === 'INACTIVE' || raw === 'INACTIVA' || raw === 'DISABLED') return 'INACTIVE';
+  if (raw.includes('EXPIRED') || raw.includes('EXPIR')) return 'EXPIRED';
+  if (raw.includes('CANCEL')) return 'CANCELLED';
+  if (raw.includes('PEND')) return 'PENDING';
+  return raw;
+};
+
+const statusLabelOf = (value, t) => {
+  const normalized = normalizePlusStatus(value);
+  if (normalized === 'ACTIVE') return t('lines.status.active', 'Active');
+  if (normalized === 'INACTIVE') return t('lines.status.inactive', 'Inactive');
+  if (normalized === 'EXPIRED') return t('lines.status.expired', 'Expired');
+  if (normalized === 'PENDING') return t('plusLines.status.pending', 'Pending');
+  if (normalized === 'CANCELLED') return t('plusLines.status.cancelled', 'Cancelled');
+  return String(value ?? 'UNKNOWN');
+};
+
 const activeSubscriptionsOf = (item) => Number(item?.activeSubscriptions ?? item?.subscriptions ?? 0);
-const inactiveSubscriptionsOf = (item) => Number(item?.inactiveSubscriptions ?? 0);
-const totalSubscriptionsOf = (item) => Number(item?.totalSubscriptions ?? activeSubscriptionsOf(item) + inactiveSubscriptionsOf(item));
+const totalSubscriptionsRawOf = (item) => Number(item?.totalSubscriptions ?? item?.subscriptions ?? Number.NaN);
+const inactiveSubscriptionsOf = (item) => {
+  const inactiveRaw = Number(item?.inactiveSubscriptions ?? Number.NaN);
+  const active = activeSubscriptionsOf(item);
+  const totalRaw = totalSubscriptionsRawOf(item);
+  if (Number.isFinite(totalRaw)) {
+    const byDiff = Math.max(totalRaw - active, 0);
+    if (!Number.isFinite(inactiveRaw)) return byDiff;
+    return Math.min(Math.max(inactiveRaw, 0), byDiff);
+  }
+  return Number.isFinite(inactiveRaw) ? Math.max(inactiveRaw, 0) : 0;
+};
+const totalSubscriptionsOf = (item) => {
+  const totalRaw = totalSubscriptionsRawOf(item);
+  if (Number.isFinite(totalRaw)) {
+    return Math.max(totalRaw, activeSubscriptionsOf(item) + inactiveSubscriptionsOf(item));
+  }
+  return activeSubscriptionsOf(item) + inactiveSubscriptionsOf(item);
+};
 const isUnusedPlusLine = (item) => activeSubscriptionsOf(item) === 0;
 
 // Semáforo: estima uso real aplicando 30% de concurrencia sobre la suma de primarias.
@@ -397,6 +436,7 @@ export default function PlusLinesExplorer() {
                 const inactiveSubs = inactiveSubscriptionsOf(line);
                 const totalSubs = totalSubscriptionsOf(line);
                 const isUnused = activeSubs === 0;
+                const normalizedStatus = normalizePlusStatus(line.status);
                 return (
                   <Grid item xs={12} md={6} key={line.linePlusId}>
                     <Card
@@ -424,8 +464,8 @@ export default function PlusLinesExplorer() {
                         </Box>
                         <Chip
                           size="small"
-                          icon={statusIcon[line.status] || <PendingActionsIcon fontSize="small" />}
-                          label={line.status || 'UNKNOWN'}
+                          icon={statusIcon[normalizedStatus] || <PendingActionsIcon fontSize="small" />}
+                          label={statusLabelOf(line.status, t)}
                           sx={{ ml: 'auto', fontWeight: 700 }}
                         />
                       </Stack>
