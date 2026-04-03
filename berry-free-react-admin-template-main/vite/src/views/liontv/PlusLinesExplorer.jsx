@@ -7,6 +7,7 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
+import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import Avatar from '@mui/material/Avatar';
@@ -82,6 +83,11 @@ const formatDate = (val) => {
   const d = new Date(val.replace(' ', 'T'));
   return Number.isNaN(d.getTime()) ? val : d.toLocaleDateString();
 };
+
+const activeSubscriptionsOf = (item) => Number(item?.activeSubscriptions ?? item?.subscriptions ?? 0);
+const inactiveSubscriptionsOf = (item) => Number(item?.inactiveSubscriptions ?? 0);
+const totalSubscriptionsOf = (item) => Number(item?.totalSubscriptions ?? activeSubscriptionsOf(item) + inactiveSubscriptionsOf(item));
+const isUnusedPlusLine = (item) => activeSubscriptionsOf(item) === 0;
 
 // Semáforo: estima uso real aplicando 30% de concurrencia sobre la suma de primarias.
 function semaphoreColor(maxConnectionsPlus, sumPrimaryConnections) {
@@ -163,12 +169,26 @@ export default function PlusLinesExplorer() {
   }, [loadLines]);
 
   const summaryWithFlags = useMemo(() => {
-    if (!summary.length) return countryOptions.map((c) => ({ country: c.code, plusLines: 0, subscriptions: 0, flag: c.flag }));
+    if (!summary.length) {
+      return countryOptions.map((c) => ({
+        country: c.code,
+        plusLines: 0,
+        subscriptions: 0,
+        activeSubscriptions: 0,
+        inactiveSubscriptions: 0,
+        unusedPlusLines: 0,
+        flag: c.flag
+      }));
+    }
     return summary.map((s) => ({ ...s, flag: countryFlag(s.country) }));
   }, [summary]);
 
   const totalLines = summary.reduce((acc, s) => acc + (s.plusLines || 0), 0);
-  const totalSubs = summary.reduce((acc, s) => acc + (s.subscriptions || 0), 0);
+  const totalActiveSubs = summary.reduce((acc, s) => acc + activeSubscriptionsOf(s), 0);
+  const totalInactiveSubs = summary.reduce((acc, s) => acc + inactiveSubscriptionsOf(s), 0);
+  const totalUnusedLines = summary.reduce((acc, s) => acc + Number(s.unusedPlusLines || 0), 0);
+  const unusedLines = useMemo(() => lines.filter((line) => isUnusedPlusLine(line)), [lines]);
+  const activeLines = useMemo(() => lines.filter((line) => !isUnusedPlusLine(line)), [lines]);
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
@@ -177,9 +197,11 @@ export default function PlusLinesExplorer() {
           {[
             { label: t('plusLines.cards.countries', 'Países con líneas plus'), value: summary.length, icon: <MapIcon />, color: '#1e88e5' },
             { label: t('plusLines.cards.lines', 'Líneas plus'), value: totalLines, icon: <LanIcon />, color: '#7e57c2' },
-            { label: t('plusLines.cards.subs', 'Suscripciones'), value: totalSubs, icon: <PeopleAltIcon />, color: '#039be5' }
+            { label: t('plusLines.cards.activeSubs', 'Suscripciones activas'), value: totalActiveSubs, icon: <PeopleAltIcon />, color: '#039be5' },
+            { label: t('plusLines.cards.unusedLines', 'Líneas sin uso activo'), value: totalUnusedLines, icon: <PendingActionsIcon />, color: '#fb8c00' },
+            { label: t('plusLines.cards.inactiveSubs', 'Suscripciones inactivas'), value: totalInactiveSubs, icon: <CancelIcon />, color: '#ef5350' }
           ].map((item, idx) => (
-            <Grid item xs={12} sm={6} md={4} key={idx}>
+            <Grid item xs={12} sm={6} md={4} lg={2} key={idx}>
               <Card
                 sx={(muiTheme) => ({
                   borderRadius: 3,
@@ -270,7 +292,7 @@ export default function PlusLinesExplorer() {
                         {countryLabel(item.country)}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {item.plusLines || 0} líneas · {item.subscriptions || 0} subs
+                        {item.plusLines || 0} líneas · {activeSubscriptionsOf(item)} activas · {inactiveSubscriptionsOf(item)} inactivas
                       </Typography>
                     </Box>
                   </Stack>
@@ -332,87 +354,138 @@ export default function PlusLinesExplorer() {
         )}
 
         {selectedCountry && !loadingLines && lines.length > 0 && (
-          <Grid container spacing={2}>
-            {lines.map((line) => (
-              <Grid item xs={12} md={6} key={line.linePlusId}>
-                <Card
-                  sx={(theme) => ({
-                    ...glassCard(theme),
-                    p: 2,
-                    borderLeft: `4px solid ${theme.palette.primary.main}`,
-                    minHeight: 240,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 1
-                  })}
-                >
-                  <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1 }}>
-                    <Avatar sx={{ bgcolor: 'primary.main', color: 'common.white' }}>{countryFlag(line.country)}</Avatar>
-                    <Box>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-                        {line.lineName || line.linePlusId}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {line.linePlusId}
-                      </Typography>
-                    </Box>
-                    <Chip
-                      size="small"
-                      icon={statusIcon[line.status] || <PendingActionsIcon fontSize="small" />}
-                      label={line.status || 'UNKNOWN'}
-                      sx={{ ml: 'auto', fontWeight: 700 }}
-                    />
-                  </Stack>
+          <Stack spacing={2}>
+            <Alert severity={unusedLines.length > 0 ? 'warning' : 'success'} variant="outlined">
+              {t('plusLines.usageSummary', {
+                defaultValue: 'En uso activo: {{active}} · Sin uso activo: {{idle}} · Total líneas plus: {{total}}',
+                active: activeLines.length,
+                idle: unusedLines.length,
+                total: lines.length
+              })}
+            </Alert>
 
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1, flexWrap: 'wrap' }}>
-                    <Chip
-                      size="small"
-                      icon={<SignalCellularAltIcon fontSize="small" />}
-                      label={`${t('plusLines.max', 'Máx. conexiones')}: ${line.maxConnections ?? '-'}`}
-                      variant="outlined"
-                    />
-                    <Chip size="small" icon={<PersonIcon fontSize="small" />} label={line.ownerName || 'N/A'} variant="outlined" />
-                    <Chip size="small" icon={<LinkIcon fontSize="small" />} label={`${line.subscriptions} subs`} color="secondary" />
-                    {line.expDate ? (
+            {unusedLines.length > 0 && (
+              <Paper sx={{ p: 2, borderRadius: 2.5, border: '1px solid', borderColor: 'warning.main' }}>
+                <Stack spacing={1}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                    {t('plusLines.unusedTitle', 'Líneas plus sin uso activo')}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t(
+                      'plusLines.unusedSubtitle',
+                      'Estas líneas están creadas pero no tienen suscripciones activas. Pueden reutilizarse de inmediato.'
+                    )}
+                  </Typography>
+                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                    {unusedLines.map((line) => (
                       <Chip
-                        size="small"
-                        icon={<AccessTimeIcon fontSize="small" />}
-                        label={`${t('plusLines.exp', 'Expira')}: ${formatDate(line.expDate)}`}
+                        key={`unused-${line.linePlusId}`}
+                        icon={<LanIcon fontSize="small" />}
+                        label={`${line.linePlusId} · ${inactiveSubscriptionsOf(line)} inactivas`}
+                        color="warning"
                         variant="outlined"
                       />
-                    ) : null}
-                    {(() => {
-                      const s = semaphoreColor(line.maxConnections, line.potentialConnections);
-                      return (
-                    <Chip
-                      size="small"
-                      icon={<TrafficIcon fontSize="small" />}
-                      label={s.label}
-                      color={s.color}
-                      variant="outlined"
-                      sx={{ fontWeight: 700 }}
-                      title={`Primarias: ${line.potentialConnections ?? 0} · Est. activo 30% · Máx plus: ${line.maxConnections ?? 1}`}
-                    />
-                  );
-                })()}
+                    ))}
                   </Stack>
+                </Stack>
+              </Paper>
+            )}
 
-                  <Divider sx={{ my: 1 }} />
+            <Grid container spacing={2}>
+              {lines.map((line) => {
+                const activeSubs = activeSubscriptionsOf(line);
+                const inactiveSubs = inactiveSubscriptionsOf(line);
+                const totalSubs = totalSubscriptionsOf(line);
+                const isUnused = activeSubs === 0;
+                return (
+                  <Grid item xs={12} md={6} key={line.linePlusId}>
+                    <Card
+                      sx={(theme) => ({
+                        ...glassCard(theme),
+                        p: 2,
+                        borderLeft: `4px solid ${isUnused ? theme.palette.warning.main : theme.palette.primary.main}`,
+                        minHeight: 240,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 1
+                      })}
+                    >
+                      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1 }}>
+                        <Avatar sx={{ bgcolor: isUnused ? 'warning.main' : 'primary.main', color: 'common.white' }}>
+                          {countryFlag(line.country)}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                            {line.lineName || line.linePlusId}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {line.linePlusId}
+                          </Typography>
+                        </Box>
+                        <Chip
+                          size="small"
+                          icon={statusIcon[line.status] || <PendingActionsIcon fontSize="small" />}
+                          label={line.status || 'UNKNOWN'}
+                          sx={{ ml: 'auto', fontWeight: 700 }}
+                        />
+                      </Stack>
 
-                  <SubscriptionsInline linePlusId={line.linePlusId} />
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1, flexWrap: 'wrap' }}>
+                        <Chip
+                          size="small"
+                          icon={<SignalCellularAltIcon fontSize="small" />}
+                          label={`${t('plusLines.max', 'Máx. conexiones')}: ${line.maxConnections ?? '-'}`}
+                          variant="outlined"
+                        />
+                        <Chip size="small" icon={<PersonIcon fontSize="small" />} label={line.ownerName || 'N/A'} variant="outlined" />
+                        <Chip size="small" icon={<LinkIcon fontSize="small" />} label={`${activeSubs} activas`} color="secondary" />
+                        <Chip size="small" icon={<CancelIcon fontSize="small" />} label={`${inactiveSubs} inactivas`} color={inactiveSubs > 0 ? 'warning' : 'default'} />
+                        {isUnused ? (
+                          <Chip size="small" icon={<PendingActionsIcon fontSize="small" />} label={t('plusLines.unusedChip', 'Disponible para reutilizar')} color="warning" />
+                        ) : null}
+                        {line.expDate ? (
+                          <Chip
+                            size="small"
+                            icon={<AccessTimeIcon fontSize="small" />}
+                            label={`${t('plusLines.exp', 'Expira')}: ${formatDate(line.expDate)}`}
+                            variant="outlined"
+                          />
+                        ) : null}
+                        {(() => {
+                          const s = semaphoreColor(line.maxConnections, line.potentialConnections);
+                          return (
+                            <Chip
+                              size="small"
+                              icon={<TrafficIcon fontSize="small" />}
+                              label={s.label}
+                              color={s.color}
+                              variant="outlined"
+                              sx={{ fontWeight: 700 }}
+                              title={`Primarias activas: ${line.potentialConnections ?? 0} · Est. activo 30% · Máx plus: ${line.maxConnections ?? 1}`}
+                            />
+                          );
+                        })()}
+                      </Stack>
+
+                      <Divider sx={{ my: 1 }} />
+
+                      <SubscriptionsInline linePlusId={line.linePlusId} totalSubscriptions={totalSubs} />
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Stack>
         )}
       </MainCard>
     </Box>
   );
 }
 
-function SubscriptionsInline({ linePlusId }) {
+function SubscriptionsInline({ linePlusId, totalSubscriptions = 0 }) {
   const { accessToken } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -423,6 +496,7 @@ function SubscriptionsInline({ linePlusId }) {
     try {
       const res = await lionTvApi.get(`/plus-lines/${linePlusId}/subscriptions`, {
         headers: { Authorization: `Bearer ${accessToken}` },
+        params: { status: 'ACTIVE' },
         skipAuthRedirect: true
       });
       setRows(Array.isArray(res?.data?.data) ? res.data.data : []);
@@ -443,9 +517,19 @@ function SubscriptionsInline({ linePlusId }) {
 
   if (!rows.length) {
     return (
-      <Typography variant="caption" color="text.secondary">
-        Sin suscripciones asociadas.
-      </Typography>
+      <Stack spacing={0.4}>
+        <Typography variant="caption" color="text.secondary">
+          {t('plusLines.noActiveSubscriptions', 'Sin suscripciones activas asociadas.')}
+        </Typography>
+        {totalSubscriptions > 0 ? (
+          <Typography variant="caption" color="warning.main">
+            {t('plusLines.onlyInactiveSubscriptions', {
+              defaultValue: 'Tiene {{count}} suscripción(es) total, pero ninguna activa.',
+              count: totalSubscriptions
+            })}
+          </Typography>
+        ) : null}
+      </Stack>
     );
   }
 
@@ -489,7 +573,7 @@ function SubscriptionsInline({ linePlusId }) {
       ))}
       {rows.length > 3 && (
         <Button size="small" onClick={() => setExpanded((v) => !v)} sx={{ textTransform: 'none', alignSelf: 'flex-start' }}>
-          {expanded ? 'Ver menos' : `Ver más (${rows.length - 3})`}
+          {expanded ? t('plusLines.seeLess', 'Ver menos') : t('plusLines.seeMore', { defaultValue: 'Ver más ({{count}})', count: rows.length - 3 })}
         </Button>
       )}
     </Stack>
