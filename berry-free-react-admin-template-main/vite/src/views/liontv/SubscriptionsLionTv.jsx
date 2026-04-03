@@ -57,6 +57,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CloseIcon from '@mui/icons-material/Close';
 import LinkIcon from '@mui/icons-material/Link';
 import EmailIcon from '@mui/icons-material/Email';
+import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
@@ -264,6 +265,32 @@ function normalizeDateOnly(value) {
   return d;
 }
 
+function parseLineEnabled(line = {}) {
+  if (typeof line.enabled === 'boolean') return line.enabled;
+  if (line.enabled === 1 || line.enabled === '1') return true;
+  if (line.enabled === 0 || line.enabled === '0') return false;
+
+  const label = String(line.enabled_label ?? line.status ?? '').trim().toUpperCase();
+  if (label.includes('ACTIVE') || label.includes('ACTIVA')) return true;
+  if (label.includes('INACTIVE') || label.includes('INACTIVA') || label.includes('DISABLED')) return false;
+  return false;
+}
+
+function hasActiveExpiredLine(row, lineMetaById, todayMs) {
+  const key = String(row.lineId ?? '');
+  const meta = lineMetaById[key];
+  if (!meta || !meta.enabled || !meta.expDate) return false;
+  return meta.expDate.getTime() < todayMs;
+}
+
+function getSubscriptionRowKey(row = {}) {
+  const subscriptionId = row.subscriptionId ?? row.id ?? null;
+  if (subscriptionId !== null && subscriptionId !== undefined && subscriptionId !== '') return String(subscriptionId);
+  const lineId = row.lineId ?? row.username_line ?? '';
+  const customerId = row.customerId ?? '';
+  return `${customerId}-${lineId}`;
+}
+
 const defaultForm = {
   subscriptionId: null,
   customerId: '',
@@ -297,6 +324,7 @@ export default function SubscriptionsLionTv() {
   const [statusFilter, setStatusFilter] = useState('');
   const [renewalFilter, setRenewalFilter] = useState(''); // '', 'yesterday', 'today', 'tomorrow'
   const [renewalSort, setRenewalSort] = useState('asc'); // asc | desc
+  const [lineHealthFilter, setLineHealthFilter] = useState(''); // '' | 'activeExpired'
 
   const [openModal, setOpenModal] = useState(false);
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
@@ -360,6 +388,20 @@ export default function SubscriptionsLionTv() {
       const provider = (line.provider ?? line.line_provider ?? line.lineProvider ?? '').toString().trim().toUpperCase();
       return provider === 'LION_PLUS+';
     });
+  }, [lines]);
+
+  const lineMetaById = useMemo(() => {
+    const map = {};
+    lines.forEach((line) => {
+      const rawId = line.id ?? line.lineId ?? line.line_id ?? null;
+      if (rawId === null || rawId === undefined || rawId === '') return;
+      const key = String(rawId);
+      map[key] = {
+        enabled: parseLineEnabled(line),
+        expDate: normalizeDateOnly(line.exp_date ?? line.expDate ?? line.expirationDate ?? null)
+      };
+    });
+    return map;
   }, [lines]);
 
   const handleUnauthorized = (err) => {
@@ -531,6 +573,7 @@ export default function SubscriptionsLionTv() {
     const term = search.toLowerCase();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const todayMs = today.getTime();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     const tomorrow = new Date(today);
@@ -538,6 +581,7 @@ export default function SubscriptionsLionTv() {
 
     const filtered = rows.filter((row) => {
       if (statusFilter && (row.status || '').toLowerCase() !== statusFilter.toLowerCase()) return false;
+      if (lineHealthFilter === 'activeExpired' && !hasActiveExpiredLine(row, lineMetaById, todayMs)) return false;
       const matchesSearch =
         !term ||
         String(row.customerId || '').toLowerCase().includes(term) ||
@@ -566,7 +610,7 @@ export default function SubscriptionsLionTv() {
     });
 
     return sorted;
-  }, [rows, search, statusFilter, renewalFilter, renewalSort]);
+  }, [rows, search, statusFilter, renewalFilter, renewalSort, lineHealthFilter, lineMetaById]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -579,6 +623,26 @@ export default function SubscriptionsLionTv() {
       setPage(0);
     }
   }, [filteredRows.length, page, rowsPerPage]);
+
+  const activeLineExpiredCount = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayMs = today.getTime();
+    return rows.reduce((acc, row) => (hasActiveExpiredLine(row, lineMetaById, todayMs) ? acc + 1 : acc), 0);
+  }, [rows, lineMetaById]);
+
+  const activeExpiredRowKeys = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayMs = today.getTime();
+    const set = new Set();
+    rows.forEach((row) => {
+      if (hasActiveExpiredLine(row, lineMetaById, todayMs)) {
+        set.add(getSubscriptionRowKey(row));
+      }
+    });
+    return set;
+  }, [rows, lineMetaById]);
 
   const resetForm = () => setForm(defaultForm);
 
@@ -794,6 +858,11 @@ export default function SubscriptionsLionTv() {
       label: t('subscriptions.kpi.sharedStatus', { count: rows.filter((r) => r.sharingRole && r.sharingRole !== 'NONE').length }),
       color: theme.vars.palette.info.main,
       icon: <LinkIcon fontSize="small" />
+    },
+    {
+      label: t('subscriptions.kpi.activeLineExpired', { count: activeLineExpiredCount }),
+      color: theme.vars.palette.error.main,
+      icon: <ReportProblemOutlinedIcon fontSize="small" />
     }
   ];
 
@@ -954,6 +1023,15 @@ export default function SubscriptionsLionTv() {
               >
                 {t('subscriptions.filters.tomorrow', 'Vence mañana')}
               </Button>
+              <Button
+                variant={lineHealthFilter === 'activeExpired' ? 'contained' : 'outlined'}
+                color="error"
+                onClick={() => setLineHealthFilter((v) => (v === 'activeExpired' ? '' : 'activeExpired'))}
+                startIcon={<ReportProblemOutlinedIcon />}
+                sx={{ minHeight: 46, borderRadius: 2, textTransform: 'none' }}
+              >
+                {t('subscriptions.filters.activeLineExpired', 'Línea activa vencida')}
+              </Button>
               <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 160 }, '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}>
                 <InputLabel>{t('subscriptions.filters.sortRenewal', 'Orden fecha')}</InputLabel>
                 <Select
@@ -1004,7 +1082,20 @@ export default function SubscriptionsLionTv() {
                   ))}
                 {!loading &&
                   paginatedRows.map((row) => (
-                    <TableRow key={row.subscriptionId || row.lineId} hover>
+                    <TableRow
+                      key={row.subscriptionId || row.lineId}
+                      hover
+                      sx={(theme) => {
+                        const isActiveExpired = activeExpiredRowKeys.has(getSubscriptionRowKey(row));
+                        if (!isActiveExpired) return undefined;
+                        return {
+                          backgroundColor: withAlpha(theme.vars.palette.error.main, theme.palette.mode === 'dark' ? 0.08 : 0.05),
+                          '&:hover': {
+                            backgroundColor: withAlpha(theme.vars.palette.error.main, theme.palette.mode === 'dark' ? 0.14 : 0.1)
+                          }
+                        };
+                      }}
+                    >
                       <TableCell>
                         <Stack direction="row" spacing={0.75} alignItems="center">
                           <CreditCardIcon fontSize="small" sx={{ color: 'primary.main' }} />
@@ -1020,11 +1111,20 @@ export default function SubscriptionsLionTv() {
                         </Stack>
                       </TableCell>
                       <TableCell>
-                        <Stack direction="row" spacing={0.75} alignItems="center">
+                        <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap">
                           <WifiTetheringIcon fontSize="small" sx={{ color: 'success.main' }} />
                           <Typography variant="body2">
                             {lineNameMap[String(row.lineId ?? row.username_line ?? '')] || row.username_line || row.lineId || '-'}
                           </Typography>
+                          {activeExpiredRowKeys.has(getSubscriptionRowKey(row)) && (
+                            <Chip
+                              size="small"
+                              color="error"
+                              variant="filled"
+                              label={t('subscriptions.labels.activeLineExpiredChip', 'Línea activa vencida')}
+                              sx={{ fontWeight: 700 }}
+                            />
+                          )}
                         </Stack>
                       </TableCell>
                       <TableCell>
@@ -1128,7 +1228,7 @@ export default function SubscriptionsLionTv() {
                 {!loading && filteredRows.length === 0 && (
                   <TableRow>
                   <TableCell colSpan={12} align="center">
-                      No hay suscripciones registradas.
+                      {t('subscriptions.empty', 'No subscriptions found.')}
                     </TableCell>
                   </TableRow>
                 )}

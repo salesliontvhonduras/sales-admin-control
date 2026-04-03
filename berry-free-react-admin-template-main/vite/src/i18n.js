@@ -573,15 +573,22 @@ const resources = {
       subscriptions: {
         title: 'Subscriptions',
         search: 'Search (customer, line, package, status)',
-        filters: { status: 'Status', all: 'All' },
+        filters: {
+          status: 'Status',
+          all: 'All',
+          activeLineExpired: 'Active line expired'
+        },
         kpi: {
           activeStatus: 'STATUS: ACTIVE {{count}}',
-          sharedStatus: 'SHARED {{count}}'
+          sharedStatus: 'SHARED {{count}}',
+          activeLineExpired: 'ACTIVE LINE EXPIRED {{count}}'
         },
         labels: {
           packageFallback: 'Package {{id}}',
-          providerFallback: 'LION_TV'
+          providerFallback: 'LION_TV',
+          activeLineExpiredChip: 'Line active / expired date'
         },
+        empty: 'No subscriptions found.',
         sharing: {
           host: 'HOST',
           shared: 'SHARED',
@@ -2794,15 +2801,22 @@ const resources = {
       subscriptions: {
         title: 'Suscripciones',
         search: 'Buscar (cliente, línea, paquete, estado)',
-        filters: { status: 'Estado', all: 'Todos' },
+        filters: {
+          status: 'Estado',
+          all: 'Todos',
+          activeLineExpired: 'Línea activa vencida'
+        },
         kpi: {
           activeStatus: 'ESTADO: ACTIVA {{count}}',
-          sharedStatus: 'COMPARTIDAS {{count}}'
+          sharedStatus: 'COMPARTIDAS {{count}}',
+          activeLineExpired: 'LÍNEA ACTIVA VENCIDA {{count}}'
         },
         labels: {
           packageFallback: 'Paquete {{id}}',
-          providerFallback: 'LION_TV'
+          providerFallback: 'LION_TV',
+          activeLineExpiredChip: 'Línea activa / fecha vencida'
         },
+        empty: 'No hay suscripciones registradas.',
         sharing: {
           host: 'HOST',
           shared: 'SHARED',
