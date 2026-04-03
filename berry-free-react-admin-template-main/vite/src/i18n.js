@@ -792,6 +792,58 @@ const resources = {
         },
         table: { empty: 'No lines found.', loading: 'Loading...' }
       },
+      plusLines: {
+        title: 'Plus Lines Explorer',
+        cards: {
+          countries: 'Countries with plus lines',
+          lines: 'Plus lines',
+          activeSubs: 'Active subscriptions',
+          unusedLines: 'Unused plus lines',
+          inactiveSubs: 'Inactive subscriptions'
+        },
+        mapTitle: 'Country map',
+        pickCountry: 'Pick a country',
+        searchLine: 'Search plus line or owner in this country',
+        searchLineHelper: 'Filter plus line cards in this country',
+        emptyCountry: 'Select a country to view plus lines',
+        emptyLines: 'No plus lines in this country',
+        usageSummary: 'Active usage: {{active}} · Unused: {{idle}} · Total plus lines: {{total}}',
+        unusedTitle: 'Plus lines without active usage',
+        unusedSubtitle: 'These lines are created but have no active subscriptions. They can be reused immediately.',
+        max: 'Max connections',
+        exp: 'Exp',
+        unusedChip: 'Ready to reuse',
+        noActiveSubscriptions: 'No associated active subscriptions.',
+        onlyInactiveSubscriptions: 'It has {{count}} subscription(s) in total, but none active.',
+        seeLess: 'Show less',
+        seeMore: 'Show more ({{count}})',
+        countryItemSummary: '{{lines}} lines · {{active}} active subs · {{unused}} unused lines',
+        status: {
+          pending: 'Pending',
+          cancelled: 'Cancelled'
+        },
+        chips: {
+          unusedLine: 'unused line',
+          activeSubs: '{{count}} active',
+          inactiveHistorical: '{{count}} inactive history'
+        },
+        labels: {
+          ownerNA: 'No owner'
+        },
+        semaphore: {
+          green: 'Green · {{pct}}%',
+          yellow: 'Yellow · {{pct}}%',
+          red: 'Red · {{pct}}%'
+        },
+        subscription: {
+          primaryMax: 'Primary line max connections: {{count}}'
+        },
+        errors: {
+          summaryLoad: 'Could not load summary.',
+          linesLoad: 'Could not load plus lines.',
+          subscriptionsLoad: 'Could not load subscriptions.'
+        }
+      },
       customers: {
         title: 'Customers',
         search: 'Search (name, email, phone, channel, status)',
@@ -3019,6 +3071,58 @@ const resources = {
           close: 'Cerrar'
         },
         table: { empty: 'No hay líneas registradas.', loading: 'Cargando...' }
+      },
+      plusLines: {
+        title: 'Explorador de Líneas Plus',
+        cards: {
+          countries: 'Países con líneas plus',
+          lines: 'Líneas plus',
+          activeSubs: 'Suscripciones activas',
+          unusedLines: 'Líneas plus sin uso',
+          inactiveSubs: 'Suscripciones inactivas'
+        },
+        mapTitle: 'Mapa por país',
+        pickCountry: 'Elige un país',
+        searchLine: 'Buscar línea plus u owner en este país',
+        searchLineHelper: 'Filtra las tarjetas de líneas de este país',
+        emptyCountry: 'Selecciona un país para ver sus líneas plus',
+        emptyLines: 'No hay líneas plus en este país',
+        usageSummary: 'En uso activo: {{active}} · Sin uso activo: {{idle}} · Total líneas plus: {{total}}',
+        unusedTitle: 'Líneas plus sin uso activo',
+        unusedSubtitle: 'Estas líneas están creadas pero no tienen suscripciones activas. Pueden reutilizarse de inmediato.',
+        max: 'Máx. conexiones',
+        exp: 'Exp',
+        unusedChip: 'Disponible para reutilizar',
+        noActiveSubscriptions: 'Sin suscripciones activas asociadas.',
+        onlyInactiveSubscriptions: 'Tiene {{count}} suscripción(es) total, pero ninguna activa.',
+        seeLess: 'Ver menos',
+        seeMore: 'Ver más ({{count}})',
+        countryItemSummary: '{{lines}} líneas · {{active}} activas · {{unused}} sin uso',
+        status: {
+          pending: 'Pendiente',
+          cancelled: 'Cancelada'
+        },
+        chips: {
+          unusedLine: 'sin uso activo',
+          activeSubs: '{{count}} activas',
+          inactiveHistorical: '{{count}} inactivas históricas'
+        },
+        labels: {
+          ownerNA: 'Sin owner'
+        },
+        semaphore: {
+          green: 'Verde · {{pct}}%',
+          yellow: 'Amarillo · {{pct}}%',
+          red: 'Rojo · {{pct}}%'
+        },
+        subscription: {
+          primaryMax: 'Max conexiones línea primaria: {{count}}'
+        },
+        errors: {
+          summaryLoad: 'No se pudo cargar el resumen.',
+          linesLoad: 'No se pudieron cargar las líneas plus.',
+          subscriptionsLoad: 'No se pudieron cargar suscripciones.'
+        }
       },
       customers: {
         title: 'Clientes',

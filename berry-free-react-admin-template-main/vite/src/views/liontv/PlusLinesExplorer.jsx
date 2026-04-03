@@ -129,14 +129,14 @@ const totalSubscriptionsOf = (item) => {
 const isUnusedPlusLine = (item) => activeSubscriptionsOf(item) === 0;
 
 // Semáforo: estima uso real aplicando 30% de concurrencia sobre la suma de primarias.
-function semaphoreColor(maxConnectionsPlus, sumPrimaryConnections) {
+function semaphoreColor(maxConnectionsPlus, sumPrimaryConnections, t) {
   const plus = maxConnectionsPlus || 1; // evita /0
   const primaries = sumPrimaryConnections || 0;
   const estimatedActive = primaries * 0.3; // 30% concurrencia
   const pct = Math.min(100, Math.round((estimatedActive / plus) * 100));
-  if (pct <= 30) return { color: 'success', label: `Verde · ${pct}%` };
-  if (pct <= 60) return { color: 'warning', label: `Amarillo · ${pct}%` };
-  return { color: 'error', label: `Rojo · ${pct}%` };
+  if (pct <= 30) return { color: 'success', label: t('plusLines.semaphore.green', 'Green · {{pct}}%', { pct }) };
+  if (pct <= 60) return { color: 'warning', label: t('plusLines.semaphore.yellow', 'Yellow · {{pct}}%', { pct }) };
+  return { color: 'error', label: t('plusLines.semaphore.red', 'Red · {{pct}}%', { pct }) };
 }
 
 export default function PlusLinesExplorer() {
@@ -161,21 +161,23 @@ export default function PlusLinesExplorer() {
   const loadSummary = useCallback(async () => {
     if (!accessToken) return;
     setLoadingSummary(true);
-    try {
-      const res = await lionTvApi.get('/plus-lines/summary', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: { q: search || undefined },
-        skipAuthRedirect: true
-      });
-      setSummary(Array.isArray(res?.data?.data) ? res.data.data : []);
-    } catch (err) {
-      if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo cargar el resumen.', { variant: 'error' });
+      try {
+        const res = await lionTvApi.get('/plus-lines/summary', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: { q: search || undefined },
+          skipAuthRedirect: true
+        });
+        setSummary(Array.isArray(res?.data?.data) ? res.data.data : []);
+      } catch (err) {
+        if (!handleUnauthorized(err)) {
+          enqueueSnackbar(err?.response?.data?.message || err.message || t('plusLines.errors.summaryLoad', 'Could not load summary.'), {
+            variant: 'error'
+          });
+        }
+      } finally {
+        setLoadingSummary(false);
       }
-    } finally {
-      setLoadingSummary(false);
-    }
-  }, [accessToken, enqueueSnackbar, search]);
+  }, [accessToken, enqueueSnackbar, search, t]);
 
   const loadLines = useCallback(async () => {
     if (!selectedCountry) {
@@ -183,21 +185,23 @@ export default function PlusLinesExplorer() {
       return;
     }
     setLoadingLines(true);
-    try {
-      const res = await lionTvApi.get('/plus-lines/by-country', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        params: { country: selectedCountry, q: lineSearch || undefined },
-        skipAuthRedirect: true
-      });
-      setLines(Array.isArray(res?.data?.data) ? res.data.data : []);
-    } catch (err) {
-      if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudieron cargar las líneas plus.', { variant: 'error' });
+      try {
+        const res = await lionTvApi.get('/plus-lines/by-country', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: { country: selectedCountry, q: lineSearch || undefined },
+          skipAuthRedirect: true
+        });
+        setLines(Array.isArray(res?.data?.data) ? res.data.data : []);
+      } catch (err) {
+        if (!handleUnauthorized(err)) {
+          enqueueSnackbar(err?.response?.data?.message || err.message || t('plusLines.errors.linesLoad', 'Could not load plus lines.'), {
+            variant: 'error'
+          });
+        }
+      } finally {
+        setLoadingLines(false);
       }
-    } finally {
-      setLoadingLines(false);
-    }
-  }, [accessToken, enqueueSnackbar, selectedCountry, lineSearch]);
+  }, [accessToken, enqueueSnackbar, selectedCountry, lineSearch, t]);
 
   useEffect(() => {
     loadSummary();
@@ -331,7 +335,12 @@ export default function PlusLinesExplorer() {
                         {countryLabel(item.country)}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {item.plusLines || 0} líneas · {activeSubscriptionsOf(item)} activas · {inactiveSubscriptionsOf(item)} inactivas
+                        {t('plusLines.countryItemSummary', {
+                          defaultValue: '{{lines}} lines · {{active}} active subs · {{unused}} unused lines',
+                          lines: item.plusLines || 0,
+                          active: activeSubscriptionsOf(item),
+                          unused: Number(item.unusedPlusLines || 0)
+                        })}
                       </Typography>
                     </Box>
                   </Stack>
@@ -420,7 +429,7 @@ export default function PlusLinesExplorer() {
                       <Chip
                         key={`unused-${line.linePlusId}`}
                         icon={<LanIcon fontSize="small" />}
-                        label={`${line.linePlusId} · ${inactiveSubscriptionsOf(line)} inactivas`}
+                        label={`${line.linePlusId} · ${t('plusLines.chips.unusedLine', 'unused line')}`}
                         color="warning"
                         variant="outlined"
                       />
@@ -477,9 +486,27 @@ export default function PlusLinesExplorer() {
                           label={`${t('plusLines.max', 'Máx. conexiones')}: ${line.maxConnections ?? '-'}`}
                           variant="outlined"
                         />
-                        <Chip size="small" icon={<PersonIcon fontSize="small" />} label={line.ownerName || 'N/A'} variant="outlined" />
-                        <Chip size="small" icon={<LinkIcon fontSize="small" />} label={`${activeSubs} activas`} color="secondary" />
-                        <Chip size="small" icon={<CancelIcon fontSize="small" />} label={`${inactiveSubs} inactivas`} color={inactiveSubs > 0 ? 'warning' : 'default'} />
+                        <Chip
+                          size="small"
+                          icon={<PersonIcon fontSize="small" />}
+                          label={line.ownerName || t('plusLines.labels.ownerNA', 'No owner')}
+                          variant="outlined"
+                        />
+                        <Chip
+                          size="small"
+                          icon={<LinkIcon fontSize="small" />}
+                          label={t('plusLines.chips.activeSubs', { defaultValue: '{{count}} active', count: activeSubs })}
+                          color="secondary"
+                        />
+                        <Chip
+                          size="small"
+                          icon={<CancelIcon fontSize="small" />}
+                          label={t('plusLines.chips.inactiveHistorical', {
+                            defaultValue: '{{count}} inactive history',
+                            count: inactiveSubs
+                          })}
+                          color={inactiveSubs > 0 ? 'warning' : 'default'}
+                        />
                         {isUnused ? (
                           <Chip size="small" icon={<PendingActionsIcon fontSize="small" />} label={t('plusLines.unusedChip', 'Disponible para reutilizar')} color="warning" />
                         ) : null}
@@ -492,7 +519,7 @@ export default function PlusLinesExplorer() {
                           />
                         ) : null}
                         {(() => {
-                          const s = semaphoreColor(line.maxConnections, line.potentialConnections);
+                          const s = semaphoreColor(line.maxConnections, line.potentialConnections, t);
                           return (
                             <Chip
                               size="small"
@@ -541,11 +568,13 @@ function SubscriptionsInline({ linePlusId, totalSubscriptions = 0 }) {
       });
       setRows(Array.isArray(res?.data?.data) ? res.data.data : []);
     } catch (err) {
-      enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudieron cargar suscripciones.', { variant: 'error' });
+      enqueueSnackbar(err?.response?.data?.message || err.message || t('plusLines.errors.subscriptionsLoad', 'Could not load subscriptions.'), {
+        variant: 'error'
+      });
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar, linePlusId]);
+  }, [accessToken, enqueueSnackbar, linePlusId, t]);
 
   useEffect(() => {
     loadSubs();
@@ -599,14 +628,17 @@ function SubscriptionsInline({ linePlusId, totalSubscriptions = 0 }) {
             </Typography>
             {sub.primaryMaxConnections ? (
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                Max conexiones línea primaria: {sub.primaryMaxConnections}
+                {t('plusLines.subscription.primaryMax', {
+                  defaultValue: 'Primary line max connections: {{count}}',
+                  count: sub.primaryMaxConnections
+                })}
               </Typography>
             ) : null}
           </Box>
           <Chip
             size="small"
             icon={statusIcon[sub.status] || <PendingActionsIcon fontSize="small" />}
-            label={sub.status}
+            label={statusLabelOf(sub.status, t)}
             sx={{ fontWeight: 700 }}
           />
         </Paper>
