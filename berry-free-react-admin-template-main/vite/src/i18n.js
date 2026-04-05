@@ -686,6 +686,12 @@ const resources = {
       licenses: {
         title: 'Licenses',
         search: 'Search (MAC, device key, customer, status)',
+        actions: {
+          server: 'Change server',
+          transfer: 'Transfer',
+          history: 'History',
+          removePlaylists: 'Remove all playlists'
+        },
         filters: { status: 'Status', payment: 'Payment', all: 'All' },
         paid: { paid: 'Paid', pending: 'Pending' },
         messages: {
@@ -695,6 +701,7 @@ const resources = {
           loadError: 'Could not load licenses.',
           customersLoadError: 'Could not load customers.',
           required: 'Complete required fields.',
+          invalidMac: 'Invalid MAC format. Use AA:BB:CC:DD:EE:FF.',
           saveError: 'Could not save license.',
           deleteError: 'Could not delete license.'
         },
@@ -716,6 +723,9 @@ const resources = {
           actions: 'Actions'
         },
         form: {
+          mac: 'Mac Address',
+          macPlaceholder: 'AA:BB:CC:DD:EE:FF',
+          macHelper: 'Format: AA:BB:CC:DD:EE:FF',
           deviceKey: 'Device key',
           deviceKeyHelper: 'Optional key for this device',
           paid: 'Payment status',
@@ -723,7 +733,14 @@ const resources = {
         },
         server: {
           updated: 'Server updated.',
-          error: 'Could not change server.'
+          error: 'Could not change server.',
+          removeTitle: 'Remove all playlists',
+          removeBody: 'This will remove every playlist from this device.',
+          removeSubmit: 'Remove playlists',
+          removeSuccess: 'All playlists removed from device.',
+          removeError: 'Could not remove playlists from device.',
+          removeRequired: 'Device MAC is required.',
+          removeNotAvailable: 'This action is not available yet in backend.'
         },
         transfer: {
           error: 'Could not transfer license.'
@@ -2966,6 +2983,12 @@ const resources = {
       licenses: {
         title: 'Licencias',
         search: 'Buscar (MAC, device key, cliente, estado)',
+        actions: {
+          server: 'Cambiar servidor',
+          transfer: 'Trasladar',
+          history: 'Historial',
+          removePlaylists: 'Quitar todas las playlists'
+        },
         filters: { status: 'Estado', payment: 'Pago', all: 'Todos' },
         paid: { paid: 'Pagada', pending: 'Pendiente' },
         messages: {
@@ -2975,6 +2998,7 @@ const resources = {
           loadError: 'No se pudieron cargar las licencias.',
           customersLoadError: 'No se pudieron cargar los clientes.',
           required: 'Completa los campos requeridos.',
+          invalidMac: 'Formato MAC inválido. Usa AA:BB:CC:DD:EE:FF.',
           saveError: 'No se pudo guardar la licencia.',
           deleteError: 'No se pudo eliminar la licencia.'
         },
@@ -2996,6 +3020,9 @@ const resources = {
           actions: 'Acciones'
         },
         form: {
+          mac: 'Mac Address',
+          macPlaceholder: 'AA:BB:CC:DD:EE:FF',
+          macHelper: 'Formato: AA:BB:CC:DD:EE:FF',
           deviceKey: 'Device key',
           deviceKeyHelper: 'Llave opcional para este dispositivo',
           paid: 'Estado de pago',
@@ -3003,7 +3030,14 @@ const resources = {
         },
         server: {
           updated: 'Servidor actualizado.',
-          error: 'No se pudo cambiar el servidor.'
+          error: 'No se pudo cambiar el servidor.',
+          removeTitle: 'Quitar todas las playlists',
+          removeBody: 'Esta acción eliminará todas las playlists de este dispositivo.',
+          removeSubmit: 'Quitar playlists',
+          removeSuccess: 'Se quitaron todas las playlists del dispositivo.',
+          removeError: 'No se pudieron quitar las playlists del dispositivo.',
+          removeRequired: 'La MAC del dispositivo es requerida.',
+          removeNotAvailable: 'Esta acción aún no está disponible en backend.'
         },
         transfer: {
           error: 'No se pudo trasladar.'

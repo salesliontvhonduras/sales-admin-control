@@ -61,13 +61,14 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
+import PlaylistRemoveIcon from '@mui/icons-material/PlaylistRemove';
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
-function RowActions({ row, onEdit, onTransfer, onServer, onHistory, onDelete, t }) {
+function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onHistory, onDelete, t }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   return (
@@ -121,6 +122,15 @@ function RowActions({ row, onEdit, onTransfer, onServer, onHistory, onDelete, t 
         <MenuItem
           onClick={() => {
             setAnchorEl(null);
+            onRemovePlaylists?.(row);
+          }}
+        >
+          <PlaylistRemoveIcon fontSize="small" style={{ marginRight: 8, color: '#fb8c00' }} />
+          {t('licenses.actions.removePlaylists', 'Remove all playlists')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
             onHistory?.(row);
           }}
         >
@@ -141,7 +151,7 @@ function RowActions({ row, onEdit, onTransfer, onServer, onHistory, onDelete, t 
   );
 }
 
-const STATUS_OPTIONS = ['ACTIVE', 'EXPIRED', 'AVAILABLE', 'EMERGENCY', 'NOT_TRANSFERRABLE'];
+const STATUS_OPTIONS = ['ACTIVE', 'INACTIVE', 'EXPIRED', 'AVAILABLE', 'EMERGENCY', 'NOT_TRANSFERRABLE'];
 const APPS = ['Vivo Player', 'Smart One', 'IboPro Player', 'Bob Player', '9xtream4k'];
 const LICENSE_PERIOD = ['ANNUAL', 'LIFETIME'];
 const TYPE_LICENSE = ['PRIMARY', 'USED'];
@@ -150,6 +160,20 @@ const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
   '& .MuiInputLabel-root': { fontWeight: 500 }
 };
+const MAC_ADDRESS_REGEX = /^[0-9A-F]{2}(:[0-9A-F]{2}){5}$/;
+
+function maskMacAddressInput(value) {
+  const hex = String(value ?? '')
+    .toUpperCase()
+    .replace(/[^0-9A-F]/g, '')
+    .slice(0, 12);
+  if (!hex) return '';
+  return hex.match(/.{1,2}/g)?.join(':') ?? '';
+}
+
+function isValidMacAddress(value) {
+  return MAC_ADDRESS_REGEX.test(String(value ?? '').toUpperCase());
+}
 
 function parsePaidValue(value) {
   if (value === true || value === 1 || value === '1') return true;
@@ -193,6 +217,12 @@ function LicenseStatusChip({ status }) {
       color: theme.palette.success.darker || theme.palette.success.dark,
       border: theme.palette.success.main,
       icon: <CheckCircleOutlineIcon fontSize="small" />
+    },
+    INACTIVE: {
+      bg: theme.palette.warning.lighter || `${theme.palette.warning.main}18`,
+      color: theme.palette.warning.darker || theme.palette.warning.dark,
+      border: theme.palette.warning.main,
+      icon: <PauseCircleOutlineIcon fontSize="small" />
     },
     EXPIRED: {
       bg: theme.palette.error.lighter || `${theme.palette.error.main}18`,
@@ -348,6 +378,7 @@ export default function LicensesLionTv() {
   const [history, setHistory] = useState([]);
   const [historyOpen, setHistoryOpen] = useState({ open: false, row: null });
   const [openServerChange, setOpenServerChange] = useState({ open: false, row: null });
+  const [openRemovePlaylists, setOpenRemovePlaylists] = useState({ open: false, row: null });
   const [serverForm, setServerForm] = useState({ serverKey: '', subscriptionId: '', lineId: '', username: '', password: '', country: '', playlistName: 'Principal' });
   const [serverOptions, setServerOptions] = useState([]);
 
@@ -590,6 +621,10 @@ export default function LicensesLionTv() {
 
   const handleFormChange = (field) => (e) => {
     const value = e.target.value;
+    if (field === 'macAddress') {
+      setForm((prev) => ({ ...prev, macAddress: maskMacAddressInput(value) }));
+      return;
+    }
     if (field === 'licensePeriod') {
       setForm((prev) => ({
         ...prev,
@@ -609,7 +644,7 @@ export default function LicensesLionTv() {
   const handleEdit = (row) => {
     setForm({
       licenseId: row.licenseId,
-      macAddress: row.macAddress,
+      macAddress: maskMacAddressInput(row.macAddress),
       name: row.name,
       deviceKey: row.deviceKey || '',
       customerId: row.customerId,
@@ -631,6 +666,11 @@ export default function LicensesLionTv() {
       enqueueSnackbar(t('licenses.messages.required'), { variant: 'warning' });
       return;
     }
+    const normalizedMacAddress = maskMacAddressInput(form.macAddress);
+    if (!isValidMacAddress(normalizedMacAddress)) {
+      enqueueSnackbar(t('licenses.messages.invalidMac', 'Invalid MAC format. Use AA:BB:CC:DD:EE:FF.'), { variant: 'warning' });
+      return;
+    }
 
     const normalizeExpireAt = (val) => {
       if (!val) return null;
@@ -639,7 +679,7 @@ export default function LicensesLionTv() {
     };
 
     const payload = {
-      macAddress: form.macAddress,
+      macAddress: normalizedMacAddress,
       name: form.name,
       deviceKey: form.deviceKey?.trim() || null,
       customerId: Number(form.customerId),
@@ -722,6 +762,10 @@ export default function LicensesLionTv() {
     setOpenServerChange({ open: true, row });
   };
 
+  const handleOpenRemovePlaylists = (row) => {
+    setOpenRemovePlaylists({ open: true, row });
+  };
+
   const handleSubscriptionSelect = (value) => {
     const sub = subscriptions.find((s) => (s.id || s.subscriptionId) === value);
     const lineId = sub?.lineId;
@@ -757,6 +801,72 @@ export default function LicensesLionTv() {
     } catch (err) {
       if (!handleUnauthorized(err)) {
         enqueueSnackbar(err?.response?.data?.message || err.message || t('licenses.server.error'), { variant: 'error' });
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const confirmRemovePlaylists = async () => {
+    const macAddress = openRemovePlaylists.row?.macAddress;
+    if (!macAddress) {
+      enqueueSnackbar(t('licenses.server.removeRequired', 'Device MAC is required.'), { variant: 'warning' });
+      return;
+    }
+
+    setSending(true);
+    try {
+      const res = await lionTvApi.post(
+        '/licenses/v1/change-server',
+        { serverKey: 'remove-all-device-playlists', macAddress, lineId: '' },
+        { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
+      );
+      const msg =
+        res?.data?.data?.message || res?.data?.message || t('licenses.server.removeSuccess', 'All playlists removed from device.');
+      enqueueSnackbar(msg, { variant: 'success' });
+      setOpenRemovePlaylists({ open: false, row: null });
+      setRefreshKey((v) => v + 1);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        const status = err?.response?.status;
+        const fallback =
+          status === 404
+            ? t('licenses.server.removeNotAvailable', 'This action is not available yet in backend.')
+            : t('licenses.server.removeError', 'Could not remove playlists from device.');
+        enqueueSnackbar(err?.response?.data?.message || err.message || fallback, { variant: 'error' });
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleRemovePlaylistsDirect = async () => {
+    const macAddress = openServerChange.row?.macAddress;
+    if (!macAddress) {
+      enqueueSnackbar(t('licenses.server.removeRequired', 'Device MAC is required.'), { variant: 'warning' });
+      return;
+    }
+
+    setSending(true);
+    try {
+      const res = await lionTvApi.post(
+        '/licenses/v1/change-server',
+        { serverKey: 'remove-all-device-playlists', macAddress, lineId: '' },
+        { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
+      );
+      const msg =
+        res?.data?.data?.message || res?.data?.message || t('licenses.server.removeSuccess', 'All playlists removed from device.');
+      enqueueSnackbar(msg, { variant: 'success' });
+      setOpenServerChange({ open: false, row: null });
+      setRefreshKey((v) => v + 1);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        const status = err?.response?.status;
+        const fallback =
+          status === 404
+            ? t('licenses.server.removeNotAvailable', 'This action is not available yet in backend.')
+            : t('licenses.server.removeError', 'Could not remove playlists from device.');
+        enqueueSnackbar(err?.response?.data?.message || err.message || fallback, { variant: 'error' });
       }
     } finally {
       setSending(false);
@@ -834,6 +944,7 @@ export default function LicensesLionTv() {
           {[
             { label: `${total} ${t('licenses.title').toLowerCase()}`, color: 'primary.main' },
             { label: `ACTIVE: ${rows.filter((r) => r.status === 'ACTIVE').length}`, color: 'success.main' },
+            { label: `INACTIVE: ${rows.filter((r) => r.status === 'INACTIVE').length}`, color: 'warning.main' },
             { label: `EXPIRED: ${rows.filter((r) => r.status === 'EXPIRED').length}`, color: 'warning.main' },
             { label: `AVAILABLE: ${rows.filter((r) => r.status === 'AVAILABLE').length}`, color: 'info.main' },
             { label: `EMERGENCY: ${rows.filter((r) => r.status === 'EMERGENCY').length}`, color: 'secondary.main' }
@@ -1122,6 +1233,7 @@ export default function LicensesLionTv() {
                       onEdit={handleEdit}
                       onTransfer={handleTransfer}
                       onServer={handleOpenServerChange}
+                      onRemovePlaylists={handleOpenRemovePlaylists}
                       onHistory={openHistory}
                       onDelete={handleDelete}
                     />
@@ -1265,8 +1377,11 @@ export default function LicensesLionTv() {
                     label={t('licenses.form.mac', 'Mac Address')}
                     value={form.macAddress}
                     onChange={handleFormChange('macAddress')}
+                    placeholder={t('licenses.form.macPlaceholder', 'AA:BB:CC:DD:EE:FF')}
+                    helperText={t('licenses.form.macHelper', 'Format: AA:BB:CC:DD:EE:FF')}
                     fullWidth
                     sx={fieldSx}
+                    inputProps={{ maxLength: 17 }}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -1632,11 +1747,52 @@ export default function LicensesLionTv() {
           </Stack>
         </DialogContent>
         <DialogActions>
+          <Button color="warning" variant="outlined" onClick={handleRemovePlaylistsDirect} disabled={sending}>
+            <Stack direction="row" spacing={0.75} alignItems="center">
+              <PlaylistRemoveIcon fontSize="small" />
+              <span>{sending ? t('actions.sending', 'Sending...') : t('licenses.server.removeSubmit', 'Remove playlists')}</span>
+            </Stack>
+          </Button>
           <Button onClick={() => setOpenServerChange({ open: false, row: null })}>
             {t('actions.cancel', 'Cancel')}
           </Button>
           <Button variant="contained" onClick={handleServerSubmit} disabled={sending}>
             {sending ? t('actions.sending', 'Sending...') : t('licenses.server.submit', 'Change server')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* REMOVE DEVICE PLAYLISTS */}
+      <Dialog
+        open={openRemovePlaylists.open}
+        onClose={() => setOpenRemovePlaylists({ open: false, row: null })}
+        maxWidth="xs"
+        fullWidth
+        fullScreen={isMobile}
+      >
+        <DialogTitleWithClose onClose={() => setOpenRemovePlaylists({ open: false, row: null })}>
+          {t('licenses.server.removeTitle', 'Remove all playlists')}
+        </DialogTitleWithClose>
+        <DialogContent dividers>
+          <Stack spacing={1.5}>
+            <Typography variant="body2">
+              {t('licenses.server.removeBody', 'This will remove every playlist from this device.')}
+            </Typography>
+            <Typography variant="body2">
+              {t('licenses.server.mac', 'Mac')}: <strong>{openRemovePlaylists.row?.macAddress || '-'}</strong>
+            </Typography>
+            <Typography variant="body2">
+              {t('licenses.server.customer', 'Customer')}:{' '}
+              <strong>{customerNameMap[openRemovePlaylists.row?.customerId] || '-'}</strong>
+            </Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenRemovePlaylists({ open: false, row: null })} disabled={sending}>
+            {t('actions.cancel', 'Cancel')}
+          </Button>
+          <Button onClick={confirmRemovePlaylists} color="warning" variant="contained" disabled={sending}>
+            {sending ? t('actions.sending', 'Sending...') : t('licenses.server.removeSubmit', 'Remove playlists')}
           </Button>
         </DialogActions>
       </Dialog>
