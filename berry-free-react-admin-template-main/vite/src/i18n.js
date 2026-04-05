@@ -47,7 +47,9 @@ const resources = {
         docs: 'Documentation',
         security: 'Security',
         userAccess: 'Users & Access',
-        userAccessCaption: 'Roles and permissions'
+        userAccessCaption: 'Roles and permissions',
+        panelAuths: 'Panel Integrations',
+        panelAuthsCaption: 'Vivo/9xtream credentials by user'
       },
       auth: {
         hi: 'Hi, Welcome Back',
@@ -1256,6 +1258,72 @@ const resources = {
           rowsPerPage: 'Rows per page:'
         }
       },
+      panelAuthAdmin: {
+        title: 'Panel Integrations',
+        subtitle: 'Manage Vivo Player and 9xtream credentials by system user from a single secure module.',
+        actions: {
+          refresh: 'Refresh',
+          new: 'New integration',
+          edit: 'Edit',
+          activate: 'Activate',
+          deactivate: 'Deactivate',
+          delete: 'Delete',
+          cancel: 'Cancel',
+          save: 'Save changes',
+          create: 'Create'
+        },
+        filters: {
+          username: 'System user',
+          provider: 'Provider',
+          status: 'Status',
+          all: 'All',
+          active: 'Active',
+          inactive: 'Inactive'
+        },
+        table: {
+          user: 'User',
+          provider: 'Provider',
+          panelUser: 'Panel user',
+          apiUrl: 'API URL',
+          cmsUrl: 'CMS URL',
+          status: 'Status',
+          updatedAt: 'Updated',
+          actions: 'Actions',
+          empty: 'No panel integrations were found with current filters.'
+        },
+        form: {
+          username: 'System user',
+          provider: 'Provider',
+          usernamePanel: 'Panel user',
+          password: 'Panel password',
+          passwordOptional: 'Panel password (optional)',
+          apiBaseUrl: 'API base URL',
+          cmsBaseUrl: 'CMS base URL'
+        },
+        status: {
+          active: 'ACTIVE',
+          inactive: 'INACTIVE'
+        },
+        dialogs: {
+          createTitle: 'Create integration',
+          editTitle: 'Edit integration',
+          deleteTitle: 'Delete integration',
+          deleteMessage: 'This action will permanently remove this panel integration.'
+        },
+        messages: {
+          apiMissing: 'VITE_API_VIVO_PLAYER is not configured. Add this environment variable to use this module.',
+          requiredFields: 'Complete user, provider and panel user.',
+          passwordRequired: 'Password is required when creating an integration.',
+          loadError: 'Could not load panel integrations.',
+          created: 'Integration created successfully.',
+          updated: 'Integration updated successfully.',
+          deleted: 'Integration deleted successfully.',
+          saveError: 'Could not save integration.',
+          deleteError: 'Could not delete integration.',
+          statusUpdated: 'Status updated successfully.',
+          statusError: 'Could not update status.'
+        }
+      },
       sidebarRadar: {
         title: 'Operational Radar',
         subtitle: 'Expirations and collections',
@@ -2344,7 +2412,9 @@ const resources = {
         docs: 'Documentación',
         security: 'Seguridad',
         userAccess: 'Usuarios y Accesos',
-        userAccessCaption: 'Roles y permisos'
+        userAccessCaption: 'Roles y permisos',
+        panelAuths: 'Integraciones de Panel',
+        panelAuthsCaption: 'Credenciales Vivo/9xtream por usuario'
       },
       auth: {
         hi: 'Hola, bienvenido',
@@ -3551,6 +3621,72 @@ const resources = {
         },
         pagination: {
           rowsPerPage: 'Filas por página:'
+        }
+      },
+      panelAuthAdmin: {
+        title: 'Integraciones de Panel',
+        subtitle: 'Administra credenciales de Vivo Player y 9xtream por usuario del sistema desde un solo módulo seguro.',
+        actions: {
+          refresh: 'Refrescar',
+          new: 'Nueva integración',
+          edit: 'Editar',
+          activate: 'Activar',
+          deactivate: 'Inactivar',
+          delete: 'Eliminar',
+          cancel: 'Cancelar',
+          save: 'Guardar cambios',
+          create: 'Crear'
+        },
+        filters: {
+          username: 'Usuario del sistema',
+          provider: 'Proveedor',
+          status: 'Estado',
+          all: 'Todos',
+          active: 'Activos',
+          inactive: 'Inactivos'
+        },
+        table: {
+          user: 'Usuario',
+          provider: 'Proveedor',
+          panelUser: 'Usuario de panel',
+          apiUrl: 'URL API',
+          cmsUrl: 'URL CMS',
+          status: 'Estado',
+          updatedAt: 'Actualizado',
+          actions: 'Acciones',
+          empty: 'No se encontraron integraciones con los filtros actuales.'
+        },
+        form: {
+          username: 'Usuario del sistema',
+          provider: 'Proveedor',
+          usernamePanel: 'Usuario de panel',
+          password: 'Password de panel',
+          passwordOptional: 'Password de panel (opcional)',
+          apiBaseUrl: 'URL base API',
+          cmsBaseUrl: 'URL base CMS'
+        },
+        status: {
+          active: 'ACTIVO',
+          inactive: 'INACTIVO'
+        },
+        dialogs: {
+          createTitle: 'Crear integración',
+          editTitle: 'Editar integración',
+          deleteTitle: 'Eliminar integración',
+          deleteMessage: 'Esta acción eliminará permanentemente esta integración de panel.'
+        },
+        messages: {
+          apiMissing: 'VITE_API_VIVO_PLAYER no está configurado. Agrega esta variable de entorno para usar este módulo.',
+          requiredFields: 'Completa usuario, proveedor y usuario de panel.',
+          passwordRequired: 'El password es obligatorio al crear una integración.',
+          loadError: 'No se pudieron cargar las integraciones de panel.',
+          created: 'Integración creada correctamente.',
+          updated: 'Integración actualizada correctamente.',
+          deleted: 'Integración eliminada correctamente.',
+          saveError: 'No se pudo guardar la integración.',
+          deleteError: 'No se pudo eliminar la integración.',
+          statusUpdated: 'Estado actualizado correctamente.',
+          statusError: 'No se pudo actualizar el estado.'
         }
       },
       sidebarRadar: {

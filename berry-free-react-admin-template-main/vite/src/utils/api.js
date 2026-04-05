@@ -11,6 +11,7 @@ const API_CATALOGS = import.meta.env.VITE_API_CATALOGS;
 const API_LIONTV = import.meta.env.VITE_API_LIONTV;
 const API_SAGA = import.meta.env.VITE_API_SAGA;
 const API_SHOPIFY_DEMOS = import.meta.env.VITE_API_SHOPIFY_DEMOS;
+const API_VIVO_PLAYER = import.meta.env.VITE_API_VIVO_PLAYER;
 const COOKIE_MODE = isCookieSessionMode();
 const REFRESH_PATH = import.meta.env.VITE_AUTH_REFRESH_PATH || '/auth/v1/session/refresh';
 const REFRESH_ENABLED = String(import.meta.env.VITE_AUTH_REFRESH_ENABLED || 'true').toLowerCase() !== 'false';
@@ -36,6 +37,12 @@ export const catalogsApi = axios.create({
 
 export const shopifyDemosApi = axios.create({
   baseURL: API_SHOPIFY_DEMOS,
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: COOKIE_MODE
+});
+
+export const vivoPlayerApi = axios.create({
+  baseURL: API_VIVO_PLAYER,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: COOKIE_MODE
 });
@@ -95,6 +102,7 @@ lionTvApi.interceptors.request.use(attachToken);
 catalogsApi.interceptors.request.use(attachToken);
 sagaApi.interceptors.request.use(attachToken);
 shopifyDemosApi.interceptors.request.use(attachToken);
+vivoPlayerApi.interceptors.request.use(attachToken);
 
 // (Opcional) Manejo global de errores
 authApi.interceptors.response.use(
@@ -121,7 +129,7 @@ smsApi.interceptors.response.use(
   }
 );
 
-const apiClients = [authApi, usersApi, productsApi, reservationsApi, smsApi, lionTvApi, catalogsApi, sagaApi, shopifyDemosApi];
+const apiClients = [authApi, usersApi, productsApi, reservationsApi, smsApi, lionTvApi, catalogsApi, sagaApi, shopifyDemosApi, vivoPlayerApi];
 
 let refreshPromise = null;
 

@@ -160,19 +160,19 @@ const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
   '& .MuiInputLabel-root': { fontWeight: 500 }
 };
-const MAC_ADDRESS_REGEX = /^[0-9A-F]{2}(:[0-9A-F]{2}){5}$/;
+const MAC_ADDRESS_REGEX = /^[0-9a-f]{2}(:[0-9a-f]{2}){5}$/;
 
 function maskMacAddressInput(value) {
   const hex = String(value ?? '')
-    .toUpperCase()
-    .replace(/[^0-9A-F]/g, '')
+    .toLowerCase()
+    .replace(/[^0-9a-f]/g, '')
     .slice(0, 12);
   if (!hex) return '';
   return hex.match(/.{1,2}/g)?.join(':') ?? '';
 }
 
 function isValidMacAddress(value) {
-  return MAC_ADDRESS_REGEX.test(String(value ?? '').toUpperCase());
+  return MAC_ADDRESS_REGEX.test(String(value ?? '').toLowerCase());
 }
 
 function parsePaidValue(value) {
@@ -668,7 +668,7 @@ export default function LicensesLionTv() {
     }
     const normalizedMacAddress = maskMacAddressInput(form.macAddress);
     if (!isValidMacAddress(normalizedMacAddress)) {
-      enqueueSnackbar(t('licenses.messages.invalidMac', 'Invalid MAC format. Use AA:BB:CC:DD:EE:FF.'), { variant: 'warning' });
+      enqueueSnackbar(t('licenses.messages.invalidMac', 'Invalid MAC format. Use aa:bb:cc:dd:ee:ff.'), { variant: 'warning' });
       return;
     }
 
@@ -751,7 +751,7 @@ export default function LicensesLionTv() {
     const customer = customers.find((c) => (c.customerId || c.id) === row.customerId);
     const country = countryFromPhone(customer?.customerPhone || customer?.customer_phone || '');
     setServerForm({
-      serverUrl: '',
+      serverKey: '',
       subscriptionId: '',
       lineId: '',
       username: '',
@@ -1377,8 +1377,8 @@ export default function LicensesLionTv() {
                     label={t('licenses.form.mac', 'Mac Address')}
                     value={form.macAddress}
                     onChange={handleFormChange('macAddress')}
-                    placeholder={t('licenses.form.macPlaceholder', 'AA:BB:CC:DD:EE:FF')}
-                    helperText={t('licenses.form.macHelper', 'Format: AA:BB:CC:DD:EE:FF')}
+                    placeholder={t('licenses.form.macPlaceholder', 'aa:bb:cc:dd:ee:ff')}
+                    helperText={t('licenses.form.macHelper', 'Format: aa:bb:cc:dd:ee:ff')}
                     fullWidth
                     sx={fieldSx}
                     inputProps={{ maxLength: 17 }}

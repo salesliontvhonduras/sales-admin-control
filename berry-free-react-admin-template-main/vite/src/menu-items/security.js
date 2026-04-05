@@ -1,7 +1,8 @@
-import { IconShieldLock } from '@tabler/icons-react';
+import { IconKey, IconShieldLock } from '@tabler/icons-react';
 
 const icons = {
-  IconShieldLock
+  IconShieldLock,
+  IconKey
 };
 
 const security = {
@@ -17,6 +18,16 @@ const security = {
       type: 'item',
       url: '/admin/users-access',
       icon: icons.IconShieldLock,
+      breadcrumbs: true,
+      permission: { any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
+    },
+    {
+      id: 'security-panel-auths',
+      title: 'menu.panelAuths',
+      caption: 'menu.panelAuthsCaption',
+      type: 'item',
+      url: '/admin/panel-auths',
+      icon: icons.IconKey,
       breadcrumbs: true,
       permission: { any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
     }

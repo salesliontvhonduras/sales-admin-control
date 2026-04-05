@@ -27,6 +27,7 @@ const LicensesLionTv = Loadable(lazy(() => import('views/liontv/LicensesLionTv')
 const LinesLionTv = Loadable(lazy(() => import('views/liontv/LinesLionTv')));
 const PlusLinesExplorer = Loadable(lazy(() => import('views/liontv/PlusLinesExplorer')));
 const UserAccessAdmin = Loadable(lazy(() => import('views/security/UserAccessAdmin')));
+const PanelAuthMultiAppAdmin = Loadable(lazy(() => import('views/security/PanelAuthMultiAppAdmin')));
 
 const protectPage = (permission, element, fallbackPath = '/dashboard/default') => (
   <RequirePermission permission={permission} fallbackPath={fallbackPath}>
@@ -163,6 +164,10 @@ const MainRoutes = {
             {
               path: '/admin/users-access',
               element: <UserAccessAdmin />
+            },
+            {
+              path: '/admin/panel-auths',
+              element: <PanelAuthMultiAppAdmin />
             }
           ]
         }
