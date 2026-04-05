@@ -11,7 +11,20 @@ const API_CATALOGS = import.meta.env.VITE_API_CATALOGS;
 const API_LIONTV = import.meta.env.VITE_API_LIONTV;
 const API_SAGA = import.meta.env.VITE_API_SAGA;
 const API_SHOPIFY_DEMOS = import.meta.env.VITE_API_SHOPIFY_DEMOS;
-const API_VIVO_PLAYER = import.meta.env.VITE_API_VIVO_PLAYER;
+const API_VIVO_PLAYER = (() => {
+  const direct = import.meta.env.VITE_API_VIVO_PLAYER;
+  if (direct) return direct;
+
+  const lionTv = import.meta.env.VITE_API_LIONTV;
+  if (!lionTv) return '';
+
+  const trimmed = String(lionTv).replace(/\/+$/, '');
+  if (trimmed.endsWith('/panel-lion-tv')) {
+    return `${trimmed.slice(0, -'/panel-lion-tv'.length)}/vivo-player`;
+  }
+
+  return '';
+})();
 const COOKIE_MODE = isCookieSessionMode();
 const REFRESH_PATH = import.meta.env.VITE_AUTH_REFRESH_PATH || '/auth/v1/session/refresh';
 const REFRESH_ENABLED = String(import.meta.env.VITE_AUTH_REFRESH_ENABLED || 'true').toLowerCase() !== 'false';

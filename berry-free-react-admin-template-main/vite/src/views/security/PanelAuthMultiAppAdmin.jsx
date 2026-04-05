@@ -59,7 +59,11 @@ function formatDateTime(value) {
 export default function PanelAuthMultiAppAdmin() {
   const { t } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
-  const apiConfigured = Boolean(import.meta.env.VITE_API_VIVO_PLAYER);
+  const apiConfigured = useMemo(() => {
+    if (import.meta.env.VITE_API_VIVO_PLAYER) return true;
+    const lionTv = import.meta.env.VITE_API_LIONTV;
+    return Boolean(lionTv && String(lionTv).includes('/panel-lion-tv'));
+  }, []);
 
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
