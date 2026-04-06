@@ -1342,6 +1342,10 @@ export default function LinesLionTv() {
                       <MenuItem value="LION_TV">LION_TV</MenuItem>
                       <MenuItem value="TITAN">TITAN</MenuItem>
                       <MenuItem value="LION_PLUS+">LION_PLUS+</MenuItem>
+                      <MenuItem value="SPOTIFY">SPOTIFY</MenuItem>
+                      <MenuItem value="NETFLIX">NETFLIX</MenuItem>
+                      <MenuItem value="AMAZON_PRIME">AMAZON PRIME</MenuItem>
+                      <MenuItem value="YOUTUBE_PREMIUM">YOUTUBE PREMIUM</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
