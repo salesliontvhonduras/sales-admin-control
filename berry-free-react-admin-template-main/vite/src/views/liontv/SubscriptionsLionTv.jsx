@@ -434,7 +434,7 @@ export default function SubscriptionsLionTv() {
     try {
       const res = await lionTvApi.get('/lines/v1/list-lines', {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: 0, size: 200 },
+        params: { index: 0, size: 1000 },
         skipAuthRedirect: true
       });
       const payload = res?.data?.data ?? res?.data ?? {};
