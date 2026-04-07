@@ -10,10 +10,12 @@ const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
 const API_CATALOGS = import.meta.env.VITE_API_CATALOGS;
 const API_LIONTV = import.meta.env.VITE_API_LIONTV;
 
+const trimTrailingSlash = (value) => String(value || '').replace(/\/+$/, '');
+
 const normalizeM3uBaseUrl = (value) => {
   if (!value) return '';
 
-  let normalized = String(value).replace(/\/+$/, '');
+  let normalized = trimTrailingSlash(value);
 
   if (normalized.includes('/sales/catalogs')) {
     normalized = normalized.replace('/sales/catalogs', '/sales/m3u');
@@ -26,12 +28,40 @@ const normalizeM3uBaseUrl = (value) => {
   return normalized;
 };
 
+const normalizeCatalogsBaseUrl = (value) => {
+  if (!value) return '';
+
+  let normalized = trimTrailingSlash(value);
+
+  if (normalized.includes('/sales/m3u')) {
+    normalized = normalized.replace('/sales/m3u', '/sales/catalogs');
+  } else if (normalized.endsWith('/m3u')) {
+    normalized = `${normalized.slice(0, -'/m3u'.length)}/catalogs`;
+  } else if (normalized.endsWith('/panel-lion-tv')) {
+    normalized = `${normalized.slice(0, -'/panel-lion-tv'.length)}/catalogs`;
+  }
+
+  return normalized;
+};
+
 const API_M3U_CATALOG = (() => {
   const direct = normalizeM3uBaseUrl(import.meta.env.VITE_API_M3U_CATALOG);
   if (direct) return direct;
 
   const lionTv = normalizeM3uBaseUrl(import.meta.env.VITE_API_LIONTV);
   if (lionTv) return lionTv;
+
+  return '';
+})();
+const API_M3U_CATALOG_FALLBACK = (() => {
+  const directCatalogs = trimTrailingSlash(API_CATALOGS);
+  if (directCatalogs && directCatalogs !== API_M3U_CATALOG) return directCatalogs;
+
+  const explicitCatalogs = normalizeCatalogsBaseUrl(import.meta.env.VITE_API_M3U_CATALOG);
+  if (explicitCatalogs && explicitCatalogs !== API_M3U_CATALOG) return explicitCatalogs;
+
+  const lionTvCatalogs = normalizeCatalogsBaseUrl(import.meta.env.VITE_API_LIONTV);
+  if (lionTvCatalogs && lionTvCatalogs !== API_M3U_CATALOG) return lionTvCatalogs;
 
   return '';
 })();
@@ -149,6 +179,39 @@ catalogsApi.interceptors.request.use(attachToken);
 sagaApi.interceptors.request.use(attachToken);
 shopifyDemosApi.interceptors.request.use(attachToken);
 vivoPlayerApi.interceptors.request.use(attachToken);
+
+function shouldRetryM3uCatalogRequest(error) {
+  if (!API_M3U_CATALOG_FALLBACK) return false;
+
+  const originalRequest = error?.config;
+  if (!originalRequest || originalRequest._m3uCatalogFallbackRetried) return false;
+
+  const status = Number(error?.response?.status ?? 0);
+  const message = String(error?.response?.data?.message || error?.message || '').toLowerCase();
+  const currentBaseUrl = trimTrailingSlash(originalRequest.baseURL || API_M3U_CATALOG);
+
+  return (
+    status === 503 &&
+    message.includes('name resolution failed') &&
+    currentBaseUrl === trimTrailingSlash(API_M3U_CATALOG)
+  );
+}
+
+// Kong currently exposes some M3U routes through the catalogs upstream when the /sales/m3u upstream cannot resolve.
+m3uCatalogApi.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (!shouldRetryM3uCatalogRequest(error)) {
+      return Promise.reject(error);
+    }
+
+    return m3uCatalogApi.request({
+      ...error.config,
+      baseURL: API_M3U_CATALOG_FALLBACK,
+      _m3uCatalogFallbackRetried: true
+    });
+  }
+);
 
 // (Opcional) Manejo global de errores
 authApi.interceptors.response.use(

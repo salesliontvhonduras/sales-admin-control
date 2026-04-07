@@ -345,7 +345,7 @@ export default function M3uLineSourcesLionTv() {
                   <Typography variant="body2">
                     {t(
                       'catalog.lineSources.step1',
-                      '1) Selecciona una línea activa (lineId + username) desde el selector. El username mostrado es el username de la línea en lines_data.'
+                      '1) Selecciona la llave de línea (lineId + username) desde el selector. Este listado usa el endpoint line-options de M3U y la llave exacta de lines_data.'
                     )}
                   </Typography>
                   <Typography variant="body2">
@@ -379,7 +379,7 @@ export default function M3uLineSourcesLionTv() {
                     onChange={(event) => setSelectedLineKey(event.target.value)}
                     helperText={t(
                       'catalog.lineSources.lineSelectHelper',
-                      'Este selector se alimenta de lines_data (líneas activas).'
+                      'Este selector usa /api/v1/line-sources/line-options y devuelve la llave exacta requerida por M3U.'
                     )}
                   >
                     <MenuItem value="">{t('catalog.lineSources.lineSelectPlaceholder', 'Seleccionar línea...')}</MenuItem>
@@ -404,10 +404,10 @@ export default function M3uLineSourcesLionTv() {
                 <Grid item xs={12} md={3}>
                   <TextField
                     fullWidth
-                    label={t('catalog.source.username', 'Username')}
+                    label={t('catalog.source.username', 'Username de busqueda')}
                     value={lineSourceForm.username}
                     InputProps={{ readOnly: true }}
-                    helperText={t('catalog.source.usernameHelper', 'Username de la línea (no es el token).')}
+                    helperText={t('catalog.source.usernameHelper', 'Username interno que usa el servicio M3U para buscar la línea.')}
                   />
                 </Grid>
 

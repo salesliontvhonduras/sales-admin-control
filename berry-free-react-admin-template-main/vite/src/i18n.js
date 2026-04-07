@@ -2319,12 +2319,12 @@ const resources = {
         lineSources: {
           title: 'Line Source Configuration',
           howItWorks: 'How this module works',
-          step1: '1) Select a line (lineId + username) from the selector. This list comes from the same Lines endpoint used in Subscriptions.',
+          step1: '1) Select a line key (lineId + username) from the selector. This list comes from the M3U line-options endpoint and uses the exact key stored in lines_data.',
           step2: '2) Configure source M3U URL and provider, then save.',
           step3: '3) To test the flow, use the line token: import catalog and/or download final M3U.',
           configTitle: 'Source playlist configuration per line',
           lineSelect: 'Select line (lineId / username)',
-          lineSelectHelper: 'This selector uses /lines/v1/list-lines (same endpoint as Subscriptions).',
+          lineSelectHelper: 'This selector uses /api/v1/line-sources/line-options and returns the exact lineId + username required by the M3U service.',
           lineSelectPlaceholder: 'Select line...'
         },
         baseHowItWorks: {
@@ -2354,8 +2354,8 @@ const resources = {
         source: {
           lineId: 'Line ID',
           lineIdHelper: 'Technical identifier of selected line.',
-          username: 'Username',
-          usernameHelper: 'Line username (this is not the token).',
+          username: 'Lookup username',
+          usernameHelper: 'Internal username key used by the M3U service for line lookup.',
           url: 'Original playlist URL',
           provider: 'Provider',
           providerHelper: 'Use the same provider catalog used in Lines module.',
@@ -4160,12 +4160,12 @@ const resources = {
         lineSources: {
           title: 'Configuración de Fuentes por Línea',
           howItWorks: 'Cómo funciona este módulo',
-          step1: '1) Selecciona una línea (lineId + username). Este listado viene del mismo endpoint de Lines que usa Subscriptions.',
+          step1: '1) Selecciona la llave de línea (lineId + username). Este listado viene del endpoint line-options de M3U y usa la llave exacta guardada en lines_data.',
           step2: '2) Configura URL source M3U y provider, luego guarda.',
           step3: '3) Para pruebas usa el token de la línea: importar y/o descargar M3U final.',
           configTitle: 'Configuración de source playlist por línea',
           lineSelect: 'Selecciona línea (lineId / username)',
-          lineSelectHelper: 'Este selector usa /lines/v1/list-lines (igual que Subscriptions).',
+          lineSelectHelper: 'Este selector usa /api/v1/line-sources/line-options y devuelve el lineId + username exacto que requiere el servicio M3U.',
           lineSelectPlaceholder: 'Seleccionar línea...'
         },
         baseHowItWorks: {
@@ -4195,8 +4195,8 @@ const resources = {
         source: {
           lineId: 'Line ID',
           lineIdHelper: 'Identificador técnico de la línea seleccionada.',
-          username: 'Username',
-          usernameHelper: 'Username de la línea (esto no es el token).',
+          username: 'Username de búsqueda',
+          usernameHelper: 'Username interno que usa el servicio M3U para buscar la línea.',
           url: 'URL playlist original',
           provider: 'Proveedor',
           providerHelper: 'Usa el mismo catálogo de provider del módulo Lines.',

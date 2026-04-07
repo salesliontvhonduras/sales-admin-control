@@ -1,4 +1,4 @@
-import { lionTvApi, m3uCatalogApi } from 'utils/api';
+import { m3uCatalogApi } from 'utils/api';
 
 const CATALOG_BASE_PATH = '/api/v1/catalog';
 const BASE_SOURCE_PATH = '/api/v1/base-source';
@@ -239,27 +239,26 @@ export async function createCategory({ accessToken, payload } = {}) {
 }
 
 export async function listLineOptions({ accessToken } = {}) {
-  const response = await lionTvApi.get('/lines/v1/list-lines', {
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-    params: { index: 0, size: 1000 },
-    skipAuthRedirect: true
-  });
-
-  const payload = response?.data?.data ?? response?.data ?? {};
-  const raw = payload.data ?? payload.items ?? payload.content ?? payload ?? [];
+  const response = await m3uCatalogApi.get(`${LINE_SOURCES_BASE_PATH}/line-options`, buildConfig(accessToken));
+  const raw = unwrap(response) ?? [];
   const list = Array.isArray(raw) ? raw : [];
 
   const sorted = list.sort((a, b) => {
-    const aName = (a.username || a.user_name || '').toString().toLowerCase();
-    const bName = (b.username || b.user_name || '').toString().toLowerCase();
+    const aLineId = String(a.lineId ?? a.line_id ?? '').toLowerCase();
+    const bLineId = String(b.lineId ?? b.line_id ?? '').toLowerCase();
+    const lineIdCompare = aLineId.localeCompare(bLineId);
+    if (lineIdCompare !== 0) return lineIdCompare;
+
+    const aName = String(a.username ?? '').toLowerCase();
+    const bName = String(b.username ?? '').toLowerCase();
     return aName.localeCompare(bName);
   });
 
   return sorted.map((item) =>
     normalizeLineOption({
-      lineId: item.id ?? item.lineId ?? item.line_id ?? '',
-      username: item.username ?? item.user_name ?? item.username_line ?? '',
-      provider: item.provider ?? item.line_provider ?? item.lineProvider ?? '',
+      lineId: item.lineId ?? item.line_id ?? item.id ?? '',
+      username: item.username ?? '',
+      provider: item.provider ?? '',
       token: item.token ?? ''
     })
   );
