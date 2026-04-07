@@ -5,6 +5,7 @@ const BASE_SOURCE_PATH = '/api/v1/base-source';
 const BASE_CATALOG_PATH = '/api/v1/base-catalog';
 const CATEGORIES_BASE_PATH = '/api/v1/categories';
 const LINE_SOURCES_BASE_PATH = '/api/v1/line-sources';
+const PROVIDER_TEMPLATES_BASE_PATH = '/api/v1/provider-templates';
 const PLAYLIST_BASE_PATH = '/api/v1/m3u';
 
 function buildConfig(accessToken, extra = {}) {
@@ -91,8 +92,7 @@ function normalizeLineSource(item = {}) {
   return {
     id: item.id ?? null,
     lineId: item.lineId ?? item.line_id ?? '',
-    username: item.username ?? '',
-    sourcePlaylistUrl: item.sourcePlaylistUrl ?? item.source_playlist_url ?? '',
+    usernameEncode: item.usernameEncode ?? item.username_encode ?? '',
     sourceProviderName: item.sourceProviderName ?? item.source_provider_name ?? '',
     cacheTtlMinutes: item.cacheTtlMinutes ?? item.cache_ttl_minutes ?? 30,
     active: item.active !== undefined ? Boolean(item.active) : true,
@@ -105,10 +105,21 @@ function normalizeLineSource(item = {}) {
 function normalizeLineOption(item = {}) {
   return {
     lineId: item.lineId ?? item.line_id ?? '',
-    username: item.username ?? '',
     usernameEncode: item.usernameEncode ?? item.username_encode ?? '',
-    provider: item.provider ?? '',
-    token: item.token ?? ''
+    provider: item.provider ?? ''
+  };
+}
+
+function normalizeProviderTemplate(item = {}) {
+  return {
+    id: item.id ?? null,
+    providerCode: item.providerCode ?? item.provider_code ?? '',
+    baseUrl: item.baseUrl ?? item.base_url ?? '',
+    playlistType: item.playlistType ?? item.playlist_type ?? 'm3u_plus',
+    outputFormat: item.outputFormat ?? item.output_format ?? 'ts',
+    active: item.active !== undefined ? Boolean(item.active) : true,
+    createdAt: item.createdAt ?? item.created_at ?? null,
+    updatedAt: item.updatedAt ?? item.updated_at ?? null
   };
 }
 
@@ -175,14 +186,14 @@ export async function assignBaseCatalogItemCategory({ accessToken, id, payload }
   return normalizeBaseCatalogItem(unwrap(response) || {});
 }
 
-export async function importCatalogByToken({ accessToken, token } = {}) {
-  const safeToken = String(token || '').trim();
-  if (!safeToken) {
-    throw new Error('token is required');
+export async function importCatalogByLineId({ accessToken, lineId } = {}) {
+  const safeLineId = String(lineId || '').trim();
+  if (!safeLineId) {
+    throw new Error('lineId is required');
   }
 
   const response = await m3uCatalogApi.post(
-    `${CATALOG_BASE_PATH}/import/token/${encodeURIComponent(safeToken)}`,
+    `${CATALOG_BASE_PATH}/import/line/${encodeURIComponent(safeLineId)}`,
     {},
     buildConfig(accessToken)
   );
@@ -250,18 +261,16 @@ export async function listLineOptions({ accessToken } = {}) {
     const lineIdCompare = aLineId.localeCompare(bLineId);
     if (lineIdCompare !== 0) return lineIdCompare;
 
-    const aName = String(a.usernameEncode ?? a.username ?? '').toLowerCase();
-    const bName = String(b.usernameEncode ?? b.username ?? '').toLowerCase();
+    const aName = String(a.usernameEncode ?? '').toLowerCase();
+    const bName = String(b.usernameEncode ?? '').toLowerCase();
     return aName.localeCompare(bName);
   });
 
   return sorted.map((item) =>
     normalizeLineOption({
       lineId: item.lineId ?? item.line_id ?? item.id ?? '',
-      username: item.username ?? '',
       usernameEncode: item.usernameEncode ?? item.username_encode ?? '',
-      provider: item.provider ?? '',
-      token: item.token ?? ''
+      provider: item.provider ?? ''
     })
   );
 }
@@ -279,14 +288,13 @@ export async function listLineSources({ accessToken, lineId = '', username = '',
 
 export async function getLineSourceByLine({ accessToken, lineId, username } = {}) {
   const safeLineId = String(lineId || '').trim();
-  const safeUsername = String(username || '').trim();
-  if (!safeLineId || !safeUsername) {
-    throw new Error('lineId and username are required');
+  if (!safeLineId) {
+    throw new Error('lineId is required');
   }
 
   const response = await m3uCatalogApi.get(
     `${LINE_SOURCES_BASE_PATH}/by-line`,
-    buildConfig(accessToken, { params: { lineId: safeLineId, username: safeUsername } })
+    buildConfig(accessToken, { params: { lineId: safeLineId } })
   );
   return normalizeLineSource(unwrap(response) || {});
 }
@@ -296,14 +304,47 @@ export async function upsertLineSource({ accessToken, payload } = {}) {
   return normalizeLineSource(unwrap(response) || {});
 }
 
-export async function downloadM3uByToken({ accessToken, token } = {}) {
-  const safeToken = String(token || '').trim();
-  if (!safeToken) {
-    throw new Error('token is required');
+export async function listProviderTemplates({ accessToken } = {}) {
+  const response = await m3uCatalogApi.get(PROVIDER_TEMPLATES_BASE_PATH, buildConfig(accessToken));
+  const payload = unwrap(response);
+  return Array.isArray(payload) ? payload.map(normalizeProviderTemplate) : [];
+}
+
+export async function getProviderTemplate({ accessToken, providerCode } = {}) {
+  const safeProviderCode = String(providerCode || '').trim();
+  if (!safeProviderCode) {
+    throw new Error('providerCode is required');
   }
 
   const response = await m3uCatalogApi.get(
-    `${PLAYLIST_BASE_PATH}/token/${encodeURIComponent(safeToken)}`,
+    `${PROVIDER_TEMPLATES_BASE_PATH}/${encodeURIComponent(safeProviderCode)}`,
+    buildConfig(accessToken)
+  );
+  return normalizeProviderTemplate(unwrap(response) || {});
+}
+
+export async function upsertProviderTemplate({ accessToken, providerCode, payload } = {}) {
+  const safeProviderCode = String(providerCode || '').trim();
+  if (!safeProviderCode) {
+    throw new Error('providerCode is required');
+  }
+
+  const response = await m3uCatalogApi.put(
+    `${PROVIDER_TEMPLATES_BASE_PATH}/${encodeURIComponent(safeProviderCode)}`,
+    payload || {},
+    buildConfig(accessToken)
+  );
+  return normalizeProviderTemplate(unwrap(response) || {});
+}
+
+export async function downloadM3uByLineId({ accessToken, lineId } = {}) {
+  const safeLineId = String(lineId || '').trim();
+  if (!safeLineId) {
+    throw new Error('lineId is required');
+  }
+
+  const response = await m3uCatalogApi.get(
+    `${PLAYLIST_BASE_PATH}/line/${encodeURIComponent(safeLineId)}`,
     buildConfig(accessToken, {
       responseType: 'blob',
       headers: { Accept: 'application/x-mpegURL,text/plain,*/*' }

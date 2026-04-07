@@ -2306,6 +2306,7 @@ const resources = {
         title: 'Global Base Catalog Curation',
         actions: {
           refresh: 'Refresh',
+          refreshProviders: 'Refresh providers',
           loading: 'Loading...',
           importing: 'Importing...',
           import: 'Import catalog',
@@ -2314,27 +2315,66 @@ const resources = {
           testing: 'Testing...',
           fullFlowTest: 'Test full flow',
           clearFilters: 'Clear filters',
-          applyFilters: 'Apply filters'
+          applyFilters: 'Apply filters',
+          openCatalog: 'Open base catalog',
+          openLineSources: 'Open M3U line sources'
+        },
+        overview: {
+          baseEyebrow: 'Global catalog preparation',
+          baseTitle: 'Prepare the master catalog before touching individual lines',
+          baseDescription:
+            'This screen is the shared preparation layer: save the global source, import the master playlist, classify titles and define the categories that later shape the final M3U grouping.',
+          lineEyebrow: 'Per-line Xtream workflow',
+          lineTitle: 'Configure, validate and download the final M3U by lineId',
+          lineDescription:
+            'This screen guides the operator through one line at a time: choose the line, save provider settings, tune the Xtream template and only then run import or download.'
+        },
+        flow: {
+          title: 'Operator flow',
+          baseSetupTitle: 'Save global base source',
+          baseSetupBody: 'Define the master playlist URL and provider used to curate the shared catalog.',
+          baseImportTitle: 'Import the shared catalog',
+          baseImportBody: 'Run the base import to populate items that later feed category matching.',
+          curateTitle: 'Assign manual categories',
+          curateBody: 'Review titles, refine filters and assign categories that should override the final output.',
+          lineRunTitle: 'Continue to per-line M3U',
+          lineRunBody: 'Move to the per-line screen only after the base catalog feels ready.',
+          linePickTitle: 'Choose the line',
+          linePickBody: 'Pick the line you want to operate.',
+          lineAssignTitle: 'Save line settings',
+          lineAssignBody: 'Assign provider and cache TTL for the selected line.',
+          templateTitle: 'Tune provider template',
+          templateBody: 'Define the common Xtream host, type and output for this provider.',
+          runTitle: 'Import and download',
+          runBody: 'Run catalog import and download the final M3U by lineId.'
         },
         lineSources: {
-          title: 'Line Source Configuration',
+          title: 'M3U Per-Line Configuration',
           howItWorks: 'How this module works',
-          step1: '1) Select the line key from the selector. It shows username_encode for easier identification, but keeps the real username required by M3U internally.',
-          step2: '2) Configure source M3U URL and provider, then save.',
-          step3: '3) To test the flow, use the line token: import catalog and/or download final M3U.',
-          configTitle: 'Source playlist configuration per line',
+          step1: '1) Select the line by lineId. The selector shows username_encode for easier identification.',
+          step2: '2) Assign provider and TTL per line. The source URL is built dynamically from the provider template and current line credentials.',
+          step3: '3) Configure the Xtream provider template, then import catalog and/or download the final M3U by lineId.',
+          flowSummary:
+            'The screen is now separated by operational step, so the user can see what is already configured and what is still blocking the run.',
+          readyHint: 'This line is ready for import and final download.',
+          pendingHint: 'Finish the pending steps below. The system resolves the real Xtream credentials automatically from the active line.',
+          configTitle: 'Per-line source configuration',
+          configBody: 'Start by identifying the line visually, then save the provider and cache policy that the backend should use for this line.',
           lineSelect: 'Select line (lineId / usernameEncode)',
-          lineSelectHelper: 'This selector uses /api/v1/line-sources/line-options. It shows username_encode, but sends the real username required by the M3U service.',
+          lineSelectHelper: 'This selector uses /api/v1/line-sources/line-options and no longer depends on token.',
           lineSelectPlaceholder: 'Select line...'
         },
         baseHowItWorks: {
           title: 'Recommended flow',
+          summary:
+            'The operator should feel a clear sequence here: define the shared source, import the catalog, curate categories and only then move to the per-line execution module.',
           step1: '1) Configure one global base URL here and save it.',
           step2: '2) Run "Import base" to populate base catalog and assign manual categories.',
-          step3: '3) Per-line source and token tests are configured in the "M3U Line Sources" screen.'
+          step3: '3) Per-line provider assignment and lineId tests are configured in the "M3U Line Sources" screen.'
         },
         baseSource: {
           title: 'Global Base M3U Source',
+          body: 'Use one shared playlist as the master catalog. This is where global categorization starts, not where per-line playback is configured.',
           url: 'Base playlist URL',
           urlHelper: 'This list is your global master catalog for categorization and override.',
           provider: 'Base provider',
@@ -2354,13 +2394,12 @@ const resources = {
         source: {
           lineId: 'Line ID',
           lineIdHelper: 'Technical identifier of selected line.',
-          username: 'Lookup username',
-          usernameHelper: 'Internal username key used by the M3U service for line lookup.',
-          url: 'Original playlist URL',
-          provider: 'Provider',
-          providerHelper: 'Use the same provider catalog used in Lines module.',
+          usernameEncode: 'Visible username',
+          usernameEncodeHelper: 'Display value to identify the line; the backend resolves the current technical username internally.',
+          provider: 'Assigned provider',
+          providerHelper: 'Select the provider whose Xtream template should be used for this line.',
           ttl: 'TTL cache (min)',
-          ttlHelper: 'Cache time for final token playlist.',
+          ttlHelper: 'Cache time for final lineId playlist.',
           active: 'Source active',
           load: 'Load configuration',
           loading: 'Loading...',
@@ -2370,14 +2409,33 @@ const resources = {
           updatedAt: 'Updated at'
         },
         import: {
-          title: 'Operational token flow test',
-          token: 'Line token',
-          tokenHelper: 'Use the line token for /api/v1/m3u/token/{token}. If available, it auto-fills when selecting a line.',
-          useSelectedToken: 'Use selected line token',
-          tokenDetected: 'Token detected'
+          title: 'Operational flow test by lineId',
+          body:
+            'Use these actions only after the line and the provider template are both saved. This section is intentionally action-focused.',
+          lineFlowHelper: 'Import and final download now use /api/v1/catalog/import/line/{lineId} and /api/v1/m3u/line/{lineId}.',
+          lineId: 'Selected lineId',
+          lineIdHelper: 'Select a line above to operate the complete flow.'
+        },
+        providerTemplates: {
+          title: 'Xtream template per provider',
+          body:
+            'This template defines the common host and response format for a provider. The line credentials are injected automatically when the flow runs.',
+          provider: 'Provider',
+          providerHelper: 'The template defines the common Xtream host/base; the backend appends the current line credentials.',
+          baseUrl: 'Xtream base URL',
+          playlistType: 'Playlist type',
+          outputFormat: 'Output',
+          active: 'Template active',
+          load: 'Load template',
+          loading: 'Loading...',
+          save: 'Save template',
+          saving: 'Saving...',
+          updatedAt: 'Updated at'
         },
         filters: {
           title: 'Base catalog filters',
+          body:
+            'Filter aggressively, review the current page and assign manual categories only where the global catalog really needs guidance.',
           all: 'All',
           type: 'Detected type',
           active: 'Active',
@@ -2386,7 +2444,37 @@ const resources = {
         },
         summary: {
           totalItems: 'Total items',
-          categories: 'Categories'
+          categories: 'Categories',
+          pageAssigned: '{{count}} assigned on this page'
+        },
+        status: {
+          baseSource: 'Base source',
+          lastDownload: 'Last download',
+          catalogItems: 'Catalog items',
+          categories: 'Categories',
+          selectedLine: 'Selected line',
+          provider: 'Provider',
+          template: 'Template',
+          actionsReady: 'Actions ready',
+          lineSnapshot: 'Line snapshot',
+          lineSnapshotEmpty: 'Pick a line to see its current identity and provider hint.',
+          prerequisites: 'Run checklist',
+          assignedItems: '{{count}} assigned on this page',
+          providerUnset: 'Provider not selected',
+          templateHelper: 'Save base URL to enable imports.',
+          pendingValue: 'Pending',
+          readyValue: 'Ready',
+          missingValue: 'Missing',
+          activeValue: 'Active',
+          inactiveValue: 'Inactive'
+        },
+        hints: {
+          dynamicUrl:
+            'The source URL is not stored per line. Only the provider and cache rules are saved; the backend builds the real Xtream URL with the active line credentials.',
+          categoryImpact: 'Manual categories defined from this base catalog are reused later when the final M3U is generated for each line.',
+          baseScope: 'This screen is global. It does not save per-line credentials or provider templates.',
+          nextAfterBase: 'The base catalog is ready enough to continue with line-specific M3U work.',
+          dynamicPreview: 'Resolved Xtream preview'
         },
         table: {
           title: 'Title',
@@ -2396,10 +2484,14 @@ const resources = {
           noManualCategory: 'No manual assignment',
           active: 'Active',
           updated: 'Updated',
-          actions: 'Actions'
+          actions: 'Actions',
+          helper:
+            'These manual categories are the clearest place to curate the final grouping. Use filters first, then open item detail or assign directly from the table.'
         },
         categories: {
           title: 'Category management',
+          body:
+            'Categories defined here are the shared language for later M3U grouping. Keep the taxonomy clean and easy to scan.',
           new: 'New category',
           createTitle: 'Create category',
           name: 'Name',
@@ -2433,16 +2525,22 @@ const resources = {
           categoryCreateError: 'Could not create category.',
           noItems: 'No items found with current filters.',
           lineOptionsLoadError: 'Could not load active lines.',
-          lineAndUserRequired: 'Line ID and Username are required.',
+          lineRequired: 'Line ID is required.',
           lineSourceNotFound: 'No source config found for selected line.',
           lineSourceLoadError: 'Could not load line source config.',
-          lineSourceRequiredFields: 'Line ID, Username and source URL are required.',
+          lineSourceRequiredFields: 'Line ID and provider are required.',
           lineSourceSaved: 'Line source saved successfully.',
           lineSourceSaveError: 'Could not save line source.',
-          tokenRequired: 'Enter a token to import.',
+          providerTemplatesLoadError: 'Could not load Xtream templates.',
+          providerTemplateNotFound: 'No template found for selected provider.',
+          providerTemplateLoadError: 'Could not load Xtream template.',
+          providerTemplateRequiredFields: 'Provider and baseUrl are required.',
+          providerTemplateSaved: 'Xtream template saved successfully.',
+          providerTemplateSaveError: 'Could not save Xtream template.',
+          lineRequiredForImport: 'Select a line to import.',
           importSuccess: 'Import completed.',
           importError: 'Could not import catalog.',
-          tokenRequiredForDownload: 'Enter a token to download playlist.',
+          lineRequiredForDownload: 'Select a line to download playlist.',
           downloadSuccess: 'Playlist downloaded successfully.',
           downloadError: 'Could not download playlist.',
           fullFlowSuccess: 'Full flow OK: import + download.',
@@ -4147,6 +4245,7 @@ const resources = {
         title: 'Curación Catálogo Base Global',
         actions: {
           refresh: 'Refrescar',
+          refreshProviders: 'Refrescar providers',
           loading: 'Cargando...',
           importing: 'Importando...',
           import: 'Importar catálogo',
@@ -4155,27 +4254,68 @@ const resources = {
           testing: 'Probando...',
           fullFlowTest: 'Probar flujo completo',
           clearFilters: 'Limpiar filtros',
-          applyFilters: 'Aplicar filtros'
+          applyFilters: 'Aplicar filtros',
+          openCatalog: 'Abrir catálogo base',
+          openLineSources: 'Abrir M3U por línea'
+        },
+        overview: {
+          baseEyebrow: 'Preparación global del catálogo',
+          baseTitle: 'Prepara el catálogo maestro antes de tocar líneas individuales',
+          baseDescription:
+            'Esta pantalla es la capa compartida de preparación: guarda la fuente global, importa la playlist maestra, clasifica títulos y define las categorías que luego moldean el agrupado final de la M3U.',
+          lineEyebrow: 'Flujo Xtream por línea',
+          lineTitle: 'Configura, valida y descarga la M3U final por lineId',
+          lineDescription:
+            'Esta pantalla guía al operador una línea a la vez: elige la línea, guarda la configuración del provider, ajusta la plantilla Xtream y solo entonces ejecuta importar o descargar.'
+        },
+        flow: {
+          title: 'Flujo del operador',
+          baseSetupTitle: 'Guardar fuente base global',
+          baseSetupBody: 'Define la URL playlist maestra y el provider usados para curar el catálogo compartido.',
+          baseImportTitle: 'Importar el catálogo compartido',
+          baseImportBody: 'Ejecuta la importación base para poblar los items que luego alimentan el match de categorías.',
+          curateTitle: 'Asignar categorías manuales',
+          curateBody: 'Revisa títulos, afina filtros y asigna categorías que deban imponerse sobre la salida final.',
+          lineRunTitle: 'Continuar a M3U por línea',
+          lineRunBody: 'Pasa a la pantalla por línea solo cuando el catálogo base se sienta listo.',
+          linePickTitle: 'Elegir la línea',
+          linePickBody: 'Elige la línea que quieres operar.',
+          lineAssignTitle: 'Guardar configuración de línea',
+          lineAssignBody: 'Asigna provider y TTL de cache para la línea seleccionada.',
+          templateTitle: 'Ajustar plantilla del provider',
+          templateBody: 'Define el host Xtream común, el tipo y el output de este provider.',
+          runTitle: 'Importar y descargar',
+          runBody: 'Ejecuta la importación de catálogo y descarga la M3U final por lineId.'
         },
         lineSources: {
-          title: 'Configuración de Fuentes por Línea',
+          title: 'Configuración M3U por Línea',
           howItWorks: 'Cómo funciona este módulo',
-          step1: '1) Selecciona la llave de línea. El selector muestra username_encode para identificar mejor la línea, pero conserva internamente el username real que requiere M3U.',
-          step2: '2) Configura URL source M3U y provider, luego guarda.',
-          step3: '3) Para pruebas usa el token de la línea: importar y/o descargar M3U final.',
-          configTitle: 'Configuración de source playlist por línea',
+          step1: '1) Selecciona la línea por lineId. El selector muestra username_encode para identificarla visualmente.',
+          step2: '2) Asigna provider y TTL por línea. La URL origen se arma dinámicamente con la plantilla Xtream del provider y las credenciales actuales de la línea.',
+          step3: '3) Configura la plantilla Xtream del provider y luego importa o descarga la M3U final por lineId.',
+          flowSummary:
+            'La pantalla ahora está separada por paso operativo, para que el usuario vea qué ya está configurado y qué sigue bloqueando la ejecución.',
+          readyHint: 'Esta línea ya está lista para importar y descargar la M3U final.',
+          pendingHint: 'Completa los pasos pendientes debajo. El sistema resuelve automáticamente las credenciales Xtream reales desde la línea activa.',
+          configTitle: 'Configuración por línea',
+          configBody:
+            'Primero identifica la línea visualmente y luego guarda el provider y la política de cache que el backend debe usar para esa línea.',
           lineSelect: 'Selecciona línea (lineId / usernameEncode)',
-          lineSelectHelper: 'Este selector usa /api/v1/line-sources/line-options. Muestra username_encode, pero envía el username real que requiere el servicio M3U.',
+          lineSelectHelper: 'Este selector usa /api/v1/line-sources/line-options y ya no depende de token.',
           lineSelectPlaceholder: 'Seleccionar línea...'
         },
         baseHowItWorks: {
           title: 'Proceso recomendado',
+          summary:
+            'El operador debería sentir una secuencia clara aquí: definir la fuente compartida, importar el catálogo, curar categorías y solo entonces pasar al módulo de ejecución por línea.',
           step1: '1) Configura aquí una única URL base global y guárdala.',
           step2: '2) Ejecuta "Importar base" para poblar catálogo base y asignar categorías manuales.',
-          step3: '3) La configuración por línea y pruebas con token se hace en "M3U Line Sources".'
+          step3: '3) La configuración por línea y las pruebas por lineId se hacen en "M3U Line Sources".'
         },
         baseSource: {
           title: 'Fuente M3U Base Global',
+          body:
+            'Usa una playlist compartida como catálogo maestro. Aquí empieza la categorización global, no la reproducción por línea.',
           url: 'URL playlist base',
           urlHelper: 'Esta lista es el catálogo maestro global para categorizar y hacer override.',
           provider: 'Proveedor base',
@@ -4195,13 +4335,12 @@ const resources = {
         source: {
           lineId: 'Line ID',
           lineIdHelper: 'Identificador técnico de la línea seleccionada.',
-          username: 'Username de búsqueda',
-          usernameHelper: 'Username interno que usa el servicio M3U para buscar la línea.',
-          url: 'URL playlist original',
-          provider: 'Proveedor',
-          providerHelper: 'Usa el mismo catálogo de provider del módulo Lines.',
+          usernameEncode: 'Username visible',
+          usernameEncodeHelper: 'Valor mostrado para identificar la línea; el backend resuelve internamente el username técnico vigente.',
+          provider: 'Provider asignado',
+          providerHelper: 'Selecciona el provider cuya plantilla Xtream debe usarse para esta línea.',
           ttl: 'TTL cache (min)',
-          ttlHelper: 'Tiempo de cache para playlist final por token.',
+          ttlHelper: 'Tiempo de cache para playlist final por lineId.',
           active: 'Fuente activa',
           load: 'Cargar configuración',
           loading: 'Cargando...',
@@ -4211,14 +4350,33 @@ const resources = {
           updatedAt: 'Actualizado'
         },
         import: {
-          title: 'Prueba operativa de flujo por token',
-          token: 'Token de línea',
-          tokenHelper: 'Usa el token de línea para /api/v1/m3u/token/{token}. Si viene disponible, se autocompleta al seleccionar línea.',
-          useSelectedToken: 'Usar token de la línea seleccionada',
-          tokenDetected: 'Token detectado'
+          title: 'Prueba operativa por lineId',
+          body:
+            'Usa estas acciones solo después de guardar tanto la línea como la plantilla del provider. Esta sección está pensada para ejecutar, no para configurar.',
+          lineFlowHelper: 'Importación y descarga final ahora usan /api/v1/catalog/import/line/{lineId} y /api/v1/m3u/line/{lineId}.',
+          lineId: 'Line ID seleccionado',
+          lineIdHelper: 'Selecciona una línea arriba para operar el flujo completo.'
+        },
+        providerTemplates: {
+          title: 'Plantilla Xtream por provider',
+          body:
+            'Esta plantilla define el host común y el formato de respuesta del provider. Las credenciales de la línea se inyectan automáticamente cuando el flujo corre.',
+          provider: 'Provider',
+          providerHelper: 'La plantilla define el host/base Xtream común; el backend agrega las credenciales actuales de la línea.',
+          baseUrl: 'Base URL Xtream',
+          playlistType: 'Playlist type',
+          outputFormat: 'Output',
+          active: 'Plantilla activa',
+          load: 'Cargar plantilla',
+          loading: 'Cargando...',
+          save: 'Guardar plantilla',
+          saving: 'Guardando...',
+          updatedAt: 'Actualizado'
         },
         filters: {
           title: 'Filtros catálogo base',
+          body:
+            'Filtra fuerte, revisa la página actual y asigna categorías manuales solo donde el catálogo global realmente necesita guía.',
           all: 'Todos',
           type: 'Tipo detectado',
           active: 'Activo',
@@ -4227,7 +4385,38 @@ const resources = {
         },
         summary: {
           totalItems: 'Total items',
-          categories: 'Categorías'
+          categories: 'Categorías',
+          pageAssigned: '{{count}} asignados en esta página'
+        },
+        status: {
+          baseSource: 'Fuente base',
+          lastDownload: 'Última descarga',
+          catalogItems: 'Items del catálogo',
+          categories: 'Categorías',
+          selectedLine: 'Línea seleccionada',
+          provider: 'Provider',
+          template: 'Plantilla',
+          actionsReady: 'Acciones listas',
+          lineSnapshot: 'Resumen de la línea',
+          lineSnapshotEmpty: 'Selecciona una línea para ver su identidad actual y el hint de provider.',
+          prerequisites: 'Checklist de ejecución',
+          assignedItems: '{{count}} asignados en esta página',
+          providerUnset: 'Provider no seleccionado',
+          templateHelper: 'Guarda la base URL para habilitar importaciones.',
+          pendingValue: 'Pendiente',
+          readyValue: 'Listo',
+          missingValue: 'Falta',
+          activeValue: 'Activo',
+          inactiveValue: 'Inactivo'
+        },
+        hints: {
+          dynamicUrl:
+            'La URL fuente no se guarda por línea. Solo se guardan el provider y las reglas de cache; el backend construye la URL Xtream real con las credenciales de la línea activa.',
+          categoryImpact:
+            'Las categorías manuales definidas desde este catálogo base se reutilizan luego cuando se genera la M3U final para cada línea.',
+          baseScope: 'Esta pantalla es global. No guarda credenciales por línea ni plantillas por provider.',
+          nextAfterBase: 'El catálogo base ya está suficientemente listo para continuar con el trabajo M3U por línea.',
+          dynamicPreview: 'Preview Xtream resuelto'
         },
         table: {
           title: 'Título',
@@ -4237,10 +4426,14 @@ const resources = {
           noManualCategory: 'Sin asignación manual',
           active: 'Activo',
           updated: 'Actualizado',
-          actions: 'Acciones'
+          actions: 'Acciones',
+          helper:
+            'Estas categorías manuales son el lugar más claro para curar el agrupado final. Primero filtra y luego abre el detalle o asigna directamente desde la tabla.'
         },
         categories: {
           title: 'Gestión de categorías',
+          body:
+            'Las categorías definidas aquí son el lenguaje compartido del agrupado M3U posterior. Mantén la taxonomía limpia y fácil de escanear.',
           new: 'Nueva categoría',
           createTitle: 'Crear categoría',
           name: 'Nombre',
@@ -4274,16 +4467,22 @@ const resources = {
           categoryCreateError: 'No se pudo crear la categoría.',
           noItems: 'No se encontraron items con los filtros actuales.',
           lineOptionsLoadError: 'No se pudieron cargar las líneas activas.',
-          lineAndUserRequired: 'Line ID y Username son obligatorios.',
+          lineRequired: 'Line ID es obligatorio.',
           lineSourceNotFound: 'No existe configuración guardada para esa línea.',
           lineSourceLoadError: 'No se pudo cargar la fuente de línea.',
-          lineSourceRequiredFields: 'Line ID, Username y URL origen son obligatorios.',
+          lineSourceRequiredFields: 'Line ID y provider son obligatorios.',
           lineSourceSaved: 'Fuente guardada correctamente.',
           lineSourceSaveError: 'No se pudo guardar la fuente.',
-          tokenRequired: 'Ingresa un token para importar.',
+          providerTemplatesLoadError: 'No se pudieron cargar las plantillas Xtream.',
+          providerTemplateNotFound: 'No existe plantilla guardada para ese provider.',
+          providerTemplateLoadError: 'No se pudo cargar la plantilla Xtream.',
+          providerTemplateRequiredFields: 'Provider y baseUrl son obligatorios.',
+          providerTemplateSaved: 'Plantilla Xtream guardada correctamente.',
+          providerTemplateSaveError: 'No se pudo guardar la plantilla Xtream.',
+          lineRequiredForImport: 'Selecciona una línea para importar.',
           importSuccess: 'Importación completada.',
           importError: 'No se pudo importar el catálogo.',
-          tokenRequiredForDownload: 'Ingresa un token para descargar la playlist.',
+          lineRequiredForDownload: 'Selecciona una línea para descargar la playlist.',
           downloadSuccess: 'Playlist descargada correctamente.',
           downloadError: 'No se pudo descargar la playlist.',
           fullFlowSuccess: 'Flujo completo OK: importación + descarga.',
