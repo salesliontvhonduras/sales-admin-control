@@ -9,7 +9,20 @@ const API_SMS = import.meta.env.VITE_API_SMS;
 const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
 const API_CATALOGS = import.meta.env.VITE_API_CATALOGS;
 const API_LIONTV = import.meta.env.VITE_API_LIONTV;
-const API_M3U_CATALOG = import.meta.env.VITE_API_M3U_CATALOG || API_CATALOGS;
+const API_M3U_CATALOG = (() => {
+  const direct = import.meta.env.VITE_API_M3U_CATALOG;
+  if (direct) return direct;
+
+  const lionTv = import.meta.env.VITE_API_LIONTV;
+  if (lionTv) {
+    const trimmed = String(lionTv).replace(/\/+$/, '');
+    if (trimmed.endsWith('/panel-lion-tv')) {
+      return `${trimmed.slice(0, -'/panel-lion-tv'.length)}/m3u`;
+    }
+  }
+
+  return '';
+})();
 const API_SAGA = import.meta.env.VITE_API_SAGA;
 const API_SHOPIFY_DEMOS = import.meta.env.VITE_API_SHOPIFY_DEMOS;
 const API_VIVO_PLAYER = (() => {
