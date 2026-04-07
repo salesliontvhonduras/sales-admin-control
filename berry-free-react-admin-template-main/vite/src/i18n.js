@@ -2319,12 +2319,12 @@ const resources = {
         lineSources: {
           title: 'Line Source Configuration',
           howItWorks: 'How this module works',
-          step1: '1) Select an active line (lineId + username) from the selector. Username is the line username from lines_data.',
+          step1: '1) Select a line (lineId + username) from the selector. This list comes from the same Lines endpoint used in Subscriptions.',
           step2: '2) Configure source M3U URL and provider, then save.',
-          step3: '3) To test the flow, use the line token (lines_data.token): import catalog and/or download final M3U.',
+          step3: '3) To test the flow, use the line token: import catalog and/or download final M3U.',
           configTitle: 'Source playlist configuration per line',
           lineSelect: 'Select line (lineId / username)',
-          lineSelectHelper: 'This selector is loaded from active lines in lines_data.',
+          lineSelectHelper: 'This selector uses /lines/v1/list-lines (same endpoint as Subscriptions).',
           lineSelectPlaceholder: 'Select line...'
         },
         baseHowItWorks: {
@@ -2372,7 +2372,7 @@ const resources = {
         import: {
           title: 'Operational token flow test',
           token: 'Line token',
-          tokenHelper: 'This token is lines_data.token. It auto-fills when selecting a line.',
+          tokenHelper: 'Use the line token for /api/v1/m3u/token/{token}. If available, it auto-fills when selecting a line.',
           useSelectedToken: 'Use selected line token',
           tokenDetected: 'Token detected'
         },
@@ -4160,12 +4160,12 @@ const resources = {
         lineSources: {
           title: 'Configuración de Fuentes por Línea',
           howItWorks: 'Cómo funciona este módulo',
-          step1: '1) Selecciona una línea activa (lineId + username). El username es el de lines_data.',
+          step1: '1) Selecciona una línea (lineId + username). Este listado viene del mismo endpoint de Lines que usa Subscriptions.',
           step2: '2) Configura URL source M3U y provider, luego guarda.',
-          step3: '3) Para pruebas usa el token de la línea (lines_data.token): importar y/o descargar M3U final.',
+          step3: '3) Para pruebas usa el token de la línea: importar y/o descargar M3U final.',
           configTitle: 'Configuración de source playlist por línea',
           lineSelect: 'Selecciona línea (lineId / username)',
-          lineSelectHelper: 'Este selector se alimenta de líneas activas en lines_data.',
+          lineSelectHelper: 'Este selector usa /lines/v1/list-lines (igual que Subscriptions).',
           lineSelectPlaceholder: 'Seleccionar línea...'
         },
         baseHowItWorks: {
@@ -4213,7 +4213,7 @@ const resources = {
         import: {
           title: 'Prueba operativa de flujo por token',
           token: 'Token de línea',
-          tokenHelper: 'Este token es lines_data.token. Se autocompleta al seleccionar línea.',
+          tokenHelper: 'Usa el token de línea para /api/v1/m3u/token/{token}. Si viene disponible, se autocompleta al seleccionar línea.',
           useSelectedToken: 'Usar token de la línea seleccionada',
           tokenDetected: 'Token detectado'
         },
