@@ -43,6 +43,7 @@ const resources = {
         moviesFeed: 'Movies Feed',
         seriesFeed: 'Series Feed',
         futbolEventsFeed: 'Futbol Events Feed',
+        catalogCuration: 'Catalog Curation',
         sample: 'Sample Page',
         docs: 'Documentation',
         security: 'Security',
@@ -2301,6 +2302,153 @@ const resources = {
           deleteError: 'No se pudo eliminar el cliente potencial.'
         }
       },
+      catalog: {
+        title: 'Global Base Catalog Curation',
+        actions: {
+          refresh: 'Refresh',
+          loading: 'Loading...',
+          importing: 'Importing...',
+          import: 'Import catalog',
+          downloading: 'Downloading...',
+          downloadM3u: 'Download M3U',
+          testing: 'Testing...',
+          fullFlowTest: 'Test full flow',
+          clearFilters: 'Clear filters',
+          applyFilters: 'Apply filters'
+        },
+        lineSources: {
+          title: 'Line Source Configuration',
+          howItWorks: 'How this module works',
+          step1: '1) Select an active line (lineId + username) from the selector. Username is the line username from lines_data.',
+          step2: '2) Configure source M3U URL and provider, then save.',
+          step3: '3) To test the flow, use the line token (lines_data.token): import catalog and/or download final M3U.',
+          configTitle: 'Source playlist configuration per line',
+          lineSelect: 'Select line (lineId / username)',
+          lineSelectHelper: 'This selector is loaded from active lines in lines_data.',
+          lineSelectPlaceholder: 'Select line...'
+        },
+        baseHowItWorks: {
+          title: 'Recommended flow',
+          step1: '1) Configure one global base URL here and save it.',
+          step2: '2) Run "Import base" to populate base catalog and assign manual categories.',
+          step3: '3) Per-line source and token tests are configured in the "M3U Line Sources" screen.'
+        },
+        baseSource: {
+          title: 'Global Base M3U Source',
+          url: 'Base playlist URL',
+          urlHelper: 'This list is your global master catalog for categorization and override.',
+          provider: 'Base provider',
+          providerHelper: 'Reference name for the global base source.',
+          ttl: 'TTL (min)',
+          ttlHelper: 'Reference refresh window for base catalog.',
+          active: 'Source active',
+          reload: 'Reload',
+          save: 'Save base source',
+          saving: 'Saving...',
+          import: 'Import base',
+          importing: 'Importing...',
+          loading: 'Loading...',
+          lastDownload: 'Last download',
+          updatedAt: 'Updated at'
+        },
+        source: {
+          lineId: 'Line ID',
+          lineIdHelper: 'Technical identifier of selected line.',
+          username: 'Username',
+          usernameHelper: 'Line username (this is not the token).',
+          url: 'Original playlist URL',
+          provider: 'Provider',
+          providerHelper: 'Use the same provider catalog used in Lines module.',
+          ttl: 'TTL cache (min)',
+          ttlHelper: 'Cache time for final token playlist.',
+          active: 'Source active',
+          load: 'Load configuration',
+          loading: 'Loading...',
+          save: 'Save configuration',
+          saving: 'Saving...',
+          lastDownload: 'Last download',
+          updatedAt: 'Updated at'
+        },
+        import: {
+          title: 'Operational token flow test',
+          token: 'Line token',
+          tokenHelper: 'This token is lines_data.token. It auto-fills when selecting a line.',
+          useSelectedToken: 'Use selected line token',
+          tokenDetected: 'Token detected'
+        },
+        filters: {
+          title: 'Base catalog filters',
+          all: 'All',
+          type: 'Detected type',
+          active: 'Active',
+          search: 'Search',
+          searchPlaceholder: 'rawTitle, canonicalTitle, groupTitle, tvgName'
+        },
+        summary: {
+          totalItems: 'Total items',
+          categories: 'Categories'
+        },
+        table: {
+          title: 'Title',
+          type: 'Type',
+          groupTitle: 'Original group',
+          primaryCategory: 'Manual category',
+          noManualCategory: 'No manual assignment',
+          active: 'Active',
+          updated: 'Updated',
+          actions: 'Actions'
+        },
+        categories: {
+          title: 'Category management',
+          new: 'New category',
+          createTitle: 'Create category',
+          name: 'Name',
+          active: 'Active'
+        },
+        assign: {
+          title: 'Assign manual category',
+          item: 'Item',
+          category: 'Category',
+          clearPrimary: 'Clear primary manual category',
+          primary: 'Assign as primary',
+          assignedBy: 'Assigned by'
+        },
+        detail: {
+          title: 'Item detail'
+        },
+        messages: {
+          baseSourceLoadError: 'Could not load base source.',
+          baseSourceRequired: 'Base URL is required.',
+          baseSourceSaved: 'Base source saved successfully.',
+          baseSourceSaveError: 'Could not save base source.',
+          baseImportSuccess: 'Base import completed.',
+          baseImportError: 'Could not import base list.',
+          loadItemsError: 'Could not load base catalog.',
+          loadCategoriesError: 'Could not load categories.',
+          itemDetailError: 'Could not load item detail.',
+          assignSuccess: 'Assignment updated.',
+          assignError: 'Could not update assignment.',
+          categoryNameRequired: 'Category name is required.',
+          categoryCreateSuccess: 'Category created successfully.',
+          categoryCreateError: 'Could not create category.',
+          noItems: 'No items found with current filters.',
+          lineOptionsLoadError: 'Could not load active lines.',
+          lineAndUserRequired: 'Line ID and Username are required.',
+          lineSourceNotFound: 'No source config found for selected line.',
+          lineSourceLoadError: 'Could not load line source config.',
+          lineSourceRequiredFields: 'Line ID, Username and source URL are required.',
+          lineSourceSaved: 'Line source saved successfully.',
+          lineSourceSaveError: 'Could not save line source.',
+          tokenRequired: 'Enter a token to import.',
+          importSuccess: 'Import completed.',
+          importError: 'Could not import catalog.',
+          tokenRequiredForDownload: 'Enter a token to download playlist.',
+          downloadSuccess: 'Playlist downloaded successfully.',
+          downloadError: 'Could not download playlist.',
+          fullFlowSuccess: 'Full flow OK: import + download.',
+          fullFlowError: 'Full flow test failed.'
+        }
+      },
       common: {
         close: 'Close',
         yes: 'Yes',
@@ -2408,6 +2556,7 @@ const resources = {
         moviesFeed: 'Feed de Películas',
         seriesFeed: 'Feed de Series',
         futbolEventsFeed: 'Feed de Eventos de Fútbol',
+        catalogCuration: 'Curación de Catálogo',
         sample: 'Página de ejemplo',
         docs: 'Documentación',
         security: 'Seguridad',
@@ -3992,6 +4141,153 @@ const resources = {
           created: 'Registro de evento de fútbol creado correctamente.',
           updated: 'Registro de evento de fútbol actualizado correctamente.',
           deleted: 'Registro de evento de fútbol eliminado correctamente.'
+        }
+      },
+      catalog: {
+        title: 'Curación Catálogo Base Global',
+        actions: {
+          refresh: 'Refrescar',
+          loading: 'Cargando...',
+          importing: 'Importando...',
+          import: 'Importar catálogo',
+          downloading: 'Descargando...',
+          downloadM3u: 'Descargar M3U',
+          testing: 'Probando...',
+          fullFlowTest: 'Probar flujo completo',
+          clearFilters: 'Limpiar filtros',
+          applyFilters: 'Aplicar filtros'
+        },
+        lineSources: {
+          title: 'Configuración de Fuentes por Línea',
+          howItWorks: 'Cómo funciona este módulo',
+          step1: '1) Selecciona una línea activa (lineId + username). El username es el de lines_data.',
+          step2: '2) Configura URL source M3U y provider, luego guarda.',
+          step3: '3) Para pruebas usa el token de la línea (lines_data.token): importar y/o descargar M3U final.',
+          configTitle: 'Configuración de source playlist por línea',
+          lineSelect: 'Selecciona línea (lineId / username)',
+          lineSelectHelper: 'Este selector se alimenta de líneas activas en lines_data.',
+          lineSelectPlaceholder: 'Seleccionar línea...'
+        },
+        baseHowItWorks: {
+          title: 'Proceso recomendado',
+          step1: '1) Configura aquí una única URL base global y guárdala.',
+          step2: '2) Ejecuta "Importar base" para poblar catálogo base y asignar categorías manuales.',
+          step3: '3) La configuración por línea y pruebas con token se hace en "M3U Line Sources".'
+        },
+        baseSource: {
+          title: 'Fuente M3U Base Global',
+          url: 'URL playlist base',
+          urlHelper: 'Esta lista es el catálogo maestro global para categorizar y hacer override.',
+          provider: 'Proveedor base',
+          providerHelper: 'Nombre referencial del origen base global.',
+          ttl: 'TTL (min)',
+          ttlHelper: 'Ventana de refresco de referencia para catálogo base.',
+          active: 'Fuente activa',
+          reload: 'Recargar',
+          save: 'Guardar fuente base',
+          saving: 'Guardando...',
+          import: 'Importar base',
+          importing: 'Importando...',
+          loading: 'Cargando...',
+          lastDownload: 'Última descarga',
+          updatedAt: 'Actualizado'
+        },
+        source: {
+          lineId: 'Line ID',
+          lineIdHelper: 'Identificador técnico de la línea seleccionada.',
+          username: 'Username',
+          usernameHelper: 'Username de la línea (esto no es el token).',
+          url: 'URL playlist original',
+          provider: 'Proveedor',
+          providerHelper: 'Usa el mismo catálogo de provider del módulo Lines.',
+          ttl: 'TTL cache (min)',
+          ttlHelper: 'Tiempo de cache para playlist final por token.',
+          active: 'Fuente activa',
+          load: 'Cargar configuración',
+          loading: 'Cargando...',
+          save: 'Guardar configuración',
+          saving: 'Guardando...',
+          lastDownload: 'Última descarga',
+          updatedAt: 'Actualizado'
+        },
+        import: {
+          title: 'Prueba operativa de flujo por token',
+          token: 'Token de línea',
+          tokenHelper: 'Este token es lines_data.token. Se autocompleta al seleccionar línea.',
+          useSelectedToken: 'Usar token de la línea seleccionada',
+          tokenDetected: 'Token detectado'
+        },
+        filters: {
+          title: 'Filtros catálogo base',
+          all: 'Todos',
+          type: 'Tipo detectado',
+          active: 'Activo',
+          search: 'Buscar',
+          searchPlaceholder: 'rawTitle, canonicalTitle, groupTitle, tvgName'
+        },
+        summary: {
+          totalItems: 'Total items',
+          categories: 'Categorías'
+        },
+        table: {
+          title: 'Título',
+          type: 'Tipo',
+          groupTitle: 'Group original',
+          primaryCategory: 'Categoría manual',
+          noManualCategory: 'Sin asignación manual',
+          active: 'Activo',
+          updated: 'Actualizado',
+          actions: 'Acciones'
+        },
+        categories: {
+          title: 'Gestión de categorías',
+          new: 'Nueva categoría',
+          createTitle: 'Crear categoría',
+          name: 'Nombre',
+          active: 'Activa'
+        },
+        assign: {
+          title: 'Asignar categoría manual',
+          item: 'Item',
+          category: 'Categoría',
+          clearPrimary: 'Quitar categoría manual primaria',
+          primary: 'Asignar como primaria',
+          assignedBy: 'Asignado por'
+        },
+        detail: {
+          title: 'Detalle del item'
+        },
+        messages: {
+          baseSourceLoadError: 'No se pudo cargar la fuente base.',
+          baseSourceRequired: 'La URL base es obligatoria.',
+          baseSourceSaved: 'Fuente base guardada correctamente.',
+          baseSourceSaveError: 'No se pudo guardar la fuente base.',
+          baseImportSuccess: 'Importación base completada.',
+          baseImportError: 'No se pudo importar la lista base.',
+          loadItemsError: 'No se pudo cargar el catálogo base.',
+          loadCategoriesError: 'No se pudieron cargar las categorías.',
+          itemDetailError: 'No se pudo cargar el detalle.',
+          assignSuccess: 'Asignación actualizada.',
+          assignError: 'No se pudo actualizar la asignación.',
+          categoryNameRequired: 'El nombre de categoría es obligatorio.',
+          categoryCreateSuccess: 'Categoría creada correctamente.',
+          categoryCreateError: 'No se pudo crear la categoría.',
+          noItems: 'No se encontraron items con los filtros actuales.',
+          lineOptionsLoadError: 'No se pudieron cargar las líneas activas.',
+          lineAndUserRequired: 'Line ID y Username son obligatorios.',
+          lineSourceNotFound: 'No existe configuración guardada para esa línea.',
+          lineSourceLoadError: 'No se pudo cargar la fuente de línea.',
+          lineSourceRequiredFields: 'Line ID, Username y URL origen son obligatorios.',
+          lineSourceSaved: 'Fuente guardada correctamente.',
+          lineSourceSaveError: 'No se pudo guardar la fuente.',
+          tokenRequired: 'Ingresa un token para importar.',
+          importSuccess: 'Importación completada.',
+          importError: 'No se pudo importar el catálogo.',
+          tokenRequiredForDownload: 'Ingresa un token para descargar la playlist.',
+          downloadSuccess: 'Playlist descargada correctamente.',
+          downloadError: 'No se pudo descargar la playlist.',
+          fullFlowSuccess: 'Flujo completo OK: importación + descarga.',
+          fullFlowError: 'Falló la prueba completa del flujo.'
         }
       },
       common: {

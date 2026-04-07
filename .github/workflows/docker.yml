@@ -31,6 +31,7 @@ jobs:
       VITE_API_SMS: ${{ secrets.VITE_API_SMS || vars.VITE_API_SMS || 'https://api.liontvplus.com/sales/sms' }}
       VITE_API_VIVO_PLAYER: ${{ secrets.VITE_API_VIVO_PLAYER || vars.VITE_API_VIVO_PLAYER || 'https://api.liontvplus.com/sales/vivo-player' }}
       VITE_API_SHOPIFY_DEMOS: ${{ 'https://api.liontvplus.com/sales/demos' }}
+      VITE_API_M3U_CATALOG: ${{ 'https://api.liontvplus.com/sales/m3u' }}
       VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID || vars.VITE_GOOGLE_CLIENT_ID || '881879419726-dviv75rgbqofnh33288jr5loriie72ot.apps.googleusercontent.com' }}
 
     steps:

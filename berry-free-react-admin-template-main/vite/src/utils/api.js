@@ -9,6 +9,7 @@ const API_SMS = import.meta.env.VITE_API_SMS;
 const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
 const API_CATALOGS = import.meta.env.VITE_API_CATALOGS;
 const API_LIONTV = import.meta.env.VITE_API_LIONTV;
+const API_M3U_CATALOG = import.meta.env.VITE_API_M3U_CATALOG || API_CATALOGS;
 const API_SAGA = import.meta.env.VITE_API_SAGA;
 const API_SHOPIFY_DEMOS = import.meta.env.VITE_API_SHOPIFY_DEMOS;
 const API_VIVO_PLAYER = (() => {
@@ -38,6 +39,12 @@ export const sagaApi = axios.create({
 
 export const lionTvApi = axios.create({
   baseURL: API_LIONTV,
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: COOKIE_MODE
+});
+
+export const m3uCatalogApi = axios.create({
+  baseURL: API_M3U_CATALOG,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: COOKIE_MODE
 });
@@ -112,6 +119,7 @@ productsApi.interceptors.request.use(attachToken);
 reservationsApi.interceptors.request.use(attachToken);
 smsApi.interceptors.request.use(attachToken);
 lionTvApi.interceptors.request.use(attachToken);
+m3uCatalogApi.interceptors.request.use(attachToken);
 catalogsApi.interceptors.request.use(attachToken);
 sagaApi.interceptors.request.use(attachToken);
 shopifyDemosApi.interceptors.request.use(attachToken);
@@ -142,7 +150,19 @@ smsApi.interceptors.response.use(
   }
 );
 
-const apiClients = [authApi, usersApi, productsApi, reservationsApi, smsApi, lionTvApi, catalogsApi, sagaApi, shopifyDemosApi, vivoPlayerApi];
+const apiClients = [
+  authApi,
+  usersApi,
+  productsApi,
+  reservationsApi,
+  smsApi,
+  lionTvApi,
+  m3uCatalogApi,
+  catalogsApi,
+  sagaApi,
+  shopifyDemosApi,
+  vivoPlayerApi
+];
 
 let refreshPromise = null;
 
