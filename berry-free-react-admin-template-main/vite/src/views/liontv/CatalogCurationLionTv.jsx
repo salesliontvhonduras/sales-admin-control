@@ -576,7 +576,7 @@ export default function CatalogCurationLionTv() {
               background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(
                 theme.palette.success.main,
                 0.12
-              )} 55%, ${alpha(theme.palette.background.paper, 1)} 100%)`
+              )} 55%, ${theme.palette.background.paper} 100%)`
             })}
           >
             <Grid container spacing={2.5} alignItems="stretch">
