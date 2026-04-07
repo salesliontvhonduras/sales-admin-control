@@ -1346,6 +1346,7 @@ export default function LinesLionTv() {
                       <MenuItem value="NETFLIX">NETFLIX</MenuItem>
                       <MenuItem value="AMAZON_PRIME">AMAZON PRIME</MenuItem>
                       <MenuItem value="YOUTUBE_PREMIUM">YOUTUBE PREMIUM</MenuItem>
+                      <MenuItem value="DISNEY_PLUS_PREMIUM">DISNEY PLUS PREMIUM</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
