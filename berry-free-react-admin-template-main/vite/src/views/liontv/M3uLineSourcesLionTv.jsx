@@ -117,7 +117,7 @@ export default function M3uLineSourcesLionTv() {
         ...option,
         provider: option.provider || 'LION_TV',
         key: `${option.lineId}::${option.username}`,
-        label: `${option.lineId} / ${option.username}${option.provider ? ` (${option.provider})` : ''}`
+        label: `${option.lineId} / ${option.usernameEncode || option.username}${option.provider ? ` (${option.provider})` : ''}`
       }));
       setLineOptions(normalized);
     } catch (error) {
@@ -345,7 +345,7 @@ export default function M3uLineSourcesLionTv() {
                   <Typography variant="body2">
                     {t(
                       'catalog.lineSources.step1',
-                      '1) Selecciona la llave de línea (lineId + username) desde el selector. Este listado usa el endpoint line-options de M3U y la llave exacta de lines_data.'
+                      '1) Selecciona la llave de línea desde el selector. Se muestra username_encode para identificarla mejor, pero internamente se conserva el username real requerido por M3U.'
                     )}
                   </Typography>
                   <Typography variant="body2">
@@ -379,7 +379,7 @@ export default function M3uLineSourcesLionTv() {
                     onChange={(event) => setSelectedLineKey(event.target.value)}
                     helperText={t(
                       'catalog.lineSources.lineSelectHelper',
-                      'Este selector usa /api/v1/line-sources/line-options y devuelve la llave exacta requerida por M3U.'
+                      'Este selector usa /api/v1/line-sources/line-options. Muestra username_encode, pero envía el username real requerido por M3U.'
                     )}
                   >
                     <MenuItem value="">{t('catalog.lineSources.lineSelectPlaceholder', 'Seleccionar línea...')}</MenuItem>

@@ -2319,12 +2319,12 @@ const resources = {
         lineSources: {
           title: 'Line Source Configuration',
           howItWorks: 'How this module works',
-          step1: '1) Select a line key (lineId + username) from the selector. This list comes from the M3U line-options endpoint and uses the exact key stored in lines_data.',
+          step1: '1) Select the line key from the selector. It shows username_encode for easier identification, but keeps the real username required by M3U internally.',
           step2: '2) Configure source M3U URL and provider, then save.',
           step3: '3) To test the flow, use the line token: import catalog and/or download final M3U.',
           configTitle: 'Source playlist configuration per line',
-          lineSelect: 'Select line (lineId / username)',
-          lineSelectHelper: 'This selector uses /api/v1/line-sources/line-options and returns the exact lineId + username required by the M3U service.',
+          lineSelect: 'Select line (lineId / usernameEncode)',
+          lineSelectHelper: 'This selector uses /api/v1/line-sources/line-options. It shows username_encode, but sends the real username required by the M3U service.',
           lineSelectPlaceholder: 'Select line...'
         },
         baseHowItWorks: {
@@ -4160,12 +4160,12 @@ const resources = {
         lineSources: {
           title: 'Configuración de Fuentes por Línea',
           howItWorks: 'Cómo funciona este módulo',
-          step1: '1) Selecciona la llave de línea (lineId + username). Este listado viene del endpoint line-options de M3U y usa la llave exacta guardada en lines_data.',
+          step1: '1) Selecciona la llave de línea. El selector muestra username_encode para identificar mejor la línea, pero conserva internamente el username real que requiere M3U.',
           step2: '2) Configura URL source M3U y provider, luego guarda.',
           step3: '3) Para pruebas usa el token de la línea: importar y/o descargar M3U final.',
           configTitle: 'Configuración de source playlist por línea',
-          lineSelect: 'Selecciona línea (lineId / username)',
-          lineSelectHelper: 'Este selector usa /api/v1/line-sources/line-options y devuelve el lineId + username exacto que requiere el servicio M3U.',
+          lineSelect: 'Selecciona línea (lineId / usernameEncode)',
+          lineSelectHelper: 'Este selector usa /api/v1/line-sources/line-options. Muestra username_encode, pero envía el username real que requiere el servicio M3U.',
           lineSelectPlaceholder: 'Seleccionar línea...'
         },
         baseHowItWorks: {

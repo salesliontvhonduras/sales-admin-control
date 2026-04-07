@@ -106,6 +106,7 @@ function normalizeLineOption(item = {}) {
   return {
     lineId: item.lineId ?? item.line_id ?? '',
     username: item.username ?? '',
+    usernameEncode: item.usernameEncode ?? item.username_encode ?? '',
     provider: item.provider ?? '',
     token: item.token ?? ''
   };
@@ -249,8 +250,8 @@ export async function listLineOptions({ accessToken } = {}) {
     const lineIdCompare = aLineId.localeCompare(bLineId);
     if (lineIdCompare !== 0) return lineIdCompare;
 
-    const aName = String(a.username ?? '').toLowerCase();
-    const bName = String(b.username ?? '').toLowerCase();
+    const aName = String(a.usernameEncode ?? a.username ?? '').toLowerCase();
+    const bName = String(b.usernameEncode ?? b.username ?? '').toLowerCase();
     return aName.localeCompare(bName);
   });
 
@@ -258,6 +259,7 @@ export async function listLineOptions({ accessToken } = {}) {
     normalizeLineOption({
       lineId: item.lineId ?? item.line_id ?? item.id ?? '',
       username: item.username ?? '',
+      usernameEncode: item.usernameEncode ?? item.username_encode ?? '',
       provider: item.provider ?? '',
       token: item.token ?? ''
     })
