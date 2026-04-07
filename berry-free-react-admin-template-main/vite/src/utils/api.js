@@ -9,17 +9,29 @@ const API_SMS = import.meta.env.VITE_API_SMS;
 const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
 const API_CATALOGS = import.meta.env.VITE_API_CATALOGS;
 const API_LIONTV = import.meta.env.VITE_API_LIONTV;
+
+const normalizeM3uBaseUrl = (value) => {
+  if (!value) return '';
+
+  let normalized = String(value).replace(/\/+$/, '');
+
+  if (normalized.includes('/sales/catalogs')) {
+    normalized = normalized.replace('/sales/catalogs', '/sales/m3u');
+  } else if (normalized.endsWith('/catalogs')) {
+    normalized = `${normalized.slice(0, -'/catalogs'.length)}/m3u`;
+  } else if (normalized.endsWith('/panel-lion-tv')) {
+    normalized = `${normalized.slice(0, -'/panel-lion-tv'.length)}/m3u`;
+  }
+
+  return normalized;
+};
+
 const API_M3U_CATALOG = (() => {
-  const direct = import.meta.env.VITE_API_M3U_CATALOG;
+  const direct = normalizeM3uBaseUrl(import.meta.env.VITE_API_M3U_CATALOG);
   if (direct) return direct;
 
-  const lionTv = import.meta.env.VITE_API_LIONTV;
-  if (lionTv) {
-    const trimmed = String(lionTv).replace(/\/+$/, '');
-    if (trimmed.endsWith('/panel-lion-tv')) {
-      return `${trimmed.slice(0, -'/panel-lion-tv'.length)}/m3u`;
-    }
-  }
+  const lionTv = normalizeM3uBaseUrl(import.meta.env.VITE_API_LIONTV);
+  if (lionTv) return lionTv;
 
   return '';
 })();

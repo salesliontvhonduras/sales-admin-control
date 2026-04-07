@@ -44,6 +44,7 @@ import {
   getBaseCatalogItem,
   getBaseSource,
   importBaseCatalog,
+  listLineOptions,
   listBaseCatalogItems,
   listCategories,
   upsertBaseSource
@@ -91,6 +92,8 @@ export default function CatalogCurationLionTv() {
   const [loadingBaseSource, setLoadingBaseSource] = useState(false);
   const [savingBaseSource, setSavingBaseSource] = useState(false);
   const [importingBase, setImportingBase] = useState(false);
+  const [providerOptions, setProviderOptions] = useState([]);
+  const [loadingProviderOptions, setLoadingProviderOptions] = useState(false);
 
   const [typeFilter, setTypeFilter] = useState('');
   const [activeFilter, setActiveFilter] = useState('true');
@@ -127,6 +130,15 @@ export default function CatalogCurationLionTv() {
     () => categoryOptions.find((option) => option.value === assignForm.categoryId) || null,
     [assignForm.categoryId, categoryOptions]
   );
+
+  const resolvedProviderOptions = useMemo(() => {
+    const values = [...providerOptions];
+    const current = String(baseSourceForm.sourceProviderName || '').trim();
+    if (current && !values.includes(current)) {
+      values.push(current);
+    }
+    return values.sort((a, b) => a.localeCompare(b));
+  }, [baseSourceForm.sourceProviderName, providerOptions]);
 
   const loadBaseSource = useCallback(async () => {
     if (!accessToken) return;
@@ -255,6 +267,26 @@ export default function CatalogCurationLionTv() {
     }
   }, [accessToken, enqueueSnackbar, t]);
 
+  const loadProviderOptions = useCallback(async () => {
+    if (!accessToken) return;
+    setLoadingProviderOptions(true);
+    try {
+      const options = await listLineOptions({ accessToken });
+      const providers = Array.from(
+        new Set(
+          (Array.isArray(options) ? options : [])
+            .map((option) => String(option.provider || '').trim())
+            .filter(Boolean)
+        )
+      ).sort((a, b) => a.localeCompare(b));
+      setProviderOptions(providers);
+    } catch (_) {
+      setProviderOptions([]);
+    } finally {
+      setLoadingProviderOptions(false);
+    }
+  }, [accessToken]);
+
   useEffect(() => {
     loadBaseSource();
   }, [loadBaseSource]);
@@ -266,6 +298,10 @@ export default function CatalogCurationLionTv() {
   useEffect(() => {
     loadCategoriesData();
   }, [loadCategoriesData]);
+
+  useEffect(() => {
+    loadProviderOptions();
+  }, [loadProviderOptions]);
 
   const openDetailDialog = useCallback(
     async (item) => {
@@ -410,12 +446,23 @@ export default function CatalogCurationLionTv() {
                 </Grid>
                 <Grid item xs={12} md={3}>
                   <TextField
+                    select
                     fullWidth
                     label={t('catalog.baseSource.provider', 'Proveedor base')}
                     value={baseSourceForm.sourceProviderName}
                     onChange={(event) => setBaseSourceForm((previous) => ({ ...previous, sourceProviderName: event.target.value }))}
-                    helperText={t('catalog.baseSource.providerHelper', 'Nombre referencial del origen base global.')}
-                  />
+                    helperText={t(
+                      'catalog.baseSource.providerHelper',
+                      'Catálogo cargado desde providers de líneas (mismo origen que Subscriptions).'
+                    )}
+                  >
+                    <MenuItem value="">{loadingProviderOptions ? t('catalog.actions.loading', 'Cargando...') : t('catalog.filters.all', 'Todos')}</MenuItem>
+                    {resolvedProviderOptions.map((providerOption) => (
+                      <MenuItem key={providerOption} value={providerOption}>
+                        {providerOption}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 </Grid>
                 <Grid item xs={12} md={2}>
                   <TextField
