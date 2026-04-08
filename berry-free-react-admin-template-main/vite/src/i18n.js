@@ -688,7 +688,7 @@ const resources = {
       },
       licenses: {
         title: 'Licenses',
-        search: 'Search (MAC, device key, customer, status)',
+        search: 'Search (MAC, device key, customer, subscription, status)',
         actions: {
           server: 'Change server',
           transfer: 'Transfer',
@@ -705,6 +705,9 @@ const resources = {
           customersLoadError: 'Could not load customers.',
           required: 'Complete required fields.',
           invalidMac: 'Invalid MAC format. Use AA:BB:CC:DD:EE:FF.',
+          created: 'License created.',
+          updated: 'License updated.',
+          deleted: 'License deleted.',
           saveError: 'Could not save license.',
           deleteError: 'Could not delete license.'
         },
@@ -714,6 +717,7 @@ const resources = {
           deviceKey: 'Device key',
           name: 'Name',
           customer: 'Customer',
+          subscription: 'Subscription',
           status: 'Status',
           paid: 'Paid',
           app: 'App',
@@ -731,6 +735,11 @@ const resources = {
           macHelper: 'Format: AA:BB:CC:DD:EE:FF',
           deviceKey: 'Device key',
           deviceKeyHelper: 'Optional key for this device',
+          subscription: 'Subscription',
+          subscriptionNone: 'No related subscription',
+          subscriptionSelectCustomer: 'Select a customer first.',
+          subscriptionHelper: 'Optional relation to one customer subscription.',
+          subscriptionEmpty: 'This customer has no subscriptions available.',
           paid: 'Payment status',
           paidHelper: 'Track if this license was already paid'
         },
@@ -3299,7 +3308,7 @@ const resources = {
       },
       licenses: {
         title: 'Licencias',
-        search: 'Buscar (MAC, device key, cliente, estado)',
+        search: 'Buscar (MAC, device key, cliente, suscripción, estado)',
         actions: {
           server: 'Cambiar servidor',
           transfer: 'Trasladar',
@@ -3316,6 +3325,9 @@ const resources = {
           customersLoadError: 'No se pudieron cargar los clientes.',
           required: 'Completa los campos requeridos.',
           invalidMac: 'Formato MAC inválido. Usa AA:BB:CC:DD:EE:FF.',
+          created: 'Licencia creada.',
+          updated: 'Licencia actualizada.',
+          deleted: 'Licencia eliminada.',
           saveError: 'No se pudo guardar la licencia.',
           deleteError: 'No se pudo eliminar la licencia.'
         },
@@ -3325,6 +3337,7 @@ const resources = {
           deviceKey: 'Device key',
           name: 'Nombre',
           customer: 'Cliente',
+          subscription: 'Suscripción',
           status: 'Estado',
           paid: 'Pagada',
           app: 'App',
@@ -3342,6 +3355,11 @@ const resources = {
           macHelper: 'Formato: AA:BB:CC:DD:EE:FF',
           deviceKey: 'Device key',
           deviceKeyHelper: 'Llave opcional para este dispositivo',
+          subscription: 'Suscripción',
+          subscriptionNone: 'Sin suscripción relacionada',
+          subscriptionSelectCustomer: 'Selecciona primero un cliente.',
+          subscriptionHelper: 'Relación opcional con una suscripción del cliente.',
+          subscriptionEmpty: 'Este cliente no tiene suscripciones disponibles.',
           paid: 'Estado de pago',
           paidHelper: 'Indica si esta licencia ya fue pagada'
         },

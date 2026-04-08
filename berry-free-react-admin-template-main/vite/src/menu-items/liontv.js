@@ -205,22 +205,6 @@ const liontv = {
           url: '/liontv/futbol-events-feed',
           breadcrumbs: true,
           permission: { any: ['LIONTV_FEED_VIEW', 'LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
-        },
-        {
-          id: 'liontv-catalog-curation',
-          title: 'menu.catalogCuration',
-          type: 'item',
-          url: '/liontv/catalog-curation',
-          breadcrumbs: true,
-          permission: { any: ['LIONTV_FEED_VIEW', 'LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
-        },
-        {
-          id: 'liontv-m3u-line-sources',
-          title: 'M3U Line Sources',
-          type: 'item',
-          url: '/liontv/m3u-line-sources',
-          breadcrumbs: true,
-          permission: { any: ['LIONTV_FEED_VIEW', 'LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         }
       ]
     }

@@ -181,6 +181,18 @@ function parsePaidValue(value) {
   return false;
 }
 
+function idsMatch(left, right) {
+  return String(left ?? '') === String(right ?? '');
+}
+
+function formatSubscriptionLabel(subscription) {
+  if (!subscription) return '-';
+  const id = subscription.id ?? subscription.subscriptionId ?? '-';
+  const lineId = subscription.lineId || '-';
+  const status = subscription.status || '-';
+  return `#${id} - Line ${lineId} - ${status}`;
+}
+
 function parseToDay(value) {
   if (!value) return null;
   const raw = String(value).trim();
@@ -302,6 +314,7 @@ function normalizeLicense(item = {}) {
 
   return {
     licenseId: item.licenseId ?? item.license_id ?? null,
+    subscriptionId: item.subscriptionId ?? item.subscription_id ?? null,
     macAddress: item.macAddress ?? item.mac_address ?? '',
     name: item.name ?? '',
     deviceKey: item.deviceKey ?? item.device_key ?? '',
@@ -362,6 +375,7 @@ export default function LicensesLionTv() {
     name: '',
     deviceKey: '',
     customerId: '',
+    subscriptionId: '',
     status: 'ACTIVE',
     app: 'Vivo Player',
     price: '',
@@ -419,7 +433,8 @@ export default function LicensesLionTv() {
         lineId: s.lineId,
         packageId: s.packageId,
         renewalDate: s.renewalDate,
-        status: s.status
+        status: s.status,
+        username: s.username
       })));
     } catch (err) {
       if (!handleUnauthorized(err)) {
@@ -559,6 +574,24 @@ export default function LicensesLionTv() {
     return map;
   }, [customers]);
 
+  const subscriptionMap = useMemo(() => {
+    const map = {};
+    subscriptions.forEach((subscription) => {
+      const id = subscription?.id ?? subscription?.subscriptionId;
+      if (id == null) return;
+      map[String(id)] = subscription;
+    });
+    return map;
+  }, [subscriptions]);
+
+  const customerSubscriptions = useMemo(
+    () =>
+      subscriptions
+        .filter((subscription) => idsMatch(subscription.customerId, form.customerId))
+        .sort((a, b) => Number(b.id ?? 0) - Number(a.id ?? 0)),
+    [form.customerId, subscriptions]
+  );
+
   // Nota: busca en todas las licencias cargadas, incluye filtro por status y pago
   const filteredRows = useMemo(() => {
     if (!search && !statusFilter && !paymentFilter) return rows;
@@ -568,6 +601,8 @@ export default function LicensesLionTv() {
       if (paymentFilter === 'PAID' && !row.isPaid) return false;
       if (paymentFilter === 'PENDING' && row.isPaid) return false;
       const paidLabel = row.isPaid ? 'paid pagada' : 'pending pendiente no pagada';
+      const subscription = row.subscriptionId ? subscriptionMap[String(row.subscriptionId)] : null;
+      const subscriptionSearch = `${row.subscriptionId || ''} ${subscription?.lineId || ''} ${subscription?.status || ''}`.toLowerCase();
       return (
         (row.macAddress || '').toLowerCase().includes(term) ||
         (row.name || '').toLowerCase().includes(term) ||
@@ -576,10 +611,11 @@ export default function LicensesLionTv() {
         (row.status || '').toLowerCase().includes(term) ||
         (row.typeLicense || '').toLowerCase().includes(term) ||
         paidLabel.includes(term) ||
+        subscriptionSearch.includes(term) ||
         (row.customerName || customerNameMap[row.customerId] || '').toLowerCase().includes(term)
       );
     });
-  }, [rows, search, customerNameMap, statusFilter, paymentFilter]);
+  }, [rows, search, customerNameMap, statusFilter, paymentFilter, subscriptionMap]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -610,6 +646,7 @@ export default function LicensesLionTv() {
       name: '',
       deviceKey: '',
       customerId: '',
+      subscriptionId: '',
       status: 'ACTIVE',
       app: 'Vivo Player',
       price: 125,
@@ -638,6 +675,10 @@ export default function LicensesLionTv() {
       setForm((prev) => ({ ...prev, isPaid: parsePaidValue(value) }));
       return;
     }
+    if (field === 'customerId') {
+      setForm((prev) => ({ ...prev, customerId: value, subscriptionId: '' }));
+      return;
+    }
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -648,6 +689,7 @@ export default function LicensesLionTv() {
       name: row.name,
       deviceKey: row.deviceKey || '',
       customerId: row.customerId,
+      subscriptionId: row.subscriptionId ?? '',
       status: row.statusRaw || row.status,
       app: row.app,
       price: row.price,
@@ -683,6 +725,7 @@ export default function LicensesLionTv() {
       name: form.name,
       deviceKey: form.deviceKey?.trim() || null,
       customerId: Number(form.customerId),
+      subscriptionId: form.subscriptionId ? Number(form.subscriptionId) : null,
       status: form.status,
       app: form.app,
       price: form.price ? Number(form.price) : 0,
@@ -750,12 +793,15 @@ export default function LicensesLionTv() {
   const handleOpenServerChange = (row) => {
     const customer = customers.find((c) => (c.customerId || c.id) === row.customerId);
     const country = countryFromPhone(customer?.customerPhone || customer?.customer_phone || '');
+    const linkedSubscription = row.subscriptionId ? subscriptionMap[String(row.subscriptionId)] : null;
+    const linkedLineId = linkedSubscription?.lineId || '';
+    const linkedLine = lines.find((line) => idsMatch(line.id || line.lineId, linkedLineId));
     setServerForm({
       serverKey: '',
-      subscriptionId: '',
-      lineId: '',
-      username: '',
-      password: '',
+      subscriptionId: linkedSubscription?.id ?? '',
+      lineId: linkedLineId,
+      username: linkedLine?.username || '',
+      password: linkedLine?.password || '',
       country,
       playlistName: 'Principal'
     });
@@ -767,9 +813,9 @@ export default function LicensesLionTv() {
   };
 
   const handleSubscriptionSelect = (value) => {
-    const sub = subscriptions.find((s) => (s.id || s.subscriptionId) === value);
+    const sub = subscriptions.find((s) => idsMatch(s.id || s.subscriptionId, value));
     const lineId = sub?.lineId;
-    const line = lines.find((l) => (l.id || l.lineId) === lineId);
+    const line = lines.find((l) => idsMatch(l.id || l.lineId, lineId));
     setServerForm((prev) => ({
       ...prev,
       subscriptionId: value,
@@ -1121,6 +1167,7 @@ export default function LicensesLionTv() {
                 <TableCell>{t('licenses.headers.mac')}</TableCell>
                 <TableCell>{t('licenses.headers.deviceKey', 'Device Key')}</TableCell>
                 <TableCell>{t('licenses.headers.customer')}</TableCell>
+                <TableCell>{t('licenses.headers.subscription', 'Subscription')}</TableCell>
                 <TableCell>{t('licenses.headers.app')}</TableCell>
                 <TableCell>{t('licenses.headers.status')}</TableCell>
                 <TableCell>{t('licenses.headers.paid', 'Paid')}</TableCell>
@@ -1171,6 +1218,23 @@ export default function LicensesLionTv() {
                   <TableCell>{row.deviceKey || '-'}</TableCell>
 
                   <TableCell>{row.customerName || customerNameMap[row.customerId] || '-'}</TableCell>
+
+                  <TableCell>
+                    {row.subscriptionId ? (
+                      <Stack spacing={0.25}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          #{row.subscriptionId}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {subscriptionMap[String(row.subscriptionId)]?.lineId
+                            ? `Line ${subscriptionMap[String(row.subscriptionId)]?.lineId}`
+                            : '-'}
+                        </Typography>
+                      </Stack>
+                    ) : (
+                      '-'
+                    )}
+                  </TableCell>
 
                   <TableCell>
                     <Chip
@@ -1243,7 +1307,7 @@ export default function LicensesLionTv() {
 
               {!loading && filteredRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={12} align="center" sx={{ py: 6 }}>
                     <Stack spacing={1} alignItems="center">
                       <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
                         <SecurityIcon />
@@ -1264,7 +1328,7 @@ export default function LicensesLionTv() {
 
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={12} align="center" sx={{ py: 4 }}>
                     <Stack spacing={1} alignItems="center">
                       <Skeleton variant="circular" width={40} height={40} />
                       <Typography variant="body2" color="text.secondary">
@@ -1454,6 +1518,38 @@ export default function LicensesLionTv() {
                       {customersLoading
                         ? t('licenses.form.loadingCustomers', 'Loading customers...')
                         : t('licenses.form.customerHelper', 'Customer linked to this license')}
+                    </FormHelperText>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <FormControl fullWidth sx={fieldSx} disabled={!form.customerId}>
+                    <InputLabel>{t('licenses.form.subscription', 'Subscription')}</InputLabel>
+                    <Select
+                      value={form.subscriptionId}
+                      label={t('licenses.form.subscription', 'Subscription')}
+                      onChange={handleFormChange('subscriptionId')}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <LinkIcon fontSize="small" color="primary" />
+                        </InputAdornment>
+                      }
+                    >
+                      <MenuItem value="">
+                        <em>{t('licenses.form.subscriptionNone', 'No related subscription')}</em>
+                      </MenuItem>
+                      {customerSubscriptions.map((subscription) => (
+                        <MenuItem key={subscription.id} value={subscription.id}>
+                          {formatSubscriptionLabel(subscription)}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    <FormHelperText>
+                      {!form.customerId
+                        ? t('licenses.form.subscriptionSelectCustomer', 'Select a customer first.')
+                        : customerSubscriptions.length
+                          ? t('licenses.form.subscriptionHelper', 'Optional relation to one customer subscription.')
+                          : t('licenses.form.subscriptionEmpty', 'This customer has no subscriptions available.')}
                     </FormHelperText>
                   </FormControl>
                 </Grid>
@@ -1699,10 +1795,10 @@ export default function LicensesLionTv() {
                   <em>{t('licenses.form.select', 'Select')}</em>
                 </MenuItem>
                 {subscriptions
-                  .filter((s) => s.customerId === openServerChange.row?.customerId)
+                  .filter((s) => idsMatch(s.customerId, openServerChange.row?.customerId))
                   .map((s) => (
                     <MenuItem key={s.id} value={s.id}>
-                      #{s.id} - Line {s.lineId}
+                      {formatSubscriptionLabel(s)}
                   </MenuItem>
                 ))}
               </Select>
