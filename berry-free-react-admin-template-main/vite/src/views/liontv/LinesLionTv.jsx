@@ -132,6 +132,18 @@ const countryOptions = [
   { code: 'CO', label: 'Colombia' }
 ];
 
+const lineProviderOptions = [
+  'LION_TV',
+  'TITAN',
+  'NEXOLAT',
+  'LION_PLUS+',
+  'SPOTIFY',
+  'NETFLIX',
+  'AMAZON_PRIME',
+  'YOUTUBE_PREMIUM',
+  'DISNEY_PLUS_PREMIUM'
+];
+
 const countryLabel = (code) => countryOptions.find((c) => c.code === code)?.label || code || 'Global';
 
 const glassCard = (theme) => ({
@@ -1339,14 +1351,11 @@ export default function LinesLionTv() {
                         </Stack>
                       )}
                     >
-                      <MenuItem value="LION_TV">LION_TV</MenuItem>
-                      <MenuItem value="TITAN">TITAN</MenuItem>
-                      <MenuItem value="LION_PLUS+">LION_PLUS+</MenuItem>
-                      <MenuItem value="SPOTIFY">SPOTIFY</MenuItem>
-                      <MenuItem value="NETFLIX">NETFLIX</MenuItem>
-                      <MenuItem value="AMAZON_PRIME">AMAZON PRIME</MenuItem>
-                      <MenuItem value="YOUTUBE_PREMIUM">YOUTUBE PREMIUM</MenuItem>
-                      <MenuItem value="DISNEY_PLUS_PREMIUM">DISNEY PLUS PREMIUM</MenuItem>
+                      {lineProviderOptions.map((providerOption) => (
+                        <MenuItem key={providerOption} value={providerOption}>
+                          {providerOption}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
                 </Grid>
