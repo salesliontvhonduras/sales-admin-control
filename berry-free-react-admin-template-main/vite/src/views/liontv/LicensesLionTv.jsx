@@ -189,8 +189,9 @@ function formatSubscriptionLabel(subscription) {
   if (!subscription) return '-';
   const id = subscription.id ?? subscription.subscriptionId ?? '-';
   const lineId = subscription.lineId || '-';
+  const lineUsername = subscription.lineUsername || subscription.usernameLine || subscription.username_line || '';
   const status = subscription.status || '-';
-  return `#${id} - Line ${lineId} - ${status}`;
+  return lineUsername ? `#${id} - ${lineUsername} - ${status}` : `#${id} - Line ${lineId} - ${status}`;
 }
 
 function parseToDay(value) {
@@ -431,6 +432,7 @@ export default function LicensesLionTv() {
         id: s.subscriptionId ?? s.id,
         customerId: s.customerId,
         lineId: s.lineId,
+        lineUsername: s.usernameLine ?? s.username_line ?? s.usernameEncode ?? s.username_encode ?? '',
         packageId: s.packageId,
         renewalDate: s.renewalDate,
         status: s.status,
@@ -602,7 +604,7 @@ export default function LicensesLionTv() {
       if (paymentFilter === 'PENDING' && row.isPaid) return false;
       const paidLabel = row.isPaid ? 'paid pagada' : 'pending pendiente no pagada';
       const subscription = row.subscriptionId ? subscriptionMap[String(row.subscriptionId)] : null;
-      const subscriptionSearch = `${row.subscriptionId || ''} ${subscription?.lineId || ''} ${subscription?.status || ''}`.toLowerCase();
+      const subscriptionSearch = `${row.subscriptionId || ''} ${subscription?.lineId || ''} ${subscription?.lineUsername || ''} ${subscription?.status || ''}`.toLowerCase();
       return (
         (row.macAddress || '').toLowerCase().includes(term) ||
         (row.name || '').toLowerCase().includes(term) ||
@@ -1172,9 +1174,6 @@ export default function LicensesLionTv() {
                 <TableCell>{t('licenses.headers.status')}</TableCell>
                 <TableCell>{t('licenses.headers.paid', 'Paid')}</TableCell>
                 <TableCell>{t('licenses.headers.period')}</TableCell>
-                <TableCell>{t('licenses.headers.type')}</TableCell>
-                <TableCell>{t('licenses.headers.price')}</TableCell>
-                <TableCell>{t('licenses.headers.expire')}</TableCell>
                 <TableCell>{t('licenses.headers.actions')}</TableCell>
               </TableRow>
             </TableHead>
@@ -1226,9 +1225,10 @@ export default function LicensesLionTv() {
                           #{row.subscriptionId}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {subscriptionMap[String(row.subscriptionId)]?.lineId
-                            ? `Line ${subscriptionMap[String(row.subscriptionId)]?.lineId}`
-                            : '-'}
+                          {subscriptionMap[String(row.subscriptionId)]?.lineUsername ||
+                            (subscriptionMap[String(row.subscriptionId)]?.lineId
+                              ? `Line ${subscriptionMap[String(row.subscriptionId)]?.lineId}`
+                              : '-')}
                         </Typography>
                       </Stack>
                     ) : (
@@ -1264,32 +1264,6 @@ export default function LicensesLionTv() {
                     </Stack>
                   </TableCell>
 
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      label={row.typeLicense || '-'}
-                      color={row.typeLicense === 'PRIMARY' ? 'primary' : 'secondary'}
-                      variant="outlined"
-                      sx={{ fontWeight: 700 }}
-                    />
-                  </TableCell>
-
-                  <TableCell>
-                    <Stack direction="row" spacing={0.75} alignItems="center">
-                      <AttachMoneyIcon fontSize="small" color="success" />
-                      <Typography variant="body2">{Number(row.price || 0).toFixed(2)}</Typography>
-                    </Stack>
-                  </TableCell>
-
-                  <TableCell>
-                    <Stack direction="row" spacing={0.75} alignItems="center">
-                      <CalendarMonthIcon fontSize="small" color="primary" />
-                      <Typography variant="body2">
-                        {row.expireAt ? String(row.expireAt).slice(0, 10) : '-'}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-
                   <TableCell align="right">
                     <RowActions
                       row={row}
@@ -1307,7 +1281,7 @@ export default function LicensesLionTv() {
 
               {!loading && filteredRows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={12} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
                     <Stack spacing={1} alignItems="center">
                       <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
                         <SecurityIcon />
@@ -1328,7 +1302,7 @@ export default function LicensesLionTv() {
 
               {loading && (
                 <TableRow>
-                  <TableCell colSpan={12} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                     <Stack spacing={1} alignItems="center">
                       <Skeleton variant="circular" width={40} height={40} />
                       <Typography variant="body2" color="text.secondary">
