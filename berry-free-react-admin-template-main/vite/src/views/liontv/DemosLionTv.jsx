@@ -481,7 +481,11 @@ export default function DemosLionTv() {
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo guardar la demo.', { variant: 'error' });
+        const isExpireAttempt = (form.status || '').toUpperCase() === 'EXPIRED';
+        const fallbackMessage = isExpireAttempt
+          ? 'No se pudo marcar la demo como expirada porque falló la limpieza en Vivo Player.'
+          : 'No se pudo guardar la demo.';
+        enqueueSnackbar(err?.response?.data?.message || err.message || fallbackMessage, { variant: 'error' });
       }
     } finally {
       setSending(false);
