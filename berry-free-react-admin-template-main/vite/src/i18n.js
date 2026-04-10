@@ -1646,7 +1646,21 @@ const resources = {
           empty: 'No series feed records found.',
           created: 'Series feed record created successfully.',
           updated: 'Series feed record updated successfully.',
-          deleted: 'Series feed record deleted successfully.'
+          deleted: 'Series feed record deleted successfully.',
+          import: {
+            button: 'Import from Alluko',
+            title: 'Alluko import',
+            helper:
+              'Sign in manually in Alluko, copy the Cookie header from an authenticated request, and use it here to fetch the JSON into the payload box.',
+            cookieLabel: 'Authenticated Cookie header',
+            cookiePlaceholder: 'PHPSESSID=...; xm_simple_security_check=...; saved_access_code=subadmin; ...',
+            categoryLabel: 'Category (optional)',
+            categoryPlaceholder: 'Leave empty for all',
+            fetch: 'Fetch from Alluko',
+            fetching: 'Importing...',
+            success: 'Payload imported from Alluko.',
+            error: 'Could not import from Alluko.'
+          }
         },
         futbol: {
           title: 'Futbol Events Feed',
@@ -1654,7 +1668,21 @@ const resources = {
           empty: 'No futbol event records found.',
           created: 'Futbol event record created successfully.',
           updated: 'Futbol event record updated successfully.',
-          deleted: 'Futbol event record deleted successfully.'
+          deleted: 'Futbol event record deleted successfully.',
+          import: {
+            button: 'Import from Alluko',
+            title: 'Alluko import',
+            helper:
+              'Sign in manually in Alluko, copy the Cookie header from an authenticated request, and use category 536 to fetch the football events payload.',
+            cookieLabel: 'Authenticated Cookie header',
+            cookiePlaceholder: 'PHPSESSID=...; xm_simple_security_check=...; saved_access_code=subadmin; ...',
+            categoryLabel: 'Category',
+            categoryPlaceholder: '536',
+            fetch: 'Fetch from Alluko',
+            fetching: 'Importing...',
+            success: 'Payload imported from Alluko.',
+            error: 'Could not import from Alluko.'
+          }
         }
       },
       errorBoundary: {
@@ -4284,7 +4312,21 @@ const resources = {
           empty: 'No hay registros en el feed de series.',
           created: 'Registro de feed de series creado correctamente.',
           updated: 'Registro de feed de series actualizado correctamente.',
-          deleted: 'Registro de feed de series eliminado correctamente.'
+          deleted: 'Registro de feed de series eliminado correctamente.',
+          import: {
+            button: 'Importar desde Alluko',
+            title: 'Importación desde Alluko',
+            helper:
+              'Autentícate manualmente en Alluko, copia el valor del header Cookie desde un request autenticado y úsalo para traer el JSON al payload.',
+            cookieLabel: 'Cookie header autenticado',
+            cookiePlaceholder: 'PHPSESSID=...; xm_simple_security_check=...; saved_access_code=subadmin; ...',
+            categoryLabel: 'Categoría (opcional)',
+            categoryPlaceholder: 'Vacío para todas',
+            fetch: 'Traer desde Alluko',
+            fetching: 'Importando...',
+            success: 'Payload importado desde Alluko.',
+            error: 'No se pudo importar desde Alluko.'
+          }
         },
         futbol: {
           title: 'Feed de Eventos de Fútbol',
@@ -4292,7 +4334,21 @@ const resources = {
           empty: 'No hay registros en el feed de fútbol.',
           created: 'Registro de evento de fútbol creado correctamente.',
           updated: 'Registro de evento de fútbol actualizado correctamente.',
-          deleted: 'Registro de evento de fútbol eliminado correctamente.'
+          deleted: 'Registro de evento de fútbol eliminado correctamente.',
+          import: {
+            button: 'Importar desde Alluko',
+            title: 'Importación desde Alluko',
+            helper:
+              'Autentícate manualmente en Alluko, copia el valor del header Cookie desde un request autenticado y usa la categoría 536 para traer el payload de eventos de fútbol.',
+            cookieLabel: 'Cookie header autenticado',
+            cookiePlaceholder: 'PHPSESSID=...; xm_simple_security_check=...; saved_access_code=subadmin; ...',
+            categoryLabel: 'Categoría',
+            categoryPlaceholder: '536',
+            fetch: 'Traer desde Alluko',
+            fetching: 'Importando...',
+            success: 'Payload importado desde Alluko.',
+            error: 'No se pudo importar desde Alluko.'
+          }
         }
       },
       catalog: {
