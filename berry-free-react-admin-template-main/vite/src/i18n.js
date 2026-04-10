@@ -1604,6 +1604,10 @@ const resources = {
           payloadRequired: 'Payload JSON is required.',
           payloadInvalid: 'Payload JSON is not valid.'
         },
+        import: {
+          success: 'Payload imported successfully.',
+          error: 'Could not import payload.'
+        },
         errors: {
           load: 'Could not load records.',
           save: 'Could not save record.',
@@ -1620,7 +1624,21 @@ const resources = {
           empty: 'No movie feed records found.',
           created: 'Movie feed record created successfully.',
           updated: 'Movie feed record updated successfully.',
-          deleted: 'Movie feed record deleted successfully.'
+          deleted: 'Movie feed record deleted successfully.',
+          import: {
+            button: 'Import from Alluko',
+            title: 'Alluko import',
+            helper:
+              'Sign in manually in Alluko, copy the Cookie header from an authenticated request, and use it here to fetch the JSON into the payload box.',
+            cookieLabel: 'Authenticated Cookie header',
+            cookiePlaceholder: 'PHPSESSID=...; xm_simple_security_check=...; saved_access_code=subadmin; ...',
+            categoryLabel: 'Category (optional)',
+            categoryPlaceholder: 'Leave empty for all',
+            fetch: 'Fetch from Alluko',
+            fetching: 'Importing...',
+            success: 'Payload imported from Alluko.',
+            error: 'Could not import from Alluko.'
+          }
         },
         series: {
           title: 'Series Feed',
@@ -4224,6 +4242,10 @@ const resources = {
           payloadRequired: 'El payload JSON es requerido.',
           payloadInvalid: 'El payload JSON no es válido.'
         },
+        import: {
+          success: 'Payload importado correctamente.',
+          error: 'No se pudo importar el payload.'
+        },
         errors: {
           load: 'No se pudo cargar los registros.',
           save: 'No se pudo guardar el registro.',
@@ -4240,7 +4262,21 @@ const resources = {
           empty: 'No hay registros en el feed de películas.',
           created: 'Registro de feed de películas creado correctamente.',
           updated: 'Registro de feed de películas actualizado correctamente.',
-          deleted: 'Registro de feed de películas eliminado correctamente.'
+          deleted: 'Registro de feed de películas eliminado correctamente.',
+          import: {
+            button: 'Importar desde Alluko',
+            title: 'Importación desde Alluko',
+            helper:
+              'Autentícate manualmente en Alluko, copia el valor del header Cookie desde un request autenticado y úsalo para traer el JSON al payload.',
+            cookieLabel: 'Cookie header autenticado',
+            cookiePlaceholder: 'PHPSESSID=...; xm_simple_security_check=...; saved_access_code=subadmin; ...',
+            categoryLabel: 'Categoría (opcional)',
+            categoryPlaceholder: 'Vacío para todas',
+            fetch: 'Traer desde Alluko',
+            fetching: 'Importando...',
+            success: 'Payload importado desde Alluko.',
+            error: 'No se pudo importar desde Alluko.'
+          }
         },
         series: {
           title: 'Feed de Series',

@@ -125,7 +125,8 @@ export default function FeedCrudManager({
   emptyMessage,
   createSuccessMessage,
   updateSuccessMessage,
-  deleteSuccessMessage
+  deleteSuccessMessage,
+  remoteImportConfig = null
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
@@ -141,6 +142,8 @@ export default function FeedCrudManager({
   const [openModal, setOpenModal] = useState(false);
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
   const [form, setForm] = useState(defaultForm);
+  const [remoteImport, setRemoteImport] = useState({ cookieHeader: '', category: '' });
+  const [importing, setImporting] = useState(false);
 
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
@@ -198,6 +201,7 @@ export default function FeedCrudManager({
   }, [filteredRows.length, page, rowsPerPage]);
 
   const resetForm = () => setForm(defaultForm);
+  const resetRemoteImport = () => setRemoteImport({ cookieHeader: '', category: '' });
 
   const validatePayloadJson = (payloadJson) => {
     if (!payloadJson?.trim()) {
@@ -291,7 +295,48 @@ export default function FeedCrudManager({
       publishedAt: toInputDateTime(row.publishedAt),
       active: Boolean(row.active)
     });
+    resetRemoteImport();
     setOpenModal(true);
+  };
+
+  const handleRemoteImport = async () => {
+    if (!remoteImportConfig) return;
+    if (!remoteImport.cookieHeader?.trim()) {
+      enqueueSnackbar(remoteImportConfig.errorMessage || t('feedCrud.import.error'), { variant: 'warning' });
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const response = await lionTvApi.post(
+        remoteImportConfig.endpoint,
+        {
+          cookieHeader: remoteImport.cookieHeader,
+          category: remoteImport.category || ''
+        },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          skipAuthRedirect: true
+        }
+      );
+
+      const payloadJson = response?.data?.data?.payloadJson ?? '';
+      if (!payloadJson) {
+        throw new Error(remoteImportConfig.errorMessage || t('feedCrud.import.error'));
+      }
+
+      setForm((prev) => ({ ...prev, payloadJson }));
+      enqueueSnackbar(remoteImportConfig.successMessage || t('feedCrud.import.success'), { variant: 'success' });
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(
+          err?.response?.data?.message || err?.message || remoteImportConfig.errorMessage || t('feedCrud.import.error'),
+          { variant: 'error' }
+        );
+      }
+    } finally {
+      setImporting(false);
+    }
   };
 
   return (
@@ -308,6 +353,7 @@ export default function FeedCrudManager({
               startIcon={<AddCircleOutlineIcon />}
               onClick={() => {
                 resetForm();
+                resetRemoteImport();
                 setOpenModal(true);
               }}
             >
@@ -410,6 +456,41 @@ export default function FeedCrudManager({
         </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2}>
+            {remoteImportConfig ? (
+              <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: 'background.default' }}>
+                <Stack spacing={1.5}>
+                  <Typography variant="subtitle2">{remoteImportConfig.title}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {remoteImportConfig.helper}
+                  </Typography>
+                  <TextField
+                    label={remoteImportConfig.cookieLabel}
+                    value={remoteImport.cookieHeader}
+                    onChange={(e) => setRemoteImport((prev) => ({ ...prev, cookieHeader: e.target.value }))}
+                    multiline
+                    minRows={3}
+                    placeholder={remoteImportConfig.cookiePlaceholder}
+                    fullWidth
+                  />
+                  <TextField
+                    label={remoteImportConfig.categoryLabel}
+                    value={remoteImport.category}
+                    onChange={(e) => setRemoteImport((prev) => ({ ...prev, category: e.target.value }))}
+                    placeholder={remoteImportConfig.categoryPlaceholder}
+                    fullWidth
+                  />
+                  <Stack direction="row" justifyContent="flex-end">
+                    <Button
+                      variant="outlined"
+                      onClick={handleRemoteImport}
+                      disabled={importing || sending}
+                    >
+                      {importing ? remoteImportConfig.fetchingLabel : remoteImportConfig.fetchLabel}
+                    </Button>
+                  </Stack>
+                </Stack>
+              </Paper>
+            ) : null}
             <TextField
               label={t('feedCrud.form.payloadJson')}
               value={form.payloadJson}
@@ -437,7 +518,7 @@ export default function FeedCrudManager({
           <Button onClick={() => setOpenModal(false)} disabled={sending}>
             {t('common.close')}
           </Button>
-          <Button onClick={handleSave} variant="contained" disabled={sending}>
+          <Button onClick={handleSave} variant="contained" disabled={sending || importing}>
             {sending ? t('feedCrud.actions.saving') : form.id ? t('feedCrud.actions.saveChanges') : t('feedCrud.actions.create')}
           </Button>
         </DialogActions>
