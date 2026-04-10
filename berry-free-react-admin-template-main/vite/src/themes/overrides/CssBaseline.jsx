@@ -18,7 +18,8 @@ export default function CssBaseline(theme) {
         body: {
           background: isDark
             ? `radial-gradient(circle at 15% -5%, ${withAlpha(theme.vars.palette.primary.main, 0.18)} 0%, transparent 34%), radial-gradient(circle at 85% -15%, ${withAlpha(theme.vars.palette.secondary.main, 0.16)} 0%, transparent 35%), ${theme.vars.palette.background.default}`
-            : `radial-gradient(circle at 12% -8%, ${withAlpha(theme.vars.palette.primary.main, 0.08)} 0%, transparent 34%), radial-gradient(circle at 92% -10%, ${withAlpha(theme.vars.palette.secondary.main, 0.07)} 0%, transparent 30%), linear-gradient(180deg, ${theme.vars.palette.background.default} 0%, ${theme.vars.palette.surface.sunken} 100%)`
+            : `radial-gradient(circle at 12% -8%, ${withAlpha(theme.vars.palette.primary.main, 0.08)} 0%, transparent 34%), radial-gradient(circle at 92% -10%, ${withAlpha(theme.vars.palette.secondary.main, 0.07)} 0%, transparent 30%), linear-gradient(180deg, ${theme.vars.palette.background.default} 0%, ${theme.vars.palette.surface.sunken} 100%)`,
+          overflowX: 'hidden'
         },
         ':focus-visible': {
           outline: `2px solid ${theme.vars.palette.primary.main}`,
@@ -41,6 +42,24 @@ export default function CssBaseline(theme) {
         },
         '#root': {
           minHeight: '100vh'
+        },
+        '.MuiTablePagination-toolbar': {
+          gap: 8
+        },
+        '@media (max-width:599.95px)': {
+          '.MuiTablePagination-toolbar': {
+            minHeight: 72,
+            paddingLeft: 8,
+            paddingRight: 8,
+            flexWrap: 'wrap',
+            justifyContent: 'space-between'
+          },
+          '.MuiTablePagination-spacer': {
+            display: 'none'
+          },
+          '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+            margin: 0
+          }
         }
       }
     }

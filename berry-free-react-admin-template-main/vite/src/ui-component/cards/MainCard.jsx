@@ -10,7 +10,16 @@ import { withAlpha } from 'utils/colorUtils';
 
 // constant
 const headerStyle = {
-  '& .MuiCardHeader-action': { mr: 0 }
+  '& .MuiCardHeader-root': {
+    gap: 12
+  },
+  '& .MuiCardHeader-content': {
+    minWidth: 0
+  },
+  '& .MuiCardHeader-action': {
+    mr: 0,
+    alignSelf: 'center'
+  }
 };
 
 export default function MainCard({
@@ -62,9 +71,51 @@ export default function MainCard({
       })}
     >
       {/* card header and action */}
-      {!darkTitle && title && <CardHeader sx={{ ...headerStyle, ...headerSX }} title={title} action={secondary} />}
+      {!darkTitle && title && (
+        <CardHeader
+          sx={{
+            ...headerStyle,
+            px: { xs: 1.5, sm: 2.5 },
+            py: { xs: 1.5, sm: 2 },
+            '& .MuiCardHeader-root': {
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'stretch', sm: 'center' }
+            },
+            '& .MuiCardHeader-action': {
+              mr: 0,
+              mt: { xs: 1.25, sm: 0 },
+              ml: { xs: 0, sm: 'auto' },
+              width: { xs: '100%', sm: 'auto' },
+              alignSelf: { xs: 'stretch', sm: 'center' }
+            },
+            ...headerSX
+          }}
+          title={title}
+          action={secondary}
+        />
+      )}
       {darkTitle && title && (
-        <CardHeader sx={{ ...headerStyle, ...headerSX }} title={<Typography variant="h3">{title}</Typography>} action={secondary} />
+        <CardHeader
+          sx={{
+            ...headerStyle,
+            px: { xs: 1.5, sm: 2.5 },
+            py: { xs: 1.5, sm: 2 },
+            '& .MuiCardHeader-root': {
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'stretch', sm: 'center' }
+            },
+            '& .MuiCardHeader-action': {
+              mr: 0,
+              mt: { xs: 1.25, sm: 0 },
+              ml: { xs: 0, sm: 'auto' },
+              width: { xs: '100%', sm: 'auto' },
+              alignSelf: { xs: 'stretch', sm: 'center' }
+            },
+            ...headerSX
+          }}
+          title={<Typography variant="h3">{title}</Typography>}
+          action={secondary}
+        />
       )}
 
       {/* content & header divider */}

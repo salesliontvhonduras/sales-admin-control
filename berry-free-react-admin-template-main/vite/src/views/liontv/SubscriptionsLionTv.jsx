@@ -1052,7 +1052,7 @@ export default function SubscriptionsLionTv() {
           </Stack>
         </Box>
         <TableContainer component={Paper}>
-          <Table size="small">
+          <Table size="small" sx={{ minWidth: { xs: 1180, md: '100%' } }}>
               <TableHead>
                 <TableRow>
                   <TableCell>{t('subscriptions.headers.id')}</TableCell>

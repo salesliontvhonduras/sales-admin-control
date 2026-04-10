@@ -48,16 +48,19 @@ const MainContentStyled = styled('main', {
     }
   }),
   [theme.breakpoints.down('md')]: {
-    marginLeft: 16,
-    padding: 14,
+    width: 'calc(100% - 24px)',
+    marginLeft: 12,
+    marginRight: 12,
+    padding: 12,
     marginTop: 82,
-    ...(!open && {
-      width: `calc(100% - ${drawerWidth}px)`
-    })
+    minHeight: 'calc(100vh - 94px)'
   },
   [theme.breakpoints.down('sm')]: {
-    marginLeft: 10,
-    marginRight: 10
+    width: 'calc(100% - 16px)',
+    marginLeft: 8,
+    marginRight: 8,
+    padding: 10,
+    borderRadius: `${Math.max(Number(borderRadius || 8), 8) + 2}px`
   }
 }));
 

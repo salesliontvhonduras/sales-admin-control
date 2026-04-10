@@ -1,11 +1,14 @@
 // ==============================|| OVERRIDES - CARD CONTENT ||============================== //
 
-export default function CardContent() {
+export default function CardContent(theme) {
   return {
     MuiCardContent: {
       styleOverrides: {
         root: {
-          padding: '20px'
+          padding: '20px',
+          [theme.breakpoints.down('sm')]: {
+            padding: '14px'
+          }
         }
       }
     },

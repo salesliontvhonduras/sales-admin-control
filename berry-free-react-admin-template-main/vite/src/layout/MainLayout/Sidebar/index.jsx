@@ -82,7 +82,7 @@ function Sidebar() {
               sx: {
                 mt: downMD ? 0 : 9.5,
                 zIndex: 1099,
-                width: drawerWidth,
+                width: downMD ? 'min(320px, calc(100vw - 16px))' : drawerWidth,
                 bgcolor: 'surface.sidebar',
                 color: 'text.primary',
                 borderRight: '1px solid',

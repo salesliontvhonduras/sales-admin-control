@@ -828,7 +828,7 @@ export default function CustomersLionTv() {
             borderColor: 'divider'
           }}
         >
-          <Table size="small">
+          <Table size="small" sx={{ minWidth: { xs: 1080, md: '100%' } }}>
             <TableHead>
               <TableRow
                 sx={(theme) => ({

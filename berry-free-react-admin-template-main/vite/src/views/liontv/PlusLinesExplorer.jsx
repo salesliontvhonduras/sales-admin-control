@@ -18,6 +18,8 @@ import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
 import Tooltip from '@mui/material/Tooltip';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 
 import SearchIcon from '@mui/icons-material/Search';
 import MapIcon from '@mui/icons-material/Map';
@@ -143,6 +145,8 @@ export default function PlusLinesExplorer() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
   const { t } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [summary, setSummary] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -234,7 +238,7 @@ export default function PlusLinesExplorer() {
   const activeLines = useMemo(() => lines.filter((line) => !isUnusedPlusLine(line)), [lines]);
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
+    <Box sx={{ width: '100%', maxWidth: { xs: '100%', xl: 1400 }, mx: 'auto' }}>
       <MainCard title={t('plusLines.title', 'Plus Lines Explorer')} secondary={null}>
         <Grid container spacing={gridSpacing}>
           {[
@@ -305,14 +309,14 @@ export default function PlusLinesExplorer() {
         <Grid container spacing={2}>
           {loadingSummary &&
             Array.from({ length: 6 }).map((_, idx) => (
-              <Grid item xs={6} sm={4} md={3} key={idx}>
+              <Grid item xs={12} sm={6} md={4} lg={3} key={idx}>
                 <Skeleton variant="rectangular" height={90} sx={{ borderRadius: 2 }} />
               </Grid>
             ))}
 
           {!loadingSummary &&
             summaryWithFlags.map((item) => (
-              <Grid item xs={6} sm={4} md={3} key={item.country}>
+              <Grid item xs={12} sm={6} md={4} lg={3} key={item.country}>
                 <Card
                   onClick={() => setSelectedCountry(item.country)}
                   sx={(theme) => ({
@@ -352,7 +356,7 @@ export default function PlusLinesExplorer() {
 
       <MainCard
         title={
-          <Stack direction="row" spacing={1} alignItems="center">
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
             <PublicIcon color="primary" />
             <Typography variant="h6">
               {selectedCountry ? countryLabel(selectedCountry) : t('plusLines.pickCountry', 'Elige un país')}
@@ -360,7 +364,7 @@ export default function PlusLinesExplorer() {
           </Stack>
         }
         secondary={
-          <Stack direction="row" spacing={1}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: { xs: '100%', sm: 'auto' } }}>
             <TextField
               size="small"
               placeholder={t('plusLines.searchLine', 'Buscar línea plus u owner en este país')}
@@ -373,7 +377,7 @@ export default function PlusLinesExplorer() {
                   </InputAdornment>
                 )
               }}
-              sx={{ minWidth: 260 }}
+              sx={{ minWidth: { xs: '100%', sm: 260 }, width: { xs: '100%', sm: 'auto' } }}
               helperText={t('plusLines.searchLineHelper', 'Filtra las tarjetas de líneas de este país')}
             />
           </Stack>
@@ -459,7 +463,12 @@ export default function PlusLinesExplorer() {
                         gap: 1
                       })}
                     >
-                      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1 }}>
+                      <Stack
+                        direction={{ xs: 'column', sm: 'row' }}
+                        spacing={1.5}
+                        alignItems={{ xs: 'flex-start', sm: 'center' }}
+                        sx={{ mb: 1 }}
+                      >
                         <Avatar sx={{ bgcolor: isUnused ? 'warning.main' : 'primary.main', color: 'common.white' }}>
                           {countryFlag(line.country)}
                         </Avatar>
@@ -475,7 +484,7 @@ export default function PlusLinesExplorer() {
                           size="small"
                           icon={statusIcon[normalizedStatus] || <PendingActionsIcon fontSize="small" />}
                           label={statusLabelOf(line.status, t)}
-                          sx={{ ml: 'auto', fontWeight: 700 }}
+                          sx={{ ml: { xs: 0, sm: 'auto' }, fontWeight: 700 }}
                         />
                       </Stack>
 
@@ -553,6 +562,8 @@ function SubscriptionsInline({ linePlusId, totalSubscriptions = 0 }) {
   const { accessToken } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -607,44 +618,45 @@ function SubscriptionsInline({ linePlusId, totalSubscriptions = 0 }) {
   return (
     <Stack spacing={1}>
       {visible.map((sub) => (
-        <Paper
-          key={sub.subscriptionId}
-          variant="outlined"
-          sx={{
-            p: 1,
-            borderRadius: 2,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1
-          }}
-        >
-          <Avatar sx={{ width: 28, height: 28, bgcolor: 'primary.lighter', color: 'primary.main', fontSize: 12, fontWeight: 700 }}>
-            #{sub.subscriptionId}
-          </Avatar>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="body2">{sub.customerName || sub.customerId}</Typography>
-            <Typography variant="caption" color="text.secondary">
-              {sub.startDate || '-'}
-            </Typography>
-            {sub.primaryMaxConnections ? (
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                {t('plusLines.subscription.primaryMax', {
-                  defaultValue: 'Primary line max connections: {{count}}',
-                  count: sub.primaryMaxConnections
-                })}
-              </Typography>
-            ) : null}
-          </Box>
-          <Chip
-            size="small"
-            icon={statusIcon[sub.status] || <PendingActionsIcon fontSize="small" />}
-            label={statusLabelOf(sub.status, t)}
-            sx={{ fontWeight: 700 }}
-          />
+        <Paper key={sub.subscriptionId} variant="outlined" sx={{ p: 1, borderRadius: 2 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ width: '100%', minWidth: 0 }}>
+              <Avatar sx={{ width: 28, height: 28, bgcolor: 'primary.lighter', color: 'primary.main', fontSize: 12, fontWeight: 700 }}>
+                #{sub.subscriptionId}
+              </Avatar>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
+                  {sub.customerName || sub.customerId}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {sub.startDate || '-'}
+                </Typography>
+                {sub.primaryMaxConnections ? (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    {t('plusLines.subscription.primaryMax', {
+                      defaultValue: 'Primary line max connections: {{count}}',
+                      count: sub.primaryMaxConnections
+                    })}
+                  </Typography>
+                ) : null}
+              </Box>
+            </Stack>
+            <Chip
+              size="small"
+              icon={statusIcon[sub.status] || <PendingActionsIcon fontSize="small" />}
+              label={statusLabelOf(sub.status, t)}
+              sx={{ fontWeight: 700, alignSelf: { xs: 'flex-start', sm: 'center' } }}
+            />
+          </Stack>
         </Paper>
       ))}
       {rows.length > 3 && (
-        <Button size="small" onClick={() => setExpanded((v) => !v)} sx={{ textTransform: 'none', alignSelf: 'flex-start' }}>
+        <Button
+          size="small"
+          onClick={() => setExpanded((v) => !v)}
+          sx={{ textTransform: 'none', alignSelf: 'flex-start', width: { xs: '100%', sm: 'auto' } }}
+          fullWidth={isMobile}
+        >
           {expanded ? t('plusLines.seeLess', 'Ver menos') : t('plusLines.seeMore', { defaultValue: 'Ver más ({{count}})', count: rows.length - 3 })}
         </Button>
       )}

@@ -32,6 +32,8 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { withAlpha } from 'utils/colorUtils';
 
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -378,6 +380,8 @@ function MetricCard({ title, value, helper, color = 'primary', icon }) {
 }
 
 export default function ManagedAccountsLionTv() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { accessToken } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const { t, i18n } = useTranslation();
@@ -925,7 +929,7 @@ export default function ManagedAccountsLionTv() {
                   <Divider sx={{ my: 1.5 }} />
 
                   <TableContainer sx={(theme) => tableContainerSx(theme)}>
-                    <Table size="small">
+                    <Table size="small" sx={{ minWidth: { xs: 920, md: '100%' } }}>
                       <TableHead>
                         <TableRow sx={(theme) => tableHeadRowSx(theme)}>
                           <TableCell>{t('managedAccounts.table.account', 'Account')}</TableCell>
@@ -1131,7 +1135,7 @@ export default function ManagedAccountsLionTv() {
 
             <Grid item xs={12}>
               <TableContainer component={Card} sx={(theme) => tableContainerSx(theme)}>
-                <Table size="small">
+                <Table size="small" sx={{ minWidth: { xs: 1220, md: '100%' } }}>
                   <TableHead>
                     <TableRow sx={(theme) => tableHeadRowSx(theme)}>
                       <TableCell>{t('managedAccounts.table.id', 'ID')}</TableCell>
@@ -1308,7 +1312,7 @@ export default function ManagedAccountsLionTv() {
 
             <Grid item xs={12}>
               <TableContainer component={Card} sx={(theme) => tableContainerSx(theme)}>
-                <Table size="small">
+                <Table size="small" sx={{ minWidth: { xs: 1080, md: '100%' } }}>
                   <TableHead>
                     <TableRow sx={(theme) => tableHeadRowSx(theme)}>
                       <TableCell>{t('managedAccounts.table.id', 'ID')}</TableCell>
@@ -1545,7 +1549,7 @@ export default function ManagedAccountsLionTv() {
                       ) : null}
 
                       <TableContainer sx={(theme) => tableContainerSx(theme)}>
-                        <Table size="small">
+                        <Table size="small" sx={{ minWidth: { xs: 980, md: '100%' } }}>
                           <TableHead>
                             <TableRow sx={(theme) => tableHeadRowSx(theme)}>
                               <TableCell>{t('managedAccounts.table.id', 'ID')}</TableCell>
@@ -1655,7 +1659,7 @@ export default function ManagedAccountsLionTv() {
                 <CardContent>
                   <Typography variant="h4">{t('managedAccounts.reports.byProvider', 'Inbound by Provider')}</Typography>
                   <Divider sx={{ my: 1.5 }} />
-                  <Table size="small">
+                  <Table size="small" sx={{ minWidth: { xs: 760, md: '100%' } }}>
                     <TableHead>
                       <TableRow sx={(theme) => tableHeadRowSx(theme)}>
                         <TableCell>{t('managedAccounts.table.provider', 'Provider')}</TableCell>
@@ -1685,7 +1689,7 @@ export default function ManagedAccountsLionTv() {
                 <CardContent>
                   <Typography variant="h4">{t('managedAccounts.reports.byAlias', 'Inbound by Alias')}</Typography>
                   <Divider sx={{ my: 1.5 }} />
-                  <Table size="small">
+                  <Table size="small" sx={{ minWidth: { xs: 760, md: '100%' } }}>
                     <TableHead>
                       <TableRow sx={(theme) => tableHeadRowSx(theme)}>
                         <TableCell>{t('managedAccounts.table.alias', 'Alias')}</TableCell>
@@ -1717,6 +1721,7 @@ export default function ManagedAccountsLionTv() {
         open={providerModalOpen}
         onClose={() => setProviderModalOpen(false)}
         fullWidth
+        fullScreen={isMobile}
         maxWidth="sm"
         PaperProps={{ sx: modalPaperSx }}
       >
@@ -1769,7 +1774,7 @@ export default function ManagedAccountsLionTv() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={accountModalOpen} onClose={() => setAccountModalOpen(false)} fullWidth maxWidth="md" PaperProps={{ sx: modalPaperSx }}>
+      <Dialog open={accountModalOpen} onClose={() => setAccountModalOpen(false)} fullWidth fullScreen={isMobile} maxWidth="md" PaperProps={{ sx: modalPaperSx }}>
         <DialogTitleWithClose sx={modalHeaderSx} onClose={() => setAccountModalOpen(false)}>
           <Stack spacing={0.5}>
             <Typography variant="h4">

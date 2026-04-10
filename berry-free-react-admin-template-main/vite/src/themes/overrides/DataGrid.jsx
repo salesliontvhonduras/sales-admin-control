@@ -16,6 +16,9 @@ export default function DataGrid(theme) {
           borderColor: theme.vars.palette.divider,
           borderRadius: 14,
           backgroundColor: theme.vars.palette.surface.card,
+          [theme.breakpoints.down('sm')]: {
+            borderRadius: 12
+          },
 
           '& .MuiDataGrid-columnHeader--filledGroup': {
             borderBottomWidth: 0
@@ -35,6 +38,9 @@ export default function DataGrid(theme) {
           },
           '& .MuiDataGrid-row:hover': {
             backgroundColor: withAlpha(theme.vars.palette.primary.main, isDark ? 0.16 : 0.08)
+          },
+          '& .MuiDataGrid-main': {
+            WebkitOverflowScrolling: 'touch'
           }
         },
         withBorderColor: {
@@ -49,7 +55,11 @@ export default function DataGrid(theme) {
         columnHeader: {
           color: theme.vars.palette.text.secondary,
           paddingLeft: 24,
-          paddingRight: 24
+          paddingRight: 24,
+          [theme.breakpoints.down('sm')]: {
+            paddingLeft: 12,
+            paddingRight: 12
+          }
         },
         footerContainer: {
           '&.MuiDataGrid-withBorderColor': {
@@ -69,6 +79,10 @@ export default function DataGrid(theme) {
           paddingLeft: 24,
           paddingRight: 24,
           borderColor: theme.vars.palette.divider,
+          [theme.breakpoints.down('sm')]: {
+            paddingLeft: 12,
+            paddingRight: 12
+          },
 
           '&.MuiDataGrid-cell--withRenderer > div': {
             ' > .high': {

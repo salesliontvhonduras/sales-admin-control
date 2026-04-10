@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import Card from '@mui/material/Card';
 import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
@@ -50,6 +51,7 @@ export default function Breadcrumbs({
   ...others
 }) {
   const theme = useTheme();
+  const downSM = useMediaQuery(theme.breakpoints.down('sm'));
   const location = useLocation();
   const { t } = useTranslation();
   const [main, setMain] = useState();
@@ -144,9 +146,9 @@ export default function Breadcrumbs({
 
   if (!custom && main && main.type === 'collapse' && main.breadcrumbs === true) {
     const baseCardSx = {
-      mb: 3,
+      mb: { xs: 2, sm: 3 },
       bgcolor: card === false ? 'transparent' : 'background.default',
-      width: 'min(1200px, 90vw)',
+      width: { xs: '100%', sm: 'min(1200px, 90vw)' },
       mx: 'auto',
       ...sx
     };
@@ -156,15 +158,18 @@ export default function Breadcrumbs({
         <Box sx={{ p: 1.25, px: card === false ? 0 : 2 }}>
           <Grid
             container
-            direction={rightAlign ? 'row' : 'column'}
-            sx={{ justifyContent: rightAlign ? 'space-between' : 'flex-start', alignItems: rightAlign ? 'center' : 'flex-start' }}
+            direction={downSM ? 'column' : rightAlign ? 'row' : 'column'}
+            sx={{
+              justifyContent: downSM ? 'flex-start' : rightAlign ? 'space-between' : 'flex-start',
+              alignItems: downSM ? 'flex-start' : rightAlign ? 'center' : 'flex-start'
+            }}
             spacing={1}
           >
             {title && !titleBottom && <BTitle title={t(main.title, { defaultValue: main.title })} />}
             <Grid>
               <MuiBreadcrumbs
                 aria-label="breadcrumb"
-                maxItems={maxItems || 8}
+                maxItems={maxItems || (downSM ? 3 : 8)}
                 separator={separatorIcon}
                 sx={{ '& .MuiBreadcrumbs-separator': { width: 16, ml: 1.25, mr: 1.25 } }}
               >
@@ -212,7 +217,7 @@ export default function Breadcrumbs({
     let tempContent = (
       <MuiBreadcrumbs
         aria-label="breadcrumb"
-        maxItems={maxItems || 8}
+        maxItems={maxItems || (downSM ? 3 : 8)}
         separator={separatorIcon}
         sx={{ '& .MuiBreadcrumbs-separator': { width: 16, mx: 0.75 } }}
       >

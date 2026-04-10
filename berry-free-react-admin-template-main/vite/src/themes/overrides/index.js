@@ -38,7 +38,7 @@ export default function ComponentsOverrides(theme, borderRadius, outlinedFilled)
     Avatar(theme),
     Button(theme),
     CardActions,
-    CardContent(),
+    CardContent(theme),
     CardHeader(theme),
     Checkbox(),
     Chip(theme),

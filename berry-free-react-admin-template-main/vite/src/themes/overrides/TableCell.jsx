@@ -11,7 +11,13 @@ export default function TableCell(theme) {
         root: {
           border: `1px solid ${theme.vars.palette.divider}`,
           borderRadius: 14,
-          backgroundColor: theme.vars.palette.surface.card
+          backgroundColor: theme.vars.palette.surface.card,
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-x pinch-zoom',
+          [theme.breakpoints.down('sm')]: {
+            borderRadius: 12
+          }
         }
       }
     },
@@ -19,7 +25,10 @@ export default function TableCell(theme) {
       styleOverrides: {
         root: {
           borderCollapse: 'separate',
-          borderSpacing: 0
+          borderSpacing: 0,
+          [theme.breakpoints.down('sm')]: {
+            minWidth: 'max-content'
+          }
         }
       }
     },
@@ -54,14 +63,28 @@ export default function TableCell(theme) {
           paddingTop: 12,
           paddingBottom: 12,
           borderColor: theme.vars.palette.grey[200],
+          verticalAlign: 'top',
 
           '&.MuiTableCell-head': {
             fontSize: '0.875rem',
             color: theme.vars.palette.text.primary,
-            fontWeight: 700
+            fontWeight: 700,
+            whiteSpace: 'nowrap'
           },
           '&.MuiTableCell-body': {
             fontSize: '0.84rem'
+          },
+          [theme.breakpoints.down('sm')]: {
+            paddingTop: 10,
+            paddingBottom: 10,
+            paddingLeft: 10,
+            paddingRight: 10,
+            '&.MuiTableCell-head': {
+              fontSize: '0.75rem'
+            },
+            '&.MuiTableCell-body': {
+              fontSize: '0.78rem'
+            }
           }
         }
       }

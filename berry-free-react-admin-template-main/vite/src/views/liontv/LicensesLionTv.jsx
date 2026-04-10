@@ -1158,7 +1158,7 @@ export default function LicensesLionTv() {
             borderColor: 'divider'
           }}
         >
-          <Table size="small">
+          <Table size="small" sx={{ minWidth: { xs: 1120, md: '100%' } }}>
             <TableHead>
               <TableRow
                 sx={(theme) => ({

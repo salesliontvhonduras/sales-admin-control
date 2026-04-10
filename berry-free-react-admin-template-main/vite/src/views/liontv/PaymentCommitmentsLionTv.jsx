@@ -699,7 +699,7 @@ export default function PaymentCommitmentsLionTv() {
         </Stack>
 
         <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-          <Table size={isMobile ? 'small' : 'medium'}>
+          <Table size={isMobile ? 'small' : 'medium'} sx={{ minWidth: { xs: 1040, md: '100%' } }}>
             <TableHead>
               <TableRow>
                 <TableCell>{t('paymentCommitments.table.headers.id')}</TableCell>
@@ -822,7 +822,7 @@ export default function PaymentCommitmentsLionTv() {
         />
       </MainCard>
 
-      <Dialog open={openModal} onClose={() => !sending && setOpenModal(false)} fullWidth maxWidth="md">
+      <Dialog open={openModal} onClose={() => !sending && setOpenModal(false)} fullWidth fullScreen={isMobile} maxWidth="md">
         <DialogTitleWithClose sx={{ pb: 1 }} onClose={() => !sending && setOpenModal(false)}>
           <Stack direction="row" spacing={1.25} alignItems="center">
             <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
@@ -984,7 +984,7 @@ export default function PaymentCommitmentsLionTv() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openDelete.open} onClose={() => !sending && setOpenDelete({ open: false, row: null })} maxWidth="xs" fullWidth>
+      <Dialog open={openDelete.open} onClose={() => !sending && setOpenDelete({ open: false, row: null })} maxWidth="xs" fullWidth fullScreen={isMobile}>
         <DialogTitleWithClose onClose={() => !sending && setOpenDelete({ open: false, row: null })}>
           {t('paymentCommitments.delete.title')}
         </DialogTitleWithClose>

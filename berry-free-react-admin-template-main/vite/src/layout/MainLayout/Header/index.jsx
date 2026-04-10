@@ -28,7 +28,7 @@ export default function Header() {
   return (
     <>
       {/* logo & toggler button */}
-      <Box sx={{ width: downMD ? 'auto' : 228, display: 'flex' }}>
+      <Box sx={{ width: downMD ? 'auto' : 228, display: 'flex', alignItems: 'center', minWidth: 0 }}>
         <Box component="span" sx={{ display: { xs: 'none', md: 'block' }, flexGrow: 1 }}>
           <LogoSection />
         </Box>
@@ -62,7 +62,9 @@ export default function Header() {
       <Box sx={{ mr: 1, display: { xs: 'none', sm: 'block' } }}>
         <ThemeModeSwitcher compact />
       </Box>
-      <NotificationSection />
+      <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+        <NotificationSection />
+      </Box>
 
       {/* profile */}
       <ProfileSection />

@@ -59,7 +59,7 @@ export default function MainLayout() {
           backdropFilter: 'none'
         }}
       >
-        <Toolbar sx={{ p: 1.75, minHeight: '66px !important' }}>
+        <Toolbar sx={{ px: { xs: 1, sm: 1.75 }, py: 1.25, minHeight: '66px !important' }}>
           <Header />
         </Toolbar>
       </AppBar>

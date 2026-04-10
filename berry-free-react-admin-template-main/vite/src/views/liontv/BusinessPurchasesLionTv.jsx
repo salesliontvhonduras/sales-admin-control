@@ -943,7 +943,7 @@ export default function BusinessPurchasesLionTv() {
             backgroundColor: muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper
           })}
         >
-          <Table size="small">
+          <Table size="small" sx={{ minWidth: { xs: 1320, md: '100%' } }}>
             <TableHead>
               <TableRow
                 sx={(muiTheme) => ({

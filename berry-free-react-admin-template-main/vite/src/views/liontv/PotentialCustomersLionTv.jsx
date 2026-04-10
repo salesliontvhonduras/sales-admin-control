@@ -781,7 +781,7 @@ export default function PotentialCustomersLionTv() {
         </Box>
 
         <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: '0 14px 32px rgba(0,0,0,0.08)' }}>
-          <Table size="small">
+          <Table size="small" sx={{ minWidth: { xs: 1020, md: '100%' } }}>
             <TableHead>
               <TableRow>
                 <TableCell>{t('potentialCustomers.headers.name', 'Nombre')}</TableCell>

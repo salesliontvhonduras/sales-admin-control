@@ -27,6 +27,8 @@ import DialogActions from '@mui/material/DialogActions';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import Skeleton from '@mui/material/Skeleton';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
@@ -131,6 +133,8 @@ export default function FeedCrudManager({
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
   const { t } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -344,8 +348,13 @@ export default function FeedCrudManager({
       <MainCard
         title={title}
         secondary={
-          <Stack direction="row" spacing={1.25}>
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => setRefreshKey((v) => v + 1)}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={() => setRefreshKey((v) => v + 1)}
+              fullWidth={isMobile}
+            >
               {t('feedCrud.actions.refresh')}
             </Button>
             <Button
@@ -356,6 +365,7 @@ export default function FeedCrudManager({
                 resetRemoteImport();
                 setOpenModal(true);
               }}
+              fullWidth={isMobile}
             >
               {createButtonLabel}
             </Button>
@@ -379,7 +389,7 @@ export default function FeedCrudManager({
         />
 
         <TableContainer component={Paper}>
-          <Table size="small">
+          <Table size="small" sx={{ minWidth: { xs: 760, md: '100%' } }}>
             <TableHead>
               <TableRow>
                 <TableCell>{t('feedCrud.headers.id', 'ID')}</TableCell>
@@ -450,7 +460,7 @@ export default function FeedCrudManager({
         />
       </MainCard>
 
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="md">
+      <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth fullScreen={isMobile} maxWidth="md">
         <DialogTitleWithClose onClose={() => setOpenModal(false)}>
           {form.id ? t('feedCrud.dialogs.editTitle') : t('feedCrud.dialogs.createTitle')}
         </DialogTitleWithClose>
@@ -479,11 +489,12 @@ export default function FeedCrudManager({
                     placeholder={remoteImportConfig.categoryPlaceholder}
                     fullWidth
                   />
-                  <Stack direction="row" justifyContent="flex-end">
+                  <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="flex-end">
                     <Button
                       variant="outlined"
                       onClick={handleRemoteImport}
                       disabled={importing || sending}
+                      fullWidth={isMobile}
                     >
                       {importing ? remoteImportConfig.fetchingLabel : remoteImportConfig.fetchLabel}
                     </Button>
@@ -514,7 +525,7 @@ export default function FeedCrudManager({
             />
           </Stack>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexDirection: { xs: 'column-reverse', sm: 'row' }, alignItems: 'stretch' }}>
           <Button onClick={() => setOpenModal(false)} disabled={sending}>
             {t('common.close')}
           </Button>
@@ -524,7 +535,13 @@ export default function FeedCrudManager({
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openDelete.open} onClose={() => setOpenDelete({ open: false, row: null })} fullWidth maxWidth="xs">
+      <Dialog
+        open={openDelete.open}
+        onClose={() => setOpenDelete({ open: false, row: null })}
+        fullWidth
+        fullScreen={isMobile}
+        maxWidth="xs"
+      >
         <DialogTitleWithClose onClose={() => setOpenDelete({ open: false, row: null })}>
           {t('feedCrud.dialogs.deleteTitle')}
         </DialogTitleWithClose>
@@ -533,7 +550,7 @@ export default function FeedCrudManager({
             {t('feedCrud.dialogs.deleteBody', { id: openDelete.row?.id ?? '-' })}
           </Typography>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexDirection: { xs: 'column-reverse', sm: 'row' }, alignItems: 'stretch' }}>
           <Button onClick={() => setOpenDelete({ open: false, row: null })} disabled={sending}>
             {t('common.close')}
           </Button>

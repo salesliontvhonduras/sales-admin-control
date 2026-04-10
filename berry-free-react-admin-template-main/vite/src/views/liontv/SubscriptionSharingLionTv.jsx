@@ -20,6 +20,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Divider from '@mui/material/Divider';
 import Avatar from '@mui/material/Avatar';
 import Skeleton from '@mui/material/Skeleton';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material';
 
 import SearchIcon from '@mui/icons-material/Search';
@@ -127,6 +128,7 @@ export default function SubscriptionSharingLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const headers = useMemo(() => ({ Authorization: `Bearer ${accessToken}` }), [accessToken]);
 
@@ -231,11 +233,11 @@ export default function SubscriptionSharingLionTv() {
     border: '1px solid',
     borderColor: 'divider',
     bgcolor: 'background.paper',
-    p: 2
+    p: { xs: 1.5, sm: 2 }
   };
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 1450, mx: 'auto' }}>
+    <Box sx={{ width: '100%', maxWidth: { xs: '100%', xl: 1450 }, mx: 'auto' }}>
       <MainCard
         title={t('subscriptionSharing.title', 'Shared subscriptions monitoring')}
         secondary={
@@ -244,6 +246,7 @@ export default function SubscriptionSharingLionTv() {
             startIcon={<RefreshIcon />}
             onClick={() => setRefreshKey((prev) => prev + 1)}
             sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700 }}
+            fullWidth={isMobile}
           >
             {t('actions.refresh', 'Refresh')}
           </Button>
@@ -374,7 +377,13 @@ export default function SubscriptionSharingLionTv() {
               return (
                 <Card key={`host-${host.subscriptionId}`} sx={sectionCardSx}>
                   <Stack spacing={1.25}>
-                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', md: 'center' }}>
+                    <Stack
+                      direction={{ xs: 'column', md: 'row' }}
+                      spacing={1}
+                      alignItems={{ xs: 'flex-start', md: 'center' }}
+                      useFlexGap
+                      flexWrap="wrap"
+                    >
                       <Stack direction="row" spacing={0.75} alignItems="center">
                         <Avatar sx={{ width: 30, height: 30, bgcolor: 'warning.main', color: 'warning.contrastText' }}>
                           <HubIcon fontSize="small" />
@@ -428,7 +437,7 @@ export default function SubscriptionSharingLionTv() {
                       </Grid>
                     </Grid>
 
-                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={1}>
+                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} useFlexGap flexWrap="wrap">
                       <Chip
                         size="small"
                         variant="outlined"
@@ -470,7 +479,13 @@ export default function SubscriptionSharingLionTv() {
                               bgcolor: muiTheme.vars?.palette?.surface?.sunken || muiTheme.palette.background.default
                             })}
                           >
-                            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', md: 'center' }}>
+                            <Stack
+                              direction={{ xs: 'column', md: 'row' }}
+                              spacing={1}
+                              alignItems={{ xs: 'flex-start', md: 'center' }}
+                              useFlexGap
+                              flexWrap="wrap"
+                            >
                               <Stack direction="row" spacing={0.75} alignItems="center">
                                 <Avatar sx={{ width: 24, height: 24, bgcolor: 'info.main', color: 'info.contrastText' }}>
                                   <LinkIcon fontSize="inherit" />
@@ -512,7 +527,13 @@ export default function SubscriptionSharingLionTv() {
           <Stack spacing={1}>
             {eligibleNotSharedRows.map((row) => (
               <Card key={`eligible-${row.subscriptionId}`} sx={sectionCardSx}>
-                <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', md: 'center' }}>
+                <Stack
+                  direction={{ xs: 'column', md: 'row' }}
+                  spacing={1}
+                  alignItems={{ xs: 'flex-start', md: 'center' }}
+                  useFlexGap
+                  flexWrap="wrap"
+                >
                   <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
                     #{row.subscriptionId} · {row.customerName || '-'}
                   </Typography>

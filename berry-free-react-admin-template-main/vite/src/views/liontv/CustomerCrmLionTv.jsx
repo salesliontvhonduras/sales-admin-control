@@ -29,6 +29,8 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import FormHelperText from '@mui/material/FormHelperText';
 import Checkbox from '@mui/material/Checkbox';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
@@ -430,6 +432,8 @@ function ActionableState({ icon, title, subtitle, actions = [] }) {
 }
 
 export default function CustomerCrmLionTv() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
   const { t } = useTranslation();
@@ -1547,6 +1551,7 @@ export default function CustomerCrmLionTv() {
         open={detail.open}
         onClose={() => setDetail({ open: false, type: null, row: null })}
         fullWidth
+        fullScreen={isMobile}
         maxWidth="md"
         PaperProps={{
           sx: (theme) => ({
@@ -2109,6 +2114,7 @@ export default function CustomerCrmLionTv() {
           setTableSelectedKeys([]);
         }}
         fullWidth
+        fullScreen={isMobile}
         maxWidth="lg"
         PaperProps={{
           sx: (theme) => ({
@@ -2229,7 +2235,7 @@ export default function CustomerCrmLionTv() {
               overflow: 'hidden'
             }}
           >
-            <Table size="small" stickyHeader>
+            <Table size="small" stickyHeader sx={{ minWidth: { xs: 960, md: '100%' } }}>
               <TableHead>
                 <TableRow>
                   <TableCell padding="checkbox">

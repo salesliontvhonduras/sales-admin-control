@@ -670,7 +670,7 @@ export default function DemosLionTv() {
             borderColor: 'divider'
           }}
         >
-          <Table size="small">
+          <Table size="small" sx={{ minWidth: { xs: 1040, md: '100%' } }}>
             <TableHead>
               <TableRow
                 sx={(theme) => ({

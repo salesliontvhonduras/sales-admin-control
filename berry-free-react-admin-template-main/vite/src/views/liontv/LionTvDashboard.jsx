@@ -946,7 +946,7 @@ export default function LionTvDashboard() {
                     </Stack>
                     <Divider />
                     <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                      <Table size="small">
+                      <Table size="small" sx={{ minWidth: { xs: 760, md: '100%' } }}>
                         <TableHead>
                           <TableRow>
                             <TableCell>{t('liontvDashboard.table.priority', 'Prioridad')}</TableCell>
@@ -1017,7 +1017,7 @@ export default function LionTvDashboard() {
                     </Stack>
                     <Divider />
                     <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                      <Table size="small">
+                      <Table size="small" sx={{ minWidth: { xs: 760, md: '100%' } }}>
                         <TableHead>
                           <TableRow>
                             <TableCell>{t('liontvDashboard.table.id', 'ID')}</TableCell>
@@ -1060,7 +1060,7 @@ export default function LionTvDashboard() {
                     </Stack>
                     <Divider />
                     <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                      <Table size="small">
+                      <Table size="small" sx={{ minWidth: { xs: 760, md: '100%' } }}>
                         <TableHead>
                           <TableRow>
                             <TableCell>{t('liontvDashboard.table.id', 'ID')}</TableCell>

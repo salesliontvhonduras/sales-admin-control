@@ -810,7 +810,7 @@ export default function InvoicesLionTv() {
             borderColor: 'divider'
           }}
         >
-          <Table size="small">
+          <Table size="small" sx={{ minWidth: { xs: 1280, md: '100%' } }}>
             <TableHead>
               <TableRow
                 sx={(theme) => ({

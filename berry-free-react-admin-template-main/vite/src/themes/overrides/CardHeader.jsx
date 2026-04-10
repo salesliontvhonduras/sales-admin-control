@@ -6,7 +6,10 @@ export default function CardHeader(theme) {
       styleOverrides: {
         root: {
           color: theme.vars.palette.text.primary,
-          padding: '18px 20px'
+          padding: '18px 20px',
+          [theme.breakpoints.down('sm')]: {
+            padding: '14px'
+          }
         },
         title: {
           fontSize: '1.03rem',

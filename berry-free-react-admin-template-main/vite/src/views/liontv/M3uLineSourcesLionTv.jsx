@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
-import { alpha } from '@mui/material/styles';
+import { alpha, useTheme } from '@mui/material/styles';
 import useAuth from 'hooks/useAuth';
 
 import Alert from '@mui/material/Alert';
@@ -18,6 +18,7 @@ import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
@@ -117,7 +118,7 @@ function FlowCard({ step, title, description, complete, readyLabel = 'Ready', pe
         backgroundColor: complete ? alpha(theme.palette.success.main, 0.06) : alpha(theme.palette.warning.main, 0.06)
       })}
     >
-      <Stack direction="row" spacing={1.5} alignItems="flex-start">
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', sm: 'flex-start' }}>
         <Box
           sx={(theme) => ({
             minWidth: 32,
@@ -191,6 +192,8 @@ export default function M3uLineSourcesLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation();
   const { accessToken } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [lineOptions, setLineOptions] = useState([]);
   const [loadingLineOptions, setLoadingLineOptions] = useState(false);
@@ -629,15 +632,27 @@ export default function M3uLineSourcesLionTv() {
   ];
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 1480, mx: 'auto' }}>
+    <Box sx={{ width: '100%', maxWidth: { xs: '100%', xl: 1480 }, mx: 'auto' }}>
       <MainCard
         title={t('catalog.lineSources.title', 'M3U Per-Line Configuration')}
         secondary={
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={refreshLineOptions} disabled={loadingLineOptions}>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={refreshLineOptions}
+              disabled={loadingLineOptions}
+              fullWidth={isMobile}
+            >
               {loadingLineOptions ? t('catalog.actions.loading', 'Loading...') : t('catalog.actions.refresh', 'Refresh')}
             </Button>
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={refreshProviderTemplates} disabled={loadingProviderTemplates}>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={refreshProviderTemplates}
+              disabled={loadingProviderTemplates}
+              fullWidth={isMobile}
+            >
               {loadingProviderTemplates ? t('catalog.actions.loading', 'Loading...') : t('catalog.actions.refreshProviders', 'Refresh providers')}
             </Button>
           </Stack>
@@ -666,7 +681,14 @@ export default function M3uLineSourcesLionTv() {
                       label={t('catalog.overview.lineEyebrow', 'Per-line Xtream workflow')}
                       sx={{ alignSelf: 'flex-start', fontWeight: 700 }}
                     />
-                    <Typography variant="h3" sx={{ maxWidth: 720 }}>
+                    <Typography
+                      variant="h3"
+                      sx={{
+                        maxWidth: 720,
+                        fontSize: { xs: '1.85rem', sm: '2.25rem', md: '3rem' },
+                        lineHeight: { xs: 1.15, md: 1.2 }
+                      }}
+                    >
                       {t('catalog.overview.lineTitle', 'Configure, validate and download the final M3U by lineId')}
                     </Typography>
                     <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 760 }}>
@@ -678,7 +700,12 @@ export default function M3uLineSourcesLionTv() {
                   </Stack>
 
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                    <Button variant="contained" endIcon={<ArrowForwardRoundedIcon />} onClick={() => navigate('/liontv/catalog-curation')}>
+                    <Button
+                      variant="contained"
+                      endIcon={<ArrowForwardRoundedIcon />}
+                      onClick={() => navigate('/liontv/catalog-curation')}
+                      fullWidth={isMobile}
+                    >
                       {t('catalog.actions.openCatalog', 'Open base catalog')}
                     </Button>
                     <Button
@@ -686,6 +713,7 @@ export default function M3uLineSourcesLionTv() {
                       startIcon={<RouteOutlinedIcon />}
                       onClick={() => activeLineId && loadLineSourceConfig(activeLineId)}
                       disabled={!activeLineId || loadingLineSource}
+                      fullWidth={isMobile}
                     >
                       {loadingLineSource ? t('catalog.source.loading', 'Loading...') : t('catalog.source.load', 'Load configuration')}
                     </Button>
@@ -886,10 +914,21 @@ export default function M3uLineSourcesLionTv() {
 
                     <Grid item xs={12} md={5}>
                       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="flex-end" sx={{ height: '100%' }}>
-                        <Button variant="outlined" onClick={() => loadLineSourceConfig(lineSourceForm.lineId)} disabled={loadingLineSource}>
+                        <Button
+                          variant="outlined"
+                          onClick={() => loadLineSourceConfig(lineSourceForm.lineId)}
+                          disabled={loadingLineSource}
+                          fullWidth={isMobile}
+                        >
                           {loadingLineSource ? t('catalog.source.loading', 'Loading...') : t('catalog.source.load', 'Load configuration')}
                         </Button>
-                        <Button variant="contained" startIcon={<SaveOutlinedIcon />} onClick={saveLineSourceConfig} disabled={savingLineSource}>
+                        <Button
+                          variant="contained"
+                          startIcon={<SaveOutlinedIcon />}
+                          onClick={saveLineSourceConfig}
+                          disabled={savingLineSource}
+                          fullWidth={isMobile}
+                        >
                           {savingLineSource ? t('catalog.source.saving', 'Saving...') : t('catalog.source.save', 'Save configuration')}
                         </Button>
                       </Stack>
@@ -994,7 +1033,12 @@ export default function M3uLineSourcesLionTv() {
 
                     <Grid item xs={12} md={8}>
                       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="flex-end">
-                        <Button variant="outlined" onClick={() => loadProviderTemplateConfig(selectedProviderCode)} disabled={loadingProviderTemplate}>
+                        <Button
+                          variant="outlined"
+                          onClick={() => loadProviderTemplateConfig(selectedProviderCode)}
+                          disabled={loadingProviderTemplate}
+                          fullWidth={isMobile}
+                        >
                           {loadingProviderTemplate
                             ? t('catalog.providerTemplates.loading', 'Loading...')
                             : t('catalog.providerTemplates.load', 'Load template')}
@@ -1004,6 +1048,7 @@ export default function M3uLineSourcesLionTv() {
                           startIcon={<SaveOutlinedIcon />}
                           onClick={saveProviderTemplateConfig}
                           disabled={savingProviderTemplate}
+                          fullWidth={isMobile}
                         >
                           {savingProviderTemplate
                             ? t('catalog.providerTemplates.saving', 'Saving...')
@@ -1101,6 +1146,7 @@ export default function M3uLineSourcesLionTv() {
                       startIcon={<CloudDownloadIcon />}
                       disabled={importing || !flowReady}
                       onClick={handleImportCatalog}
+                      fullWidth={isMobile}
                     >
                       {importing ? t('catalog.actions.importing', 'Importing...') : t('catalog.actions.import', 'Import catalog')}
                     </Button>
@@ -1110,6 +1156,7 @@ export default function M3uLineSourcesLionTv() {
                       startIcon={<FileDownloadIcon />}
                       disabled={downloading || !flowReady}
                       onClick={handleDownloadPlaylist}
+                      fullWidth={isMobile}
                     >
                       {downloading ? t('catalog.actions.downloading', 'Downloading...') : t('catalog.actions.downloadM3u', 'Download M3U')}
                     </Button>
@@ -1120,6 +1167,7 @@ export default function M3uLineSourcesLionTv() {
                       startIcon={<AssignmentTurnedInIcon />}
                       disabled={fullTestLoading || !flowReady}
                       onClick={handleFullFlowTest}
+                      fullWidth={isMobile}
                     >
                       {fullTestLoading ? t('catalog.actions.testing', 'Testing...') : t('catalog.actions.fullFlowTest', 'Test full flow')}
                     </Button>

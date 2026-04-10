@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
-import { alpha } from '@mui/material/styles';
+import { alpha, useTheme } from '@mui/material/styles';
 import useAuth from 'hooks/useAuth';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 import Alert from '@mui/material/Alert';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -177,6 +178,8 @@ const defaultBaseSourceForm = {
 };
 
 export default function CatalogCurationLionTv() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation();
@@ -888,7 +891,7 @@ export default function CatalogCurationLionTv() {
                   </Stack>
 
                   <TableContainer component={Paper} variant="outlined">
-                    <Table size="small">
+                    <Table size="small" sx={{ minWidth: { xs: 1120, md: '100%' } }}>
                       <TableHead>
                         <TableRow>
                           <TableCell>ID</TableCell>
@@ -1040,7 +1043,7 @@ export default function CatalogCurationLionTv() {
         </Stack>
       </MainCard>
 
-      <Dialog open={createCategoryDialog} onClose={() => (savingCategory ? null : setCreateCategoryDialog(false))} maxWidth="sm" fullWidth>
+      <Dialog open={createCategoryDialog} onClose={() => (savingCategory ? null : setCreateCategoryDialog(false))} maxWidth="sm" fullWidth fullScreen={isMobile}>
         <DialogTitleWithClose onClose={() => (savingCategory ? null : setCreateCategoryDialog(false))}>
           {t('catalog.categories.createTitle', 'Create category')}
         </DialogTitleWithClose>
@@ -1073,7 +1076,7 @@ export default function CatalogCurationLionTv() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={assignDialog.open} onClose={closeAssignDialog} maxWidth="sm" fullWidth>
+      <Dialog open={assignDialog.open} onClose={closeAssignDialog} maxWidth="sm" fullWidth fullScreen={isMobile}>
         <DialogTitleWithClose onClose={closeAssignDialog}>{t('catalog.assign.title', 'Assign manual category')}</DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2}>
@@ -1125,7 +1128,7 @@ export default function CatalogCurationLionTv() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={detailDialog.open} onClose={() => setDetailDialog({ open: false, item: null, loading: false })} maxWidth="md" fullWidth>
+      <Dialog open={detailDialog.open} onClose={() => setDetailDialog({ open: false, item: null, loading: false })} maxWidth="md" fullWidth fullScreen={isMobile}>
         <DialogTitleWithClose onClose={() => setDetailDialog({ open: false, item: null, loading: false })}>
           {t('catalog.detail.title', 'Item detail')}
         </DialogTitleWithClose>
