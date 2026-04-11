@@ -362,8 +362,7 @@ export async function deleteClientAlias({ accessToken, id } = {}) {
   await m3uCatalogApi.delete(`${CLIENT_ALIASES_BASE_PATH}/${encodeURIComponent(id)}`, buildConfig(accessToken));
 }
 
-function buildClientAliasUrl({ aliasUsername, aliasPasswordPlain, type = 'm3u_plus', output = 'ts', download = false } = {}) {
-  const baseUrl = String(m3uCatalogApi.defaults?.baseURL || '').replace(/\/+$/, '');
+function buildClientAliasQuery({ aliasUsername, aliasPasswordPlain, type = 'm3u_plus', output = 'ts', download = false } = {}) {
   const params = new URLSearchParams({
     username: aliasUsername || '',
     password: aliasPasswordPlain || '',
@@ -375,8 +374,17 @@ function buildClientAliasUrl({ aliasUsername, aliasPasswordPlain, type = 'm3u_pl
     params.set('download', '1');
   }
 
-  const relative = `/get.php?${params.toString()}`;
-  return baseUrl ? `${baseUrl}${relative}` : relative;
+  return params.toString();
+}
+
+function buildAbsoluteUrl(baseUrl, relativePath) {
+  return baseUrl ? `${baseUrl}${relativePath}` : relativePath;
+}
+
+function buildClientAliasUrl({ aliasUsername, aliasPasswordPlain, type = 'm3u_plus', output = 'ts', download = false } = {}) {
+  const baseUrl = String(m3uCatalogApi.defaults?.baseURL || '').replace(/\/+$/, '');
+  const relative = `/get.php?${buildClientAliasQuery({ aliasUsername, aliasPasswordPlain, type, output, download })}`;
+  return buildAbsoluteUrl(baseUrl, relative);
 }
 
 export function buildClientAliasDeliveryUrl({ aliasUsername, aliasPasswordPlain, type = 'm3u_plus', output = 'ts' } = {}) {
