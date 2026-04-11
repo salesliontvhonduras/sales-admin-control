@@ -55,6 +55,10 @@ import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
+import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
+import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
+import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
+import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -577,7 +581,7 @@ export default function LinesLionTv() {
       <MainCard
         title={t('lines.title')}
         secondary={
-          <Stack direction="row" spacing={1}>
+          <ResponsiveActionBar>
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
@@ -603,10 +607,11 @@ export default function LinesLionTv() {
                 px: 2.8,
                 boxShadow: '0 12px 24px rgba(0,133,255,0.35)'
               }}
+              fullWidth={isMobile}
             >
               {t('lines.actions.new', 'Nueva línea')}
             </Button>
-          </Stack>
+          </ResponsiveActionBar>
         }
       >
         <Grid container spacing={gridSpacing}>
@@ -735,153 +740,216 @@ export default function LinesLionTv() {
             </FormControl>
           </Stack>
         </Box>
-        <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: '0 14px 32px rgba(0,0,0,0.08)' }}>
-          <Table size="small" sx={{ minWidth: { xs: 1320, md: '100%' } }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('lines.headers.user')}</TableCell>
-                <TableCell>{t('lines.headers.provider', 'Provider')}</TableCell>
-                <TableCell>{t('lines.headers.country', 'País')}</TableCell>
-                <TableCell>{t('lines.headers.status')}</TableCell>
-                <TableCell>{t('lines.headers.expires')}</TableCell>
-                <TableCell>{t('lines.headers.max')}</TableCell>
-                <TableCell>{t('lines.headers.created')}</TableCell>
-                <TableCell>{t('lines.headers.actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading &&
-                Array.from({ length: 4 }).map((_, idx) => (
-                  <TableRow key={`skeleton-${idx}`}>
-                    {Array.from({ length: 8 }).map((__, cidx) => (
-                      <TableCell key={cidx}>
-                        <Skeleton variant="text" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
+        <ResponsiveEntityView
+          isMobile={isMobile}
+          mobileContent={
+            loading ? (
+              <Stack spacing={1.5}>
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <Skeleton key={`line-mobile-${idx}`} variant="rounded" height={230} />
                 ))}
-              {!loading && paginatedRows.map((row) => (
-                <TableRow key={row.id || row.username} hover sx={{ cursor: 'pointer' }} onClick={() => setDetail({ open: true, row })}>
-                  <TableCell>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.light', color: 'primary.dark' }}>
+              </Stack>
+            ) : paginatedRows.length ? (
+              <Stack spacing={1.5}>
+                {paginatedRows.map((row) => (
+                  <MobileSummaryCard
+                    key={row.id || row.username}
+                    icon={
+                      <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.light', color: 'primary.dark' }}>
                         <WifiTetheringIcon fontSize="small" />
                       </Avatar>
-                      <Box>
-                        <Typography variant="subtitle2">{row.username}</Typography>
-                        <Tooltip title={`${t('lines.detail.password')}: ${visibleRowPassword[row.id || row.username] ? row.password : '••••••'}`}>
-                          <Stack direction="row" spacing={0.5} alignItems="center">
-                            <KeyIcon fontSize="inherit" color="action" />
-                            <Typography variant="caption" color="text.secondary">
-                              {visibleRowPassword[row.id || row.username] ? row.passwordEncode || row.password : '••••••'}
-                            </Typography>
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setVisibleRowPassword((prev) => ({
-                                  ...prev,
-                                  [row.id || row.username]: !prev[row.id || row.username]
-                                }));
+                    }
+                    title={row.username}
+                    subtitle={row.usernameEncode || row.provider || 'LION_TV'}
+                    chips={[
+                      <StatusChip key="status" enabled={row.enabled} expired={row.expired} t={t} />,
+                      <Chip key="provider" size="small" variant="outlined" label={row.provider || 'LION_TV'} />,
+                      <Chip key="country" size="small" variant="outlined" label={countryLabel(row.lineCountry || 'GLOBAL')} />
+                    ]}
+                    actions={
+                      <ResponsiveActionBar>
+                        <Button size="small" variant="outlined" onClick={() => setDetail({ open: true, row })}>
+                          {t('common.view', 'View')}
+                        </Button>
+                        <LineRowActions
+                          row={row}
+                          onEdit={() => handleOpenEdit(row)}
+                          onDelete={() => setOpenDelete({ open: true, row })}
+                          onDetail={() => setDetail({ open: true, row })}
+                        />
+                      </ResponsiveActionBar>
+                    }
+                  >
+                    <MobileFieldGrid
+                      fields={[
+                        { label: t('lines.headers.expires'), value: formatDate(row.expDate) },
+                        { label: t('lines.headers.max'), value: row.maxConnections ?? '-' },
+                        { label: t('lines.headers.created'), value: formatDate(row.createdAt) },
+                        { label: t('lines.detail.password'), value: row.passwordEncode || '••••••' }
+                      ]}
+                    />
+                  </MobileSummaryCard>
+                ))}
+              </Stack>
+            ) : (
+              <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 3 }}>
+                <Typography variant="subtitle1">{t('lines.table.empty')}</Typography>
+              </Paper>
+            )
+          }
+          desktopContent={
+            <TableContainer component={Paper} sx={{ borderRadius: 3, boxShadow: '0 14px 32px rgba(0,0,0,0.08)' }}>
+              <Table size="small" sx={{ minWidth: { xs: 1320, md: '100%' } }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>{t('lines.headers.user')}</TableCell>
+                    <TableCell>{t('lines.headers.provider', 'Provider')}</TableCell>
+                    <TableCell>{t('lines.headers.country', 'País')}</TableCell>
+                    <TableCell>{t('lines.headers.status')}</TableCell>
+                    <TableCell>{t('lines.headers.expires')}</TableCell>
+                    <TableCell>{t('lines.headers.max')}</TableCell>
+                    <TableCell>{t('lines.headers.created')}</TableCell>
+                    <TableCell>{t('lines.headers.actions')}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {loading &&
+                    Array.from({ length: 4 }).map((_, idx) => (
+                      <TableRow key={`skeleton-${idx}`}>
+                        {Array.from({ length: 8 }).map((__, cidx) => (
+                          <TableCell key={cidx}>
+                            <Skeleton variant="text" />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  {!loading &&
+                    paginatedRows.map((row) => (
+                      <TableRow key={row.id || row.username} hover sx={{ cursor: 'pointer' }} onClick={() => setDetail({ open: true, row })}>
+                        <TableCell>
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.light', color: 'primary.dark' }}>
+                              <WifiTetheringIcon fontSize="small" />
+                            </Avatar>
+                            <Box>
+                              <Typography variant="subtitle2">{row.username}</Typography>
+                              <Tooltip title={`${t('lines.detail.password')}: ${visibleRowPassword[row.id || row.username] ? row.password : '••••••'}`}>
+                                <Stack direction="row" spacing={0.5} alignItems="center">
+                                  <KeyIcon fontSize="inherit" color="action" />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {visibleRowPassword[row.id || row.username] ? row.passwordEncode || row.password : '••••••'}
+                                  </Typography>
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setVisibleRowPassword((prev) => ({
+                                        ...prev,
+                                        [row.id || row.username]: !prev[row.id || row.username]
+                                      }));
+                                    }}
+                                  >
+                                    {visibleRowPassword[row.id || row.username] ? (
+                                      <VisibilityOffIcon fontSize="inherit" />
+                                    ) : (
+                                      <VisibilityIcon fontSize="inherit" />
+                                    )}
+                                  </IconButton>
+                                </Stack>
+                              </Tooltip>
+                            </Box>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={row.provider || 'LION_TV'}
+                            variant="outlined"
+                            sx={(theme) => ({
+                              fontWeight: 700,
+                              letterSpacing: 0.35,
+                              textTransform: 'uppercase',
+                              borderRadius: 1.5,
+                              borderColor: theme.palette.info.main,
+                              color: theme.palette.info.main,
+                              background: theme.palette.mode === 'light' ? theme.palette.info.light + '1f' : theme.palette.background.paper,
+                              height: 22,
+                              px: 0.9
+                            })}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={0.75} alignItems="center">
+                            <Avatar
+                              sx={{
+                                width: 26,
+                                height: 26,
+                                bgcolor: 'grey.100',
+                                color: 'text.secondary',
+                                fontSize: 14,
+                                fontWeight: 700
                               }}
                             >
-                              {visibleRowPassword[row.id || row.username] ? (
-                                <VisibilityOffIcon fontSize="inherit" />
-                              ) : (
-                                <VisibilityIcon fontSize="inherit" />
-                              )}
-                            </IconButton>
+                              {flagFromCountry(row.lineCountry)}
+                            </Avatar>
+                            <Typography variant="body2">{countryLabel(row.lineCountry || 'GLOBAL')}</Typography>
                           </Stack>
-                        </Tooltip>
-                      </Box>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      label={row.provider || 'LION_TV'}
-                      variant="outlined"
-                      sx={(theme) => ({
-                        fontWeight: 700,
-                        letterSpacing: 0.35,
-                        textTransform: 'uppercase',
-                        borderRadius: 1.5,
-                        borderColor: theme.palette.info.main,
-                        color: theme.palette.info.main,
-                        background: theme.palette.mode === 'light' ? theme.palette.info.light + '1f' : theme.palette.background.paper,
-                        height: 22,
-                        px: 0.9
-                      })}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.75} alignItems="center">
-                      <Avatar
-                        sx={{
-                          width: 26,
-                          height: 26,
-                          bgcolor: 'grey.100',
-                          color: 'text.secondary',
-                          fontSize: 14,
-                          fontWeight: 700
-                        }}
-                      >
-                        {flagFromCountry(row.lineCountry)}
-                      </Avatar>
-                      <Typography variant="body2">{countryLabel(row.lineCountry || 'GLOBAL')}</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <StatusChip enabled={row.enabled} expired={row.expired} t={t} />
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.5} alignItems="center">
-                      <CalendarMonthIcon fontSize="small" color="error" />
-                      <Typography variant="body2">{formatDate(row.expDate)}</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.5} alignItems="center">
-                      <SpeedIcon fontSize="small" color="secondary" />
-                      <Typography variant="body2" sx={{ fontWeight: 700 }}>{row.maxConnections ?? '-'}</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.5} alignItems="center">
-                      <CalendarMonthIcon fontSize="small" color="action" />
-                      <Typography variant="body2">{formatDate(row.createdAt)}</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell align="right">
-                    <LineRowActions
-                      row={row}
-                      onEdit={() => handleOpenEdit(row)}
-                      onDelete={() => setOpenDelete({ open: true, row })}
-                      onDetail={() => setDetail({ open: true, row })}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-              {!loading && paginatedRows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    {t('lines.table.empty')}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        <Divider sx={{ my: 1 }} />
-
-        <TablePagination
-          component="div"
-          count={filteredRows.length}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          onPageChange={(e, p) => setPage(p)}
-          onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
+                        </TableCell>
+                        <TableCell>
+                          <StatusChip enabled={row.enabled} expired={row.expired} t={t} />
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={0.5} alignItems="center">
+                            <CalendarMonthIcon fontSize="small" color="error" />
+                            <Typography variant="body2">{formatDate(row.expDate)}</Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={0.5} alignItems="center">
+                            <SpeedIcon fontSize="small" color="secondary" />
+                            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                              {row.maxConnections ?? '-'}
+                            </Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={0.5} alignItems="center">
+                            <CalendarMonthIcon fontSize="small" color="action" />
+                            <Typography variant="body2">{formatDate(row.createdAt)}</Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell align="right">
+                          <LineRowActions
+                            row={row}
+                            onEdit={() => handleOpenEdit(row)}
+                            onDelete={() => setOpenDelete({ open: true, row })}
+                            onDetail={() => setDetail({ open: true, row })}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  {!loading && paginatedRows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center">
+                        {t('lines.table.empty')}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          }
+          pagination={
+            <TablePagination
+              component="div"
+              count={filteredRows.length}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              onPageChange={(e, p) => setPage(p)}
+              onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
+            />
+          }
+          showDivider={!isMobile}
         />
       </MainCard>
 

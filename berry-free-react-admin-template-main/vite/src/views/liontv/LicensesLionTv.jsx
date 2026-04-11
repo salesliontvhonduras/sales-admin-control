@@ -65,6 +65,10 @@ import PlaylistRemoveIcon from '@mui/icons-material/PlaylistRemove';
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
+import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
+import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
+import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
+import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -965,7 +969,7 @@ export default function LicensesLionTv() {
       <MainCard
         title={t('licenses.title')}
         secondary={
-          <Stack direction="row" spacing={1}>
+          <ResponsiveActionBar>
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
@@ -982,10 +986,11 @@ export default function LicensesLionTv() {
                 setOpenModal(true);
               }}
               sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700, px: 2.8, boxShadow: '0 12px 24px rgba(0,133,255,0.35)' }}
+              fullWidth={isMobile}
             >
               {t('actions.add', 'Add')}
             </Button>
-          </Stack>
+          </ResponsiveActionBar>
         }
       >
         <Grid container spacing={gridSpacing}>
@@ -1148,183 +1153,268 @@ export default function LicensesLionTv() {
           </Paper>
         }
       >
-        <TableContainer
-          component={Paper}
-          sx={{
-            borderRadius: 3,
-            overflow: 'hidden',
-            boxShadow: '0 12px 24px rgba(0,0,0,0.06)',
-            border: '1px solid',
-            borderColor: 'divider'
-          }}
-        >
-          <Table size="small" sx={{ minWidth: { xs: 1120, md: '100%' } }}>
-            <TableHead>
-              <TableRow
-                sx={(theme) => ({
-                  bgcolor: theme.palette.surface.sunken,
-                  borderBottom: `1px solid ${theme.palette.divider}`
-                })}
-              >
-                <TableCell>{t('licenses.headers.mac')}</TableCell>
-                <TableCell>{t('licenses.headers.deviceKey', 'Device Key')}</TableCell>
-                <TableCell>{t('licenses.headers.customer')}</TableCell>
-                <TableCell>{t('licenses.headers.subscription', 'Subscription')}</TableCell>
-                <TableCell>{t('licenses.headers.app')}</TableCell>
-                <TableCell>{t('licenses.headers.status')}</TableCell>
-                <TableCell>{t('licenses.headers.paid', 'Paid')}</TableCell>
-                <TableCell>{t('licenses.headers.period')}</TableCell>
-                <TableCell>{t('licenses.headers.actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {paginatedRows.map((row) => (
-                <TableRow
-                  key={row.licenseId}
-                  hover
-                  sx={{
-                    '&:nth-of-type(odd)': { bgcolor: 'background.default' },
-                    transition: 'background 0.2s ease',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <TableCell>
-                    <Stack direction="row" spacing={1.25} alignItems="center">
-                      <Avatar
-                        sx={{
-                          width: 34,
-                          height: 34,
-                          bgcolor: (theme) => theme.palette.secondary.light,
-                          color: (theme) => theme.palette.secondary.dark,
-                          fontWeight: 700,
-                          boxShadow: 2,
-                          border: '1px solid',
-                          borderColor: 'divider'
-                        }}
-                      >
+        <ResponsiveEntityView
+          isMobile={isMobile}
+          mobileContent={
+            loading ? (
+              <Stack spacing={1.5}>
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <Skeleton key={`licenses-mobile-${idx}`} variant="rounded" height={220} />
+                ))}
+              </Stack>
+            ) : paginatedRows.length ? (
+              <Stack spacing={1.5}>
+                {paginatedRows.map((row) => (
+                  <MobileSummaryCard
+                    key={row.licenseId}
+                    icon={
+                      <Avatar sx={{ width: 40, height: 40, bgcolor: 'secondary.light', color: 'secondary.dark' }}>
                         <MemoryIcon fontSize="small" />
                       </Avatar>
-                      <Box>
-                        <Typography variant="subtitle2">{row.macAddress || '-'}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {row.name || '-'}
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  </TableCell>
-
-                  <TableCell>{row.deviceKey || '-'}</TableCell>
-
-                  <TableCell>{row.customerName || customerNameMap[row.customerId] || '-'}</TableCell>
-
-                  <TableCell>
-                    {row.subscriptionId ? (
-                      <Stack spacing={0.25}>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          #{row.subscriptionId}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {subscriptionMap[String(row.subscriptionId)]?.lineUsername ||
-                            (subscriptionMap[String(row.subscriptionId)]?.lineId
-                              ? `Line ${subscriptionMap[String(row.subscriptionId)]?.lineId}`
-                              : '-')}
-                        </Typography>
-                      </Stack>
-                    ) : (
-                      '-'
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      icon={<AppsIcon fontSize="small" />}
-                      label={row.app || '-'}
-                      sx={(theme) => ({
-                        bgcolor: theme.palette.info.lighter,
-                        color: theme.palette.info.darker,
-                        fontWeight: 600
-                      })}
+                    }
+                    title={row.macAddress || '-'}
+                    subtitle={row.name || '-'}
+                    chips={[
+                      <LicenseStatusChip key="status" status={row.status} />,
+                      <LicensePaidChip key="paid" isPaid={row.isPaid} t={t} />,
+                      <Chip key="app" size="small" variant="outlined" label={row.app || '-'} />
+                    ]}
+                    actions={
+                      <ResponsiveActionBar>
+                        <Button size="small" variant="outlined" onClick={() => handleEdit(row)}>
+                          {t('actions.edit', 'Edit')}
+                        </Button>
+                        <RowActions
+                          row={row}
+                          t={t}
+                          onEdit={handleEdit}
+                          onTransfer={handleTransfer}
+                          onServer={handleOpenServerChange}
+                          onRemovePlaylists={handleOpenRemovePlaylists}
+                          onHistory={openHistory}
+                          onDelete={handleDelete}
+                        />
+                      </ResponsiveActionBar>
+                    }
+                  >
+                    <MobileFieldGrid
+                      fields={[
+                        { label: t('licenses.headers.deviceKey', 'Device Key'), value: row.deviceKey || '-' },
+                        { label: t('licenses.headers.customer'), value: row.customerName || customerNameMap[row.customerId] || '-' },
+                        {
+                          label: t('licenses.headers.subscription', 'Subscription'),
+                          value: row.subscriptionId
+                            ? `#${row.subscriptionId} · ${
+                                subscriptionMap[String(row.subscriptionId)]?.lineUsername ||
+                                (subscriptionMap[String(row.subscriptionId)]?.lineId
+                                  ? `Line ${subscriptionMap[String(row.subscriptionId)]?.lineId}`
+                                  : '-')
+                              }`
+                            : '-'
+                        },
+                        { label: t('licenses.headers.period'), value: row.licensePeriod || '-' }
+                      ]}
                     />
-                  </TableCell>
+                  </MobileSummaryCard>
+                ))}
+              </Stack>
+            ) : (
+              <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 3 }}>
+                <Stack spacing={1} alignItems="center">
+                  <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                    <SecurityIcon />
+                  </Avatar>
+                  <Typography variant="subtitle1">{t('licenses.table.emptyTitle', 'No licenses found')}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('licenses.table.emptyText', 'Try adjusting filters or add a new license.')}
+                  </Typography>
+                  <Button variant="contained" onClick={() => setOpenModal(true)} size="small" fullWidth>
+                    {t('actions.add', 'Add')}
+                  </Button>
+                </Stack>
+              </Paper>
+            )
+          }
+          desktopContent={
+            <TableContainer
+              component={Paper}
+              sx={{
+                borderRadius: 3,
+                overflow: 'hidden',
+                boxShadow: '0 12px 24px rgba(0,0,0,0.06)',
+                border: '1px solid',
+                borderColor: 'divider'
+              }}
+            >
+              <Table size="small" sx={{ minWidth: { xs: 1120, md: '100%' } }}>
+                <TableHead>
+                  <TableRow
+                    sx={(theme) => ({
+                      bgcolor: theme.palette.surface.sunken,
+                      borderBottom: `1px solid ${theme.palette.divider}`
+                    })}
+                  >
+                    <TableCell>{t('licenses.headers.mac')}</TableCell>
+                    <TableCell>{t('licenses.headers.deviceKey', 'Device Key')}</TableCell>
+                    <TableCell>{t('licenses.headers.customer')}</TableCell>
+                    <TableCell>{t('licenses.headers.subscription', 'Subscription')}</TableCell>
+                    <TableCell>{t('licenses.headers.app')}</TableCell>
+                    <TableCell>{t('licenses.headers.status')}</TableCell>
+                    <TableCell>{t('licenses.headers.paid', 'Paid')}</TableCell>
+                    <TableCell>{t('licenses.headers.period')}</TableCell>
+                    <TableCell>{t('licenses.headers.actions')}</TableCell>
+                  </TableRow>
+                </TableHead>
 
-                  <TableCell>
-                    <LicenseStatusChip status={row.status} />
-                  </TableCell>
+                <TableBody>
+                  {paginatedRows.map((row) => (
+                    <TableRow
+                      key={row.licenseId}
+                      hover
+                      sx={{
+                        '&:nth-of-type(odd)': { bgcolor: 'background.default' },
+                        transition: 'background 0.2s ease',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <TableCell>
+                        <Stack direction="row" spacing={1.25} alignItems="center">
+                          <Avatar
+                            sx={{
+                              width: 34,
+                              height: 34,
+                              bgcolor: (theme) => theme.palette.secondary.light,
+                              color: (theme) => theme.palette.secondary.dark,
+                              fontWeight: 700,
+                              boxShadow: 2,
+                              border: '1px solid',
+                              borderColor: 'divider'
+                            }}
+                          >
+                            <MemoryIcon fontSize="small" />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2">{row.macAddress || '-'}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {row.name || '-'}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </TableCell>
 
-                  <TableCell>
-                    <LicensePaidChip isPaid={row.isPaid} t={t} />
-                  </TableCell>
+                      <TableCell>{row.deviceKey || '-'}</TableCell>
 
-                  <TableCell>
-                    <Stack direction="row" spacing={0.75} alignItems="center">
-                      <AccessTimeIcon fontSize="small" color="action" />
-                      <Typography variant="body2">{row.licensePeriod || '-'}</Typography>
-                    </Stack>
-                  </TableCell>
+                      <TableCell>{row.customerName || customerNameMap[row.customerId] || '-'}</TableCell>
 
-                  <TableCell align="right">
-                    <RowActions
-                      row={row}
-                      t={t}
-                      onEdit={handleEdit}
-                      onTransfer={handleTransfer}
-                      onServer={handleOpenServerChange}
-                      onRemovePlaylists={handleOpenRemovePlaylists}
-                      onHistory={openHistory}
-                      onDelete={handleDelete}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
+                      <TableCell>
+                        {row.subscriptionId ? (
+                          <Stack spacing={0.25}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              #{row.subscriptionId}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {subscriptionMap[String(row.subscriptionId)]?.lineUsername ||
+                                (subscriptionMap[String(row.subscriptionId)]?.lineId
+                                  ? `Line ${subscriptionMap[String(row.subscriptionId)]?.lineId}`
+                                  : '-')}
+                            </Typography>
+                          </Stack>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
 
-              {!loading && filteredRows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
-                    <Stack spacing={1} alignItems="center">
-                      <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
-                        <SecurityIcon />
-                      </Avatar>
-                      <Typography variant="subtitle1">
-                        {t('licenses.table.emptyTitle', 'No licenses found')}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('licenses.table.emptyText', 'Try adjusting filters or add a new license.')}
-                      </Typography>
-                      <Button variant="contained" onClick={() => setOpenModal(true)} size="small">
-                        {t('actions.add', 'Add')}
-                      </Button>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              )}
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          icon={<AppsIcon fontSize="small" />}
+                          label={row.app || '-'}
+                          sx={(theme) => ({
+                            bgcolor: theme.palette.info.lighter,
+                            color: theme.palette.info.darker,
+                            fontWeight: 600
+                          })}
+                        />
+                      </TableCell>
 
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                    <Stack spacing={1} alignItems="center">
-                      <Skeleton variant="circular" width={40} height={40} />
-                      <Typography variant="body2" color="text.secondary">
-                        {t('licenses.table.loading', 'Loading licenses...')}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                      <TableCell>
+                        <LicenseStatusChip status={row.status} />
+                      </TableCell>
 
-        <Divider sx={{ my: 1 }} />
+                      <TableCell>
+                        <LicensePaidChip isPaid={row.isPaid} t={t} />
+                      </TableCell>
 
-        <TablePagination
-          component="div"
-          count={filteredRows.length}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          onPageChange={(e, p) => setPage(p)}
-          onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
+                      <TableCell>
+                        <Stack direction="row" spacing={0.75} alignItems="center">
+                          <AccessTimeIcon fontSize="small" color="action" />
+                          <Typography variant="body2">{row.licensePeriod || '-'}</Typography>
+                        </Stack>
+                      </TableCell>
+
+                      <TableCell align="right">
+                        <RowActions
+                          row={row}
+                          t={t}
+                          onEdit={handleEdit}
+                          onTransfer={handleTransfer}
+                          onServer={handleOpenServerChange}
+                          onRemovePlaylists={handleOpenRemovePlaylists}
+                          onHistory={openHistory}
+                          onDelete={handleDelete}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+
+                  {!loading && filteredRows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+                        <Stack spacing={1} alignItems="center">
+                          <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                            <SecurityIcon />
+                          </Avatar>
+                          <Typography variant="subtitle1">
+                            {t('licenses.table.emptyTitle', 'No licenses found')}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {t('licenses.table.emptyText', 'Try adjusting filters or add a new license.')}
+                          </Typography>
+                          <Button variant="contained" onClick={() => setOpenModal(true)} size="small">
+                            {t('actions.add', 'Add')}
+                          </Button>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  )}
+
+                  {loading && (
+                    <TableRow>
+                      <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                        <Stack spacing={1} alignItems="center">
+                          <Skeleton variant="circular" width={40} height={40} />
+                          <Typography variant="body2" color="text.secondary">
+                            {t('licenses.table.loading', 'Loading licenses...')}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          }
+          pagination={
+            <TablePagination
+              component="div"
+              count={filteredRows.length}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              onPageChange={(e, p) => setPage(p)}
+              onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
+            />
+          }
+          showDivider={!isMobile}
         />
       </MainCard>
 

@@ -39,6 +39,10 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
+import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
+import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
+import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
+import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import { lionTvApi } from 'utils/api';
 
 function normalizeFeed(item = {}) {
@@ -348,7 +352,7 @@ export default function FeedCrudManager({
       <MainCard
         title={title}
         secondary={
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+          <ResponsiveActionBar sx={{ width: { xs: '100%', sm: 'auto' } }}>
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
@@ -369,7 +373,7 @@ export default function FeedCrudManager({
             >
               {createButtonLabel}
             </Button>
-          </Stack>
+          </ResponsiveActionBar>
         }
       >
         <TextField
@@ -388,75 +392,136 @@ export default function FeedCrudManager({
           }}
         />
 
-        <TableContainer component={Paper}>
-          <Table size="small" sx={{ minWidth: { xs: 760, md: '100%' } }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('feedCrud.headers.id', 'ID')}</TableCell>
-                <TableCell>{t('feedCrud.table.published')}</TableCell>
-                <TableCell>{t('feedCrud.table.active')}</TableCell>
-                <TableCell>{t('feedCrud.table.payloadPreview')}</TableCell>
-                <TableCell>{t('feedCrud.table.created')}</TableCell>
-                <TableCell>{t('feedCrud.table.updated')}</TableCell>
-                <TableCell align="right">{t('feedCrud.table.actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading &&
-                Array.from({ length: 4 }).map((_, idx) => (
-                  <TableRow key={`skeleton-${idx}`}>
-                    {Array.from({ length: 7 }).map((__, cidx) => (
-                      <TableCell key={cidx}>
-                        <Skeleton variant="text" />
-                      </TableCell>
+        <ResponsiveEntityView
+          isMobile={isMobile}
+          mobileContent={
+            loading ? (
+              <Stack spacing={1.25}>
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <Skeleton key={`feed-mobile-${idx}`} variant="rounded" height={176} />
+                ))}
+              </Stack>
+            ) : paginatedRows.length ? (
+              <Stack spacing={1.5}>
+                {paginatedRows.map((row) => (
+                  <MobileSummaryCard
+                    key={row.id}
+                    title={`#${row.id ?? '-'}`}
+                    subtitle={payloadPreview(row.payloadJson)}
+                    chips={[
+                      <Chip
+                        key="active"
+                        size="small"
+                        color={row.active ? 'success' : 'default'}
+                        variant={row.active ? 'filled' : 'outlined'}
+                        label={row.active ? t('common.yes') : t('common.no')}
+                      />,
+                      <Chip key="published" size="small" variant="outlined" label={formatDateTime(row.publishedAt)} />
+                    ]}
+                    actions={
+                      <ResponsiveActionBar>
+                        <Button size="small" variant="outlined" onClick={() => handleEdit(row)}>
+                          {t('feedCrud.actions.edit')}
+                        </Button>
+                        <FeedRowActions
+                          row={row}
+                          onEdit={handleEdit}
+                          onDelete={(selected) => setOpenDelete({ open: true, row: selected })}
+                          editLabel={t('feedCrud.actions.edit')}
+                          deleteLabel={t('feedCrud.actions.delete')}
+                        />
+                      </ResponsiveActionBar>
+                    }
+                  >
+                    <MobileFieldGrid
+                      fields={[
+                        { label: t('feedCrud.table.created'), value: formatDateTime(row.createdAt) },
+                        { label: t('feedCrud.table.updated'), value: formatDateTime(row.updatedAt) }
+                      ]}
+                    />
+                  </MobileSummaryCard>
+                ))}
+              </Stack>
+            ) : (
+              <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 3 }}>
+                <Typography variant="subtitle1">{emptyMessage}</Typography>
+              </Paper>
+            )
+          }
+          desktopContent={
+            <TableContainer component={Paper}>
+              <Table size="small" sx={{ minWidth: { xs: 760, md: '100%' } }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>{t('feedCrud.headers.id', 'ID')}</TableCell>
+                    <TableCell>{t('feedCrud.table.published')}</TableCell>
+                    <TableCell>{t('feedCrud.table.active')}</TableCell>
+                    <TableCell>{t('feedCrud.table.payloadPreview')}</TableCell>
+                    <TableCell>{t('feedCrud.table.created')}</TableCell>
+                    <TableCell>{t('feedCrud.table.updated')}</TableCell>
+                    <TableCell align="right">{t('feedCrud.table.actions')}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {loading &&
+                    Array.from({ length: 4 }).map((_, idx) => (
+                      <TableRow key={`skeleton-${idx}`}>
+                        {Array.from({ length: 7 }).map((__, cidx) => (
+                          <TableCell key={cidx}>
+                            <Skeleton variant="text" />
+                          </TableCell>
+                        ))}
+                      </TableRow>
                     ))}
-                  </TableRow>
-                ))}
 
-              {!loading &&
-                paginatedRows.map((row) => (
-                  <TableRow key={row.id} hover>
-                    <TableCell>{row.id}</TableCell>
-                    <TableCell>{formatDateTime(row.publishedAt)}</TableCell>
-                    <TableCell>
-                      <Chip size="small" color={row.active ? 'success' : 'default'} label={row.active ? t('common.yes') : t('common.no')} />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{payloadPreview(row.payloadJson)}</Typography>
-                    </TableCell>
-                    <TableCell>{formatDateTime(row.createdAt)}</TableCell>
-                    <TableCell>{formatDateTime(row.updatedAt)}</TableCell>
-                    <TableCell align="right">
-                      <FeedRowActions
-                        row={row}
-                        onEdit={handleEdit}
-                        onDelete={(selected) => setOpenDelete({ open: true, row: selected })}
-                        editLabel={t('feedCrud.actions.edit')}
-                        deleteLabel={t('feedCrud.actions.delete')}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
+                  {!loading &&
+                    paginatedRows.map((row) => (
+                      <TableRow key={row.id} hover>
+                        <TableCell>{row.id}</TableCell>
+                        <TableCell>{formatDateTime(row.publishedAt)}</TableCell>
+                        <TableCell>
+                          <Chip size="small" color={row.active ? 'success' : 'default'} label={row.active ? t('common.yes') : t('common.no')} />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">{payloadPreview(row.payloadJson)}</Typography>
+                        </TableCell>
+                        <TableCell>{formatDateTime(row.createdAt)}</TableCell>
+                        <TableCell>{formatDateTime(row.updatedAt)}</TableCell>
+                        <TableCell align="right">
+                          <FeedRowActions
+                            row={row}
+                            onEdit={handleEdit}
+                            onDelete={(selected) => setOpenDelete({ open: true, row: selected })}
+                            editLabel={t('feedCrud.actions.edit')}
+                            deleteLabel={t('feedCrud.actions.delete')}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
 
-              {!loading && paginatedRows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    {emptyMessage}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        <TablePagination
-          component="div"
-          count={filteredRows.length}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          onPageChange={(event, nextPage) => setPage(nextPage)}
-          onRowsPerPageChange={(event) => setRowsPerPage(parseInt(event.target.value, 10))}
-          labelRowsPerPage={t('feedCrud.pagination.rowsPerPage')}
+                  {!loading && paginatedRows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center">
+                        {emptyMessage}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          }
+          pagination={
+            <TablePagination
+              component="div"
+              count={filteredRows.length}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              onPageChange={(event, nextPage) => setPage(nextPage)}
+              onRowsPerPageChange={(event) => setRowsPerPage(parseInt(event.target.value, 10))}
+              labelRowsPerPage={t('feedCrud.pagination.rowsPerPage')}
+            />
+          }
+          showDivider={!isMobile}
         />
       </MainCard>
 

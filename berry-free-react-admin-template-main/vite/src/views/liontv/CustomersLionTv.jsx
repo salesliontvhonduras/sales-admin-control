@@ -67,6 +67,10 @@ import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
+import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
+import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
+import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
+import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -667,7 +671,7 @@ export default function CustomersLionTv() {
       <MainCard
         title={t('customers.title')}
         secondary={
-          <Stack direction="row" spacing={1.25}>
+          <ResponsiveActionBar>
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
@@ -690,10 +694,11 @@ export default function CustomersLionTv() {
                 px: 2.5,
                 boxShadow: '0 10px 24px rgba(0,0,0,0.12)'
               }}
+              fullWidth={isMobile}
             >
               {t('actions.newCustomer')}
             </Button>
-          </Stack>
+          </ResponsiveActionBar>
         }
       >
         <Grid container spacing={gridSpacing}>
@@ -818,272 +823,344 @@ export default function CustomersLionTv() {
           </Paper>
         }
       >
-        <TableContainer
-          component={Paper}
-          sx={{
-            borderRadius: 3,
-            overflow: 'hidden',
-            boxShadow: '0 12px 24px rgba(0,0,0,0.06)',
-            border: '1px solid',
-            borderColor: 'divider'
-          }}
-        >
-          <Table size="small" sx={{ minWidth: { xs: 1080, md: '100%' } }}>
-            <TableHead>
-              <TableRow
-                sx={(theme) => ({
-                  bgcolor: theme.palette.surface.sunken,
-                  borderBottom: `1px solid ${theme.palette.divider}`
-                })}
-              >
-                <TableCell>{t('customers.headers.customer')}</TableCell>
-                <TableCell>{t('customers.headers.email')}</TableCell>
-                <TableCell>{t('customers.headers.phone')}</TableCell>
-                <TableCell>{t('customers.headers.gender')}</TableCell>
-                <TableCell>{t('customers.headers.status')}</TableCell>
-                <TableCell>{t('customers.headers.referred')}</TableCell>
-                <TableCell>{t('customers.headers.channel')}</TableCell>
-                <TableCell>{t('invoices.headers.actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedRows.map((row) => (
-                <TableRow
-                  key={row.id || row.username || row.mail}
-                  hover
-                  sx={{
-                    '&:nth-of-type(odd)': { bgcolor: 'background.default' },
-                    transition: 'background 0.2s ease',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <TableCell>
-                    <Stack direction="row" spacing={1.5} alignItems="center">
+        <ResponsiveEntityView
+          isMobile={isMobile}
+          mobileContent={
+            loading ? (
+              <Stack spacing={1.5}>
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <Skeleton key={`customer-mobile-${idx}`} variant="rounded" height={220} />
+                ))}
+              </Stack>
+            ) : paginatedRows.length ? (
+              <Stack spacing={1.5}>
+                {paginatedRows.map((row) => (
+                  <MobileSummaryCard
+                    key={row.id || row.username || row.mail}
+                    icon={
                       <Avatar
                         sx={{
-                          width: 34,
-                          height: 34,
+                          width: 40,
+                          height: 40,
                           bgcolor: (theme) => theme.palette.secondary.light,
                           color: (theme) => theme.palette.secondary.dark,
-                          fontWeight: 700,
-                          boxShadow: 2,
-                          border: '1px solid',
-                          borderColor: 'divider'
+                          fontWeight: 700
                         }}
                       >
                         {initialsFromName(row.fullName)}
                       </Avatar>
-                      <Box>
-                        <Typography variant="subtitle2">{row.fullName || '-'}</Typography>
-                        {row.refererBy ? (
-                          <Typography variant="caption" color="text.secondary">
-                            {t('customers.headers.referred')}: {row.refererBy}
-                          </Typography>
-                        ) : null}
-                      </Box>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.75} alignItems="center">
-                      <MailOutlineIcon fontSize="small" color="info" />
-                      <Typography variant="body2">{row.mail || '-'}</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.75} alignItems="center">
-                      <Avatar
-                        sx={{
-                          width: 26,
-                          height: 26,
-                          bgcolor: 'grey.100',
-                          color: 'text.secondary',
-                          fontSize: 14,
-                          fontWeight: 700
-                        }}
-                      >
-                        {flagFromPhone(row.phone) || <PublicIcon fontSize="small" />}
-                      </Avatar>
-                      <Typography variant="body2">{row.phone || '-'}</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      icon={
-                        row.gender === 'F' ? (
-                          <FemaleIcon fontSize="small" />
-                        ) : row.gender === 'M' ? (
-                          <MaleIcon fontSize="small" />
-                        ) : null
-                      }
-                      label={row.gender || '-'}
-                      sx={(theme) => ({
-                        bgcolor:
-                          row.gender === 'F'
-                              ? theme.palette.secondary.lighter
-                              : row.gender === 'M'
-                                ? theme.palette.primary.lighter
-                                : theme.palette.surface?.muted || theme.palette.background.paper,
-                        color:
-                          row.gender === 'F'
-                            ? theme.palette.secondary.dark
-                            : row.gender === 'M'
-                              ? theme.palette.primary.dark
-                              : theme.palette.text.secondary,
-                        fontWeight: 600
-                      })}
+                    }
+                    title={row.fullName || '-'}
+                    subtitle={row.mail || '-'}
+                    chips={[
+                      <StatusChip key="status" status={row.status} />,
+                      <Chip
+                        key="gender"
+                        size="small"
+                        label={row.gender || '-'}
+                        icon={row.gender === 'F' ? <FemaleIcon fontSize="small" /> : row.gender === 'M' ? <MaleIcon fontSize="small" /> : null}
+                      />,
+                      <Chip key="channel" size="small" variant="outlined" label={row.channel || '-'} />
+                    ]}
+                    actions={
+                      <ResponsiveActionBar>
+                        <Button size="small" variant="outlined" onClick={() => handleEdit(row)}>
+                          {t('actions.edit')}
+                        </Button>
+                        <RowActions
+                          row={row}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          onWelcome={handleSendWelcome}
+                          welcomeLoading={sendingWelcomeId === (row.customerId || row.id)}
+                        />
+                      </ResponsiveActionBar>
+                    }
+                  >
+                    <MobileFieldGrid
+                      fields={[
+                        { label: t('customers.headers.phone'), value: row.phone || '-' },
+                        { label: t('customers.headers.referred'), value: row.refererBy || (row.isReferred ? 'Sí' : 'No') },
+                        { label: t('customers.headers.channel'), value: row.channel || '-' },
+                        { label: t('customers.headers.gender'), value: row.gender || '-' }
+                      ]}
                     />
-                  </TableCell>
-                  <TableCell>
-                    <StatusChip status={row.status} />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      label={
-                        <Box
-                          component="span"
-                          sx={{
-                            color:
-                              row.isReferred || row.refererBy
-                                ? '#0B1F3A !important'
-                                : isDarkMode
-                                  ? '#F8FAFC !important'
-                                  : 'inherit',
-                            fontWeight: 700
-                          }}
-                        >
-                          {row.isReferred || row.refererBy ? 'Sí' : 'No'}
-                        </Box>
-                      }
-                      sx={(theme) => {
-                        const referred = row.isReferred || row.refererBy;
-                        const darkMode = theme.palette.mode === 'dark';
-                        const chipColor = referred
-                          ? '#0B1F3A'
-                          : darkMode
-                            ? '#F8FAFC'
-                            : theme.palette.text.secondary;
-
-                        return {
-                          bgcolor: referred
-                            ? darkMode
-                              ? '#7DD3FC'
-                              : theme.palette.info.lighter
-                            : theme.palette.surface?.muted || theme.palette.background.paper,
-                          color: `${chipColor} !important`,
-                          fontWeight: 700,
-                          border: '1px solid',
-                          borderColor: referred ? (darkMode ? '#38BDF8' : theme.palette.info.light) : theme.palette.divider,
-                          '& .MuiChip-label': { color: `${chipColor} !important`, fontWeight: 700 },
-                          '& .MuiChip-icon': { color: `${chipColor} !important` },
-                          '& .MuiSvgIcon-root': { color: `${chipColor} !important` }
-                        };
+                  </MobileSummaryCard>
+                ))}
+              </Stack>
+            ) : (
+              <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 3 }}>
+                <Stack spacing={1} alignItems="center">
+                  <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                    <PeopleAltIcon />
+                  </Avatar>
+                  <Typography variant="subtitle1">{t('customers.table.emptyTitle')}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('customers.table.emptyText')}
+                  </Typography>
+                  <Button variant="contained" onClick={() => setOpenCreate(true)} size="small" fullWidth>
+                    {t('actions.newCustomer')}
+                  </Button>
+                </Stack>
+              </Paper>
+            )
+          }
+          desktopContent={
+            <TableContainer
+              component={Paper}
+              sx={{
+                borderRadius: 3,
+                overflow: 'hidden',
+                boxShadow: '0 12px 24px rgba(0,0,0,0.06)',
+                border: '1px solid',
+                borderColor: 'divider'
+              }}
+            >
+              <Table size="small" sx={{ minWidth: { xs: 1080, md: '100%' } }}>
+                <TableHead>
+                  <TableRow
+                    sx={(theme) => ({
+                      bgcolor: theme.palette.surface.sunken,
+                      borderBottom: `1px solid ${theme.palette.divider}`
+                    })}
+                  >
+                    <TableCell>{t('customers.headers.customer')}</TableCell>
+                    <TableCell>{t('customers.headers.email')}</TableCell>
+                    <TableCell>{t('customers.headers.phone')}</TableCell>
+                    <TableCell>{t('customers.headers.gender')}</TableCell>
+                    <TableCell>{t('customers.headers.status')}</TableCell>
+                    <TableCell>{t('customers.headers.referred')}</TableCell>
+                    <TableCell>{t('customers.headers.channel')}</TableCell>
+                    <TableCell>{t('invoices.headers.actions')}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedRows.map((row) => (
+                    <TableRow
+                      key={row.id || row.username || row.mail}
+                      hover
+                      sx={{
+                        '&:nth-of-type(odd)': { bgcolor: 'background.default' },
+                        transition: 'background 0.2s ease',
+                        cursor: 'pointer'
                       }}
-                      icon={
-                        <PeopleAltIcon
-                          fontSize="small"
-                          sx={{
-                            color:
-                              row.isReferred || row.refererBy ? '#0B1F3A !important' : isDarkMode ? '#F8FAFC !important' : `${theme.palette.info.dark} !important`
-                          }}
-                        />
-                      }
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      icon={
-                        <ShareIcon
-                          fontSize="small"
-                          sx={{
-                            color: isDarkMode ? '#FFFFFF !important' : `${theme.palette.info.darker} !important`
-                          }}
-                        />
-                      }
-                      label={
-                        <Box component="span" sx={{ color: isDarkMode ? '#FFFFFF !important' : 'inherit', fontWeight: 700 }}>
-                          {row.channel || '-'}
-                        </Box>
-                      }
-                      sx={(theme) => {
-                        const darkMode = theme.palette.mode === 'dark';
-                        const channelColor = darkMode ? '#FFFFFF' : theme.palette.info.darker;
-                        return {
-                          bgcolor: darkMode ? 'rgba(2, 136, 209, 0.42)' : theme.palette.info.lighter,
-                          color: `${channelColor} !important`,
-                          border: '1px solid',
-                          borderColor: darkMode ? 'rgba(125, 211, 252, 0.45)' : theme.palette.info.light,
-                          fontWeight: 700,
-                          '& .MuiChip-label': {
-                            color: `${channelColor} !important`,
-                            fontWeight: 700
-                          },
-                          '& .MuiChip-icon': {
-                            color: `${channelColor} !important`
-                          },
-                          '& .MuiSvgIcon-root': {
-                            color: `${channelColor} !important`
+                    >
+                      <TableCell>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Avatar
+                            sx={{
+                              width: 34,
+                              height: 34,
+                              bgcolor: (theme) => theme.palette.secondary.light,
+                              color: (theme) => theme.palette.secondary.dark,
+                              fontWeight: 700,
+                              boxShadow: 2,
+                              border: '1px solid',
+                              borderColor: 'divider'
+                            }}
+                          >
+                            {initialsFromName(row.fullName)}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2">{row.fullName || '-'}</Typography>
+                            {row.refererBy ? (
+                              <Typography variant="caption" color="text.secondary">
+                                {t('customers.headers.referred')}: {row.refererBy}
+                              </Typography>
+                            ) : null}
+                          </Box>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={0.75} alignItems="center">
+                          <MailOutlineIcon fontSize="small" color="info" />
+                          <Typography variant="body2">{row.mail || '-'}</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={0.75} alignItems="center">
+                          <Avatar
+                            sx={{
+                              width: 26,
+                              height: 26,
+                              bgcolor: 'grey.100',
+                              color: 'text.secondary',
+                              fontSize: 14,
+                              fontWeight: 700
+                            }}
+                          >
+                            {flagFromPhone(row.phone) || <PublicIcon fontSize="small" />}
+                          </Avatar>
+                          <Typography variant="body2">{row.phone || '-'}</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          icon={
+                            row.gender === 'F' ? (
+                              <FemaleIcon fontSize="small" />
+                            ) : row.gender === 'M' ? (
+                              <MaleIcon fontSize="small" />
+                            ) : null
                           }
-                        };
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    <RowActions
-                      row={row}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      onWelcome={handleSendWelcome}
-                      welcomeLoading={sendingWelcomeId === (row.customerId || row.id)}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-              {!loading && filteredRows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
-                    <Stack spacing={1} alignItems="center">
-                      <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
-                        <PeopleAltIcon />
-                      </Avatar>
-                      <Typography variant="subtitle1">{t('customers.table.emptyTitle')}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('customers.table.emptyText')}
-                      </Typography>
-                      <Button variant="contained" onClick={() => setOpenCreate(true)} size="small">
-                        {t('actions.newCustomer')}
-                      </Button>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              )}
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                    <Stack spacing={1} alignItems="center">
-                      <Skeleton variant="circular" width={40} height={40} />
-                      <Typography variant="body2" color="text.secondary">
-                        {t('customers.table.loading')}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                          label={row.gender || '-'}
+                          sx={(theme) => ({
+                            bgcolor:
+                              row.gender === 'F'
+                                ? theme.palette.secondary.lighter
+                                : row.gender === 'M'
+                                  ? theme.palette.primary.lighter
+                                  : theme.palette.surface?.muted || theme.palette.background.paper,
+                            color:
+                              row.gender === 'F'
+                                ? theme.palette.secondary.dark
+                                : row.gender === 'M'
+                                  ? theme.palette.primary.dark
+                                  : theme.palette.text.secondary,
+                            fontWeight: 600
+                          })}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <StatusChip status={row.status} />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          label={
+                            <Box
+                              component="span"
+                              sx={{
+                                color: row.isReferred || row.refererBy ? '#0B1F3A !important' : isDarkMode ? '#F8FAFC !important' : 'inherit',
+                                fontWeight: 700
+                              }}
+                            >
+                              {row.isReferred || row.refererBy ? 'Sí' : 'No'}
+                            </Box>
+                          }
+                          sx={(theme) => {
+                            const referred = row.isReferred || row.refererBy;
+                            const darkMode = theme.palette.mode === 'dark';
+                            const chipColor = referred ? '#0B1F3A' : darkMode ? '#F8FAFC' : theme.palette.text.secondary;
 
-        <Divider sx={{ my: 1 }} />
-
-        <TablePagination
-          component="div"
-          count={filteredRows.length}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          onPageChange={(e, p) => setPage(p)}
-          onRowsPerPageChange={handleRowsPerPageChange}
+                            return {
+                              bgcolor: referred ? (darkMode ? '#7DD3FC' : theme.palette.info.lighter) : theme.palette.surface?.muted || theme.palette.background.paper,
+                              color: `${chipColor} !important`,
+                              fontWeight: 700,
+                              border: '1px solid',
+                              borderColor: referred ? (darkMode ? '#38BDF8' : theme.palette.info.light) : theme.palette.divider,
+                              '& .MuiChip-label': { color: `${chipColor} !important`, fontWeight: 700 },
+                              '& .MuiChip-icon': { color: `${chipColor} !important` },
+                              '& .MuiSvgIcon-root': { color: `${chipColor} !important` }
+                            };
+                          }}
+                          icon={
+                            <PeopleAltIcon
+                              fontSize="small"
+                              sx={{
+                                color:
+                                  row.isReferred || row.refererBy ? '#0B1F3A !important' : isDarkMode ? '#F8FAFC !important' : `${theme.palette.info.dark} !important`
+                              }}
+                            />
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          icon={
+                            <ShareIcon
+                              fontSize="small"
+                              sx={{
+                                color: isDarkMode ? '#FFFFFF !important' : `${theme.palette.info.darker} !important`
+                              }}
+                            />
+                          }
+                          label={
+                            <Box component="span" sx={{ color: isDarkMode ? '#FFFFFF !important' : 'inherit', fontWeight: 700 }}>
+                              {row.channel || '-'}
+                            </Box>
+                          }
+                          sx={(theme) => {
+                            const darkMode = theme.palette.mode === 'dark';
+                            const channelColor = darkMode ? '#FFFFFF' : theme.palette.info.darker;
+                            return {
+                              bgcolor: darkMode ? 'rgba(2, 136, 209, 0.42)' : theme.palette.info.lighter,
+                              color: `${channelColor} !important`,
+                              border: '1px solid',
+                              borderColor: darkMode ? 'rgba(125, 211, 252, 0.45)' : theme.palette.info.light,
+                              fontWeight: 700,
+                              '& .MuiChip-label': {
+                                color: `${channelColor} !important`,
+                                fontWeight: 700
+                              },
+                              '& .MuiChip-icon': {
+                                color: `${channelColor} !important`
+                              },
+                              '& .MuiSvgIcon-root': {
+                                color: `${channelColor} !important`
+                              }
+                            };
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        <RowActions
+                          row={row}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          onWelcome={handleSendWelcome}
+                          welcomeLoading={sendingWelcomeId === (row.customerId || row.id)}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!loading && filteredRows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+                        <Stack spacing={1} alignItems="center">
+                          <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                            <PeopleAltIcon />
+                          </Avatar>
+                          <Typography variant="subtitle1">{t('customers.table.emptyTitle')}</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {t('customers.table.emptyText')}
+                          </Typography>
+                          <Button variant="contained" onClick={() => setOpenCreate(true)} size="small">
+                            {t('actions.newCustomer')}
+                          </Button>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {loading && (
+                    <TableRow>
+                      <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                        <Stack spacing={1} alignItems="center">
+                          <Skeleton variant="circular" width={40} height={40} />
+                          <Typography variant="body2" color="text.secondary">
+                            {t('customers.table.loading')}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          }
+          pagination={
+            <TablePagination
+              component="div"
+              count={filteredRows.length}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              onPageChange={(e, p) => setPage(p)}
+              onRowsPerPageChange={handleRowsPerPageChange}
+            />
+          }
+          showDivider={!isMobile}
         />
       </MainCard>
 

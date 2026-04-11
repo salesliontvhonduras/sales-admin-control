@@ -54,6 +54,10 @@ import MailOutlineIcon from '@mui/icons-material/MailOutline';
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
+import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
+import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
+import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
+import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import { gridSpacing } from 'store/constant';
 import { shopifyDemosApi } from 'utils/api';
 
@@ -517,7 +521,7 @@ export default function DemosLionTv() {
       <MainCard
         title={t('demos.title', 'Demos')}
         secondary={
-          <Stack direction="row" spacing={1.25}>
+          <ResponsiveActionBar>
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
@@ -531,10 +535,11 @@ export default function DemosLionTv() {
               startIcon={<AddCircleOutlineIcon />}
               onClick={openCreateModal}
               sx={{ borderRadius: 2, textTransform: 'none', px: 2.5, boxShadow: '0 10px 24px rgba(0,0,0,0.12)' }}
+              fullWidth={isMobile}
             >
               {t('demos.new', 'Nueva demo')}
             </Button>
-          </Stack>
+          </ResponsiveActionBar>
         }
       >
         <Grid container spacing={gridSpacing}>
@@ -660,169 +665,236 @@ export default function DemosLionTv() {
           </Paper>
         }
       >
-        <TableContainer
-          component={Paper}
-          sx={{
-            borderRadius: 3,
-            overflow: 'hidden',
-            boxShadow: '0 12px 24px rgba(0,0,0,0.06)',
-            border: '1px solid',
-            borderColor: 'divider'
-          }}
-        >
-          <Table size="small" sx={{ minWidth: { xs: 1040, md: '100%' } }}>
-            <TableHead>
-              <TableRow
-                sx={(theme) => ({
-                  bgcolor: theme.palette.surface.sunken,
-                  borderBottom: `1px solid ${theme.palette.divider}`
-                })}
-              >
-                <TableCell>{t('customers.headers.customer')}</TableCell>
-                <TableCell>{t('demos.headers.phone', 'Teléfono')}</TableCell>
-                <TableCell>{t('demos.headers.mac', 'MAC')}</TableCell>
-                <TableCell>{t('demos.headers.app', 'App')}</TableCell>
-                <TableCell>{t('demos.headers.status', 'Estado')}</TableCell>
-                <TableCell>{t('demos.headers.created', 'Creado')}</TableCell>
-                <TableCell>{t('demos.headers.expires', 'Expira')}</TableCell>
-                <TableCell>{t('invoices.headers.actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedRows.map((row) => (
-                <TableRow
-                  key={row.macAddress || row.cellphone}
-                  hover
-                  sx={{
-                    '&:nth-of-type(odd)': { bgcolor: 'background.default' },
-                    transition: 'background 0.2s ease',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <TableCell>
-                    <Stack direction="row" spacing={1.25} alignItems="center">
-                      <Avatar
-                        sx={{
-                          width: 34,
-                          height: 34,
-                          bgcolor: (theme) => theme.palette.secondary.light,
-                          color: (theme) => theme.palette.secondary.dark,
-                          fontWeight: 700,
-                          boxShadow: 2,
-                          border: '1px solid',
-                          borderColor: 'divider'
-                        }}
-                      >
+        <ResponsiveEntityView
+          isMobile={isMobile}
+          mobileContent={
+            loading ? (
+              <Stack spacing={1.5}>
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <Skeleton key={`demos-mobile-${idx}`} variant="rounded" height={210} />
+                ))}
+              </Stack>
+            ) : paginatedRows.length ? (
+              <Stack spacing={1.5}>
+                {paginatedRows.map((row) => (
+                  <MobileSummaryCard
+                    key={row.macAddress || row.cellphone}
+                    icon={
+                      <Avatar sx={{ width: 40, height: 40, bgcolor: 'secondary.light', color: 'secondary.dark', fontWeight: 700 }}>
                         {initialsFromName(row.customerName || row.email)}
                       </Avatar>
-                      <Box>
-                        <Typography variant="subtitle2">{row.customerName || '-'}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {row.email || '-'}
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.75} alignItems="center">
-                      <Avatar
-                        sx={{
-                          width: 26,
-                          height: 26,
-                          bgcolor: 'grey.100',
-                          color: 'text.secondary',
-                          fontSize: 14,
-                          fontWeight: 700
-                        }}
-                      >
-                        {flagFromPhone(row.cellphone) || <PublicIcon fontSize="small" />}
-                      </Avatar>
-                      <Typography variant="body2">{row.cellphone || '-'}</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.75} alignItems="center">
-                      <LanIcon fontSize="small" color="action" />
-                      <Typography variant="body2">{row.macAddress || '-'}</Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      icon={<AppsIcon fontSize="small" />}
-                      label={row.appCode || '-'}
-                      sx={(theme) => ({
-                        bgcolor: theme.palette.info.lighter,
-                        color: theme.palette.info.darker,
-                        fontWeight: 700
-                      })}
+                    }
+                    title={row.customerName || '-'}
+                    subtitle={row.email || '-'}
+                    chips={[
+                      <StatusChip key="status" status={row.status} />,
+                      <Chip key="app" size="small" variant="outlined" label={row.appCode || '-'} />,
+                      <Chip key="expires" size="small" variant="outlined" label={`${t('demos.headers.expires', 'Expira')}: ${formatDate(row.expiresAt)}`} />
+                    ]}
+                    actions={
+                      <ResponsiveActionBar>
+                        <Button size="small" variant="outlined" onClick={() => openEditModal(row)}>
+                          {t('actions.edit')}
+                        </Button>
+                        <RowActions
+                          row={row}
+                          onEdit={openEditModal}
+                          onDelete={(r) => setOpenDelete({ open: true, row: r })}
+                          onEmail={(r) => handleSendEmail(r)}
+                        />
+                      </ResponsiveActionBar>
+                    }
+                  >
+                    <MobileFieldGrid
+                      fields={[
+                        { label: t('demos.headers.phone', 'Teléfono'), value: row.cellphone || '-' },
+                        { label: t('demos.headers.mac', 'MAC'), value: row.macAddress || '-' },
+                        { label: t('demos.headers.created', 'Creado'), value: formatDate(row.createdAt) }
+                      ]}
                     />
-                  </TableCell>
-                  <TableCell>
-                    <StatusChip status={row.status} />
-                  </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={0.5} alignItems="center">
-                      <AccessTimeIcon fontSize="inherit" color="action" />
-                      <Typography variant="body2">{formatDate(row.createdAt)}</Typography>
-                    </Stack>
-                  </TableCell>
-          <TableCell>
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <AccessTimeIcon fontSize="inherit" color="warning" />
-              <Typography variant="body2">{formatDate(row.expiresAt)}</Typography>
-            </Stack>
-          </TableCell>
-          <TableCell align="right">
-                    <RowActions
-                      row={row}
-                      onEdit={openEditModal}
-                      onDelete={(r) => setOpenDelete({ open: true, row: r })}
-                      onEmail={(r) => handleSendEmail(r)}
-                    />
-          </TableCell>
-        </TableRow>
-      ))}
-              {!loading && filteredRows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
-                    <Stack spacing={1} alignItems="center">
-                      <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
-                        <AppsIcon />
-                      </Avatar>
-                      <Typography variant="subtitle1">{t('demos.table.empty', 'No hay demos registradas')}</Typography>
-                      <Button variant="contained" onClick={openCreateModal} size="small">
-                        {t('demos.new', 'Nueva demo')}
-                      </Button>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              )}
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                    <Stack spacing={1} alignItems="center">
-                      <Skeleton variant="circular" width={40} height={40} />
-                      <Typography variant="body2" color="text.secondary">
-                        {t('demos.table.loading', 'Cargando demos...')}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        <Divider sx={{ my: 1 }} />
-
-        <TablePagination
-          component="div"
-          count={filteredRows.length}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          onPageChange={(e, p) => setPage(p)}
-          onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
+                  </MobileSummaryCard>
+                ))}
+              </Stack>
+            ) : (
+              <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 3 }}>
+                <Stack spacing={1} alignItems="center">
+                  <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                    <AppsIcon />
+                  </Avatar>
+                  <Typography variant="subtitle1">{t('demos.table.empty', 'No hay demos registradas')}</Typography>
+                  <Button variant="contained" onClick={openCreateModal} size="small" fullWidth>
+                    {t('demos.new', 'Nueva demo')}
+                  </Button>
+                </Stack>
+              </Paper>
+            )
+          }
+          desktopContent={
+            <TableContainer
+              component={Paper}
+              sx={{
+                borderRadius: 3,
+                overflow: 'hidden',
+                boxShadow: '0 12px 24px rgba(0,0,0,0.06)',
+                border: '1px solid',
+                borderColor: 'divider'
+              }}
+            >
+              <Table size="small" sx={{ minWidth: { xs: 1040, md: '100%' } }}>
+                <TableHead>
+                  <TableRow
+                    sx={(theme) => ({
+                      bgcolor: theme.palette.surface.sunken,
+                      borderBottom: `1px solid ${theme.palette.divider}`
+                    })}
+                  >
+                    <TableCell>{t('customers.headers.customer')}</TableCell>
+                    <TableCell>{t('demos.headers.phone', 'Teléfono')}</TableCell>
+                    <TableCell>{t('demos.headers.mac', 'MAC')}</TableCell>
+                    <TableCell>{t('demos.headers.app', 'App')}</TableCell>
+                    <TableCell>{t('demos.headers.status', 'Estado')}</TableCell>
+                    <TableCell>{t('demos.headers.created', 'Creado')}</TableCell>
+                    <TableCell>{t('demos.headers.expires', 'Expira')}</TableCell>
+                    <TableCell>{t('invoices.headers.actions')}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedRows.map((row) => (
+                    <TableRow
+                      key={row.macAddress || row.cellphone}
+                      hover
+                      sx={{
+                        '&:nth-of-type(odd)': { bgcolor: 'background.default' },
+                        transition: 'background 0.2s ease',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <TableCell>
+                        <Stack direction="row" spacing={1.25} alignItems="center">
+                          <Avatar
+                            sx={{
+                              width: 34,
+                              height: 34,
+                              bgcolor: (theme) => theme.palette.secondary.light,
+                              color: (theme) => theme.palette.secondary.dark,
+                              fontWeight: 700,
+                              boxShadow: 2,
+                              border: '1px solid',
+                              borderColor: 'divider'
+                            }}
+                          >
+                            {initialsFromName(row.customerName || row.email)}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2">{row.customerName || '-'}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {row.email || '-'}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={0.75} alignItems="center">
+                          <Avatar
+                            sx={{
+                              width: 26,
+                              height: 26,
+                              bgcolor: 'grey.100',
+                              color: 'text.secondary',
+                              fontSize: 14,
+                              fontWeight: 700
+                            }}
+                          >
+                            {flagFromPhone(row.cellphone) || <PublicIcon fontSize="small" />}
+                          </Avatar>
+                          <Typography variant="body2">{row.cellphone || '-'}</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={0.75} alignItems="center">
+                          <LanIcon fontSize="small" color="action" />
+                          <Typography variant="body2">{row.macAddress || '-'}</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          icon={<AppsIcon fontSize="small" />}
+                          label={row.appCode || '-'}
+                          sx={(theme) => ({
+                            bgcolor: theme.palette.info.lighter,
+                            color: theme.palette.info.darker,
+                            fontWeight: 700
+                          })}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <StatusChip status={row.status} />
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                          <AccessTimeIcon fontSize="inherit" color="action" />
+                          <Typography variant="body2">{formatDate(row.createdAt)}</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                          <AccessTimeIcon fontSize="inherit" color="warning" />
+                          <Typography variant="body2">{formatDate(row.expiresAt)}</Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell align="right">
+                        <RowActions
+                          row={row}
+                          onEdit={openEditModal}
+                          onDelete={(r) => setOpenDelete({ open: true, row: r })}
+                          onEmail={(r) => handleSendEmail(r)}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!loading && filteredRows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
+                        <Stack spacing={1} alignItems="center">
+                          <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                            <AppsIcon />
+                          </Avatar>
+                          <Typography variant="subtitle1">{t('demos.table.empty', 'No hay demos registradas')}</Typography>
+                          <Button variant="contained" onClick={openCreateModal} size="small">
+                            {t('demos.new', 'Nueva demo')}
+                          </Button>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {loading && (
+                    <TableRow>
+                      <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                        <Stack spacing={1} alignItems="center">
+                          <Skeleton variant="circular" width={40} height={40} />
+                          <Typography variant="body2" color="text.secondary">
+                            {t('demos.table.loading', 'Cargando demos...')}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          }
+          pagination={
+            <TablePagination
+              component="div"
+              count={filteredRows.length}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              onPageChange={(e, p) => setPage(p)}
+              onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
+            />
+          }
+          showDivider={!isMobile}
         />
       </MainCard>
 

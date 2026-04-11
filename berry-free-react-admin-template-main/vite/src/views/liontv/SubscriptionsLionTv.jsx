@@ -61,6 +61,10 @@ import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
+import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
+import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
+import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
+import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 import { withAlpha } from 'utils/colorUtils';
@@ -871,7 +875,7 @@ export default function SubscriptionsLionTv() {
       <MainCard
         title={t('subscriptions.title')}
         secondary={
-          <Stack direction="row" spacing={1}>
+          <ResponsiveActionBar>
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
@@ -897,10 +901,11 @@ export default function SubscriptionsLionTv() {
                 px: 2.8,
                 boxShadow: `0 12px 24px ${withAlpha(theme.vars.palette.primary.main, theme.palette.mode === 'dark' ? 0.42 : 0.32)}`
               })}
+              fullWidth={isMobile}
             >
               {t('subscriptions.actions.new', 'New subscription')}
             </Button>
-          </Stack>
+          </ResponsiveActionBar>
         }
       >
         <Grid container spacing={gridSpacing}>
@@ -1051,200 +1056,284 @@ export default function SubscriptionsLionTv() {
             </Stack>
           </Stack>
         </Box>
-        <TableContainer component={Paper}>
-          <Table size="small" sx={{ minWidth: { xs: 1180, md: '100%' } }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>{t('subscriptions.headers.id')}</TableCell>
-                  <TableCell>{t('subscriptions.headers.customer')}</TableCell>
-                  <TableCell>{t('subscriptions.headers.line')}</TableCell>
-                  <TableCell>{t('subscriptions.headers.linePlus', 'Line plus')}</TableCell>
-                  <TableCell>{t('subscriptions.headers.package')}</TableCell>
-                  <TableCell>{t('subscriptions.headers.provider', 'Provider')}</TableCell>
-                  <TableCell>{t('subscriptions.headers.status')}</TableCell>
-                  <TableCell>{t('subscriptions.headers.amount')}</TableCell>
-                  <TableCell>{t('subscriptions.headers.start')}</TableCell>
-                  <TableCell>{t('subscriptions.headers.renewal')}</TableCell>
-                  <TableCell>{t('subscriptions.headers.autopay')}</TableCell>
-                  <TableCell>{t('subscriptions.headers.actions')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading &&
-                  Array.from({ length: 4 }).map((_, idx) => (
-                    <TableRow key={`sub-skel-${idx}`}>
-                      {Array.from({ length: 12 }).map((__, cidx) => (
-                        <TableCell key={cidx}>
-                          <Skeleton variant="text" />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                {!loading &&
-                  paginatedRows.map((row) => (
-                    <TableRow
+        <ResponsiveEntityView
+          isMobile={isMobile}
+          mobileContent={
+            loading ? (
+              <Stack spacing={1.5}>
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <Skeleton key={`sub-mobile-${idx}`} variant="rounded" height={230} />
+                ))}
+              </Stack>
+            ) : paginatedRows.length ? (
+              <Stack spacing={1.5}>
+                {paginatedRows.map((row) => {
+                  const isActiveExpired = activeExpiredRowKeys.has(getSubscriptionRowKey(row));
+                  return (
+                    <MobileSummaryCard
                       key={row.subscriptionId || row.lineId}
-                      hover
-                      sx={(theme) => {
-                        const isActiveExpired = activeExpiredRowKeys.has(getSubscriptionRowKey(row));
-                        if (!isActiveExpired) return undefined;
-                        return {
-                          backgroundColor: withAlpha(theme.vars.palette.error.main, theme.palette.mode === 'dark' ? 0.08 : 0.05),
-                          '&:hover': {
-                            backgroundColor: withAlpha(theme.vars.palette.error.main, theme.palette.mode === 'dark' ? 0.14 : 0.1)
-                          }
-                        };
-                      }}
+                      title={`${row.customerName || row.customer_name || '-'} · #${row.subscriptionId || '-'}`}
+                      subtitle={lineNameMap[String(row.lineId ?? row.username_line ?? '')] || row.username_line || row.lineId || '-'}
+                      chips={[
+                        <StatusChip key="status" status={row.status} />,
+                        <Chip key="provider" size="small" variant="outlined" label={row.provider || t('subscriptions.labels.providerFallback')} />,
+                        row.sharingRole === 'HOST' ? (
+                          <Chip key="host" size="small" color="warning" label={t('subscriptions.sharing.host', 'HOST')} />
+                        ) : row.sharingRole === 'SHARED' ? (
+                          <Chip key="shared" size="small" color="info" label={t('subscriptions.sharing.shared', 'SHARED')} />
+                        ) : null,
+                        isActiveExpired ? (
+                          <Chip key="expired" size="small" color="error" label={t('subscriptions.labels.activeLineExpiredChip', 'Línea activa vencida')} />
+                        ) : null
+                      ].filter(Boolean)}
+                      actions={
+                        <ResponsiveActionBar>
+                          <Button size="small" variant="outlined" onClick={() => handleEdit(row)}>
+                            {t('actions.edit', 'Edit')}
+                          </Button>
+                          <RowActions
+                            row={row}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onNotifyExpiration={handleNotifyExpiration}
+                            onNotifyReengage={handleNotifyReengage}
+                            onNotifyRenewed={handleNotifyRenewed}
+                            busy={notifLoadingId === row.subscriptionId}
+                          />
+                        </ResponsiveActionBar>
+                      }
                     >
-                      <TableCell>
-                        <Stack direction="row" spacing={0.75} alignItems="center">
-                          <CreditCardIcon fontSize="small" sx={{ color: 'primary.main' }} />
-                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {row.subscriptionId}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.75} alignItems="center">
-                          <PersonOutlineIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                          <Typography variant="body2">{row.customerName || row.customer_name || '-'}</Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap">
-                          <WifiTetheringIcon fontSize="small" sx={{ color: 'success.main' }} />
-                          <Typography variant="body2">
-                            {lineNameMap[String(row.lineId ?? row.username_line ?? '')] || row.username_line || row.lineId || '-'}
-                          </Typography>
-                          {activeExpiredRowKeys.has(getSubscriptionRowKey(row)) && (
-                            <Chip
-                              size="small"
-                              color="error"
-                              variant="filled"
-                              label={t('subscriptions.labels.activeLineExpiredChip', 'Línea activa vencida')}
-                              sx={{ fontWeight: 700 }}
-                            />
-                          )}
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.75} alignItems="center">
-                          <WifiTetheringIcon fontSize="small" sx={{ color: 'secondary.main' }} />
-                          <Typography variant="body2">
-                            {lineNameMap[String(row.linePlusId ?? '')] || row.linePlusId || '-'}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Stack spacing={0.25}>
-                          <Stack direction="row" spacing={0.5} alignItems="center">
-                            <Avatar sx={{ width: 22, height: 22, bgcolor: 'warning.main', color: 'warning.contrastText' }}>
-                              <BoltIcon fontSize="inherit" />
-                            </Avatar>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              {row.packageName || packageMap[String(row.packageId ?? '')]?.name || row.packageId || '-'}
+                      <MobileFieldGrid
+                        fields={[
+                          {
+                            label: t('subscriptions.headers.line'),
+                            value: lineNameMap[String(row.lineId ?? row.username_line ?? '')] || row.username_line || row.lineId || '-'
+                          },
+                          {
+                            label: t('subscriptions.headers.linePlus', 'Line plus'),
+                            value: lineNameMap[String(row.linePlusId ?? '')] || row.linePlusId || '-'
+                          },
+                          {
+                            label: t('subscriptions.headers.package'),
+                            value: row.packageName || packageMap[String(row.packageId ?? '')]?.name || row.packageId || '-'
+                          },
+                          {
+                            label: t('subscriptions.headers.amount'),
+                            value: Number(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 }),
+                            emphasis: true
+                          },
+                          { label: t('subscriptions.headers.start'), value: row.startDate || '-' },
+                          { label: t('subscriptions.headers.renewal'), value: row.renewalDate || '-' },
+                          { label: t('subscriptions.headers.autopay'), value: row.automaticPay ? t('common.yes', 'Yes') : t('common.no', 'No') }
+                        ]}
+                      />
+                    </MobileSummaryCard>
+                  );
+                })}
+              </Stack>
+            ) : (
+              <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 3 }}>
+                <Typography variant="subtitle1">{t('subscriptions.empty', 'No subscriptions found.')}</Typography>
+              </Paper>
+            )
+          }
+          desktopContent={
+            <TableContainer component={Paper}>
+              <Table size="small" sx={{ minWidth: { xs: 1180, md: '100%' } }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>{t('subscriptions.headers.id')}</TableCell>
+                    <TableCell>{t('subscriptions.headers.customer')}</TableCell>
+                    <TableCell>{t('subscriptions.headers.line')}</TableCell>
+                    <TableCell>{t('subscriptions.headers.linePlus', 'Line plus')}</TableCell>
+                    <TableCell>{t('subscriptions.headers.package')}</TableCell>
+                    <TableCell>{t('subscriptions.headers.provider', 'Provider')}</TableCell>
+                    <TableCell>{t('subscriptions.headers.status')}</TableCell>
+                    <TableCell>{t('subscriptions.headers.amount')}</TableCell>
+                    <TableCell>{t('subscriptions.headers.start')}</TableCell>
+                    <TableCell>{t('subscriptions.headers.renewal')}</TableCell>
+                    <TableCell>{t('subscriptions.headers.autopay')}</TableCell>
+                    <TableCell>{t('subscriptions.headers.actions')}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {loading &&
+                    Array.from({ length: 4 }).map((_, idx) => (
+                      <TableRow key={`sub-skel-${idx}`}>
+                        {Array.from({ length: 12 }).map((__, cidx) => (
+                          <TableCell key={cidx}>
+                            <Skeleton variant="text" />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  {!loading &&
+                    paginatedRows.map((row) => (
+                      <TableRow
+                        key={row.subscriptionId || row.lineId}
+                        hover
+                        sx={(theme) => {
+                          const isActiveExpired = activeExpiredRowKeys.has(getSubscriptionRowKey(row));
+                          if (!isActiveExpired) return undefined;
+                          return {
+                            backgroundColor: withAlpha(theme.vars.palette.error.main, theme.palette.mode === 'dark' ? 0.08 : 0.05),
+                            '&:hover': {
+                              backgroundColor: withAlpha(theme.vars.palette.error.main, theme.palette.mode === 'dark' ? 0.14 : 0.1)
+                            }
+                          };
+                        }}
+                      >
+                        <TableCell>
+                          <Stack direction="row" spacing={0.75} alignItems="center">
+                            <CreditCardIcon fontSize="small" sx={{ color: 'primary.main' }} />
+                            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                              {row.subscriptionId}
                             </Typography>
                           </Stack>
-                          {row.packageDescription || packageMap[String(row.packageId ?? '')]?.description ? (
-                            <Typography variant="caption" color="text.secondary" noWrap>
-                              {row.packageDescription || packageMap[String(row.packageId ?? '')]?.description}
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={0.75} alignItems="center">
+                            <PersonOutlineIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                            <Typography variant="body2">{row.customerName || row.customer_name || '-'}</Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap">
+                            <WifiTetheringIcon fontSize="small" sx={{ color: 'success.main' }} />
+                            <Typography variant="body2">
+                              {lineNameMap[String(row.lineId ?? row.username_line ?? '')] || row.username_line || row.lineId || '-'}
                             </Typography>
-                          ) : null}
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          size="small"
-                          label={row.provider || t('subscriptions.labels.providerFallback')}
-                          color="info"
-                          variant="outlined"
-                          sx={{ fontWeight: 700, borderRadius: 1.5 }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.75} alignItems="center">
-                          <StatusChip status={row.status} />
-                          {row.sharingRole === 'HOST' && (
-                            <Chip
-                              size="small"
-                              color="warning"
-                              variant="filled"
-                              label={t('subscriptions.sharing.host', 'HOST')}
-                              sx={{ fontWeight: 700 }}
-                            />
-                          )}
-                          {row.sharingRole === 'SHARED' && (
-                            <Chip
-                              size="small"
-                              color="info"
-                              variant="filled"
-                              label={t('subscriptions.sharing.shared', 'SHARED')}
-                              sx={{ fontWeight: 700 }}
-                            />
-                          )}
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" alignItems="center" spacing={0.5}>
-                          <PriceChangeIcon fontSize="small" sx={{ color: 'success.main' }} />
-                          <Typography variant="body2">
-                            {Number(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.5} alignItems="center">
-                          <CalendarMonthIcon fontSize="small" color="primary" />
-                          <Typography variant="body2">{row.startDate || '-'}</Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.5} alignItems="center">
-                          <CalendarMonthIcon fontSize="small" color="primary" />
-                          <Typography variant="body2">{row.renewalDate || '-'}</Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          size="small"
-                          label={row.automaticPay ? t('common.yes', 'Yes') : t('common.no', 'No')}
-                          color={row.automaticPay ? 'success' : 'default'}
-                          variant={row.automaticPay ? 'filled' : 'outlined'}
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        <RowActions
-                          row={row}
-                          onEdit={handleEdit}
-                          onDelete={handleDelete}
-                          onNotifyExpiration={handleNotifyExpiration}
-                          onNotifyReengage={handleNotifyReengage}
-                          onNotifyRenewed={handleNotifyRenewed}
-                          busy={notifLoadingId === row.subscriptionId}
-                        />
+                            {activeExpiredRowKeys.has(getSubscriptionRowKey(row)) && (
+                              <Chip
+                                size="small"
+                                color="error"
+                                variant="filled"
+                                label={t('subscriptions.labels.activeLineExpiredChip', 'Línea activa vencida')}
+                                sx={{ fontWeight: 700 }}
+                              />
+                            )}
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={0.75} alignItems="center">
+                            <WifiTetheringIcon fontSize="small" sx={{ color: 'secondary.main' }} />
+                            <Typography variant="body2">
+                              {lineNameMap[String(row.linePlusId ?? '')] || row.linePlusId || '-'}
+                            </Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Stack spacing={0.25}>
+                            <Stack direction="row" spacing={0.5} alignItems="center">
+                              <Avatar sx={{ width: 22, height: 22, bgcolor: 'warning.main', color: 'warning.contrastText' }}>
+                                <BoltIcon fontSize="inherit" />
+                              </Avatar>
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {row.packageName || packageMap[String(row.packageId ?? '')]?.name || row.packageId || '-'}
+                              </Typography>
+                            </Stack>
+                            {row.packageDescription || packageMap[String(row.packageId ?? '')]?.description ? (
+                              <Typography variant="caption" color="text.secondary" noWrap>
+                                {row.packageDescription || packageMap[String(row.packageId ?? '')]?.description}
+                              </Typography>
+                            ) : null}
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={row.provider || t('subscriptions.labels.providerFallback')}
+                            color="info"
+                            variant="outlined"
+                            sx={{ fontWeight: 700, borderRadius: 1.5 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={0.75} alignItems="center">
+                            <StatusChip status={row.status} />
+                            {row.sharingRole === 'HOST' && (
+                              <Chip
+                                size="small"
+                                color="warning"
+                                variant="filled"
+                                label={t('subscriptions.sharing.host', 'HOST')}
+                                sx={{ fontWeight: 700 }}
+                              />
+                            )}
+                            {row.sharingRole === 'SHARED' && (
+                              <Chip
+                                size="small"
+                                color="info"
+                                variant="filled"
+                                label={t('subscriptions.sharing.shared', 'SHARED')}
+                                sx={{ fontWeight: 700 }}
+                              />
+                            )}
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <PriceChangeIcon fontSize="small" sx={{ color: 'success.main' }} />
+                            <Typography variant="body2">
+                              {Number(row.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            </Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={0.5} alignItems="center">
+                            <CalendarMonthIcon fontSize="small" color="primary" />
+                            <Typography variant="body2">{row.startDate || '-'}</Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={0.5} alignItems="center">
+                            <CalendarMonthIcon fontSize="small" color="primary" />
+                            <Typography variant="body2">{row.renewalDate || '-'}</Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={row.automaticPay ? t('common.yes', 'Yes') : t('common.no', 'No')}
+                            color={row.automaticPay ? 'success' : 'default'}
+                            variant={row.automaticPay ? 'filled' : 'outlined'}
+                          />
+                        </TableCell>
+                        <TableCell align="right">
+                          <RowActions
+                            row={row}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onNotifyExpiration={handleNotifyExpiration}
+                            onNotifyReengage={handleNotifyReengage}
+                            onNotifyRenewed={handleNotifyRenewed}
+                            busy={notifLoadingId === row.subscriptionId}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  {!loading && filteredRows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={12} align="center">
+                        {t('subscriptions.empty', 'No subscriptions found.')}
                       </TableCell>
                     </TableRow>
-                  ))}
-                {!loading && filteredRows.length === 0 && (
-                  <TableRow>
-                  <TableCell colSpan={12} align="center">
-                      {t('subscriptions.empty', 'No subscriptions found.')}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-        <Divider sx={{ my: 1 }} />
-
-        <TablePagination
-          component="div"
-          count={filteredRows.length}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          onPageChange={(e, p) => setPage(p)}
-          onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          }
+          pagination={
+            <TablePagination
+              component="div"
+              count={filteredRows.length}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              onPageChange={(e, p) => setPage(p)}
+              onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
+            />
+          }
+          showDivider={!isMobile}
         />
       </MainCard>
 

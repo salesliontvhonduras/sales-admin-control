@@ -64,6 +64,10 @@ import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
+import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
+import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
+import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
+import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi, catalogsApi } from 'utils/api';
 
@@ -654,7 +658,7 @@ export default function InvoicesLionTv() {
       <MainCard
         title={t('invoices.title')}
         secondary={
-          <Stack direction="row" spacing={1.25}>
+          <ResponsiveActionBar>
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
@@ -673,10 +677,11 @@ export default function InvoicesLionTv() {
                 px: 2.5,
                 boxShadow: '0 10px 24px rgba(0,0,0,0.12)'
               }}
+              fullWidth={isMobile}
             >
               {t('actions.newInvoice')}
             </Button>
-          </Stack>
+          </ResponsiveActionBar>
         }
       >
         <Grid container spacing={gridSpacing}>
@@ -800,194 +805,274 @@ export default function InvoicesLionTv() {
           </Paper>
         }
       >
-        <TableContainer
-          component={Paper}
-          sx={{
-            borderRadius: 3,
-            overflow: 'hidden',
-            boxShadow: '0 12px 24px rgba(0,0,0,0.06)',
-            border: '1px solid',
-            borderColor: 'divider'
-          }}
-        >
-          <Table size="small" sx={{ minWidth: { xs: 1280, md: '100%' } }}>
-            <TableHead>
-              <TableRow
-                sx={(theme) => ({
-                  bgcolor: theme.palette.surface.sunken,
-                  borderBottom: `1px solid ${theme.palette.divider}`
-                })}
-              >
-                <TableCell>{t('invoices.headers.id')}</TableCell>
-                <TableCell>{t('invoices.headers.customer')}</TableCell>
-                <TableCell>{t('invoices.headers.service')}</TableCell>
-                <TableCell>{t('invoices.headers.package')}</TableCell>
-                <TableCell>{t('invoices.headers.bank')}</TableCell>
-                <TableCell>{t('invoices.headers.method')}</TableCell>
-                <TableCell>{t('invoices.headers.status')}</TableCell>
-                <TableCell>{t('invoices.headers.payment')}</TableCell>
-                <TableCell>{t('invoices.headers.discount')}</TableCell>
-                <TableCell>{t('invoices.headers.paymentDate')}</TableCell>
-                <TableCell>{t('invoices.headers.actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedRows.map((row) => (
-                <TableRow
-                  key={row.invoiceId}
-                  hover
-                  sx={{
-                    '&:nth-of-type(odd)': { bgcolor: 'background.paper' },
-                    transition: 'background 0.2s ease'
-                  }}
-                >
-                  <TableCell>
-                    <Stack direction="row" spacing={1.5} alignItems="center">
-                      <Avatar
-                        sx={{
-                          width: 34,
-                          height: 34,
-                          bgcolor: (theme) => theme.palette.secondary.light,
-                          color: (theme) => theme.palette.secondary.dark,
-                          fontWeight: 700,
-                          boxShadow: 2,
-                          border: '1px solid',
-                          borderColor: 'divider'
-                        }}
-                      >
+        <ResponsiveEntityView
+          isMobile={isMobile}
+          mobileContent={
+            loading ? (
+              <Stack spacing={1.5}>
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <Skeleton key={`invoice-mobile-${idx}`} variant="rounded" height={220} />
+                ))}
+              </Stack>
+            ) : paginatedRows.length ? (
+              <Stack spacing={1.5}>
+                {paginatedRows.map((row) => (
+                  <MobileSummaryCard
+                    key={row.invoiceId}
+                    icon={
+                      <Avatar sx={{ width: 40, height: 40, bgcolor: 'secondary.light', color: 'secondary.dark' }}>
                         <ReceiptLongIcon fontSize="small" />
                       </Avatar>
-                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                        #{row.invoiceId}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                <TableCell>
-                  <Typography variant="subtitle2">{row.customerName || row.customer_name || '-'}</Typography>
-                </TableCell>
-                  <TableCell>{row.serviceId || '-'}</TableCell>
-                  <TableCell>{row.packageId || '-'}</TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      variant="outlined"
-                      icon={<AccountBalanceIcon fontSize="small" color="info" />}
-                      label={row.bankId || '-'}
+                    }
+                    title={`#${row.invoiceId} · ${row.customerName || row.customer_name || '-'}`}
+                    subtitle={paymentMethodLabel(row.paymentMethod)}
+                    chips={[
+                      <StatusChip key="status" status={row.status} label={statusLabel(row.status)} />,
+                      <Chip key="bank" size="small" variant="outlined" label={row.bankId || '-'} />,
+                      <Chip
+                        key="payment"
+                        size="small"
+                        variant="outlined"
+                        label={`L ${Number(row.amountPaid || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                      />
+                    ]}
+                    actions={
+                      <ResponsiveActionBar>
+                        <Button size="small" variant="outlined" onClick={() => handleEdit(row)}>
+                          {t('actions.edit', 'Edit')}
+                        </Button>
+                        <RowActions
+                          row={row}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          onSendInvoice={handleSendInvoice}
+                          sendingInvoice={sendingInvoiceId === row.invoiceId}
+                        />
+                      </ResponsiveActionBar>
+                    }
+                  >
+                    <MobileFieldGrid
+                      fields={[
+                        { label: t('invoices.headers.service'), value: row.serviceId || '-' },
+                        { label: t('invoices.headers.package'), value: row.packageId || '-' },
+                        {
+                          label: t('invoices.headers.discount'),
+                          value: `L ${Number(row.amountDiscount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                        },
+                        { label: t('invoices.headers.paymentDate'), value: formatDate(row.paymentDate) }
+                      ]}
+                    />
+                  </MobileSummaryCard>
+                ))}
+              </Stack>
+            ) : (
+              <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 3 }}>
+                <Stack spacing={1} alignItems="center">
+                  <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                    <ReceiptLongIcon />
+                  </Avatar>
+                  <Typography variant="subtitle1">{t('invoices.table.emptyTitle')}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('invoices.table.emptyText')}
+                  </Typography>
+                  <Button variant="contained" onClick={() => setOpenModal(true)} size="small" fullWidth>
+                    {t('actions.newInvoice')}
+                  </Button>
+                </Stack>
+              </Paper>
+            )
+          }
+          desktopContent={
+            <TableContainer
+              component={Paper}
+              sx={{
+                borderRadius: 3,
+                overflow: 'hidden',
+                boxShadow: '0 12px 24px rgba(0,0,0,0.06)',
+                border: '1px solid',
+                borderColor: 'divider'
+              }}
+            >
+              <Table size="small" sx={{ minWidth: { xs: 1280, md: '100%' } }}>
+                <TableHead>
+                  <TableRow
+                    sx={(theme) => ({
+                      bgcolor: theme.palette.surface.sunken,
+                      borderBottom: `1px solid ${theme.palette.divider}`
+                    })}
+                  >
+                    <TableCell>{t('invoices.headers.id')}</TableCell>
+                    <TableCell>{t('invoices.headers.customer')}</TableCell>
+                    <TableCell>{t('invoices.headers.service')}</TableCell>
+                    <TableCell>{t('invoices.headers.package')}</TableCell>
+                    <TableCell>{t('invoices.headers.bank')}</TableCell>
+                    <TableCell>{t('invoices.headers.method')}</TableCell>
+                    <TableCell>{t('invoices.headers.status')}</TableCell>
+                    <TableCell>{t('invoices.headers.payment')}</TableCell>
+                    <TableCell>{t('invoices.headers.discount')}</TableCell>
+                    <TableCell>{t('invoices.headers.paymentDate')}</TableCell>
+                    <TableCell>{t('invoices.headers.actions')}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedRows.map((row) => (
+                    <TableRow
+                      key={row.invoiceId}
+                      hover
                       sx={{
-                        fontWeight: 600,
-                        borderColor: 'divider',
-                        bgcolor: 'background.paper',
-                        color: 'text.primary'
+                        '&:nth-of-type(odd)': { bgcolor: 'background.paper' },
+                        transition: 'background 0.2s ease'
                       }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      variant="outlined"
-                      icon={
-                        (() => {
-                          const IconComp = paymentMethodIcons[row.paymentMethod] || CreditScoreIcon;
-                          return <IconComp fontSize="small" color="info" />;
-                        })()
-                      }
-                      label={paymentMethodLabel(row.paymentMethod)}
-                      sx={{
-                        fontWeight: 600,
-                        borderColor: 'divider',
-                        bgcolor: 'background.paper',
-                        color: 'text.primary'
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <StatusChip status={row.status} label={statusLabel(row.status)} />
-                  </TableCell>
-                  <TableCell>
-                  <Chip
-                    size="small"
-                    variant="outlined"
-                    icon={<MonetizationOnIcon fontSize="small" color="success" />}
-                    label={`L ${Number(row.amountPaid || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-                    sx={{
-                      fontWeight: 600,
-                      borderColor: 'divider',
-                      bgcolor: 'background.paper',
-                      color: 'text.primary'
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                  <Chip
-                    size="small"
-                    variant="outlined"
-                    icon={<MonetizationOnIcon fontSize="small" color="warning" />}
-                    label={`L ${Number(row.amountDiscount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-                    sx={{
-                      fontWeight: 600,
-                      borderColor: 'divider',
-                      bgcolor: 'background.paper',
-                      color: 'text.primary'
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>{formatDate(row.paymentDate)}</TableCell>
-                  <TableCell align="right">
-                    <RowActions
-                      row={row}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      onSendInvoice={handleSendInvoice}
-                      sendingInvoice={sendingInvoiceId === row.invoiceId}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-              {!loading && filteredRows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
-                    <Stack spacing={1} alignItems="center">
-                      <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
-                        <ReceiptLongIcon />
-                      </Avatar>
-                      <Typography variant="subtitle1">{t('invoices.table.emptyTitle')}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('invoices.table.emptyText')}
-                      </Typography>
-                      <Button variant="contained" onClick={() => setOpenModal(true)} size="small">
-                        {t('actions.newInvoice')}
-                      </Button>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              )}
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
-                    <Stack spacing={1} alignItems="center">
-                      <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
-                        <RefreshIcon />
-                      </Avatar>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('invoices.table.loading')}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        <Divider sx={{ my: 1 }} />
-
-        <TablePagination
-          component="div"
-          count={filteredRows.length}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          onPageChange={(e, p) => setPage(p)}
-          onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
+                    >
+                      <TableCell>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Avatar
+                            sx={{
+                              width: 34,
+                              height: 34,
+                              bgcolor: (theme) => theme.palette.secondary.light,
+                              color: (theme) => theme.palette.secondary.dark,
+                              fontWeight: 700,
+                              boxShadow: 2,
+                              border: '1px solid',
+                              borderColor: 'divider'
+                            }}
+                          >
+                            <ReceiptLongIcon fontSize="small" />
+                          </Avatar>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                            #{row.invoiceId}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2">{row.customerName || row.customer_name || '-'}</Typography>
+                      </TableCell>
+                      <TableCell>{row.serviceId || '-'}</TableCell>
+                      <TableCell>{row.packageId || '-'}</TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          icon={<AccountBalanceIcon fontSize="small" color="info" />}
+                          label={row.bankId || '-'}
+                          sx={{
+                            fontWeight: 600,
+                            borderColor: 'divider',
+                            bgcolor: 'background.paper',
+                            color: 'text.primary'
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          icon={
+                            (() => {
+                              const IconComp = paymentMethodIcons[row.paymentMethod] || CreditScoreIcon;
+                              return <IconComp fontSize="small" color="info" />;
+                            })()
+                          }
+                          label={paymentMethodLabel(row.paymentMethod)}
+                          sx={{
+                            fontWeight: 600,
+                            borderColor: 'divider',
+                            bgcolor: 'background.paper',
+                            color: 'text.primary'
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <StatusChip status={row.status} label={statusLabel(row.status)} />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          icon={<MonetizationOnIcon fontSize="small" color="success" />}
+                          label={`L ${Number(row.amountPaid || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                          sx={{
+                            fontWeight: 600,
+                            borderColor: 'divider',
+                            bgcolor: 'background.paper',
+                            color: 'text.primary'
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          icon={<MonetizationOnIcon fontSize="small" color="warning" />}
+                          label={`L ${Number(row.amountDiscount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                          sx={{
+                            fontWeight: 600,
+                            borderColor: 'divider',
+                            bgcolor: 'background.paper',
+                            color: 'text.primary'
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>{formatDate(row.paymentDate)}</TableCell>
+                      <TableCell align="right">
+                        <RowActions
+                          row={row}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          onSendInvoice={handleSendInvoice}
+                          sendingInvoice={sendingInvoiceId === row.invoiceId}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!loading && filteredRows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
+                        <Stack spacing={1} alignItems="center">
+                          <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                            <ReceiptLongIcon />
+                          </Avatar>
+                          <Typography variant="subtitle1">{t('invoices.table.emptyTitle')}</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {t('invoices.table.emptyText')}
+                          </Typography>
+                          <Button variant="contained" onClick={() => setOpenModal(true)} size="small">
+                            {t('actions.newInvoice')}
+                          </Button>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {loading && (
+                    <TableRow>
+                      <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
+                        <Stack spacing={1} alignItems="center">
+                          <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                            <RefreshIcon />
+                          </Avatar>
+                          <Typography variant="body2" color="text.secondary">
+                            {t('invoices.table.loading')}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          }
+          pagination={
+            <TablePagination
+              component="div"
+              count={filteredRows.length}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              onPageChange={(e, p) => setPage(p)}
+              onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
+            />
+          }
+          showDivider={!isMobile}
         />
       </MainCard>
 

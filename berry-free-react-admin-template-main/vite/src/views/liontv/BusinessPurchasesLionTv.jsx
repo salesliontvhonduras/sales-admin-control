@@ -70,6 +70,10 @@ import NoteAltIcon from '@mui/icons-material/NoteAlt';
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
+import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
+import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
+import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
+import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 import { withAlpha } from 'utils/colorUtils';
@@ -667,7 +671,7 @@ export default function BusinessPurchasesLionTv() {
       <MainCard
         title={t('businessPurchases.title', 'Business Purchases')}
         secondary={
-          <Stack direction="row" spacing={1.25}>
+          <ResponsiveActionBar>
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
@@ -689,10 +693,11 @@ export default function BusinessPurchasesLionTv() {
                     ? `0 12px 26px ${withAlpha(muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main, 0.35)}`
                     : `0 10px 22px ${withAlpha(muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main, 0.24)}`
               })}
+              fullWidth={isMobile}
             >
               {t('businessPurchases.actions.new', 'New purchase')}
             </Button>
-          </Stack>
+          </ResponsiveActionBar>
         }
       >
         <Grid container spacing={gridSpacing}>
@@ -929,215 +934,291 @@ export default function BusinessPurchasesLionTv() {
           </Stack>
         }
       >
-        <TableContainer
-          component={Paper}
-          sx={(muiTheme) => ({
-            borderRadius: 3,
-            overflow: 'hidden',
-            boxShadow:
-              muiTheme.palette.mode === 'dark'
-                ? `0 16px 34px ${withAlpha('#020617', 0.44)}`
-                : `0 12px 24px ${withAlpha('#0f172a', 0.08)}`,
-            border: '1px solid',
-            borderColor: withAlpha(muiTheme.vars?.palette?.divider || muiTheme.palette.divider, 0.95),
-            backgroundColor: muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper
-          })}
-        >
-          <Table size="small" sx={{ minWidth: { xs: 1320, md: '100%' } }}>
-            <TableHead>
-              <TableRow
-                sx={(muiTheme) => ({
-                  bgcolor: muiTheme.palette.surface.sunken,
-                  borderBottom: `1px solid ${muiTheme.palette.divider}`
-                })}
-              >
-                <TableCell>{t('businessPurchases.headers.code', 'Code')}</TableCell>
-                <TableCell>{t('businessPurchases.headers.item', 'Item')}</TableCell>
-                <TableCell>{t('businessPurchases.headers.type', 'Type')}</TableCell>
-                <TableCell>{t('businessPurchases.headers.category', 'Category')}</TableCell>
-                <TableCell>{t('businessPurchases.headers.amount', 'Amount')}</TableCell>
-                <TableCell>{t('businessPurchases.headers.date', 'Purchase date')}</TableCell>
-                <TableCell>{t('businessPurchases.headers.method', 'Method')}</TableCell>
-                <TableCell>{t('businessPurchases.headers.status', 'Status')}</TableCell>
-                <TableCell>{t('businessPurchases.headers.actions', 'Actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedRows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  hover
-                  sx={(muiTheme) => ({
-                    bgcolor: muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper,
-                    '&:nth-of-type(odd)': {
-                      bgcolor: withAlpha(
-                        muiTheme.vars?.palette?.surface?.muted || muiTheme.palette.action.hover,
-                        muiTheme.palette.mode === 'dark' ? 0.84 : 0.44
-                      )
-                    },
-                    '&:hover': {
-                      bgcolor: withAlpha(
-                        muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main,
-                        muiTheme.palette.mode === 'dark' ? 0.12 : 0.06
-                      )
-                    },
-                    transition: 'background-color 0.2s ease'
-                  })}
-                >
-                  <TableCell>
-                    <Stack direction="row" spacing={1.5} alignItems="center">
-                      <Avatar
-                        sx={(muiTheme) => ({
-                          width: 34,
-                          height: 34,
-                          bgcolor: withAlpha(
-                            muiTheme.vars?.palette?.secondary?.main || muiTheme.palette.secondary.main,
-                            muiTheme.palette.mode === 'dark' ? 0.26 : 0.18
-                          ),
-                          color: muiTheme.vars?.palette?.secondary?.main || muiTheme.palette.secondary.main,
-                          boxShadow:
-                            muiTheme.palette.mode === 'dark'
-                              ? `0 8px 16px ${withAlpha('#020617', 0.4)}`
-                              : `0 6px 12px ${withAlpha('#0f172a', 0.12)}`
-                        })}
-                      >
+        <ResponsiveEntityView
+          isMobile={isMobile}
+          mobileContent={
+            loading ? (
+              <Stack spacing={1.5}>
+                {Array.from({ length: 4 }).map((_, idx) => (
+                  <Skeleton key={`purchase-mobile-${idx}`} variant="rounded" height={240} />
+                ))}
+              </Stack>
+            ) : paginatedRows.length ? (
+              <Stack spacing={1.5}>
+                {paginatedRows.map((row) => (
+                  <MobileSummaryCard
+                    key={row.id}
+                    icon={
+                      <Avatar sx={{ width: 40, height: 40, bgcolor: 'secondary.light', color: 'secondary.main' }}>
                         <ReceiptLongIcon fontSize="small" />
                       </Avatar>
-                      <Stack spacing={0.2}>
-                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                          {row.purchaseCode || '-'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          #{row.id}
-                        </Typography>
-                      </Stack>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Stack spacing={0.25}>
-                      <Typography variant="subtitle2">{row.itemName || '-'}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {row.providerName || '-'}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      variant="outlined"
-                      icon={<ShoppingCartIcon fontSize="small" />}
-                      label={optionLabel(purchaseTypeOptionsT, row.purchaseType)}
-                      sx={{ maxWidth: 240, '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }}
+                    }
+                    title={row.itemName || '-'}
+                    subtitle={`${row.purchaseCode || '-'} · ${row.providerName || '-'}`}
+                    chips={[
+                      <StatusChip key="status" status={row.status} />,
+                      <Chip key="type" size="small" variant="outlined" label={optionLabel(purchaseTypeOptionsT, row.purchaseType)} />,
+                      <Chip key="category" size="small" variant="outlined" label={optionLabel(categoryOptionsT, row.category)} />
+                    ]}
+                    actions={
+                      <ResponsiveActionBar>
+                        <Button size="small" variant="outlined" onClick={() => handleEdit(row)}>
+                          {t('actions.edit', 'Edit')}
+                        </Button>
+                        <RowActions row={row} onEdit={handleEdit} onDelete={handleDelete} />
+                      </ResponsiveActionBar>
+                    }
+                  >
+                    <MobileFieldGrid
+                      fields={[
+                        {
+                          label: t('businessPurchases.headers.amount', 'Amount'),
+                          value: `${row.currency || 'HNL'} ${toSafeNumber(row.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                          emphasis: true
+                        },
+                        {
+                          label: t('businessPurchases.headers.date', 'Purchase date'),
+                          value: row.paidAt
+                            ? `${formatDate(row.purchaseDate)} · ${t('businessPurchases.labels.paidAt', 'Paid')}: ${formatDate(row.paidAt)}`
+                            : row.dueDate
+                              ? `${formatDate(row.purchaseDate)} · ${t('businessPurchases.labels.due', 'Due')}: ${formatDate(row.dueDate)}`
+                              : formatDate(row.purchaseDate)
+                        },
+                        { label: t('businessPurchases.headers.method', 'Method'), value: optionLabel(paymentMethodOptionsT, row.paymentMethod) }
+                      ]}
                     />
-                  </TableCell>
-                  <TableCell>
-                    <Chip size="small" label={optionLabel(categoryOptionsT, row.category)} variant="outlined" />
-                  </TableCell>
-                  <TableCell>
-                    <Stack spacing={0.25}>
-                      <Chip
-                        size="small"
-                        variant="outlined"
-                        icon={<AccountBalanceWalletIcon fontSize="small" color="success" />}
-                        label={`${row.currency || 'HNL'} ${toSafeNumber(row.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-                        sx={{ fontWeight: 600 }}
-                      />
-                      <Typography variant="caption" color="text.secondary">
-                        {toSafeNumber(row.quantity).toLocaleString()} x {toSafeNumber(row.unitCost).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Stack spacing={0.25}>
-                      <Typography variant="body2">{formatDate(row.purchaseDate)}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {row.paidAt
-                          ? `${t('businessPurchases.labels.paidAt', 'Paid')}: ${formatDate(row.paidAt)}`
-                          : row.dueDate
-                            ? `${t('businessPurchases.labels.due', 'Due')}: ${formatDate(row.dueDate)}`
-                            : '-'}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      variant="outlined"
-                      color={paymentMethodChipColors[row.paymentMethod] || 'default'}
-                      label={optionLabel(paymentMethodOptionsT, row.paymentMethod)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <StatusChip status={row.status} />
-                  </TableCell>
-                  <TableCell align="right">
-                    <RowActions row={row} onEdit={handleEdit} onDelete={handleDelete} />
-                  </TableCell>
-                </TableRow>
-              ))}
-
-              {!loading && filteredRows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
-                    <Stack spacing={1} alignItems="center">
-                      <Avatar
-                        sx={(muiTheme) => ({
+                  </MobileSummaryCard>
+                ))}
+              </Stack>
+            ) : (
+              <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 3 }}>
+                <Stack spacing={1} alignItems="center">
+                  <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
+                    <ShoppingCartIcon />
+                  </Avatar>
+                  <Typography variant="subtitle1">{t('businessPurchases.empty.title', 'No purchases yet')}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('businessPurchases.empty.description', 'Create your first purchase record to see it here.')}
+                  </Typography>
+                  <Button variant="contained" onClick={() => setOpenModal(true)} size="small" fullWidth>
+                    {t('businessPurchases.actions.new', 'New purchase')}
+                  </Button>
+                </Stack>
+              </Paper>
+            )
+          }
+          desktopContent={
+            <TableContainer
+              component={Paper}
+              sx={(muiTheme) => ({
+                borderRadius: 3,
+                overflow: 'hidden',
+                boxShadow:
+                  muiTheme.palette.mode === 'dark'
+                    ? `0 16px 34px ${withAlpha('#020617', 0.44)}`
+                    : `0 12px 24px ${withAlpha('#0f172a', 0.08)}`,
+                border: '1px solid',
+                borderColor: withAlpha(muiTheme.vars?.palette?.divider || muiTheme.palette.divider, 0.95),
+                backgroundColor: muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper
+              })}
+            >
+              <Table size="small" sx={{ minWidth: { xs: 1320, md: '100%' } }}>
+                <TableHead>
+                  <TableRow
+                    sx={(muiTheme) => ({
+                      bgcolor: muiTheme.palette.surface.sunken,
+                      borderBottom: `1px solid ${muiTheme.palette.divider}`
+                    })}
+                  >
+                    <TableCell>{t('businessPurchases.headers.code', 'Code')}</TableCell>
+                    <TableCell>{t('businessPurchases.headers.item', 'Item')}</TableCell>
+                    <TableCell>{t('businessPurchases.headers.type', 'Type')}</TableCell>
+                    <TableCell>{t('businessPurchases.headers.category', 'Category')}</TableCell>
+                    <TableCell>{t('businessPurchases.headers.amount', 'Amount')}</TableCell>
+                    <TableCell>{t('businessPurchases.headers.date', 'Purchase date')}</TableCell>
+                    <TableCell>{t('businessPurchases.headers.method', 'Method')}</TableCell>
+                    <TableCell>{t('businessPurchases.headers.status', 'Status')}</TableCell>
+                    <TableCell>{t('businessPurchases.headers.actions', 'Actions')}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {paginatedRows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      hover
+                      sx={(muiTheme) => ({
+                        bgcolor: muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper,
+                        '&:nth-of-type(odd)': {
+                          bgcolor: withAlpha(
+                            muiTheme.vars?.palette?.surface?.muted || muiTheme.palette.action.hover,
+                            muiTheme.palette.mode === 'dark' ? 0.84 : 0.44
+                          )
+                        },
+                        '&:hover': {
                           bgcolor: withAlpha(
                             muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main,
-                            muiTheme.palette.mode === 'dark' ? 0.24 : 0.12
-                          ),
-                          color: muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main
-                        })}
-                      >
-                        <ShoppingCartIcon />
-                      </Avatar>
-                      <Typography variant="subtitle1">{t('businessPurchases.empty.title', 'No purchases yet')}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('businessPurchases.empty.description', 'Create your first purchase record to see it here.')}
-                      </Typography>
-                      <Button variant="contained" onClick={() => setOpenModal(true)} size="small">
-                        {t('businessPurchases.actions.new', 'New purchase')}
-                      </Button>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              )}
+                            muiTheme.palette.mode === 'dark' ? 0.12 : 0.06
+                          )
+                        },
+                        transition: 'background-color 0.2s ease'
+                      })}
+                    >
+                      <TableCell>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Avatar
+                            sx={(muiTheme) => ({
+                              width: 34,
+                              height: 34,
+                              bgcolor: withAlpha(
+                                muiTheme.vars?.palette?.secondary?.main || muiTheme.palette.secondary.main,
+                                muiTheme.palette.mode === 'dark' ? 0.26 : 0.18
+                              ),
+                              color: muiTheme.vars?.palette?.secondary?.main || muiTheme.palette.secondary.main,
+                              boxShadow:
+                                muiTheme.palette.mode === 'dark'
+                                  ? `0 8px 16px ${withAlpha('#020617', 0.4)}`
+                                  : `0 6px 12px ${withAlpha('#0f172a', 0.12)}`
+                            })}
+                          >
+                            <ReceiptLongIcon fontSize="small" />
+                          </Avatar>
+                          <Stack spacing={0.2}>
+                            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                              {row.purchaseCode || '-'}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              #{row.id}
+                            </Typography>
+                          </Stack>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack spacing={0.25}>
+                          <Typography variant="subtitle2">{row.itemName || '-'}</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {row.providerName || '-'}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          icon={<ShoppingCartIcon fontSize="small" />}
+                          label={optionLabel(purchaseTypeOptionsT, row.purchaseType)}
+                          sx={{ maxWidth: 240, '& .MuiChip-label': { overflow: 'hidden', textOverflow: 'ellipsis' } }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip size="small" label={optionLabel(categoryOptionsT, row.category)} variant="outlined" />
+                      </TableCell>
+                      <TableCell>
+                        <Stack spacing={0.25}>
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            icon={<AccountBalanceWalletIcon fontSize="small" color="success" />}
+                            label={`${row.currency || 'HNL'} ${toSafeNumber(row.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+                            sx={{ fontWeight: 600 }}
+                          />
+                          <Typography variant="caption" color="text.secondary">
+                            {toSafeNumber(row.quantity).toLocaleString()} x {toSafeNumber(row.unitCost).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Stack spacing={0.25}>
+                          <Typography variant="body2">{formatDate(row.purchaseDate)}</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {row.paidAt
+                              ? `${t('businessPurchases.labels.paidAt', 'Paid')}: ${formatDate(row.paidAt)}`
+                              : row.dueDate
+                                ? `${t('businessPurchases.labels.due', 'Due')}: ${formatDate(row.dueDate)}`
+                                : '-'}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          color={paymentMethodChipColors[row.paymentMethod] || 'default'}
+                          label={optionLabel(paymentMethodOptionsT, row.paymentMethod)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <StatusChip status={row.status} />
+                      </TableCell>
+                      <TableCell align="right">
+                        <RowActions row={row} onEdit={handleEdit} onDelete={handleDelete} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
 
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                    <Stack spacing={1} alignItems="center">
-                      <Avatar
-                        sx={(muiTheme) => ({
-                          bgcolor: withAlpha(
-                            muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main,
-                            muiTheme.palette.mode === 'dark' ? 0.24 : 0.12
-                          ),
-                          color: muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main
-                        })}
-                      >
-                        <RefreshIcon />
-                      </Avatar>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('businessPurchases.loading', 'Loading purchases...')}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                  {!loading && filteredRows.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+                        <Stack spacing={1} alignItems="center">
+                          <Avatar
+                            sx={(muiTheme) => ({
+                              bgcolor: withAlpha(
+                                muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main,
+                                muiTheme.palette.mode === 'dark' ? 0.24 : 0.12
+                              ),
+                              color: muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main
+                            })}
+                          >
+                            <ShoppingCartIcon />
+                          </Avatar>
+                          <Typography variant="subtitle1">{t('businessPurchases.empty.title', 'No purchases yet')}</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {t('businessPurchases.empty.description', 'Create your first purchase record to see it here.')}
+                          </Typography>
+                          <Button variant="contained" onClick={() => setOpenModal(true)} size="small">
+                            {t('businessPurchases.actions.new', 'New purchase')}
+                          </Button>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  )}
 
-        <Divider sx={{ my: 1 }} />
-
-        <TablePagination
-          component="div"
-          count={filteredRows.length}
-          page={page}
-          rowsPerPage={rowsPerPage}
-          onPageChange={(e, p) => setPage(p)}
-          onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
+                  {loading && (
+                    <TableRow>
+                      <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                        <Stack spacing={1} alignItems="center">
+                          <Avatar
+                            sx={(muiTheme) => ({
+                              bgcolor: withAlpha(
+                                muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main,
+                                muiTheme.palette.mode === 'dark' ? 0.24 : 0.12
+                              ),
+                              color: muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main
+                            })}
+                          >
+                            <RefreshIcon />
+                          </Avatar>
+                          <Typography variant="body2" color="text.secondary">
+                            {t('businessPurchases.loading', 'Loading purchases...')}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          }
+          pagination={
+            <TablePagination
+              component="div"
+              count={filteredRows.length}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              onPageChange={(e, p) => setPage(p)}
+              onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
+            />
+          }
+          showDivider={!isMobile}
         />
       </MainCard>
 

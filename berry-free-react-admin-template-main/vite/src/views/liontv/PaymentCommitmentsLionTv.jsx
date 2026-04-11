@@ -56,6 +56,10 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
+import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
+import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
+import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
+import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -542,7 +546,7 @@ export default function PaymentCommitmentsLionTv() {
       <MainCard
         title={t('paymentCommitments.title', 'Compromisos de pago')}
         secondary={
-          <Stack direction="row" spacing={1.25}>
+          <ResponsiveActionBar>
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
@@ -564,10 +568,11 @@ export default function PaymentCommitmentsLionTv() {
                 px: 2.5,
                 boxShadow: '0 10px 24px rgba(0,0,0,0.12)'
               }}
+              fullWidth={isMobile}
             >
               {t('paymentCommitments.actions.new', 'Nuevo compromiso')}
             </Button>
-          </Stack>
+          </ResponsiveActionBar>
         }
       >
         <Grid container spacing={gridSpacing}>
@@ -698,127 +703,191 @@ export default function PaymentCommitmentsLionTv() {
           </Button>
         </Stack>
 
-        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-          <Table size={isMobile ? 'small' : 'medium'} sx={{ minWidth: { xs: 1040, md: '100%' } }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>{t('paymentCommitments.table.headers.id')}</TableCell>
-                <TableCell>{t('paymentCommitments.table.headers.customer')}</TableCell>
-                <TableCell>{t('paymentCommitments.table.headers.promisedDate')}</TableCell>
-                <TableCell align="right">{t('paymentCommitments.table.headers.amountDue')}</TableCell>
-                <TableCell align="right">{t('paymentCommitments.table.headers.amountPaid')}</TableCell>
-                <TableCell align="right">{t('paymentCommitments.table.headers.pendingAmount')}</TableCell>
-                <TableCell>{t('paymentCommitments.table.headers.status')}</TableCell>
-                <TableCell>{t('paymentCommitments.table.headers.risk')}</TableCell>
-                <TableCell>{t('paymentCommitments.table.headers.note')}</TableCell>
-                <TableCell align="right">{t('paymentCommitments.table.headers.actions')}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading
-                ? Array.from({ length: rowsPerPage }).map((_, index) => (
-                    <TableRow key={`skeleton-${index}`}>
-                      <TableCell colSpan={10}>
-                        <Skeleton variant="rounded" height={38} />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                : paginatedRows.map((row) => (
-                    <TableRow hover key={row.paymentCommitmentId}>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight={700}>
-                          #{row.paymentCommitmentId}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Stack spacing={0.25}>
-                          <Typography variant="body2" fontWeight={600}>
-                            {row.customerFullname || '-'}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {t('paymentCommitments.labels.customerId', { id: row.customerId || '-' })}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Stack spacing={0.35}>
-                          <Typography variant="body2">{formatDate(row.promisedPaymentDate)}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {formatDateTime(row.createdAt)}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell align="right">{formatMoney(row.amountDue)}</TableCell>
-                      <TableCell align="right">{formatMoney(row.amountPaid)}</TableCell>
-                      <TableCell align="right">
-                        <Typography
-                          variant="body2"
-                          fontWeight={700}
-                          color={row.pendingAmount > 0 ? 'warning.dark' : 'success.dark'}
-                        >
-                          {formatMoney(row.pendingAmount)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <StatusChip status={row.status} />
-                      </TableCell>
-                      <TableCell>
-                        {row.overdue ? (
-                          <Chip size="small" color="error" label={t('paymentCommitments.risk.overdue')} />
-                        ) : (
-                          <Chip size="small" color="success" label={t('paymentCommitments.risk.onTime')} />
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            maxWidth: 240,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap'
-                          }}
-                        >
-                          {row.notes || '-'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
+        <ResponsiveEntityView
+          isMobile={isMobile}
+          mobileContent={
+            loading ? (
+              <Stack spacing={1.5}>
+                {Array.from({ length: rowsPerPage }).map((_, index) => (
+                  <Skeleton key={`payment-mobile-${index}`} variant="rounded" height={210} />
+                ))}
+              </Stack>
+            ) : paginatedRows.length ? (
+              <Stack spacing={1.5}>
+                {paginatedRows.map((row) => (
+                  <MobileSummaryCard
+                    key={row.paymentCommitmentId}
+                    title={`#${row.paymentCommitmentId} · ${row.customerFullname || '-'}`}
+                    subtitle={t('paymentCommitments.labels.customerId', { id: row.customerId || '-' })}
+                    chips={[
+                      <StatusChip key="status" status={row.status} />,
+                      row.overdue ? (
+                        <Chip key="risk" size="small" color="error" label={t('paymentCommitments.risk.overdue')} />
+                      ) : (
+                        <Chip key="risk" size="small" color="success" label={t('paymentCommitments.risk.onTime')} />
+                      )
+                    ]}
+                    actions={
+                      <ResponsiveActionBar>
+                        <Button size="small" variant="outlined" onClick={() => handleEdit(row)}>
+                          {t('actions.edit', 'Edit')}
+                        </Button>
                         <RowActions row={row} onEdit={handleEdit} onDelete={handleDelete} />
+                      </ResponsiveActionBar>
+                    }
+                  >
+                    <MobileFieldGrid
+                      fields={[
+                        { label: t('paymentCommitments.table.headers.promisedDate'), value: formatDate(row.promisedPaymentDate) },
+                        { label: t('paymentCommitments.table.headers.amountDue'), value: formatMoney(row.amountDue) },
+                        { label: t('paymentCommitments.table.headers.amountPaid'), value: formatMoney(row.amountPaid) },
+                        { label: t('paymentCommitments.table.headers.pendingAmount'), value: formatMoney(row.pendingAmount), emphasis: true },
+                        { label: t('paymentCommitments.table.headers.note'), value: row.notes || '-' }
+                      ]}
+                    />
+                  </MobileSummaryCard>
+                ))}
+              </Stack>
+            ) : (
+              <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 3 }}>
+                <Stack spacing={1.25} alignItems="center">
+                  <Avatar sx={{ bgcolor: 'warning.lighter', color: 'warning.main', width: 56, height: 56 }}>
+                    <WarningAmberIcon />
+                  </Avatar>
+                  <Typography variant="subtitle1">{t('paymentCommitments.table.emptyTitle')}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('paymentCommitments.table.emptyText')}
+                  </Typography>
+                </Stack>
+              </Paper>
+            )
+          }
+          desktopContent={
+            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+              <Table size={isMobile ? 'small' : 'medium'} sx={{ minWidth: { xs: 1040, md: '100%' } }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>{t('paymentCommitments.table.headers.id')}</TableCell>
+                    <TableCell>{t('paymentCommitments.table.headers.customer')}</TableCell>
+                    <TableCell>{t('paymentCommitments.table.headers.promisedDate')}</TableCell>
+                    <TableCell align="right">{t('paymentCommitments.table.headers.amountDue')}</TableCell>
+                    <TableCell align="right">{t('paymentCommitments.table.headers.amountPaid')}</TableCell>
+                    <TableCell align="right">{t('paymentCommitments.table.headers.pendingAmount')}</TableCell>
+                    <TableCell>{t('paymentCommitments.table.headers.status')}</TableCell>
+                    <TableCell>{t('paymentCommitments.table.headers.risk')}</TableCell>
+                    <TableCell>{t('paymentCommitments.table.headers.note')}</TableCell>
+                    <TableCell align="right">{t('paymentCommitments.table.headers.actions')}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {loading
+                    ? Array.from({ length: rowsPerPage }).map((_, index) => (
+                        <TableRow key={`skeleton-${index}`}>
+                          <TableCell colSpan={10}>
+                            <Skeleton variant="rounded" height={38} />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    : paginatedRows.map((row) => (
+                        <TableRow hover key={row.paymentCommitmentId}>
+                          <TableCell>
+                            <Typography variant="body2" fontWeight={700}>
+                              #{row.paymentCommitmentId}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Stack spacing={0.25}>
+                              <Typography variant="body2" fontWeight={600}>
+                                {row.customerFullname || '-'}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {t('paymentCommitments.labels.customerId', { id: row.customerId || '-' })}
+                              </Typography>
+                            </Stack>
+                          </TableCell>
+                          <TableCell>
+                            <Stack spacing={0.35}>
+                              <Typography variant="body2">{formatDate(row.promisedPaymentDate)}</Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {formatDateTime(row.createdAt)}
+                              </Typography>
+                            </Stack>
+                          </TableCell>
+                          <TableCell align="right">{formatMoney(row.amountDue)}</TableCell>
+                          <TableCell align="right">{formatMoney(row.amountPaid)}</TableCell>
+                          <TableCell align="right">
+                            <Typography
+                              variant="body2"
+                              fontWeight={700}
+                              color={row.pendingAmount > 0 ? 'warning.dark' : 'success.dark'}
+                            >
+                              {formatMoney(row.pendingAmount)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <StatusChip status={row.status} />
+                          </TableCell>
+                          <TableCell>
+                            {row.overdue ? (
+                              <Chip size="small" color="error" label={t('paymentCommitments.risk.overdue')} />
+                            ) : (
+                              <Chip size="small" color="success" label={t('paymentCommitments.risk.onTime')} />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                maxWidth: 240,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {row.notes || '-'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <RowActions row={row} onEdit={handleEdit} onDelete={handleDelete} />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+
+                  {!loading && paginatedRows.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
+                        <Stack spacing={1.25} alignItems="center">
+                          <Avatar sx={{ bgcolor: 'warning.lighter', color: 'warning.main', width: 56, height: 56 }}>
+                            <WarningAmberIcon />
+                          </Avatar>
+                          <Typography variant="subtitle1">{t('paymentCommitments.table.emptyTitle')}</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {t('paymentCommitments.table.emptyText')}
+                          </Typography>
+                        </Stack>
                       </TableCell>
                     </TableRow>
-                  ))}
-
-              {!loading && paginatedRows.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
-                    <Stack spacing={1.25} alignItems="center">
-                      <Avatar sx={{ bgcolor: 'warning.lighter', color: 'warning.main', width: 56, height: 56 }}>
-                        <WarningAmberIcon />
-                      </Avatar>
-                      <Typography variant="subtitle1">{t('paymentCommitments.table.emptyTitle')}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('paymentCommitments.table.emptyText')}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ) : null}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        <TablePagination
-          component="div"
-          count={filteredRows.length}
-          page={page}
-          onPageChange={(_, value) => setPage(value)}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={(event) => {
-            setRowsPerPage(parseInt(event.target.value, 10));
-            setPage(0);
-          }}
-          rowsPerPageOptions={[5, 10, 20, 50]}
-          labelRowsPerPage={t('paymentCommitments.table.rowsPerPage', 'Filas por página')}
+                  ) : null}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          }
+          pagination={
+            <TablePagination
+              component="div"
+              count={filteredRows.length}
+              page={page}
+              onPageChange={(_, value) => setPage(value)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(event) => {
+                setRowsPerPage(parseInt(event.target.value, 10));
+                setPage(0);
+              }}
+              rowsPerPageOptions={[5, 10, 20, 50]}
+              labelRowsPerPage={t('paymentCommitments.table.rowsPerPage', 'Filas por página')}
+            />
+          }
+          showDivider={!isMobile}
         />
       </MainCard>
 
