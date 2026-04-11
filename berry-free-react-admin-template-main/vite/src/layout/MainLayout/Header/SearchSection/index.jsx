@@ -53,6 +53,7 @@ const MAX_RECENT = 6;
 const ROUTES = {
   dashboard: '/liontv/dashboard',
   customers: '/liontv/customers',
+  referrals: '/liontv/referrals',
   subscriptions: '/liontv/subscriptions',
   licenses: '/liontv/licenses',
   lines: '/liontv/lines',
@@ -80,6 +81,14 @@ const QUICK_COMMANDS_CONFIG = [
     subtitleKey: 'headerSearch.quickCommands.customers.subtitle',
     route: ROUTES.customers,
     keywords: ['clientes', 'customer', 'crm']
+  },
+  {
+    id: 'cmd-referrals',
+    kind: 'comando',
+    titleKey: 'headerSearch.quickCommands.referrals.title',
+    subtitleKey: 'headerSearch.quickCommands.referrals.subtitle',
+    route: ROUTES.referrals,
+    keywords: ['referidos', 'referrals', 'leads', 'whatsapp']
   },
   {
     id: 'cmd-subscriptions',

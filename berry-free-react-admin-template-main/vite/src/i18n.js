@@ -33,6 +33,7 @@ const resources = {
         businessPurchases: 'Business Purchases',
         customers: 'Customers',
         potentialCustomers: 'Potential Customers',
+        referrals: 'Referral Leads',
         paymentCommitments: 'Payment Commitments',
         crm: 'Customer CRM',
         lines: 'Lines',
@@ -970,6 +971,60 @@ const resources = {
           deleted: 'Customer deleted successfully.'
         }
       },
+      referrals: {
+        title: 'Referral leads',
+        description:
+          'Requests submitted from Shopify by active customers who want to refer another person and claim 1 free month when the referral converts.',
+        search: 'Search by customer, contact, referred name or WhatsApp',
+        empty: 'No referral requests found.',
+        metrics: {
+          total: 'Total requests',
+          new: 'New',
+          contacted: 'Contacted',
+          converted: 'Converted',
+          rewarded: 'Rewarded'
+        },
+        filters: {
+          status: 'Status',
+          all: 'All',
+          from: 'From',
+          to: 'To'
+        },
+        headers: {
+          createdAt: 'Created',
+          referrer: 'Current customer',
+          referrerContact: 'Contact',
+          referredName: 'Referred',
+          whatsapp: 'WhatsApp',
+          status: 'Status',
+          notes: 'Admin notes'
+        },
+        sections: {
+          referrer: 'Current customer',
+          referred: 'Referred person'
+        },
+        fields: {
+          referrerCustomer: 'Name',
+          referrerCustomerId: 'Customer ID',
+          referrerContact: 'Phone or email',
+          referredName: 'Name',
+          whatsapp: 'WhatsApp',
+          createdAt: 'Created',
+          contactedAt: 'Contacted',
+          convertedAt: 'Converted',
+          rewardGrantedAt: 'Reward granted',
+          sourceShop: 'Shop',
+          status: 'Status',
+          adminNotes: 'Admin notes',
+          notes: 'Notes'
+        },
+        dialog: {
+          title: 'Referral detail'
+        },
+        actions: {
+          copyReferrer: 'Copy contact'
+        }
+      },
       crm: {
         title: 'Customer CRM',
         search: { label: 'Search customer', placeholder: 'Name, email or user' },
@@ -1757,6 +1812,7 @@ const resources = {
         quickCommands: {
           dashboard: { title: 'Go to operational tracking', subtitle: 'KPI, alerts and priorities for the day.' },
           customers: { title: 'Open customers', subtitle: 'Portfolio and customer data management.' },
+          referrals: { title: 'Open referral leads', subtitle: 'Validated leads submitted from Shopify referrals.' },
           subscriptions: { title: 'Open subscriptions', subtitle: 'Plan status and renewals.' },
           invoices: { title: 'Open invoices', subtitle: 'Pending collections and payments.' },
           commitments: { title: 'Open payment commitments', subtitle: 'Promises and collection follow-up.' },
@@ -2093,6 +2149,7 @@ const resources = {
         quickCommands: {
           dashboard: { title: 'Ir a seguimiento operativo', subtitle: 'KPI, alertas y prioridades del día.' },
           customers: { title: 'Abrir clientes', subtitle: 'Gestión de cartera y datos del cliente.' },
+          referrals: { title: 'Abrir leads por referidos', subtitle: 'Leads validados enviados desde referidos en Shopify.' },
           subscriptions: { title: 'Abrir suscripciones', subtitle: 'Estado y renovaciones de planes.' },
           invoices: { title: 'Abrir facturas', subtitle: 'Cobros pendientes y pagos.' },
           commitments: { title: 'Abrir compromisos de pago', subtitle: 'Promesas y seguimiento de cobranza.' },
@@ -2700,6 +2757,7 @@ const resources = {
         businessPurchases: 'Compras negocio',
         customers: 'Clientes',
         potentialCustomers: 'Prospectos',
+        referrals: 'Leads por Referidos',
         paymentCommitments: 'Compromisos de pago',
         crm: 'CRM Clientes',
         lines: 'Líneas',
@@ -3635,6 +3693,60 @@ const resources = {
           created: 'Cliente creado correctamente.',
           updated: 'Cliente actualizado correctamente.',
           deleted: 'Cliente eliminado correctamente.'
+        }
+      },
+      referrals: {
+        title: 'Leads por referidos',
+        description:
+          'Solicitudes enviadas desde Shopify por clientes activos que quieren referir a otra persona y reclamar 1 mes gratis cuando ese referido convierta.',
+        search: 'Buscar por cliente, contacto, nombre del referido o WhatsApp',
+        empty: 'No hay solicitudes de referidos.',
+        metrics: {
+          total: 'Solicitudes totales',
+          new: 'Nuevas',
+          contacted: 'Contactadas',
+          converted: 'Convertidas',
+          rewarded: 'Bonificadas'
+        },
+        filters: {
+          status: 'Estado',
+          all: 'Todos',
+          from: 'Desde',
+          to: 'Hasta'
+        },
+        headers: {
+          createdAt: 'Creado',
+          referrer: 'Cliente actual',
+          referrerContact: 'Contacto',
+          referredName: 'Referido',
+          whatsapp: 'WhatsApp',
+          status: 'Estado',
+          notes: 'Notas admin'
+        },
+        sections: {
+          referrer: 'Cliente actual',
+          referred: 'Persona referida'
+        },
+        fields: {
+          referrerCustomer: 'Nombre',
+          referrerCustomerId: 'Customer ID',
+          referrerContact: 'Teléfono o correo',
+          referredName: 'Nombre',
+          whatsapp: 'WhatsApp',
+          createdAt: 'Creado',
+          contactedAt: 'Contactado',
+          convertedAt: 'Convertido',
+          rewardGrantedAt: 'Beneficio aplicado',
+          sourceShop: 'Shop',
+          status: 'Estado',
+          adminNotes: 'Notas admin',
+          notes: 'Notas'
+        },
+        dialog: {
+          title: 'Detalle del referido'
+        },
+        actions: {
+          copyReferrer: 'Copiar contacto'
         }
       },
       crm: {

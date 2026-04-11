@@ -13,6 +13,7 @@ const LionTvDashboard = Loadable(lazy(() => import('views/liontv/LionTvDashboard
 const DemosLionTv = Loadable(lazy(() => import('views/liontv/DemosLionTv')));
 const CustomersLionTv = Loadable(lazy(() => import('views/liontv/CustomersLionTv')));
 const PotentialCustomersLionTv = Loadable(lazy(() => import('views/liontv/PotentialCustomersLionTv')));
+const ReferralLeadsLionTv = Loadable(lazy(() => import('views/liontv/ReferralLeadsLionTv')));
 const PaymentCommitmentsLionTv = Loadable(lazy(() => import('views/liontv/PaymentCommitmentsLionTv')));
 const MoviesFeedLionTv = Loadable(lazy(() => import('views/liontv/MoviesFeedLionTv')));
 const SeriesFeedLionTv = Loadable(lazy(() => import('views/liontv/SeriesFeedLionTv')));
@@ -75,6 +76,13 @@ const MainRoutes = {
           element: protectPage(
             { any: ['LIONTV_POTENTIAL_CUSTOMERS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
             <PotentialCustomersLionTv />
+          )
+        },
+        {
+          path: '/liontv/referrals',
+          element: protectPage(
+            { any: ['LIONTV_POTENTIAL_CUSTOMERS_VIEW', 'LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+            <ReferralLeadsLionTv />
           )
         },
         {

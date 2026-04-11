@@ -75,6 +75,15 @@ const liontv = {
           permission: { any: ['LIONTV_POTENTIAL_CUSTOMERS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         },
         {
+          id: 'liontv-referrals',
+          title: 'menu.referrals',
+          type: 'item',
+          url: '/liontv/referrals',
+          breadcrumbs: true,
+          icon: icons.IconUserPlus,
+          permission: { any: ['LIONTV_POTENTIAL_CUSTOMERS_VIEW', 'LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+        },
+        {
           id: 'liontv-crm',
           title: 'menu.crm',
           type: 'item',
