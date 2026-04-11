@@ -18,13 +18,20 @@ export default function CardHeader(theme) {
           lineHeight: 1.25,
           whiteSpace: 'normal',
           overflowWrap: 'anywhere',
-          wordBreak: 'break-word'
+          wordBreak: 'break-word',
+          [theme.breakpoints.down('sm')]: {
+            fontSize: '0.96rem',
+            lineHeight: 1.32
+          }
         },
         subheader: {
           fontSize: '0.78rem',
           lineHeight: 1.35,
           whiteSpace: 'normal',
-          overflowWrap: 'anywhere'
+          overflowWrap: 'anywhere',
+          [theme.breakpoints.down('sm')]: {
+            fontSize: '0.74rem'
+          }
         }
       }
     }

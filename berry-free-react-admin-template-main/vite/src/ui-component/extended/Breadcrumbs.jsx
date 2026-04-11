@@ -26,8 +26,8 @@ import HomeTwoToneIcon from '@mui/icons-material/HomeTwoTone';
 
 function BTitle({ title }) {
   return (
-    <Grid>
-      <Typography variant="h4" sx={{ fontWeight: 500 }}>
+    <Grid sx={{ minWidth: 0, width: '100%' }}>
+      <Typography variant="h4" sx={{ fontWeight: 500, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
         {title}
       </Typography>
     </Grid>
@@ -127,14 +127,13 @@ export default function Breadcrumbs({
       <Typography
         {...(main.url && { component: Link, to: main.url })}
         variant="h6"
-        noWrap
         sx={{
-          overflow: 'hidden',
           lineHeight: 1.5,
           mb: -0.625,
-          textOverflow: 'ellipsis',
-          maxWidth: { xs: 102, sm: 'unset' },
-          display: 'inline-block'
+          maxWidth: { xs: '100%', sm: 'unset' },
+          display: 'inline-flex',
+          minWidth: 0,
+          whiteSpace: 'normal'
         }}
         color={window.location.pathname === main.url ? 'text.primary' : 'text.secondary'}
       >
@@ -197,16 +196,15 @@ export default function Breadcrumbs({
     itemContent = (
       <Typography
         variant="h6"
-        noWrap
         sx={{
           ...linkSX,
           color: 'text.secondary',
-          display: 'inline-block',
-          overflow: 'hidden',
+          display: 'inline-flex',
+          minWidth: 0,
           lineHeight: 1.5,
           mb: -0.625,
-          textOverflow: 'ellipsis',
-          maxWidth: { xs: 102, sm: 'unset' }
+          maxWidth: { xs: '100%', sm: 'unset' },
+          whiteSpace: 'normal'
         }}
       >
         {icons && <ItemIcon style={{ ...iconSX }} />}

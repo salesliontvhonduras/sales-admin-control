@@ -29,6 +29,8 @@ export default function SubCard({
   return (
     <Card
       sx={(theme) => ({
+        minWidth: 0,
+        maxWidth: '100%',
         border: '1px solid',
         borderColor: 'divider',
         ':hover': { boxShadow: defaultShadow },
@@ -37,8 +39,52 @@ export default function SubCard({
       {...others}
     >
       {/* card header and action */}
-      {!darkTitle && title && <CardHeader sx={{ p: 2.5 }} title={<Typography variant="h5">{title}</Typography>} action={secondary} />}
-      {darkTitle && title && <CardHeader sx={{ p: 2.5 }} title={<Typography variant="h4">{title}</Typography>} action={secondary} />}
+      {!darkTitle && title && (
+        <CardHeader
+          sx={{
+            p: { xs: 1.5, sm: 2.5 },
+            '& .MuiCardHeader-root': {
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'stretch', sm: 'center' }
+            },
+            '& .MuiCardHeader-content': {
+              minWidth: 0,
+              width: '100%'
+            },
+            '& .MuiCardHeader-action': {
+              mr: 0,
+              mt: { xs: 1, sm: 0 },
+              ml: { xs: 0, sm: 'auto' },
+              width: { xs: '100%', sm: 'auto' }
+            }
+          }}
+          title={<Typography variant="h5">{title}</Typography>}
+          action={secondary}
+        />
+      )}
+      {darkTitle && title && (
+        <CardHeader
+          sx={{
+            p: { xs: 1.5, sm: 2.5 },
+            '& .MuiCardHeader-root': {
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'stretch', sm: 'center' }
+            },
+            '& .MuiCardHeader-content': {
+              minWidth: 0,
+              width: '100%'
+            },
+            '& .MuiCardHeader-action': {
+              mr: 0,
+              mt: { xs: 1, sm: 0 },
+              ml: { xs: 0, sm: 'auto' },
+              width: { xs: '100%', sm: 'auto' }
+            }
+          }}
+          title={<Typography variant="h4">{title}</Typography>}
+          action={secondary}
+        />
+      )}
 
       {/* content & header divider */}
       {title && <Divider />}
