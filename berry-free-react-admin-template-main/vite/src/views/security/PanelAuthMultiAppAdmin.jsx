@@ -9,9 +9,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
   Grid,
-  IconButton,
   MenuItem,
   Stack,
   Switch,
@@ -28,8 +26,9 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { IconEdit, IconPlus, IconRefresh, IconTrash, IconX } from '@tabler/icons-react';
+import { IconEdit, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
 import MainCard from 'ui-component/cards/MainCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
 import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
@@ -483,12 +482,9 @@ export default function PanelAuthMultiAppAdmin() {
       </MainCard>
 
       <Dialog open={openForm} onClose={closeForm} fullWidth fullScreen={isMobile} maxWidth="sm">
-        <DialogTitle sx={{ pr: 7 }}>
+        <DialogTitleWithClose onClose={closeForm}>
           {editingId ? t('panelAuthAdmin.dialogs.editTitle') : t('panelAuthAdmin.dialogs.createTitle')}
-          <IconButton onClick={closeForm} sx={{ position: 'absolute', right: 8, top: 8 }}>
-            <IconX size={18} />
-          </IconButton>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2}>
             <TextField
@@ -557,12 +553,9 @@ export default function PanelAuthMultiAppAdmin() {
       </Dialog>
 
       <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} fullWidth fullScreen={isMobile} maxWidth="xs">
-        <DialogTitle sx={{ pr: 7 }}>
+        <DialogTitleWithClose onClose={() => setDeleteTarget(null)}>
           {t('panelAuthAdmin.dialogs.deleteTitle')}
-          <IconButton onClick={() => setDeleteTarget(null)} sx={{ position: 'absolute', right: 8, top: 8 }}>
-            <IconX size={18} />
-          </IconButton>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Typography variant="body2">{t('panelAuthAdmin.dialogs.deleteMessage')}</Typography>
         </DialogContent>

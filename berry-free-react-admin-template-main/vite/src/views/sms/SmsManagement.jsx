@@ -24,22 +24,20 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import SendIcon from '@mui/icons-material/Send';
 import ClearIcon from '@mui/icons-material/Clear';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
-import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import useAuth from 'hooks/useAuth';
 
 import MainCard from 'ui-component/cards/MainCard';
 import LionMetricCard from 'ui-component/cards/LionMetricCard';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
 import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
@@ -526,12 +524,9 @@ export default function SmsManagement() {
       </MainCard>
 
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth fullScreen={isMobile} maxWidth="md">
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <DialogTitleWithClose onClose={() => setOpenModal(false)}>
           {t('sms.enqueue')}
-          <IconButton onClick={() => setOpenModal(false)} size="small">
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent
           dividers
           sx={{
@@ -637,12 +632,9 @@ export default function SmsManagement() {
       </Dialog>
 
       <Dialog open={detailModal.open} onClose={() => setDetailModal({ open: false, row: null })} fullWidth fullScreen={isMobile} maxWidth="sm">
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <DialogTitleWithClose onClose={() => setDetailModal({ open: false, row: null })}>
           {t('sms.detail.title')}
-          <IconButton onClick={() => setDetailModal({ open: false, row: null })} size="small">
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent
           dividers
           sx={{

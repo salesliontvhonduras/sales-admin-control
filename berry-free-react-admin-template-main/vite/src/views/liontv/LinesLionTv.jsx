@@ -22,7 +22,6 @@ import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
 import Tooltip from '@mui/material/Tooltip';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import IconButton from '@mui/material/IconButton';
@@ -1269,10 +1268,9 @@ export default function LinesLionTv() {
           })
         }}
       >
-        <DialogTitle
+        <DialogTitleWithClose
+          onClose={() => setOpenModal(false)}
           sx={(theme) => ({
-            position: 'relative',
-            pr: 5,
             background: `linear-gradient(135deg, ${theme.palette.primary.light}28 0%, ${theme.palette.secondary.light}20 45%, ${theme.palette.background.paper} 100%)`,
             pb: 1
           })}
@@ -1303,15 +1301,8 @@ export default function LinesLionTv() {
               color={form._isEdit ? 'warning' : 'success'}
               sx={{ ml: 'auto', fontWeight: 700, borderRadius: 1.5 }}
             />
-            <IconButton
-              size="small"
-              onClick={() => setOpenModal(false)}
-              sx={{ position: 'absolute', right: 12, top: 12 }}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent
           dividers
           sx={{

@@ -23,7 +23,6 @@ import Avatar from '@mui/material/Avatar';
 import Divider from '@mui/material/Divider';
 import Card from '@mui/material/Card';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import FormControl from '@mui/material/FormControl';
@@ -54,7 +53,6 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import Skeleton from '@mui/material/Skeleton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import CloseIcon from '@mui/icons-material/Close';
 import LinkIcon from '@mui/icons-material/Link';
 import EmailIcon from '@mui/icons-material/Email';
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
@@ -1329,10 +1327,9 @@ export default function SubscriptionsLionTv() {
           })
         }}
       >
-        <DialogTitle
+        <DialogTitleWithClose
+          onClose={() => setOpenModal(false)}
           sx={(theme) => ({
-            position: 'relative',
-            pr: 5,
             background:
               theme.palette.mode === 'dark'
                 ? `linear-gradient(135deg, ${withAlpha(theme.vars.palette.primary.main, 0.25)} 0%, ${withAlpha(theme.vars.palette.secondary.main, 0.18)} 45%, ${theme.vars.palette.surface.card} 100%)`
@@ -1366,15 +1363,8 @@ export default function SubscriptionsLionTv() {
               color={form.subscriptionId ? 'warning' : 'success'}
               sx={{ ml: 'auto', fontWeight: 700, borderRadius: 1.5 }}
             />
-            <IconButton
-              size="small"
-              onClick={() => setOpenModal(false)}
-              sx={{ position: 'absolute', right: 12, top: 12 }}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
           </Stack>
-        </DialogTitle>
+        </DialogTitleWithClose>
         <DialogContent
           dividers
           sx={{

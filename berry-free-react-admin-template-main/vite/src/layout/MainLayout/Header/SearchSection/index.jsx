@@ -12,7 +12,6 @@ import Chip from '@mui/material/Chip';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -29,11 +28,12 @@ import Typography from '@mui/material/Typography';
 
 // project imports
 import useAuth from 'hooks/useAuth';
+import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import Transitions from 'ui-component/extended/Transitions';
 import { useLionTvOverview } from 'api/liontv-overview';
 
 // assets
-import { IconAdjustmentsHorizontal, IconSearch, IconX } from '@tabler/icons-react';
+import { IconAdjustmentsHorizontal, IconSearch } from '@tabler/icons-react';
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
@@ -518,40 +518,109 @@ function SearchInput({
       placeholder={placeholder}
       startAdornment={
         <InputAdornment position="start">
-          <IconSearch stroke={1.5} size="16px" />
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'text.secondary',
+              opacity: 0.92
+            }}
+          >
+            <IconSearch stroke={1.7} size="17px" />
+          </Box>
         </InputAdornment>
       }
       endAdornment={
         <InputAdornment position="end">
-          <Stack direction="row" spacing={0.8} alignItems="center">
-            <Box sx={{ display: 'inline-flex', color: 'text.secondary', opacity: 0.88 }}>
-              <IconAdjustmentsHorizontal stroke={1.5} size="20px" />
+          <Stack direction="row" spacing={0.9} alignItems="center">
+            <Box
+              sx={(theme) => ({
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 28,
+                height: 28,
+                borderRadius: 1.5,
+                color: 'text.secondary',
+                backgroundColor:
+                  theme.palette.mode === 'dark' ? theme.palette.surface.card : theme.palette.background.paper,
+                border: '1px solid',
+                borderColor: 'divider'
+              })}
+            >
+              <IconAdjustmentsHorizontal stroke={1.55} size="16px" />
             </Box>
             {showShortcut ? (
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, letterSpacing: 0.25 }}>
+              <Box
+                component="span"
+                sx={(theme) => ({
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  px: 1,
+                  minWidth: 54,
+                  height: 28,
+                  borderRadius: 1.5,
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  letterSpacing: 0.2,
+                  color: 'text.secondary',
+                  backgroundColor:
+                    theme.palette.mode === 'dark' ? theme.palette.surface.card : theme.palette.background.paper,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  whiteSpace: 'nowrap'
+                })}
+              >
                 Ctrl + K
-              </Typography>
+              </Box>
             ) : null}
           </Stack>
         </InputAdornment>
       }
       sx={(theme) => ({
-        width: fullWidth ? '100%' : { md: 280, lg: 470 },
-        ml: fullWidth ? 0 : 2,
-        px: 0.2,
-        borderRadius: 12,
+        width: fullWidth ? '100%' : 'min(100%, 540px)',
+        minWidth: 0,
+        ml: fullWidth ? 0 : { md: 1.5, lg: 2 },
+        borderRadius: 3,
         backgroundColor: theme.palette.mode === 'dark' ? theme.palette.surface.muted : theme.palette.surface.sunken,
+        boxShadow: 'none',
         '&:hover': {
           backgroundColor: theme.palette.mode === 'dark' ? theme.palette.surface.muted : theme.palette.surface.sunken
         },
         '&.Mui-focused': {
           backgroundColor: theme.palette.mode === 'dark' ? theme.palette.surface.card : theme.palette.background.paper
         },
+        '& .MuiOutlinedInput-notchedOutline': {
+          borderColor: theme.palette.divider
+        },
+        '& .MuiInputAdornment-positionStart': {
+          marginRight: 8
+        },
+        '& .MuiInputAdornment-positionEnd': {
+          marginLeft: 10
+        },
         '& .MuiInputBase-input': {
-          py: 1.25
+          paddingTop: '12px',
+          paddingBottom: '12px',
+          paddingLeft: 0,
+          fontSize: '0.95rem',
+          fontWeight: 500,
+          minWidth: 0,
+          '&::placeholder': {
+            color: theme.palette.text.secondary,
+            opacity: theme.palette.mode === 'dark' ? 0.9 : 0.78
+          }
+        },
+        '& .MuiOutlinedInput-inputAdornedEnd': {
+          paddingRight: 0
+        },
+        '& .MuiOutlinedInput-root, &.MuiOutlinedInput-root': {
+          minHeight: 44
         },
         [theme.breakpoints.down('lg')]: {
-          width: fullWidth ? '100%' : { md: 240, lg: 400 }
+          width: fullWidth ? '100%' : 'min(100%, 460px)'
         }
       })}
     />
@@ -567,35 +636,81 @@ function ResultRow({ item, onSelect }) {
     <ListItemButton
       onClick={() => onSelect(item)}
       sx={{
-        borderRadius: 1.5,
-        border: '1px solid transparent',
+        borderRadius: 2,
+        border: '1px solid',
+        borderColor: 'divider',
+        px: 1.25,
+        py: 1,
+        alignItems: 'flex-start',
+        gap: 1,
+        transition: 'border-color 120ms ease, background-color 120ms ease, transform 120ms ease',
         '&:hover': {
-          borderColor: theme.palette.divider,
-          backgroundColor: theme.palette.action.hover
+          borderColor: theme.palette.primary.main,
+          backgroundColor: theme.palette.action.hover,
+          transform: 'translateY(-1px)'
         }
       }}
     >
-      <ListItemIcon sx={{ minWidth: 36 }}>{kindIcon(item.kind, theme)}</ListItemIcon>
+      <ListItemIcon sx={{ minWidth: 0, mt: 0.25 }}>{kindIcon(item.kind, theme)}</ListItemIcon>
       <ListItemText
         primary={
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-            <Typography variant="subtitle2" noWrap sx={{ maxWidth: { xs: 180, md: 320 } }}>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0, flexWrap: 'wrap' }} useFlexGap>
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 800,
+                lineHeight: 1.3,
+                overflow: 'hidden',
+                display: '-webkit-box',
+                WebkitBoxOrient: 'vertical',
+                WebkitLineClamp: 2,
+                maxWidth: '100%'
+              }}
+            >
               {item.title}
             </Typography>
-            <Chip size="small" label={item.typeLabel || t('headerSearch.labels.result')} variant="outlined" />
+            <Chip size="small" label={item.typeLabel || t('headerSearch.labels.result')} variant="outlined" sx={{ borderRadius: 1.5 }} />
           </Stack>
         }
         secondary={
-          <Stack direction="row" spacing={0.8} alignItems="center" flexWrap="wrap" useFlexGap>
-            <Typography variant="caption" color="text.secondary">
+          <Stack direction="row" spacing={0.8} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 0.35 }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                lineHeight: 1.45,
+                display: '-webkit-box',
+                WebkitBoxOrient: 'vertical',
+                WebkitLineClamp: 2,
+                overflow: 'hidden'
+              }}
+            >
               {item.subtitle || '-'}
             </Typography>
-            {item.status ? <Chip size="small" label={item.status} color={statusColor(item.status)} variant="outlined" /> : null}
-            {dueLabel ? <Chip size="small" label={dueLabel} color={item.dueDays <= 1 ? 'error' : 'default'} variant="outlined" /> : null}
+            {item.status ? <Chip size="small" label={item.status} color={statusColor(item.status)} variant="outlined" sx={{ borderRadius: 1.5 }} /> : null}
+            {dueLabel ? <Chip size="small" label={dueLabel} color={item.dueDays <= 1 ? 'error' : 'default'} variant="outlined" sx={{ borderRadius: 1.5 }} /> : null}
           </Stack>
         }
+        sx={{ my: 0, minWidth: 0 }}
       />
-      <NorthEastRoundedIcon fontSize="small" sx={{ color: theme.palette.text.secondary }} />
+      <Box
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 28,
+          height: 28,
+          borderRadius: 1.5,
+          color: 'text.secondary',
+          backgroundColor: theme.palette.mode === 'dark' ? theme.palette.surface.card : theme.palette.background.paper,
+          border: '1px solid',
+          borderColor: 'divider',
+          mt: 0.35,
+          flexShrink: 0
+        }}
+      >
+        <NorthEastRoundedIcon fontSize="small" sx={{ color: theme.palette.text.secondary, fontSize: 16 }} />
+      </Box>
     </ListItemButton>
   );
 }
@@ -618,9 +733,14 @@ function SearchPanel({
   const hasQuery = normalizeString(query).length > 0;
 
   const Section = ({ title, children, action = null }) => (
-    <Stack spacing={0.75}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.6 }}>
+    <Stack spacing={0.85}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        justifyContent="space-between"
+        spacing={0.75}
+      >
+        <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 800 }}>
           {title}
         </Typography>
         {action}
@@ -630,18 +750,41 @@ function SearchPanel({
   );
 
   return (
-    <Stack spacing={1.5} sx={{ p: 1.5 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+    <Stack spacing={1.5} sx={{ p: { xs: 1.25, sm: 1.5 } }}>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        alignItems={{ xs: 'stretch', sm: 'center' }}
+        justifyContent="space-between"
+        spacing={1}
+      >
         <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-          <Chip size="small" color="primary" variant="outlined" label={t('headerSearch.summary.results', { count: filteredResults.length })} />
-          <Chip size="small" color="warning" variant="outlined" label={t('headerSearch.summary.todayAlerts', { count: urgentResults.length })} />
+          <Chip
+            size="small"
+            color="primary"
+            variant="outlined"
+            label={t('headerSearch.summary.results', { count: filteredResults.length })}
+            sx={{ borderRadius: 1.5 }}
+          />
+          <Chip
+            size="small"
+            color="warning"
+            variant="outlined"
+            label={t('headerSearch.summary.todayAlerts', { count: urgentResults.length })}
+            sx={{ borderRadius: 1.5 }}
+          />
           {lastSyncAt ? (
             <Typography variant="caption" color="text.secondary">
               {t('headerSearch.summary.sync', { time: lastSyncAt.toLocaleTimeString(i18n.language || undefined) })}
             </Typography>
           ) : null}
         </Stack>
-        <Button variant="text" size="small" startIcon={<RefreshRoundedIcon fontSize="small" />} onClick={onRefresh}>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<RefreshRoundedIcon fontSize="small" />}
+          onClick={onRefresh}
+          sx={{ alignSelf: { xs: 'stretch', sm: 'center' }, borderRadius: 2, textTransform: 'none' }}
+        >
           {t('actions.refresh')}
         </Button>
       </Stack>
@@ -657,9 +800,9 @@ function SearchPanel({
 
       <Box sx={{ maxHeight: 420, overflowY: 'auto', pr: 0.5 }}>
         {!hasQuery ? (
-          <Stack spacing={1.5}>
+          <Stack spacing={1.75}>
             <Section title={t('headerSearch.sections.quickActions')}>
-              <List disablePadding sx={{ display: 'grid', gap: 0.4 }}>
+              <List disablePadding sx={{ display: 'grid', gap: 0.55 }}>
                 {quickResults.slice(0, 6).map((item) => (
                   <ResultRow key={item.id} item={item} onSelect={onSelect} />
                 ))}
@@ -681,7 +824,7 @@ function SearchPanel({
                   {t('headerSearch.messages.noRecents')}
                 </Typography>
               ) : (
-                <List disablePadding sx={{ display: 'grid', gap: 0.4 }}>
+                <List disablePadding sx={{ display: 'grid', gap: 0.55 }}>
                   {recentResults.map((item) => (
                     <ResultRow key={`recent-${item.id}`} item={item} onSelect={onSelect} />
                   ))}
@@ -695,7 +838,7 @@ function SearchPanel({
                   {t('headerSearch.messages.noTodayDue')}
                 </Typography>
               ) : (
-                <List disablePadding sx={{ display: 'grid', gap: 0.4 }}>
+                <List disablePadding sx={{ display: 'grid', gap: 0.55 }}>
                   {urgentResults.slice(0, 8).map((item) => (
                     <ResultRow key={`urgent-${item.id}`} item={item} onSelect={onSelect} />
                   ))}
@@ -704,13 +847,23 @@ function SearchPanel({
             </Section>
           </Stack>
         ) : (
-          <Stack spacing={1}>
+          <Stack spacing={1.2}>
             <Typography variant="caption" color="text.secondary">
               {t('headerSearch.messages.filtersHelp')}
             </Typography>
-            <List disablePadding sx={{ display: 'grid', gap: 0.4 }}>
+            <List disablePadding sx={{ display: 'grid', gap: 0.55 }}>
               {filteredResults.length === 0 ? (
-                <Typography variant="body2" color="text.secondary" sx={{ p: 1 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 2,
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    backgroundColor: 'action.hover'
+                  }}
+                >
                   {t('headerSearch.messages.noResults')}
                 </Typography>
               ) : (
@@ -873,7 +1026,7 @@ export default function SearchSection() {
 
   return (
     <>
-      <Box sx={{ display: { xs: 'none', md: 'block' } }} ref={desktopAnchorRef}>
+      <Box sx={{ display: { xs: 'none', md: 'block' }, width: '100%', minWidth: 0 }} ref={desktopAnchorRef}>
         <SearchInput
           inputId="input-search-header-desktop"
           value={query}
@@ -917,12 +1070,14 @@ export default function SearchSection() {
             <Transitions type="zoom" {...TransitionProps} sx={{ transformOrigin: 'center top' }}>
               <Paper
                 sx={{
-                  width: 'min(680px, calc(100vw - 24px))',
+                  width: 'min(720px, calc(100vw - 24px))',
                   maxWidth: 'calc(100vw - 24px)',
-                  borderRadius: 2.5,
+                  borderRadius: 3,
                   border: '1px solid',
                   borderColor: 'divider',
-                  bgcolor: 'surface.card'
+                  bgcolor: 'surface.card',
+                  boxShadow: (theme) =>
+                    theme.palette.mode === 'dark' ? '0 24px 60px rgba(2, 8, 23, 0.58)' : '0 18px 44px rgba(15, 23, 42, 0.18)'
                 }}
               >
                 <SearchPanel
@@ -955,14 +1110,11 @@ export default function SearchSection() {
           }
         }}
       >
-        <DialogTitle sx={{ pb: 1.2 }}>
-          <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-            <Typography variant="h4">{t('headerSearch.dialogTitle')}</Typography>
-            <IconButton onClick={() => setOpenMobile(false)}>
-              <IconX stroke={1.5} size="18px" />
-            </IconButton>
-          </Stack>
-        </DialogTitle>
+        <DialogTitleWithClose onClose={() => setOpenMobile(false)} sx={{ pb: 1.2 }}>
+          <Typography variant="h4" sx={{ overflowWrap: 'anywhere' }}>
+            {t('headerSearch.dialogTitle')}
+          </Typography>
+        </DialogTitleWithClose>
         <DialogContent sx={{ pt: 0 }}>
           <Stack spacing={1.5}>
             <SearchInput
