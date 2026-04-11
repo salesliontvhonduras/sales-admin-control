@@ -43,6 +43,7 @@ import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
+import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import {
   assignBaseCatalogItemCategory,
@@ -70,31 +71,7 @@ function extractErrorMessage(error, fallback) {
 }
 
 function StatusCard({ label, value, helper, tone = 'primary' }) {
-  return (
-    <Paper
-      variant="outlined"
-      sx={(theme) => ({
-        p: 1.75,
-        height: '100%',
-        borderColor: alpha(theme.palette[tone].main, 0.25),
-        backgroundColor: alpha(theme.palette[tone].main, 0.06)
-      })}
-    >
-      <Stack spacing={0.5}>
-        <Typography variant="caption" color="text.secondary">
-          {label}
-        </Typography>
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.15, wordBreak: 'break-word' }}>
-          {value}
-        </Typography>
-        {helper ? (
-          <Typography variant="caption" color="text.secondary">
-            {helper}
-          </Typography>
-        ) : null}
-      </Stack>
-    </Paper>
-  );
+  return <LionMetricCard title={label} value={value} helper={helper} color={tone} />;
 }
 
 function FlowCard({ step, title, description, complete, readyLabel = 'Ready', pendingLabel = 'Pending' }) {

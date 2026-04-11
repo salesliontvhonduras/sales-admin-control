@@ -43,6 +43,7 @@ import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
 import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
+import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import { lionTvApi } from 'utils/api';
 
 function normalizeFeed(item = {}) {
@@ -376,21 +377,22 @@ export default function FeedCrudManager({
           </ResponsiveActionBar>
         }
       >
-        <TextField
-          size="small"
-          placeholder={t('feedCrud.searchPlaceholder')}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          fullWidth
-          sx={{ mb: 2 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon color="action" />
-              </InputAdornment>
-            )
-          }}
-        />
+        <ResponsiveFilters paperSx={{ mb: 2 }}>
+          <TextField
+            size="small"
+            placeholder={t('feedCrud.searchPlaceholder')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              )
+            }}
+          />
+        </ResponsiveFilters>
 
         <ResponsiveEntityView
           isMobile={isMobile}

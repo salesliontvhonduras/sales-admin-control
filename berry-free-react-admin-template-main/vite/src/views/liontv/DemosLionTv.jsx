@@ -53,11 +53,13 @@ import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 
 import MainCard from 'ui-component/cards/MainCard';
+import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
 import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
+import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import { gridSpacing } from 'store/constant';
 import { shopifyDemosApi } from 'utils/api';
 
@@ -544,44 +546,31 @@ export default function DemosLionTv() {
       >
         <Grid container spacing={gridSpacing}>
           {[
-            { label: `${rows.length} ${t('demos.cards.total', 'demos')}`, color: 'primary.main' },
-            { label: `${t('demos.headers.status')}: ACTIVE ${summary.active}`, color: 'success.main' },
-            { label: `${t('demos.headers.status')}: PENDING ${summary.pending}`, color: 'info.main' },
-            { label: `${t('demos.headers.status')}: EXPIRED ${summary.expired}`, color: 'warning.main' }
+            { title: t('demos.cards.total', 'Demos'), value: rows.length, helper: t('demos.title', 'Demos'), color: 'primary', icon: <AppsIcon fontSize="small" /> },
+            {
+              title: 'ACTIVE',
+              value: summary.active,
+              helper: t('demos.headers.status'),
+              color: 'success',
+              icon: <CheckCircleOutlineIcon fontSize="small" />
+            },
+            {
+              title: 'PENDING',
+              value: summary.pending,
+              helper: t('demos.headers.status'),
+              color: 'info',
+              icon: <PendingOutlinedIcon fontSize="small" />
+            },
+            {
+              title: 'EXPIRED',
+              value: summary.expired,
+              helper: t('demos.headers.status'),
+              color: 'warning',
+              icon: <AccessTimeIcon fontSize="small" />
+            }
           ].map((item, idx) => (
             <Grid item xs={12} sm={6} md={3} key={idx}>
-              <Card
-                sx={(theme) => ({
-                  ...glassCard(theme),
-                  py: 1.5,
-                  px: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.5,
-                  background: `linear-gradient(155deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 100%)`,
-                  ...theme.applyStyles('light', {
-                    background: `linear-gradient(155deg, ${theme.vars.palette.primary.main}1F 0%, ${theme.vars.palette.secondary.main}20 55%, ${theme.vars.palette.background.paper} 100%)`
-                  })
-                })}
-              >
-                <Avatar
-                  sx={(theme) => ({
-                    width: 40,
-                    height: 40,
-                    bgcolor: item.color,
-                    color: theme.palette.getContrastText(theme.palette.primary.main),
-                    fontWeight: 700,
-                    boxShadow: 3,
-                    border: '2px solid',
-                    borderColor: 'background.paper'
-                  })}
-                >
-                  <AppsIcon fontSize="small" />
-                </Avatar>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                  {item.label}
-                </Typography>
-              </Card>
+              <LionMetricCard {...item} />
             </Grid>
           ))}
         </Grid>
@@ -590,23 +579,10 @@ export default function DemosLionTv() {
       <MainCard
         title={t('demos.search', 'Búsqueda')}
         secondary={
-          <Paper
-            elevation={0}
-            sx={(theme) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              width: { xs: '100%', sm: 520 },
-              p: 1,
-              borderRadius: 2,
-              border: '1px solid',
-              borderColor: 'divider',
-              background: theme.vars.palette.surface.card,
-              ...theme.applyStyles('light', {
-                background: `linear-gradient(120deg, ${theme.vars.palette.primary.light}12 0%, ${theme.vars.palette.secondary.light}12 100%)`
-              }),
-              boxShadow: '0 8px 18px rgba(0,0,0,0.05)'
-            })}
+          <ResponsiveFilters
+            paperSx={{
+              width: { xs: '100%', sm: 560 }
+            }}
           >
             <TextField
               size="small"
@@ -662,7 +638,7 @@ export default function DemosLionTv() {
                   ))}
               </Select>
             </FormControl>
-          </Paper>
+          </ResponsiveFilters>
         }
       >
         <ResponsiveEntityView

@@ -4,11 +4,23 @@ import Stack from '@mui/material/Stack';
 export default function ResponsiveFilters({ children, sx = {}, paperSx = {}, ...props }) {
   return (
     <Paper
-      sx={{
+      elevation={0}
+      sx={(theme) => ({
         p: { xs: 1.5, sm: 2 },
         borderRadius: 3,
-        ...paperSx
-      }}
+        border: '1px solid',
+        borderColor: 'divider',
+        backgroundColor: theme.vars.palette.surface.card,
+        backgroundImage:
+          theme.palette.mode === 'light'
+            ? `linear-gradient(120deg, ${theme.vars.palette.primary.light}12 0%, ${theme.vars.palette.secondary.light}12 100%)`
+            : `linear-gradient(135deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 100%)`,
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 12px 26px rgba(2,8,23,0.38)'
+            : '0 10px 20px rgba(15,23,42,0.08)',
+        ...(typeof paperSx === 'function' ? paperSx(theme) : paperSx)
+      })}
     >
       <Stack
         direction={{ xs: 'column', md: 'row' }}
@@ -19,6 +31,14 @@ export default function ResponsiveFilters({ children, sx = {}, paperSx = {}, ...
           width: '100%',
           '& .MuiFormControl-root, & .MuiTextField-root': {
             width: { xs: '100%', md: 'auto' }
+          },
+          '& .MuiInputBase-root': {
+            minHeight: 46
+          },
+          '& .MuiButton-root': {
+            width: { xs: '100%', md: 'auto' },
+            minHeight: 46,
+            textTransform: 'none'
           },
           ...sx
         }}

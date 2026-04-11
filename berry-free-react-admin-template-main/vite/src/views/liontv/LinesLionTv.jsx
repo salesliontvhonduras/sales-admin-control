@@ -54,11 +54,13 @@ import FilterAltOutlinedIcon from '@mui/icons-material/FilterAltOutlined';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 
 import MainCard from 'ui-component/cards/MainCard';
+import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
 import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
+import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -616,69 +618,19 @@ export default function LinesLionTv() {
       >
         <Grid container spacing={gridSpacing}>
             {[
-              { icon: <SpeedIcon fontSize="small" />, label: t('lines.summary.totalLabel', 'Líneas totales'), value: total, color: 'primary.main' },
-              { icon: <CloudDoneIcon fontSize="small" />, label: t('lines.summary.activeLabel', 'Activas'), value: summary.enabled, color: 'success.main' },
-              { icon: <ErrorOutlineIcon fontSize="small" />, label: t('lines.summary.expiredLabel', 'Expiradas'), value: summary.expired, color: 'warning.main' }
+              { icon: <SpeedIcon fontSize="small" />, title: t('lines.summary.totalLabel', 'Líneas totales'), value: total, helper: t('lines.title'), color: 'primary' },
+              { icon: <CloudDoneIcon fontSize="small" />, title: t('lines.summary.activeLabel', 'Activas'), value: summary.enabled, helper: t('lines.filters.status'), color: 'success' },
+              { icon: <ErrorOutlineIcon fontSize="small" />, title: t('lines.summary.expiredLabel', 'Expiradas'), value: summary.expired, helper: t('lines.filters.status'), color: 'warning' }
             ].map((item, idx) => (
               <Grid item xs={12} sm={6} md={3} key={idx}>
-                <Card
-                  sx={(theme) => ({
-                    ...glassCard(theme),
-                    py: 1.5,
-                    px: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.5,
-                    background:
-                      theme.palette.mode === 'light'
-                        ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, ${theme.palette.background.paper} 100%)`
-                        : theme.palette.background.paper
-                  })}
-                >
-                <Avatar
-                  sx={(theme) => ({
-                    width: 40,
-                    height: 40,
-                    bgcolor: item.color,
-                    color: theme.palette.getContrastText(theme.palette.primary.main),
-                    fontWeight: 700,
-                    boxShadow: 3,
-                    border: '2px solid',
-                    borderColor: 'background.paper'
-                  })}
-                >
-                  {item.icon}
-                </Avatar>
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                    {item.value}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {item.label}
-                  </Typography>
-                </Box>
-              </Card>
+                <LionMetricCard {...item} />
             </Grid>
           ))}
         </Grid>
       </MainCard>
 
       <MainCard title={null}>
-        <Box
-          sx={(theme) => ({
-            mb: 2,
-            p: 2,
-            borderRadius: 2.5,
-            border: '1px solid',
-            borderColor: theme.palette.divider,
-            background:
-              theme.palette.mode === 'light'
-                ? `linear-gradient(135deg, ${theme.palette.primary.light}12 0%, ${theme.palette.secondary.light}10 100%)`
-                : theme.palette.background.paper,
-            boxShadow: '0 10px 28px rgba(0,0,0,0.08)'
-          })}
-        >
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems="stretch">
+        <ResponsiveFilters paperSx={{ mb: 2 }}>
             <TextField
               size="small"
               placeholder={t('lines.search')}
@@ -738,8 +690,7 @@ export default function LinesLionTv() {
                 ))}
               </Select>
             </FormControl>
-          </Stack>
-        </Box>
+        </ResponsiveFilters>
         <ResponsiveEntityView
           isMobile={isMobile}
           mobileContent={

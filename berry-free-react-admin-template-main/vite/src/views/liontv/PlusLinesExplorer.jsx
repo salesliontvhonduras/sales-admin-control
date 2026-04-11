@@ -37,6 +37,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TrafficIcon from '@mui/icons-material/Traffic';
 
 import MainCard from 'ui-component/cards/MainCard';
+import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -242,64 +243,14 @@ export default function PlusLinesExplorer() {
       <MainCard title={t('plusLines.title', 'Plus Lines Explorer')} secondary={null}>
         <Grid container spacing={gridSpacing}>
           {[
-            { label: t('plusLines.cards.countries', 'Países con líneas plus'), value: summary.length, icon: <MapIcon />, color: '#1e88e5' },
-            { label: t('plusLines.cards.lines', 'Líneas plus'), value: totalLines, icon: <LanIcon />, color: '#7e57c2' },
-            { label: t('plusLines.cards.activeSubs', 'Suscripciones activas'), value: totalActiveSubs, icon: <PeopleAltIcon />, color: '#039be5' },
-            { label: t('plusLines.cards.unusedLines', 'Líneas sin uso activo'), value: totalUnusedLines, icon: <PendingActionsIcon />, color: '#fb8c00' },
-            { label: t('plusLines.cards.inactiveSubs', 'Suscripciones inactivas'), value: totalInactiveSubs, icon: <CancelIcon />, color: '#ef5350' }
+            { title: t('plusLines.cards.countries', 'Países con líneas plus'), value: summary.length, icon: <MapIcon />, color: '#1e88e5' },
+            { title: t('plusLines.cards.lines', 'Líneas plus'), value: totalLines, icon: <LanIcon />, color: '#7e57c2' },
+            { title: t('plusLines.cards.activeSubs', 'Suscripciones activas'), value: totalActiveSubs, icon: <PeopleAltIcon />, color: '#039be5' },
+            { title: t('plusLines.cards.unusedLines', 'Líneas sin uso activo'), value: totalUnusedLines, icon: <PendingActionsIcon />, color: '#fb8c00' },
+            { title: t('plusLines.cards.inactiveSubs', 'Suscripciones inactivas'), value: totalInactiveSubs, icon: <CancelIcon />, color: '#ef5350' }
           ].map((item, idx) => (
             <Grid item xs={12} sm={6} md={4} lg={2} key={idx}>
-              <Card
-                sx={(muiTheme) => ({
-                  borderRadius: 3,
-                  p: 2.2,
-                  display: 'flex',
-                  gap: 1.5,
-                  alignItems: 'center',
-                  background:
-                    muiTheme.palette.mode === 'light'
-                      ? `linear-gradient(135deg, ${item.color}12 0%, ${muiTheme.palette.background.paper} 100%)`
-                      : muiTheme.palette.surface.card,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  boxShadow:
-                    muiTheme.palette.mode === 'dark' ? '0 14px 30px rgba(2,8,23,0.45)' : '0 10px 24px rgba(15,23,42,0.08)',
-                  position: 'relative',
-                  overflow: 'hidden'
-                })}
-              >
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    inset: 0,
-                    background: `radial-gradient(circle at 20% 30%, ${item.color}18 0, transparent 45%), radial-gradient(circle at 85% 10%, ${item.color}10 0, transparent 35%)`,
-                    pointerEvents: 'none'
-                  }}
-                />
-                <Avatar
-                  sx={{
-                    bgcolor: item.color,
-                    color: 'common.white',
-                    width: 52,
-                    height: 52,
-                    boxShadow: '0 8px 20px rgba(2,8,23,0.2)',
-                    border: '2px solid',
-                    borderColor: 'background.paper',
-                    position: 'relative',
-                    zIndex: 1
-                  }}
-                >
-                  {item.icon}
-                </Avatar>
-                <Box sx={{ position: 'relative', zIndex: 1 }}>
-                  <Typography variant="h5" sx={{ fontWeight: 900, lineHeight: 1 }}>
-                    {item.value}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    {item.label}
-                  </Typography>
-                </Box>
-              </Card>
+              <LionMetricCard {...item} />
             </Grid>
           ))}
         </Grid>

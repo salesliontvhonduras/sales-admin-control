@@ -18,19 +18,19 @@ export default function Typography(theme) {
             },
             {
               props: { variant: 'h3' },
-              style: { color: headingColor }
+              style: { color: headingColor, lineHeight: 1.2, overflowWrap: 'anywhere' }
             },
             {
               props: { variant: 'h4' },
-              style: { color: headingColor }
+              style: { color: headingColor, lineHeight: 1.22, overflowWrap: 'anywhere' }
             },
             {
               props: { variant: 'h5' },
-              style: { color: headingColor }
+              style: { color: headingColor, lineHeight: 1.24, overflowWrap: 'anywhere' }
             },
             {
               props: { variant: 'h6' },
-              style: { color: headingColor }
+              style: { color: headingColor, lineHeight: 1.26, overflowWrap: 'anywhere' }
             },
             {
               props: { variant: 'subtitle1' },

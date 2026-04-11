@@ -23,7 +23,14 @@ export default function InputBase(theme) {
         root: {
           fontSize: '0.85rem',
           fontWeight: 600,
-          color: theme.vars.palette.text.secondary
+          color: theme.vars.palette.text.secondary,
+          '&.MuiInputLabel-shrink': {
+            backgroundColor: theme.vars.palette.surface.card,
+            paddingInline: 6,
+            borderRadius: 6,
+            transform: 'translate(12px, -9px) scale(0.85)',
+            maxWidth: 'calc(100% - 24px)'
+          }
         }
       }
     },

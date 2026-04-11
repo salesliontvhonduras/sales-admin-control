@@ -48,6 +48,7 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
+import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
@@ -341,42 +342,7 @@ function expirationChipSx(meta) {
 }
 
 function MetricCard({ title, value, helper, color = 'primary', icon }) {
-  return (
-    <Card sx={(theme) => cardGlassSx(theme)}>
-      <CardContent>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.5}>
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              {title}
-            </Typography>
-            <Typography variant="h2" sx={{ mt: 0.75 }}>
-              {value}
-            </Typography>
-            {helper ? (
-              <Typography variant="caption" color="text.secondary">
-                {helper}
-              </Typography>
-            ) : null}
-          </Box>
-          <Avatar
-            variant="rounded"
-            sx={(theme) => ({
-              width: 46,
-              height: 46,
-              bgcolor: withAlpha(theme.palette[color]?.main || theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.22 : 0.14),
-              color: theme.palette[color]?.main || theme.palette.primary.main,
-              boxShadow:
-                theme.palette.mode === 'dark'
-                  ? `0 10px 22px ${withAlpha('#020617', 0.42)}`
-                  : `0 8px 16px ${withAlpha('#0f172a', 0.12)}`
-            })}
-          >
-            {icon}
-          </Avatar>
-        </Stack>
-      </CardContent>
-    </Card>
-  );
+  return <LionMetricCard title={title} value={value} helper={helper} color={color} icon={icon} sx={(theme) => cardGlassSx(theme)} />;
 }
 
 export default function ManagedAccountsLionTv() {

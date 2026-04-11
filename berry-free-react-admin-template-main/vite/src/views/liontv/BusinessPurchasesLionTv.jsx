@@ -34,6 +34,7 @@ import Menu from '@mui/material/Menu';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import Avatar from '@mui/material/Avatar';
+import Skeleton from '@mui/material/Skeleton';
 import { useMediaQuery, useTheme } from '@mui/material';
 
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -69,11 +70,13 @@ import RepeatIcon from '@mui/icons-material/Repeat';
 import NoteAltIcon from '@mui/icons-material/NoteAlt';
 
 import MainCard from 'ui-component/cards/MainCard';
+import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
 import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
+import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 import { withAlpha } from 'utils/colorUtils';
@@ -703,68 +706,43 @@ export default function BusinessPurchasesLionTv() {
         <Grid container spacing={gridSpacing}>
           {[
             {
-              label: t('businessPurchases.summary.total', { defaultValue: '{{count}} purchases', count: summary.total }),
-              icon: ShoppingCartIcon,
-              color: 'primary.main'
+              title: t('businessPurchases.summary.totalLabel', 'Compras'),
+              value: summary.total,
+              helper: t('businessPurchases.summary.total', { defaultValue: '{{count}} purchases', count: summary.total }),
+              icon: <ShoppingCartIcon fontSize="small" />,
+              color: 'primary'
             },
             {
-              label: t('businessPurchases.summary.paid', { defaultValue: 'Paid: {{count}}', count: summary.paid }),
-              icon: PaidOutlinedIcon,
-              color: 'success.main'
+              title: t('businessPurchases.summary.paidLabel', 'Pagadas'),
+              value: summary.paid,
+              helper: t('businessPurchases.summary.paid', { defaultValue: 'Paid: {{count}}', count: summary.paid }),
+              icon: <PaidOutlinedIcon fontSize="small" />,
+              color: 'success'
             },
             {
-              label: t('businessPurchases.summary.pending', {
+              title: t('businessPurchases.summary.pendingLabel', 'Pendientes'),
+              value: summary.pending,
+              helper: t('businessPurchases.summary.pending', {
                 defaultValue: 'Pending: {{count}} · Recurring: {{recurring}}',
                 count: summary.pending,
                 recurring: summary.recurring
               }),
-              icon: PendingActionsIcon,
-              color: 'warning.main'
+              icon: <PendingActionsIcon fontSize="small" />,
+              color: 'warning'
             },
             {
-              label: t('businessPurchases.summary.totalAmount', {
+              title: t('businessPurchases.summary.totalAmountLabel', 'Monto total'),
+              value: `L ${summary.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+              helper: t('businessPurchases.summary.totalAmount', {
                 defaultValue: 'Total: L {{amount}}',
                 amount: summary.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })
               }),
-              icon: LocalAtmIcon,
-              color: 'secondary.main'
+              icon: <LocalAtmIcon fontSize="small" />,
+              color: 'secondary'
             }
           ].map((item, idx) => (
             <Grid item xs={12} sm={6} md={3} key={idx}>
-              <Card
-                sx={(muiTheme) => ({
-                  ...glassCard(muiTheme),
-                  py: 1.5,
-                  px: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.5
-                })}
-              >
-                <Avatar
-                  sx={(muiTheme) => ({
-                    width: 40,
-                    height: 40,
-                    bgcolor: withAlpha(
-                      muiTheme.vars?.palette?.primary?.main || muiTheme.palette.primary.main,
-                      muiTheme.palette.mode === 'dark' ? 0.24 : 0.16
-                    ),
-                    color: item.color,
-                    fontWeight: 700,
-                    boxShadow:
-                      muiTheme.palette.mode === 'dark'
-                        ? `0 10px 20px ${withAlpha('#020617', 0.4)}`
-                        : `0 8px 16px ${withAlpha('#0f172a', 0.14)}`,
-                    border: '2px solid',
-                    borderColor: withAlpha(muiTheme.vars?.palette?.divider || muiTheme.palette.divider, 0.9)
-                  })}
-                >
-                  <item.icon fontSize="small" />
-                </Avatar>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                  {item.label}
-                </Typography>
-              </Card>
+              <LionMetricCard {...item} />
             </Grid>
           ))}
         </Grid>
@@ -774,24 +752,7 @@ export default function BusinessPurchasesLionTv() {
         title={t('businessPurchases.searchTitle', 'Search purchases')}
         secondary={
           <Stack spacing={1.25} sx={{ width: { xs: '100%', md: 900 } }}>
-            <Paper
-              elevation={0}
-              sx={(muiTheme) => ({
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                width: '100%',
-                p: 1,
-                borderRadius: 2,
-                border: '1px solid',
-                borderColor: withAlpha(muiTheme.vars?.palette?.divider || muiTheme.palette.divider, 0.95),
-                backgroundColor: muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper,
-                boxShadow:
-                  muiTheme.palette.mode === 'dark'
-                    ? `0 12px 26px ${withAlpha('#020617', 0.38)}`
-                    : `0 10px 20px ${withAlpha('#0f172a', 0.08)}`
-              })}
-            >
+            <ResponsiveFilters paperSx={{ width: '100%' }}>
               <TextField
                 size="small"
                 placeholder={t('businessPurchases.search', 'Search by code, item, provider, reference')}
@@ -884,7 +845,7 @@ export default function BusinessPurchasesLionTv() {
               >
                 {t('businessPurchases.filters.clear', 'Clear')}
               </Button>
-            </Paper>
+            </ResponsiveFilters>
 
             {hasFilters ? (
               <Stack direction="row" spacing={0.75} flexWrap="wrap">

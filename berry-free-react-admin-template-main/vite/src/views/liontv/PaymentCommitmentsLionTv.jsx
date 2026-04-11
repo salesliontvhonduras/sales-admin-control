@@ -55,11 +55,13 @@ import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
+import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
 import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
+import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -577,43 +579,37 @@ export default function PaymentCommitmentsLionTv() {
       >
         <Grid container spacing={gridSpacing}>
           {[
-            { label: t('paymentCommitments.kpi.total', { count: summary.total }), icon: AssignmentTurnedInIcon, color: 'primary.main' },
-            { label: t('paymentCommitments.kpi.debtors', { count: summary.debtorsCount }), icon: GroupIcon, color: 'secondary.main' },
-            { label: t('paymentCommitments.kpi.pendingAmount', { amount: formatMoney(summary.totalPending) }), icon: AccountBalanceWalletIcon, color: 'warning.main' },
-            { label: t('paymentCommitments.kpi.overdue', { count: summary.overdueCount }), icon: WarningAmberIcon, color: 'error.main' }
+            {
+              title: t('paymentCommitments.kpi.totalLabel', 'Compromisos'),
+              value: summary.total,
+              helper: t('paymentCommitments.kpi.total', { count: summary.total }),
+              icon: <AssignmentTurnedInIcon fontSize="small" />,
+              color: 'primary'
+            },
+            {
+              title: t('paymentCommitments.kpi.debtorsLabel', 'Deudores'),
+              value: summary.debtorsCount,
+              helper: t('paymentCommitments.kpi.debtors', { count: summary.debtorsCount }),
+              icon: <GroupIcon fontSize="small" />,
+              color: 'secondary'
+            },
+            {
+              title: t('paymentCommitments.kpi.pendingAmountLabel', 'Pendiente'),
+              value: formatMoney(summary.totalPending),
+              helper: t('paymentCommitments.kpi.pendingAmount', { amount: formatMoney(summary.totalPending) }),
+              icon: <AccountBalanceWalletIcon fontSize="small" />,
+              color: 'warning'
+            },
+            {
+              title: t('paymentCommitments.kpi.overdueLabel', 'Vencidos'),
+              value: summary.overdueCount,
+              helper: t('paymentCommitments.kpi.overdue', { count: summary.overdueCount }),
+              icon: <WarningAmberIcon fontSize="small" />,
+              color: 'error'
+            }
           ].map((item, index) => (
             <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card
-                sx={(muiTheme) => ({
-                  ...glassCard(muiTheme),
-                  py: 1.5,
-                  px: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.5,
-                  background:
-                    muiTheme.palette.mode === 'light'
-                      ? `linear-gradient(155deg, ${muiTheme.palette.primary.main}1F 0%, ${muiTheme.palette.secondary.main}20 55%, ${muiTheme.palette.background.paper} 100%)`
-                      : muiTheme.palette.background.paper
-                })}
-              >
-                <Avatar
-                  sx={(muiTheme) => ({
-                    width: 40,
-                    height: 40,
-                    bgcolor: item.color,
-                    color: muiTheme.palette.getContrastText(muiTheme.palette.primary.main),
-                    boxShadow: 3,
-                    border: '2px solid',
-                    borderColor: 'background.paper'
-                  })}
-                >
-                  <item.icon fontSize="small" />
-                </Avatar>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                  {item.label}
-                </Typography>
-              </Card>
+              <LionMetricCard {...item} />
             </Grid>
           ))}
         </Grid>
@@ -622,23 +618,10 @@ export default function PaymentCommitmentsLionTv() {
       <MainCard
         title={t('paymentCommitments.filters.title', 'Control de deuda')}
         secondary={
-          <Paper
-            elevation={0}
-            sx={(muiTheme) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              width: { xs: '100%', sm: 560 },
-              p: 1,
-              borderRadius: 2,
-              border: '1px solid',
-              borderColor: 'divider',
-              background:
-                muiTheme.palette.mode === 'light'
-                  ? `linear-gradient(120deg, ${muiTheme.palette.primary.light}12 0%, ${muiTheme.palette.secondary.light}12 100%)`
-                  : muiTheme.palette.background.paper,
-              boxShadow: '0 8px 18px rgba(0,0,0,0.05)'
-            })}
+          <ResponsiveFilters
+            paperSx={{
+              width: { xs: '100%', sm: 560 }
+            }}
           >
             <TextField
               size="small"
@@ -674,7 +657,7 @@ export default function PaymentCommitmentsLionTv() {
                 ))}
               </Select>
             </FormControl>
-          </Paper>
+          </ResponsiveFilters>
         }
       >
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} alignItems={{ xs: 'stretch', sm: 'center' }} sx={{ mb: 1.5 }}>

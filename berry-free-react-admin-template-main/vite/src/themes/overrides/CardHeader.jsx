@@ -13,10 +13,16 @@ export default function CardHeader(theme) {
         },
         title: {
           fontSize: '1.03rem',
-          fontWeight: 700
+          fontWeight: 700,
+          lineHeight: 1.25,
+          whiteSpace: 'normal',
+          overflowWrap: 'anywhere'
         },
         subheader: {
-          fontSize: '0.78rem'
+          fontSize: '0.78rem',
+          lineHeight: 1.35,
+          whiteSpace: 'normal',
+          overflowWrap: 'anywhere'
         }
       }
     }

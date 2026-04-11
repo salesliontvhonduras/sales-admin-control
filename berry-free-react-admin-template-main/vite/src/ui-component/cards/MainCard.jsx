@@ -14,7 +14,13 @@ const headerStyle = {
     gap: 12
   },
   '& .MuiCardHeader-content': {
-    minWidth: 0
+    minWidth: 0,
+    width: '100%'
+  },
+  '& .MuiCardHeader-title': {
+    whiteSpace: 'normal',
+    overflowWrap: 'anywhere',
+    lineHeight: 1.25
   },
   '& .MuiCardHeader-action': {
     mr: 0,
@@ -81,6 +87,9 @@ export default function MainCard({
               flexDirection: { xs: 'column', sm: 'row' },
               alignItems: { xs: 'stretch', sm: 'center' }
             },
+            '& .MuiCardHeader-content': {
+              width: '100%'
+            },
             '& .MuiCardHeader-action': {
               mr: 0,
               mt: { xs: 1.25, sm: 0 },
@@ -103,6 +112,9 @@ export default function MainCard({
             '& .MuiCardHeader-root': {
               flexDirection: { xs: 'column', sm: 'row' },
               alignItems: { xs: 'stretch', sm: 'center' }
+            },
+            '& .MuiCardHeader-content': {
+              width: '100%'
             },
             '& .MuiCardHeader-action': {
               mr: 0,

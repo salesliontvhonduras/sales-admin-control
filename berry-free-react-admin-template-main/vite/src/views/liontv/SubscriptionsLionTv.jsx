@@ -60,11 +60,13 @@ import EmailIcon from '@mui/icons-material/Email';
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
+import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
 import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
+import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 import { withAlpha } from 'utils/colorUtils';
@@ -844,28 +846,38 @@ export default function SubscriptionsLionTv() {
 
   const kpiCards = [
     {
-      label: `${total} ${t('subscriptions.title').toLowerCase()}`,
-      color: theme.vars.palette.primary.main,
+      title: t('subscriptions.title'),
+      value: total,
+      helper: t('subscriptions.search'),
+      color: 'primary',
       icon: <CreditCardIcon fontSize="small" />
     },
     {
-      label: t('subscriptions.kpi.activeStatus', { count: rows.filter((r) => r.status === 'ACTIVE').length }),
-      color: theme.vars.palette.success.main,
+      title: t('subscriptions.headers.status', 'Status'),
+      value: rows.filter((r) => r.status === 'ACTIVE').length,
+      helper: t('subscriptions.kpi.activeStatus', { count: rows.filter((r) => r.status === 'ACTIVE').length }),
+      color: 'success',
       icon: <AutoAwesomeIcon fontSize="small" />
     },
     {
-      label: `${t('subscriptions.headers.autopay')}: ${rows.filter((r) => r.automaticPay).length}`,
-      color: theme.vars.palette.warning.main,
+      title: t('subscriptions.headers.autopay'),
+      value: rows.filter((r) => r.automaticPay).length,
+      helper: t('subscriptions.headers.autopay'),
+      color: 'warning',
       icon: <PriceChangeIcon fontSize="small" />
     },
     {
-      label: t('subscriptions.kpi.sharedStatus', { count: rows.filter((r) => r.sharingRole && r.sharingRole !== 'NONE').length }),
-      color: theme.vars.palette.info.main,
+      title: t('subscriptions.kpi.sharedLabel', 'Shared'),
+      value: rows.filter((r) => r.sharingRole && r.sharingRole !== 'NONE').length,
+      helper: t('subscriptions.kpi.sharedStatus', { count: rows.filter((r) => r.sharingRole && r.sharingRole !== 'NONE').length }),
+      color: 'info',
       icon: <LinkIcon fontSize="small" />
     },
     {
-      label: t('subscriptions.kpi.activeLineExpired', { count: activeLineExpiredCount }),
-      color: theme.vars.palette.error.main,
+      title: t('subscriptions.kpi.activeLineExpiredLabel', 'Line risk'),
+      value: activeLineExpiredCount,
+      helper: t('subscriptions.kpi.activeLineExpired', { count: activeLineExpiredCount }),
+      color: 'error',
       icon: <ReportProblemOutlinedIcon fontSize="small" />
     }
   ];
@@ -909,60 +921,16 @@ export default function SubscriptionsLionTv() {
         }
       >
         <Grid container spacing={gridSpacing}>
-            {kpiCards.map((item, idx) => (
+          {kpiCards.map((item, idx) => (
             <Grid item xs={12} sm={6} md={3} key={idx}>
-              <Card
-                sx={(theme) => ({
-                  ...glassCard(theme),
-                  py: 1.5,
-                  px: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.5,
-                  borderRadius: 2.5,
-                  border: '1px solid',
-                  borderColor: withAlpha(theme.vars.palette.divider, 0.95)
-                })}
-              >
-                <Avatar
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: item.color,
-                    color: 'common.white',
-                    boxShadow: `0 10px 20px ${withAlpha(item.color, 0.34)}`,
-                    border: '2px solid',
-                    borderColor: 'background.paper'
-                  }}
-                >
-                  {item.icon}
-                </Avatar>
-                <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary' }}>
-                  {item.label}
-                </Typography>
-              </Card>
+              <LionMetricCard {...item} />
             </Grid>
           ))}
         </Grid>
       </MainCard>
 
       <MainCard title={null}>
-        <Box
-          sx={(theme) => ({
-            mb: 2,
-            p: 2,
-            borderRadius: 2.5,
-            border: '1px solid',
-            borderColor: withAlpha(theme.vars.palette.divider, 0.95),
-            backgroundColor: theme.vars.palette.surface.sunken,
-            backgroundImage: `linear-gradient(135deg, ${withAlpha(theme.vars.palette.primary.main, theme.palette.mode === 'dark' ? 0.14 : 0.08)} 0%, ${withAlpha(theme.vars.palette.secondary.main, theme.palette.mode === 'dark' ? 0.1 : 0.06)} 100%)`,
-            boxShadow:
-              theme.palette.mode === 'dark'
-                ? `0 12px 28px ${withAlpha('#020817', 0.42)}`
-                : `0 10px 28px ${withAlpha('#0f172a', 0.1)}`
-          })}
-        >
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+        <ResponsiveFilters paperSx={{ mb: 2 }}>
             <TextField
               size="small"
               placeholder={t('subscriptions.search')}
@@ -1054,8 +1022,7 @@ export default function SubscriptionsLionTv() {
                 </Select>
               </FormControl>
             </Stack>
-          </Stack>
-        </Box>
+        </ResponsiveFilters>
         <ResponsiveEntityView
           isMobile={isMobile}
           mobileContent={

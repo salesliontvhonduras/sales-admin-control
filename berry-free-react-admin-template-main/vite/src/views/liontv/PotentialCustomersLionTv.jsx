@@ -55,11 +55,13 @@ import ContactPhoneOutlinedIcon from '@mui/icons-material/ContactPhoneOutlined';
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
+import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
 import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
+import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -691,69 +693,38 @@ export default function PotentialCustomersLionTv() {
       >
         <Grid container spacing={gridSpacing}>
           {[
-            { icon: GroupIcon, label: t('potentialCustomers.kpi.total'), value: total, color: 'primary.main' },
-            { icon: InfoOutlinedIcon, label: t('potentialCustomers.kpi.new'), value: summary.newCount, color: 'info.main' },
-            { icon: ContactPhoneOutlinedIcon, label: t('potentialCustomers.kpi.contacted'), value: summary.contacted, color: 'warning.main' },
-            { icon: TrendingUpOutlinedIcon, label: t('potentialCustomers.kpi.converted'), value: summary.converted, color: 'success.main' }
+            { icon: <GroupIcon fontSize="small" />, title: t('potentialCustomers.kpi.total'), value: total, helper: t('potentialCustomers.title'), color: 'primary' },
+            {
+              icon: <InfoOutlinedIcon fontSize="small" />,
+              title: t('potentialCustomers.kpi.new'),
+              value: summary.newCount,
+              helper: t('potentialCustomers.filters.status', 'Status'),
+              color: 'info'
+            },
+            {
+              icon: <ContactPhoneOutlinedIcon fontSize="small" />,
+              title: t('potentialCustomers.kpi.contacted'),
+              value: summary.contacted,
+              helper: t('potentialCustomers.headers.phone', 'Phone activity'),
+              color: 'warning'
+            },
+            {
+              icon: <TrendingUpOutlinedIcon fontSize="small" />,
+              title: t('potentialCustomers.kpi.converted'),
+              value: summary.converted,
+              helper: t('potentialCustomers.headers.category', 'Category pipeline'),
+              color: 'success'
+            }
           ].map((item, idx) => (
             <Grid item xs={12} sm={6} md={3} key={idx}>
-              <Card
-                sx={(theme) => ({
-                  ...glassCard(theme),
-                  py: 1.5,
-                  px: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.5,
-                  background:
-                    theme.palette.mode === 'light'
-                      ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, ${theme.palette.background.paper} 100%)`
-                      : theme.palette.background.paper
-                })}
-              >
-                <Avatar
-                  sx={(theme) => ({
-                    width: 40,
-                    height: 40,
-                    bgcolor: item.color,
-                    color: theme.palette.getContrastText(theme.palette.primary.main),
-                    boxShadow: 3,
-                    border: '2px solid',
-                    borderColor: 'background.paper'
-                  })}
-                >
-                  <item.icon fontSize="small" />
-                </Avatar>
-                <Box>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                    {item.value}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {item.label}
-                  </Typography>
-                </Box>
-              </Card>
+              <LionMetricCard {...item} />
             </Grid>
           ))}
         </Grid>
       </MainCard>
 
       <MainCard title={t('potentialCustomers.search', 'Buscar potenciales')}>
-        <Box
-          sx={(theme) => ({
-            mb: 2,
-            p: 2,
-            borderRadius: 2.5,
-            border: '1px solid',
-            borderColor: theme.palette.divider,
-            background:
-              theme.palette.mode === 'light'
-                ? `linear-gradient(135deg, ${theme.palette.primary.light}12 0%, ${theme.palette.secondary.light}10 100%)`
-                : theme.palette.background.paper,
-            boxShadow: '0 10px 28px rgba(0,0,0,0.08)'
-          })}
-        >
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+        <ResponsiveFilters paperSx={{ mb: 2 }}>
             <TextField
               size="small"
               placeholder={t('potentialCustomers.searchPlaceholder', 'Buscar por nombre, correo, teléfono, país')}
@@ -782,8 +753,7 @@ export default function PotentialCustomersLionTv() {
                 ))}
               </Select>
             </FormControl>
-          </Stack>
-        </Box>
+        </ResponsiveFilters>
 
         <ResponsiveEntityView
           isMobile={isMobile}

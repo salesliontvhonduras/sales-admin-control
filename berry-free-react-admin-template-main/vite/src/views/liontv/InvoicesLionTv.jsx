@@ -35,6 +35,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import { useTheme, useMediaQuery } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
+import Skeleton from '@mui/material/Skeleton';
 
 import RefreshIcon from '@mui/icons-material/Refresh';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
@@ -63,11 +64,13 @@ import AutorenewIcon from '@mui/icons-material/Autorenew';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 
 import MainCard from 'ui-component/cards/MainCard';
+import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
 import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
+import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi, catalogsApi } from 'utils/api';
 
@@ -686,43 +689,30 @@ export default function InvoicesLionTv() {
       >
         <Grid container spacing={gridSpacing}>
           {[
-            { label: t('invoices.summary.total', { count: summary.total }), icon: ReceiptLongIcon, color: 'primary.main' },
-            { label: t('invoices.summary.paid', { count: summary.paid }), icon: PaidOutlinedIcon, color: 'success.main' },
-            { label: t('invoices.summary.pending', { count: summary.pending }), icon: PendingActionsIcon, color: 'warning.main' }
+            {
+              title: t('invoices.summary.totalLabel', 'Facturas'),
+              value: summary.total,
+              helper: t('invoices.summary.total', { count: summary.total }),
+              icon: <ReceiptLongIcon fontSize="small" />,
+              color: 'primary'
+            },
+            {
+              title: t('invoices.summary.paidLabel', 'Pagadas'),
+              value: summary.paid,
+              helper: t('invoices.summary.paid', { count: summary.paid }),
+              icon: <PaidOutlinedIcon fontSize="small" />,
+              color: 'success'
+            },
+            {
+              title: t('invoices.summary.pendingLabel', 'Pendientes'),
+              value: summary.pending,
+              helper: t('invoices.summary.pending', { count: summary.pending }),
+              icon: <PendingActionsIcon fontSize="small" />,
+              color: 'warning'
+            }
           ].map((item, idx) => (
             <Grid item xs={12} sm={4} md={4} key={idx}>
-              <Card
-                sx={(theme) => ({
-                  ...glassCard(theme),
-                  py: 1.5,
-                  px: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1.5,
-                  background:
-                    theme.palette.mode === 'light'
-                      ? `linear-gradient(155deg, ${theme.palette.primary.main}1F 0%, ${theme.palette.secondary.main}20 55%, ${theme.palette.background.paper} 100%)`
-                      : theme.palette.background.paper
-                })}
-              >
-                <Avatar
-                  sx={(theme) => ({
-                    width: 40,
-                    height: 40,
-                    bgcolor: theme.palette.mode === 'light' ? `${item.color}` : theme.palette.primary.dark,
-                    color: theme.palette.getContrastText(theme.palette.primary.main),
-                    fontWeight: 700,
-                    boxShadow: 3,
-                    border: '2px solid',
-                    borderColor: 'background.paper'
-                  })}
-                >
-                  <item.icon fontSize="small" />
-                </Avatar>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
-                  {item.label}
-                </Typography>
-              </Card>
+              <LionMetricCard {...item} />
             </Grid>
           ))}
         </Grid>
@@ -731,23 +721,10 @@ export default function InvoicesLionTv() {
       <MainCard
         title={t('invoices.search')}
         secondary={
-          <Paper
-            elevation={0}
-            sx={(theme) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              width: { xs: '100%', sm: 520 },
-              p: 1,
-              borderRadius: 2,
-              border: '1px solid',
-              borderColor: 'divider',
-              background:
-                theme.palette.mode === 'light'
-                  ? `linear-gradient(120deg, ${theme.palette.primary.light}12 0%, ${theme.palette.secondary.light}12 100%)`
-                  : theme.palette.background.paper,
-              boxShadow: '0 8px 18px rgba(0,0,0,0.05)'
-            })}
+          <ResponsiveFilters
+            paperSx={{
+              width: { xs: '100%', sm: 560 }
+            }}
           >
             <TextField
               size="small"
@@ -802,7 +779,7 @@ export default function InvoicesLionTv() {
                 ))}
               </Select>
             </FormControl>
-          </Paper>
+          </ResponsiveFilters>
         }
       >
         <ResponsiveEntityView

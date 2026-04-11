@@ -74,6 +74,7 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import { useTranslation } from 'react-i18next';
 
 import MainCard from 'ui-component/cards/MainCard';
+import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi, catalogsApi } from 'utils/api';
@@ -282,50 +283,7 @@ function initials(name = '') {
 }
 
 function StatCard({ icon, title, value, helper, color = 'primary' }) {
-  return (
-    <Box
-      sx={{
-        p: 2,
-        borderRadius: 2,
-        bgcolor: (theme) => `${theme.palette[color]?.main ?? theme.palette.grey[500]}10`,
-        border: '1px solid',
-        borderColor: 'divider',
-        boxShadow: 2,
-        display: 'flex',
-        gap: 1.5,
-        alignItems: 'center',
-        minHeight: 110
-      }}
-    >
-      <Avatar
-        sx={{
-          bgcolor: (theme) => theme.palette[color]?.light ?? theme.palette.grey[200],
-          color: (theme) => theme.palette[color]?.contrastText ?? theme.palette.text.primary,
-          width: 42,
-          height: 42,
-          boxShadow: 3
-        }}
-      >
-        {icon}
-      </Avatar>
-      <Box sx={{ flex: 1 }}>
-        <Typography variant="caption" color="text.secondary">
-          {title}
-        </Typography>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
-          {value}
-        </Typography>
-        {helper ? (
-          <Stack direction="row" spacing={0.75} alignItems="center">
-            <InfoOutlinedIcon fontSize="inherit" color="action" />
-            <Typography variant="caption" color="text.secondary">
-              {helper}
-            </Typography>
-          </Stack>
-        ) : null}
-      </Box>
-    </Box>
-  );
+  return <LionMetricCard title={title} value={value} helper={helper} color={color} icon={icon} />;
 }
 
 function LabelWithIcon({ icon, label, color = 'primary' }) {
