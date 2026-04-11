@@ -22,7 +22,7 @@ const resources = {
         liontvOverview: 'Overview',
         liontvOverviewCaption: 'Daily control and priorities',
         liontvCommercial: 'Customers & Sales',
-        liontvCommercialCaption: 'CRM, collections and commercial relationship',
+        liontvCommercialCaption: 'CRM, collections and commercial',
         liontvOperations: 'Technical Operations',
         liontvOperationsCaption: 'Inventory, lines and accounts',
         liontvContent: 'Content & Feed',
