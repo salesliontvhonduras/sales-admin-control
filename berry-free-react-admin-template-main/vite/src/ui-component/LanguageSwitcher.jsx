@@ -28,7 +28,7 @@ const StyledChip = styled(Chip)(({ theme }) => ({
   }
 }));
 
-export default function LanguageSwitcher({ overlay = false }) {
+export default function LanguageSwitcher({ overlay = false, compact = false, sx = {} }) {
   const { i18n, t } = useTranslation();
   const isEs = i18n.language === 'es';
   const next = isEs ? 'en' : 'es';
@@ -47,9 +47,10 @@ export default function LanguageSwitcher({ overlay = false }) {
       clickable
       onClick={toggle}
       avatar={<Avatar sx={{ bgcolor: 'transparent', fontSize: 16 }}>{flag}</Avatar>}
-      label={`${t('actions.language')}: ${label}`}
+      label={compact ? label : `${t('actions.language')}: ${label}`}
       variant="outlined"
       size="small"
+      sx={sx}
     />
   );
 }

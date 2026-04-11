@@ -13,7 +13,6 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
-import Grid from '@mui/material/Grid';
 import InputLabel from '@mui/material/InputLabel';
 import LinearProgress from '@mui/material/LinearProgress';
 import ListItemText from '@mui/material/ListItemText';
@@ -53,6 +52,7 @@ import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveListSection from 'ui-component/responsive/ResponsiveListSection';
+import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import {
   createAdminUser,
@@ -96,22 +96,34 @@ const modalPaperSx = (theme) => ({
 });
 
 const modalHeaderSx = (theme) => ({
-  px: 3,
-  py: 2.2,
+  px: { xs: 1.75, sm: 3 },
+  py: { xs: 1.5, sm: 2.2 },
   borderBottom: `1px solid ${theme.palette.divider}`,
   background: `linear-gradient(135deg, ${withAlpha(theme.vars.palette.primary.main, 0.18)} 0%, ${withAlpha(theme.vars.palette.secondary.main, 0.14)} 100%)`
 });
 
 const modalContentSx = {
-  px: 3,
-  py: 2.5
+  px: { xs: 1.5, sm: 3 },
+  py: { xs: 1.75, sm: 2.5 },
+  '& .MuiFormControl-root, & .MuiTextField-root': {
+    width: '100%',
+    minWidth: 0
+  }
 };
 
 const modalActionsSx = (theme) => ({
-  px: 3,
-  py: 2,
+  px: { xs: 1.5, sm: 3 },
+  py: { xs: 1.5, sm: 2 },
   borderTop: `1px solid ${theme.palette.divider}`,
-  backgroundColor: withAlpha(theme.vars.palette.surface.muted, 0.86)
+  backgroundColor: withAlpha(theme.vars.palette.surface.muted, 0.86),
+  [theme.breakpoints.down('sm')]: {
+    flexDirection: 'column-reverse',
+    alignItems: 'stretch',
+    gap: 1,
+    '& > .MuiButton-root': {
+      width: '100%'
+    }
+  }
 });
 
 const filterPanelSx = (theme) => ({
@@ -396,8 +408,8 @@ export default function UserAccessAdmin() {
   };
 
   return (
-    <Grid container spacing={gridSpacing}>
-      <Grid item xs={12}>
+    <Stack spacing={gridSpacing}>
+      <Box sx={{ width: '100%', minWidth: 0 }}>
         <MainCard
           sx={sectionCardSx}
           title={t('userAccess.title')}
@@ -421,45 +433,41 @@ export default function UserAccessAdmin() {
             {t('userAccess.subtitle')}
           </Typography>
         </MainCard>
-      </Grid>
+      </Box>
 
-      <Grid item xs={12} md={3}>
-        <MetricCard
-          title={t('userAccess.metrics.usersInPage')}
-          value={users.length}
-          helper={t('userAccess.metrics.filteredTotal', { count: total })}
-          icon={<BadgeOutlinedIcon />}
-        />
-      </Grid>
-      <Grid item xs={12} md={3}>
-        <MetricCard
-          title={t('userAccess.metrics.active')}
-          value={metrics.activeCount}
-          helper={t('userAccess.metrics.activeHelper')}
-          color="success"
-          icon={<VerifiedUserOutlinedIcon />}
-        />
-      </Grid>
-      <Grid item xs={12} md={3}>
-        <MetricCard
-          title={t('userAccess.metrics.adminsInPage')}
-          value={metrics.adminCount}
-          helper={t('userAccess.metrics.adminsHelper')}
-          color="error"
-          icon={<AdminPanelSettingsOutlinedIcon />}
-        />
-      </Grid>
-      <Grid item xs={12} md={3}>
-        <MetricCard
-          title={t('userAccess.metrics.noActiveLicense')}
-          value={metrics.noLicense}
-          helper={t('userAccess.metrics.noActiveLicenseHelper')}
-          color="warning"
-          icon={<BlockOutlinedIcon />}
-        />
-      </Grid>
+      <Box sx={{ width: '100%', minWidth: 0 }}>
+        <ResponsiveMetricGrid columns={{ xs: 1, md: 2, xl: 4 }} gap={gridSpacing}>
+          <MetricCard
+            title={t('userAccess.metrics.usersInPage')}
+            value={users.length}
+            helper={t('userAccess.metrics.filteredTotal', { count: total })}
+            icon={<BadgeOutlinedIcon />}
+          />
+          <MetricCard
+            title={t('userAccess.metrics.active')}
+            value={metrics.activeCount}
+            helper={t('userAccess.metrics.activeHelper')}
+            color="success"
+            icon={<VerifiedUserOutlinedIcon />}
+          />
+          <MetricCard
+            title={t('userAccess.metrics.adminsInPage')}
+            value={metrics.adminCount}
+            helper={t('userAccess.metrics.adminsHelper')}
+            color="error"
+            icon={<AdminPanelSettingsOutlinedIcon />}
+          />
+          <MetricCard
+            title={t('userAccess.metrics.noActiveLicense')}
+            value={metrics.noLicense}
+            helper={t('userAccess.metrics.noActiveLicenseHelper')}
+            color="warning"
+            icon={<BlockOutlinedIcon />}
+          />
+        </ResponsiveMetricGrid>
+      </Box>
 
-      <Grid item xs={12}>
+      <Box sx={{ width: '100%', minWidth: 0 }}>
         <MainCard title={t('userAccess.listTitle')} sx={sectionCardSx}>
           <Stack spacing={2.5}>
             <ResponsiveFilters
@@ -695,7 +703,7 @@ export default function UserAccessAdmin() {
             />
           </Stack>
         </MainCard>
-      </Grid>
+      </Box>
 
       <Dialog
         open={createOpen}
@@ -713,16 +721,24 @@ export default function UserAccessAdmin() {
             <Alert severity="info" variant="outlined" sx={infoAlertSx}>
               {t('userAccess.dialogs.create.info')}
             </Alert>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 2,
+                width: '100%',
+                minWidth: 0,
+                gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }
+              }}
+            >
+              <Box>
                 <TextField
                   fullWidth
                   label={t('userAccess.form.name')}
                   value={createForm.name}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, name: e.target.value }))}
                 />
-              </Grid>
-              <Grid item xs={12} md={6}>
+              </Box>
+              <Box>
                 <TextField
                   fullWidth
                   label={t('userAccess.form.email')}
@@ -730,8 +746,8 @@ export default function UserAccessAdmin() {
                   value={createForm.email}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, email: e.target.value }))}
                 />
-              </Grid>
-              <Grid item xs={12} md={6}>
+              </Box>
+              <Box>
                 <TextField
                   fullWidth
                   label={t('userAccess.form.tempPassword')}
@@ -739,16 +755,16 @@ export default function UserAccessAdmin() {
                   value={createForm.password}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, password: e.target.value }))}
                 />
-              </Grid>
-              <Grid item xs={12} md={6}>
+              </Box>
+              <Box>
                 <TextField
                   fullWidth
                   label={t('userAccess.form.serialCode')}
                   value={createForm.serialCode}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, serialCode: e.target.value }))}
                 />
-              </Grid>
-              <Grid item xs={12} md={6}>
+              </Box>
+              <Box>
                 <FormControl fullWidth>
                   <InputLabel id="create-roles-label">{t('userAccess.form.roles')}</InputLabel>
                   <Select
@@ -767,8 +783,8 @@ export default function UserAccessAdmin() {
                     ))}
                   </Select>
                 </FormControl>
-              </Grid>
-              <Grid item xs={12} md={6}>
+              </Box>
+              <Box>
                 <FormControl fullWidth>
                   <InputLabel id="create-permissions-label">{t('userAccess.form.extraPermissions')}</InputLabel>
                   <Select
@@ -787,8 +803,8 @@ export default function UserAccessAdmin() {
                     ))}
                   </Select>
                 </FormControl>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
           </Stack>
         </DialogContent>
         <DialogActions sx={modalActionsSx}>
@@ -921,6 +937,6 @@ export default function UserAccessAdmin() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Grid>
+    </Stack>
   );
 }

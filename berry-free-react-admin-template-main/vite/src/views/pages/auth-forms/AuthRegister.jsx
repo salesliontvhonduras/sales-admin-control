@@ -4,7 +4,6 @@ import { Link, useNavigate } from 'react-router-dom';
 // material-ui
 import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
-import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import InputLabel from '@mui/material/InputLabel';
@@ -119,12 +118,21 @@ export default function AuthRegister() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Stack sx={{ mb: 2, alignItems: 'center' }}>
-        <Typography variant="subtitle1">{t('auth.register')}</Typography>
+      <Stack sx={{ mb: 2, alignItems: 'center', width: '100%' }}>
+        <Typography variant="subtitle1" sx={{ textAlign: 'center' }}>
+          {t('auth.register')}
+        </Typography>
       </Stack>
 
-      <Grid container spacing={{ xs: 1.5, sm: 2 }}>
-        <Grid item xs={12} sm={6}>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: { xs: 0.5, sm: 1 },
+          width: '100%',
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }
+        }}
+      >
+        <Box>
           <CustomFormControl fullWidth>
             <InputLabel htmlFor="outlined-adornment-first-register">{t('auth.firstName')}</InputLabel>
             <OutlinedInput
@@ -136,8 +144,8 @@ export default function AuthRegister() {
               label={t('auth.firstName')}
             />
           </CustomFormControl>
-        </Grid>
-        <Grid item xs={12} sm={6}>
+        </Box>
+        <Box>
           <CustomFormControl fullWidth>
             <InputLabel htmlFor="outlined-adornment-last-register">{t('auth.lastName')}</InputLabel>
             <OutlinedInput
@@ -149,8 +157,8 @@ export default function AuthRegister() {
               label={t('auth.lastName')}
             />
           </CustomFormControl>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       <CustomFormControl fullWidth>
         <InputLabel htmlFor="outlined-adornment-email-register">{t('auth.email')}</InputLabel>

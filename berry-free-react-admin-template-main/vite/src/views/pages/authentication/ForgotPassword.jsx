@@ -16,10 +16,12 @@ import { authApi } from 'utils/api';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from 'ui-component/LanguageSwitcher';
 import ThemeModeSwitcher from 'ui-component/ThemeModeSwitcher';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 export default function ForgotPassword() {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation();
+  const isMobile = useMediaQuery((theme) => theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const [step, setStep] = useState('email'); // email | reset
   const [email, setEmail] = useState('');
@@ -68,21 +70,33 @@ export default function ForgotPassword() {
 
   return (
     <AuthWrapper1>
-      <Stack sx={{ justifyContent: 'space-between', minHeight: '100vh' }}>
-        <Stack sx={{ justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 72px)', px: { xs: 1, sm: 2.5 }, py: { xs: 2, sm: 3 } }}>
-          <Box sx={{ width: '100%', maxWidth: { xs: 480, md: 520 }, position: 'relative' }}>
+      <Stack sx={{ justifyContent: 'space-between', minHeight: { xs: '100dvh', sm: '100vh' } }}>
+        <Stack
+          sx={{
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: { xs: 'auto', sm: 'calc(100vh - 72px)' },
+            px: { xs: 1, sm: 2.5 },
+            py: { xs: 1.5, sm: 3 },
+            flex: 1
+          }}
+        >
+          <Box sx={{ width: '100%', maxWidth: { xs: '100%', sm: 480, md: 520 }, position: 'relative', minWidth: 0 }}>
             <AuthCardWrapper>
-              <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-                <Box sx={{ mb: 3 }}>
+              <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: { xs: 1.5, sm: 2 }, minWidth: 0 }}>
+                <Box sx={{ mb: { xs: 1, sm: 3 } }}>
                   <Link to="#" aria-label={t('auth.logoAriaLabel')}>
                     <Logo />
                   </Link>
                 </Box>
-                <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                  <Typography variant="h4" sx={{ color: 'secondary.main' }}>
+                <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 0.75, width: '100%', minWidth: 0 }}>
+                  <Typography variant={isMobile ? 'h5' : 'h4'} sx={{ color: 'secondary.main', textAlign: 'center', width: '100%' }}>
                     {t('auth.recoverTitle')}
                   </Typography>
-                  <Typography variant="caption" sx={{ fontSize: '16px', textAlign: { xs: 'center', md: 'inherit' } }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontSize: { xs: '0.95rem', sm: '1rem' }, textAlign: 'center', color: 'text.secondary', maxWidth: 420 }}
+                  >
                     {t('auth.recoverSubtitle')}
                   </Typography>
                 </Stack>
@@ -119,7 +133,7 @@ export default function ForgotPassword() {
                       >
                         {loading ? t('auth.savingPass') : t('auth.resetPass')}
                       </Button>
-                      <Button size="small" onClick={() => setStep('email')} sx={{ alignSelf: 'flex-start' }}>
+                      <Button size="small" onClick={() => setStep('email')} sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}>
                         {t('auth.sendAnother')}
                       </Button>
                     </>
@@ -127,20 +141,46 @@ export default function ForgotPassword() {
                 </Stack>
                 <Divider sx={{ width: 1 }} />
                 <Stack sx={{ alignItems: 'center' }}>
-                  <Typography component={Link} to="/pages/login" variant="subtitle1" sx={{ textDecoration: 'none' }}>
+                  <Typography component={Link} to="/pages/login" variant="subtitle1" sx={{ textDecoration: 'none', textAlign: 'center' }}>
                     {t('auth.login')}
                   </Typography>
                 </Stack>
                 <Divider sx={{ width: 1 }} />
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignItems: 'center', justifyContent: 'center' }}>
-                  <ThemeModeSwitcher />
-                  <LanguageSwitcher />
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'stretch', justifyContent: 'center', width: '100%' }}>
+                  <ThemeModeSwitcher
+                    compact={isMobile}
+                    sx={{
+                      flex: 1,
+                      minWidth: 0,
+                      maxWidth: { xs: 'none', sm: 180 },
+                      width: '100%',
+                      justifyContent: 'center',
+                      '& .MuiChip-label': {
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }
+                    }}
+                  />
+                  <LanguageSwitcher
+                    compact={isMobile}
+                    sx={{
+                      flex: 1,
+                      minWidth: 0,
+                      maxWidth: { xs: 'none', sm: 180 },
+                      width: '100%',
+                      justifyContent: 'center',
+                      '& .MuiChip-label': {
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }
+                    }}
+                  />
                 </Stack>
               </Stack>
             </AuthCardWrapper>
           </Box>
         </Stack>
-        <Box sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+        <Box sx={{ px: { xs: 1.25, sm: 3 }, py: { xs: 1.5, sm: 3 } }}>
           <AuthFooter />
         </Box>
       </Stack>

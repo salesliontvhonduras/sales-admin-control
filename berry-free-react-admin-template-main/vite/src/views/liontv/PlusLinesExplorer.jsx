@@ -5,7 +5,6 @@ import useAuth from 'hooks/useAuth';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
@@ -38,6 +37,7 @@ import TrafficIcon from '@mui/icons-material/Traffic';
 
 import MainCard from 'ui-component/cards/MainCard';
 import LionMetricCard from 'ui-component/cards/LionMetricCard';
+import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -48,6 +48,8 @@ const glassCard = (theme) => ({
   borderColor: theme.palette.divider,
   boxShadow: '0 18px 38px rgba(0,0,0,0.10)',
   backdropFilter: 'blur(6px)',
+  width: '100%',
+  minWidth: 0,
   background:
     theme.palette.mode === 'light'
       ? `linear-gradient(135deg, ${theme.palette.primary.light}22 0%, ${theme.palette.secondary.light}12 45%, ${theme.palette.background.paper} 100%)`
@@ -241,7 +243,7 @@ export default function PlusLinesExplorer() {
   return (
     <Box sx={{ width: '100%', maxWidth: { xs: '100%', xl: 1400 }, mx: 'auto' }}>
       <MainCard title={t('plusLines.title', 'Plus Lines Explorer')} secondary={null}>
-        <Grid container spacing={gridSpacing}>
+        <ResponsiveMetricGrid columns={{ xs: 1, md: 2, lg: 3, xl: 5 }} gap={gridSpacing}>
           {[
             { title: t('plusLines.cards.countries', 'Países con líneas plus'), value: summary.length, icon: <MapIcon />, color: '#1e88e5' },
             { title: t('plusLines.cards.lines', 'Líneas plus'), value: totalLines, icon: <LanIcon />, color: '#7e57c2' },
@@ -249,25 +251,32 @@ export default function PlusLinesExplorer() {
             { title: t('plusLines.cards.unusedLines', 'Líneas sin uso activo'), value: totalUnusedLines, icon: <PendingActionsIcon />, color: '#fb8c00' },
             { title: t('plusLines.cards.inactiveSubs', 'Suscripciones inactivas'), value: totalInactiveSubs, icon: <CancelIcon />, color: '#ef5350' }
           ].map((item, idx) => (
-            <Grid item xs={12} sm={12} md={6} lg={4} xl={2} key={idx}>
-              <LionMetricCard {...item} />
-            </Grid>
+            <LionMetricCard {...item} key={idx} />
           ))}
-        </Grid>
+        </ResponsiveMetricGrid>
       </MainCard>
 
       <MainCard title={t('plusLines.mapTitle', 'Mapa por país')}>
-        <Grid container spacing={2}>
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 2,
+            width: '100%',
+            minWidth: 0,
+            justifyItems: 'stretch',
+            gridTemplateColumns: { xs: '1fr', xl: 'repeat(2, minmax(0, 1fr))' }
+          }}
+        >
           {loadingSummary &&
             Array.from({ length: 6 }).map((_, idx) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={idx}>
+              <Box key={idx}>
                 <Skeleton variant="rectangular" height={90} sx={{ borderRadius: 2 }} />
-              </Grid>
+              </Box>
             ))}
 
           {!loadingSummary &&
             summaryWithFlags.map((item) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={item.country}>
+              <Box key={item.country} sx={{ width: '100%', minWidth: 0 }}>
                 <Card
                   onClick={() => setSelectedCountry(item.country)}
                   sx={(theme) => ({
@@ -300,9 +309,9 @@ export default function PlusLinesExplorer() {
                     </Box>
                   </Stack>
                 </Card>
-              </Grid>
+              </Box>
             ))}
-        </Grid>
+        </Box>
       </MainCard>
 
       <MainCard
@@ -341,13 +350,22 @@ export default function PlusLinesExplorer() {
         )}
 
         {selectedCountry && loadingLines && (
-          <Grid container spacing={2}>
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 2,
+              width: '100%',
+              minWidth: 0,
+              justifyItems: 'stretch',
+              gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }
+            }}
+          >
             {Array.from({ length: 4 }).map((_, idx) => (
-              <Grid item xs={12} md={6} key={idx}>
+              <Box key={idx}>
                 <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
         )}
 
         {selectedCountry && !loadingLines && lines.length === 0 && (
@@ -394,7 +412,16 @@ export default function PlusLinesExplorer() {
               </Paper>
             )}
 
-            <Grid container spacing={2}>
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 2,
+                width: '100%',
+                minWidth: 0,
+                justifyItems: 'stretch',
+                gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }
+              }}
+            >
               {lines.map((line) => {
                 const activeSubs = activeSubscriptionsOf(line);
                 const inactiveSubs = inactiveSubscriptionsOf(line);
@@ -402,7 +429,7 @@ export default function PlusLinesExplorer() {
                 const isUnused = activeSubs === 0;
                 const normalizedStatus = normalizePlusStatus(line.status);
                 return (
-                  <Grid item xs={12} md={6} key={line.linePlusId}>
+                  <Box key={line.linePlusId} sx={{ width: '100%', minWidth: 0 }}>
                     <Card
                       sx={(theme) => ({
                         ...glassCard(theme),
@@ -411,7 +438,8 @@ export default function PlusLinesExplorer() {
                         minHeight: 240,
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: 1
+                        gap: 1,
+                        width: '100%'
                       })}
                     >
                       <Stack
@@ -498,10 +526,10 @@ export default function PlusLinesExplorer() {
 
                       <SubscriptionsInline linePlusId={line.linePlusId} totalSubscriptions={totalSubs} />
                     </Card>
-                  </Grid>
+                  </Box>
                 );
               })}
-            </Grid>
+            </Box>
           </Stack>
         )}
       </MainCard>

@@ -13,7 +13,13 @@ const AuthWrapper1 = styled('div')(({ theme }) => ({
   display: 'flex',
   flexDirection: 'column',
   width: '100%',
-  overflowX: 'hidden'
+  overflowX: 'hidden',
+  overflowY: 'auto',
+  position: 'relative',
+  padding: theme.spacing(0),
+  [theme.breakpoints.down('sm')]: {
+    minHeight: '100dvh'
+  }
 }));
 
 export default AuthWrapper1;

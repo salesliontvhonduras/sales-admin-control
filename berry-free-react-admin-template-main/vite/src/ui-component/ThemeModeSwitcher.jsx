@@ -42,7 +42,7 @@ const modeOptions = [
   { value: 'system', icon: <SettingsBrightnessRoundedIcon fontSize="small" /> }
 ];
 
-export default function ThemeModeSwitcher({ compact = false }) {
+export default function ThemeModeSwitcher({ compact = false, sx = {} }) {
   const { t } = useTranslation();
   const colorSchemeApi = useColorScheme();
   const mode = colorSchemeApi?.mode ?? colorSchemeApi?.colorScheme ?? 'system';
@@ -80,6 +80,7 @@ export default function ThemeModeSwitcher({ compact = false }) {
         label={compact ? `${modeLabel[currentOption.value]}` : `${t('themeMode.labelPrefix')}: ${modeLabel[currentOption.value]}`}
         variant="outlined"
         size="small"
+        sx={sx}
       />
       <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)} keepMounted>
         {modeOptions.map((option) => (

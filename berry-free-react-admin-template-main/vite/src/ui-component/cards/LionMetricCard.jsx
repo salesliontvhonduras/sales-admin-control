@@ -44,6 +44,8 @@ export function lionMetricCardSx(theme, color = 'primary') {
   const paletteColor = resolveMetricColor(theme, color);
 
   return {
+    width: '100%',
+    minWidth: 0,
     borderRadius: { xs: 3.5, sm: 3 },
     border: '1px solid',
     borderColor: withAlpha(paletteColor.main, theme.palette.mode === 'dark' ? 0.3 : 0.16),

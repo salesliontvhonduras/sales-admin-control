@@ -19,47 +19,90 @@ import ThemeModeSwitcher from 'ui-component/ThemeModeSwitcher';
 
 export default function Register() {
   const downMD = useMediaQuery((theme) => theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery((theme) => theme.breakpoints.down('sm'));
   const { t } = useTranslation();
 
   return (
     <AuthWrapper1>
-      <Stack sx={{ justifyContent: 'space-between', minHeight: '100vh' }}>
-        <Stack sx={{ justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 72px)', px: { xs: 1, sm: 2.5 }, py: { xs: 2, sm: 3 } }}>
-          <Box sx={{ width: '100%', maxWidth: { xs: 520, md: 620 }, position: 'relative' }}>
+      <Stack sx={{ justifyContent: 'space-between', minHeight: { xs: '100dvh', sm: '100vh' } }}>
+        <Stack
+          sx={{
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: { xs: 'auto', sm: 'calc(100vh - 72px)' },
+            px: { xs: 1, sm: 2.5 },
+            py: { xs: 1.5, sm: 3 },
+            flex: 1
+          }}
+        >
+          <Box sx={{ width: '100%', maxWidth: { xs: '100%', sm: 520, md: 620 }, position: 'relative', minWidth: 0 }}>
             <AuthCardWrapper>
-              <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-                <Box sx={{ mb: 3 }}>
+              <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: { xs: 1.5, sm: 2 }, minWidth: 0 }}>
+                <Box sx={{ mb: { xs: 1, sm: 3 } }}>
                   <Link to="#" aria-label={t('auth.logoAriaLabel')}>
                     <Logo />
                   </Link>
                 </Box>
-                <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                  <Typography gutterBottom variant={downMD ? 'h3' : 'h2'} sx={{ color: 'secondary.main', mb: 0 }}>
+                <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 0.75, width: '100%', minWidth: 0 }}>
+                  <Typography
+                    gutterBottom
+                    variant={downMD ? 'h3' : 'h2'}
+                    sx={{ color: 'secondary.main', mb: 0, textAlign: 'center', width: '100%', overflowWrap: 'anywhere' }}
+                  >
                     {t('auth.registerBtn')}
                   </Typography>
-                  <Typography variant="caption" sx={{ fontSize: '16px', textAlign: { xs: 'center', md: 'inherit' } }}>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontSize: { xs: '0.95rem', sm: '1rem' }, textAlign: 'center', color: 'text.secondary', maxWidth: 460 }}
+                  >
                     {t('auth.enterCredentials')}
                   </Typography>
                 </Stack>
-                <Box>
+                <Box sx={{ width: 1, minWidth: 0 }}>
                   <AuthRegister />
                 </Box>
                 <Divider sx={{ width: 1 }} />
                 <Stack sx={{ alignItems: 'center' }}>
-                  <Typography component={Link} to="/pages/login" variant="subtitle1" sx={{ textDecoration: 'none' }}>
+                  <Typography component={Link} to="/pages/login" variant="subtitle1" sx={{ textDecoration: 'none', textAlign: 'center' }}>
                     {t('auth.login')}
                   </Typography>
                 </Stack>
                 <Divider sx={{ width: 1 }} />
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignItems: 'center', justifyContent: 'center' }}>
-                  <ThemeModeSwitcher />
-                  <LanguageSwitcher />
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'stretch', justifyContent: 'center', width: '100%' }}>
+                  <ThemeModeSwitcher
+                    compact={isMobile}
+                    sx={{
+                      flex: 1,
+                      minWidth: 0,
+                      maxWidth: { xs: 'none', sm: 180 },
+                      width: '100%',
+                      justifyContent: 'center',
+                      '& .MuiChip-label': {
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }
+                    }}
+                  />
+                  <LanguageSwitcher
+                    compact={isMobile}
+                    sx={{
+                      flex: 1,
+                      minWidth: 0,
+                      maxWidth: { xs: 'none', sm: 180 },
+                      width: '100%',
+                      justifyContent: 'center',
+                      '& .MuiChip-label': {
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }
+                    }}
+                  />
                 </Stack>
               </Stack>
             </AuthCardWrapper>
           </Box>
         </Stack>
-        <Stack sx={{ px: { xs: 1.5, sm: 3 }, pb: { xs: 2, sm: 3 }, pt: 1 }}>
+        <Stack sx={{ px: { xs: 1.25, sm: 3 }, pb: { xs: 1.5, sm: 3 }, pt: 1 }}>
           <AuthFooter />
         </Stack>
       </Stack>

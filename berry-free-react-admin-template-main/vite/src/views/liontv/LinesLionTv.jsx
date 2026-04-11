@@ -7,7 +7,6 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
-import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import Table from '@mui/material/Table';
@@ -90,7 +89,9 @@ const detailCardSx = {
   border: '1px solid',
   borderColor: 'divider',
   bgcolor: 'background.paper',
-  boxShadow: '0 10px 24px rgba(0,0,0,0.08)'
+  boxShadow: '0 10px 24px rgba(0,0,0,0.08)',
+  width: '100%',
+  minWidth: 0
 };
 
 const infoCardBase = (theme) => ({
@@ -99,6 +100,7 @@ const infoCardBase = (theme) => ({
   height: '100%',
   display: 'flex',
   alignItems: 'stretch',
+  width: '100%',
   background: `linear-gradient(160deg, ${theme.palette.background.paper} 0%, ${theme.palette.primary.light}08 100%)`
 });
 
@@ -111,7 +113,10 @@ const heroCardSx = (theme) => ({
   boxShadow: '0 18px 44px rgba(0,0,0,0.14)',
   display: 'flex',
   gap: 2,
-  alignItems: 'center'
+  alignItems: 'center',
+  flexDirection: 'column',
+  width: '100%',
+  minWidth: 0
 });
 
 const pillSx = {
@@ -978,7 +983,13 @@ export default function LinesLionTv() {
           }}
         >
           <Stack spacing={2.25} sx={{ position: 'relative', zIndex: 1 }}>
-            <Box sx={(theme) => heroCardSx(theme)}>
+            <Box
+              sx={(theme) => ({
+                ...heroCardSx(theme),
+                flexDirection: { xs: 'column', md: 'row' },
+                alignItems: { xs: 'flex-start', md: 'center' }
+              })}
+            >
               <Avatar
                 sx={{
                   bgcolor: 'primary.main',
@@ -990,14 +1001,14 @@ export default function LinesLionTv() {
               >
                 <KeyIcon fontSize="medium" />
               </Avatar>
-              <Box sx={{ flex: 1 }}>
+              <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
                 <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1 }}>
                   {t('lines.detail.user')}
                 </Typography>
-                <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.1 }}>
+                <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.1, overflowWrap: 'anywhere' }}>
                   {detail.row?.username || '-'}
                 </Typography>
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5, flexWrap: 'wrap' }}>
+                <Stack direction="row" spacing={1} alignItems="center" useFlexGap sx={{ mt: 0.5, flexWrap: 'wrap', minWidth: 0 }}>
                   <Chip
                     label={`${t('lines.detail.password')}: ${showPassword ? detail.row?.password || '-' : '••••••'}`}
                     size="small"
@@ -1027,28 +1038,45 @@ export default function LinesLionTv() {
                   ) : null}
                 </Stack>
               </Box>
-              <Stack spacing={1} direction="column" alignItems="flex-end" justifyContent="center">
+              <Stack
+                spacing={1}
+                direction="column"
+                alignItems={{ xs: 'stretch', md: 'flex-end' }}
+                justifyContent="center"
+                sx={{ width: { xs: '100%', md: 'auto' } }}
+              >
                 <Chip
                   label={detail.row?.enabled ? t('lines.status.active') : t('lines.status.inactive')}
                   color={detail.row?.enabled ? 'success' : 'default'}
                   size="small"
-                  sx={pillSx}
+                  sx={{ ...pillSx, alignSelf: { xs: 'flex-start', md: 'auto' } }}
                 />
-                {detail.row?.trial ? <Chip size="small" color="info" label={t('lines.status.trial')} sx={pillSx} /> : null}
+                {detail.row?.trial ? (
+                  <Chip size="small" color="info" label={t('lines.status.trial')} sx={{ ...pillSx, alignSelf: { xs: 'flex-start', md: 'auto' } }} />
+                ) : null}
                 <Button
                   variant="contained"
                   color="secondary"
                   startIcon={<ContentCopyIcon fontSize="small" />}
                   onClick={() => copyCredentials(detail.row)}
-                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                  sx={{ borderRadius: 2, textTransform: 'none', width: { xs: '100%', md: 'auto' } }}
                 >
                   {t('lines.detail.copy', 'Copiar')}
                 </Button>
               </Stack>
             </Box>
 
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 2,
+                width: '100%',
+                minWidth: 0,
+                justifyItems: 'stretch',
+                gridTemplateColumns: { xs: '1fr', xl: 'repeat(2, minmax(0, 1fr))' }
+              }}
+            >
+              <Box sx={{ width: '100%', minWidth: 0 }}>
                 <Box
                   sx={(theme) => ({
                     ...infoCardBase(theme),
@@ -1073,9 +1101,9 @@ export default function LinesLionTv() {
                     </Box>
                   </Stack>
                 </Box>
-              </Grid>
+              </Box>
 
-              <Grid item xs={12} sm={6}>
+              <Box sx={{ width: '100%', minWidth: 0 }}>
                 <Box
                   sx={(theme) => ({
                     ...infoCardBase(theme),
@@ -1103,9 +1131,9 @@ export default function LinesLionTv() {
                     </Box>
                   </Stack>
                 </Box>
-              </Grid>
+              </Box>
 
-              <Grid item xs={12} sm={6}>
+              <Box sx={{ width: '100%', minWidth: 0 }}>
                 <Box
                   sx={(theme) => ({
                     ...infoCardBase(theme),
@@ -1126,9 +1154,9 @@ export default function LinesLionTv() {
                     </Box>
                   </Stack>
                 </Box>
-              </Grid>
+              </Box>
 
-              <Grid item xs={12} sm={6}>
+              <Box sx={{ width: '100%', minWidth: 0 }}>
                 <Box
                   sx={(theme) => ({
                     ...infoCardBase(theme),
@@ -1155,8 +1183,8 @@ export default function LinesLionTv() {
                     </Box>
                   </Stack>
                 </Box>
-              </Grid>
-            </Grid>
+              </Box>
+            </Box>
 
             <Box
               sx={(theme) => ({
@@ -1178,7 +1206,7 @@ export default function LinesLionTv() {
                   <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
                     {detail.row?.lastWatchedName || t('lines.detail.noStream', 'No recent stream')}
                   </Typography>
-                  <Stack direction="row" spacing={1.5} sx={{ mt: 0.5, flexWrap: 'wrap' }}>
+                  <Stack direction="row" spacing={1.5} useFlexGap sx={{ mt: 0.5, flexWrap: 'wrap' }}>
                     <Stack direction="row" spacing={0.5} alignItems="center">
                       <AccessTimeIcon fontSize="inherit" color="action" />
                       <Typography variant="caption" color="text.secondary">
@@ -1351,8 +1379,14 @@ export default function LinesLionTv() {
               title={t('lines.form.access', 'Acceso')}
               helper={t('lines.form.accessHelper', 'ID, usuario, contraseña y estado')}
             >
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={6}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gap: 2,
+                  gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }
+                }}
+              >
+                <Box>
                   <FormControl fullWidth required sx={fieldSx}>
                     <InputLabel shrink>{t('lines.form.provider', 'Provider')}</InputLabel>
                     <Select
@@ -1376,8 +1410,8 @@ export default function LinesLionTv() {
                       ))}
                     </Select>
                   </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                </Box>
+                <Box>
                   <TextField
                     label={t('lines.form.id', 'Line ID')}
                     value={form.lineId}
@@ -1393,14 +1427,14 @@ export default function LinesLionTv() {
                       )
                     }}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6} md={6} display="flex" alignItems="center">
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <FormControlLabel
                     control={<Switch checked={form.enabled} onChange={(e) => setForm((p) => ({ ...p, enabled: e.target.checked }))} color="success" />}
                     label={form.enabled ? t('lines.status.active') : t('lines.status.inactive')}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                </Box>
+                <Box>
                   <FormControl fullWidth sx={fieldSx}>
                     <InputLabel shrink>{t('lines.form.country', 'País')}</InputLabel>
                     <Select
@@ -1424,8 +1458,8 @@ export default function LinesLionTv() {
                       ))}
                     </Select>
                   </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                </Box>
+                <Box>
                   <TextField
                     label={t('lines.form.username', 'Username')}
                     value={form.username}
@@ -1441,8 +1475,8 @@ export default function LinesLionTv() {
                       )
                     }}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                </Box>
+                <Box>
                   <TextField
                     label={t('lines.form.password', 'Password')}
                     value={form.password}
@@ -1458,16 +1492,22 @@ export default function LinesLionTv() {
                       )
                     }}
                   />
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </SectionCard>
 
             <SectionCard
               title={t('lines.form.packageId', 'Paquete')}
               helper={t('lines.form.packageHelper', 'Selecciona el paquete y conexiones máximas')}
             >
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={6}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gap: 2,
+                  gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }
+                }}
+              >
+                <Box>
                   <FormControl fullWidth required sx={fieldSx} disabled={packagesLoading}>
                     <InputLabel shrink>{t('lines.form.packageId', 'Package')}</InputLabel>
                     <Select
@@ -1519,8 +1559,8 @@ export default function LinesLionTv() {
                         : t('subscriptions.form.packagesHint', 'Packages (DEMO excluded)')}
                     </FormHelperText>
                   </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6} md={6}>
+                </Box>
+                <Box>
                   <TextField
                     label={t('lines.form.maxConnections', 'Max connections')}
                     type="number"
@@ -1536,16 +1576,22 @@ export default function LinesLionTv() {
                       )
                     }}
                   />
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </SectionCard>
 
             <SectionCard
               title={t('lines.form.meta', 'Vigencia y notas')}
               helper={t('lines.form.metaHelper', 'Fecha de expiración y notas internas')}
             >
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={6}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gap: 2,
+                  gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }
+                }}
+              >
+                <Box>
                   <TextField
                     label={t('lines.form.expDate', 'Expire date')}
                     type="date"
@@ -1562,8 +1608,8 @@ export default function LinesLionTv() {
                       )
                     }}
                   />
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
               <TextField
                 label={t('lines.form.notes', 'Reseller notes')}
                 value={form.resellerNotes}

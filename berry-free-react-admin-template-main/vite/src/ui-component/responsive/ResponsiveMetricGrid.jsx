@@ -24,6 +24,8 @@ export default function ResponsiveMetricGrid({
         display: 'grid',
         width: '100%',
         minWidth: 0,
+        justifyItems: 'stretch',
+        alignItems: 'stretch',
         gap,
         gridTemplateColumns: {
           xs: toTemplate(resolvedColumns.xs),
@@ -33,7 +35,9 @@ export default function ResponsiveMetricGrid({
           xl: toTemplate(resolvedColumns.xl)
         },
         '& > *': {
-          minWidth: 0
+          minWidth: 0,
+          width: '100%',
+          maxWidth: '100%'
         },
         ...(typeof sx === 'function' ? sx(theme) : sx || {})
       })}

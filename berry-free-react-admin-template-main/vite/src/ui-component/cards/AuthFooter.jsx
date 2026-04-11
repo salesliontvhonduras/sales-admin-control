@@ -7,7 +7,11 @@ import Stack from '@mui/material/Stack';
 
 export default function AuthFooter() {
   return (
-    <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
+    <Stack
+      direction={{ xs: 'column', sm: 'row' }}
+      spacing={{ xs: 0.75, sm: 1.5 }}
+      sx={{ justifyContent: 'space-between', alignItems: { xs: 'center', sm: 'center' }, textAlign: { xs: 'center', sm: 'left' } }}
+    >
       <Typography variant="subtitle2" component={Link} href="https://berrydashboard.com" target="_blank" underline="hover">
         berrydashboard.com
       </Typography>

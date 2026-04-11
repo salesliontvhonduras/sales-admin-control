@@ -5,7 +5,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import InputLabel from '@mui/material/InputLabel';
@@ -152,7 +151,7 @@ export default function AuthLogin() {
   return (
     <form onSubmit={handleSubmit}>
       {step === 'creds' ? (
-        <>
+        <Stack spacing={1.25}>
           <CustomFormControl fullWidth>
             <InputLabel htmlFor="outlined-adornment-email-login">{t('auth.email')}</InputLabel>
             <OutlinedInput
@@ -190,48 +189,49 @@ export default function AuthLogin() {
             />
           </CustomFormControl>
 
-      <Grid container spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-            <Grid item xs={12} sm="auto">
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={checked}
-                onChange={(event) => setChecked(event.target.checked)}
-                name="checked"
-                color="primary"
-              />
-            }
-            label={t('auth.keepLogged')}
-          />
-        </Grid>
-        <Grid item xs={12} sm="auto">
-          <Typography
-            variant="subtitle1"
-            component={Link}
-            to="/pages/forgot-password"
-            sx={{ textDecoration: 'none', color: 'secondary.main', display: 'inline-flex' }}
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={0.5}
+            sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', width: '100%' }}
           >
-            {t('auth.forgot')}
-          </Typography>
-        </Grid>
-      </Grid>
+            <FormControlLabel
+              sx={{ mr: 0, ml: -0.5 }}
+              control={
+                <Checkbox
+                  checked={checked}
+                  onChange={(event) => setChecked(event.target.checked)}
+                  name="checked"
+                  color="primary"
+                />
+              }
+              label={t('auth.keepLogged')}
+            />
+            <Typography
+              variant="subtitle1"
+              component={Link}
+              to="/pages/forgot-password"
+              sx={{ textDecoration: 'none', color: 'secondary.main', display: 'inline-flex' }}
+            >
+              {t('auth.forgot')}
+            </Typography>
+          </Stack>
 
-      <Box sx={{ mt: 2 }}>
-        <AnimateButton>
-          <Button
-            color="secondary"
-            fullWidth
-            size="large"
-            type="submit"
-            variant="contained"
-            disabled={loading.creds}
-            startIcon={loading.creds ? <CircularProgress color="inherit" size={18} /> : null}
-          >
-            {loading.creds ? t('auth.sending') : t('auth.signIn')}
-          </Button>
-        </AnimateButton>
-      </Box>
-        </>
+          <Box sx={{ mt: 1 }}>
+            <AnimateButton>
+              <Button
+                color="secondary"
+                fullWidth
+                size="large"
+                type="submit"
+                variant="contained"
+                disabled={loading.creds}
+                startIcon={loading.creds ? <CircularProgress color="inherit" size={18} /> : null}
+              >
+                {loading.creds ? t('auth.sending') : t('auth.signIn')}
+              </Button>
+            </AnimateButton>
+          </Box>
+        </Stack>
       ) : (
         <Stack spacing={2}>
           <Typography variant="subtitle1" sx={{ color: 'secondary.main' }}>
