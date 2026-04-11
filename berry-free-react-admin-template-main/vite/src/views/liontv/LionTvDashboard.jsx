@@ -813,7 +813,7 @@ export default function LionTvDashboard() {
               <Divider />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+            <Grid size={{ xs: 12, sm: 12, md: 6, lg: 4, xl: 2 }}>
               <MetricCard
                 title={t('liontvDashboard.metrics.criticalAlerts.title', 'Alertas críticas')}
                 value={tracking.criticalCount}
@@ -825,7 +825,7 @@ export default function LionTvDashboard() {
                 icon={<ErrorOutlineIcon fontSize="small" />}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+            <Grid size={{ xs: 12, sm: 12, md: 6, lg: 4, xl: 2 }}>
               <MetricCard
                 title={t('liontvDashboard.metrics.highAlerts.title', 'Alertas altas')}
                 value={tracking.highCount}
@@ -837,7 +837,7 @@ export default function LionTvDashboard() {
                 icon={<WarningAmberIcon fontSize="small" />}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+            <Grid size={{ xs: 12, sm: 12, md: 6, lg: 4, xl: 2 }}>
               <MetricCard
                 title={t('liontvDashboard.metrics.horizonAlerts.title', {
                   days: horizonDays,
@@ -852,7 +852,7 @@ export default function LionTvDashboard() {
                 icon={<NotificationsActiveIcon fontSize="small" />}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+            <Grid size={{ xs: 12, sm: 12, md: 6, lg: 4, xl: 2 }}>
               <MetricCard
                 title={t('liontvDashboard.metrics.pendingInvoices.title', 'Facturas pendientes')}
                 value={tracking.pendingInvoices.length}
@@ -861,7 +861,7 @@ export default function LionTvDashboard() {
                 icon={<ReceiptLongIcon fontSize="small" />}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+            <Grid size={{ xs: 12, sm: 12, md: 6, lg: 4, xl: 2 }}>
               <MetricCard
                 title={t('liontvDashboard.metrics.pendingCommitments.title', 'Compromisos pendientes')}
                 value={tracking.pendingCommitments.length}
@@ -870,7 +870,7 @@ export default function LionTvDashboard() {
                 icon={<PriceCheckIcon fontSize="small" />}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+            <Grid size={{ xs: 12, sm: 12, md: 6, lg: 4, xl: 2 }}>
               <MetricCard
                 title={t('liontvDashboard.metrics.lostCustomers.title', 'Clientes perdidos')}
                 value={tracking.lostCount}

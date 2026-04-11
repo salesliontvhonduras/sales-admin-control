@@ -62,6 +62,7 @@ import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
+import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -577,7 +578,7 @@ export default function PaymentCommitmentsLionTv() {
           </ResponsiveActionBar>
         }
       >
-        <Grid container spacing={gridSpacing}>
+        <ResponsiveMetricGrid columns={{ xs: 1, md: 2, lg: 4 }}>
           {[
             {
               title: t('paymentCommitments.kpi.totalLabel', 'Compromisos'),
@@ -608,11 +609,9 @@ export default function PaymentCommitmentsLionTv() {
               color: 'error'
             }
           ].map((item, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
-              <LionMetricCard {...item} />
-            </Grid>
+            <LionMetricCard {...item} key={index} />
           ))}
-        </Grid>
+        </ResponsiveMetricGrid>
       </MainCard>
 
       <MainCard

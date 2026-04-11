@@ -61,6 +61,7 @@ import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
+import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -616,17 +617,15 @@ export default function LinesLionTv() {
           </ResponsiveActionBar>
         }
       >
-        <Grid container spacing={gridSpacing}>
+        <ResponsiveMetricGrid columns={{ xs: 1, md: 2, lg: 3 }}>
             {[
               { icon: <SpeedIcon fontSize="small" />, title: t('lines.summary.totalLabel', 'Líneas totales'), value: total, helper: t('lines.title'), color: 'primary' },
               { icon: <CloudDoneIcon fontSize="small" />, title: t('lines.summary.activeLabel', 'Activas'), value: summary.enabled, helper: t('lines.filters.status'), color: 'success' },
               { icon: <ErrorOutlineIcon fontSize="small" />, title: t('lines.summary.expiredLabel', 'Expiradas'), value: summary.expired, helper: t('lines.filters.status'), color: 'warning' }
             ].map((item, idx) => (
-              <Grid item xs={12} sm={6} md={3} key={idx}>
-                <LionMetricCard {...item} />
-            </Grid>
+              <LionMetricCard {...item} key={idx} />
           ))}
-        </Grid>
+        </ResponsiveMetricGrid>
       </MainCard>
 
       <MainCard title={null}>

@@ -44,7 +44,7 @@ export function lionMetricCardSx(theme, color = 'primary') {
   const paletteColor = resolveMetricColor(theme, color);
 
   return {
-    borderRadius: 3,
+    borderRadius: { xs: 3.5, sm: 3 },
     border: '1px solid',
     borderColor: withAlpha(paletteColor.main, theme.palette.mode === 'dark' ? 0.3 : 0.16),
     backgroundColor: theme.vars.palette.surface.card,
@@ -56,7 +56,8 @@ export function lionMetricCardSx(theme, color = 'primary') {
       theme.palette.mode === 'dark'
         ? `0 14px 32px ${withAlpha('#020617', 0.5)}`
         : `0 12px 28px ${withAlpha('#0f172a', 0.1)}`,
-    height: '100%'
+    height: '100%',
+    minHeight: { xs: 128, md: 0 }
   };
 }
 
@@ -71,8 +72,8 @@ export default function LionMetricCard({
 }) {
   return (
     <Card sx={(theme) => ({ ...lionMetricCardSx(theme, color), ...(typeof sx === 'function' ? sx(theme) : sx) })}>
-      <CardContent sx={{ p: { xs: 1.5, sm: 2 }, '&:last-child': { pb: { xs: 1.5, sm: 2 } } }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
+      <CardContent sx={{ p: { xs: 1.75, sm: 2 }, '&:last-child': { pb: { xs: 1.75, sm: 2 } } }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={{ xs: 1.75, sm: 1.5 }}>
           <Box sx={{ minWidth: 0, flex: 1 }}>
             <Typography
               variant="caption"
@@ -128,8 +129,8 @@ export default function LionMetricCard({
               sx={(theme) => {
                 const paletteColor = resolveMetricColor(theme, color);
                 return {
-                  width: { xs: 42, sm: 46 },
-                  height: { xs: 42, sm: 46 },
+                  width: { xs: 46, sm: 46 },
+                  height: { xs: 46, sm: 46 },
                   flexShrink: 0,
                   bgcolor: paletteColor.lighter,
                   color: paletteColor.main,

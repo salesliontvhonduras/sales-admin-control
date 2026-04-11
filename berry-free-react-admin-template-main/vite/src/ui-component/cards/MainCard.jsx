@@ -1,31 +1,47 @@
 import PropTypes from 'prop-types';
 
 // material-ui
+import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
-import CardHeader from '@mui/material/CardHeader';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import { withAlpha } from 'utils/colorUtils';
 
 // constant
-const headerStyle = {
-  gap: 12,
-  '& .MuiCardHeader-content': {
-    minWidth: 0,
-    width: '100%'
-  },
-  '& .MuiCardHeader-title': {
-    whiteSpace: 'normal',
-    overflowWrap: 'anywhere',
-    lineHeight: 1.25
-  },
-  '& .MuiCardHeader-action': {
-    mr: 0,
-    alignSelf: 'center'
-  },
-  '& .MuiCardHeader-action > *': {
+const headerContainerSx = {
+  px: { xs: 1.5, sm: 2.5 },
+  py: { xs: 1.5, sm: 2 },
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 1.25
+};
+
+const headerTitleSx = {
+  minWidth: 0,
+  whiteSpace: 'normal',
+  overflowWrap: 'anywhere',
+  lineHeight: 1.25
+};
+
+const headerActionSx = {
+  width: '100%',
+  display: 'flex',
+  justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+  alignItems: 'center',
+  '& > *': {
     maxWidth: '100%'
+  },
+  '& .responsive-action-bar': {
+    width: '100%',
+    flexDirection: { xs: 'row', sm: 'row' },
+    flexWrap: 'wrap',
+    justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+    alignItems: 'center'
+  },
+  '& .responsive-action-bar > .MuiButton-root': {
+    width: 'auto !important',
+    flex: '0 0 auto'
   }
 };
 
@@ -46,6 +62,13 @@ export default function MainCard({
   ...others
 }) {
   const defaultShadow = '0 2px 14px 0 rgb(32 40 45 / 8%)';
+  const resolvedTitle = darkTitle
+    ? typeof title === 'string'
+      ? <Typography variant="h3">{title}</Typography>
+      : title
+    : typeof title === 'string'
+      ? <Typography variant="h4">{title}</Typography>
+      : title;
 
   return (
     <Card
@@ -80,59 +103,11 @@ export default function MainCard({
       })}
     >
       {/* card header and action */}
-      {!darkTitle && title && (
-        <CardHeader
-          sx={{
-            ...headerStyle,
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: { xs: 'stretch', sm: 'center' },
-            px: { xs: 1.5, sm: 2.5 },
-            py: { xs: 1.5, sm: 2 },
-            '& .MuiCardHeader-content': {
-              width: '100%'
-            },
-            '& .MuiCardHeader-action': {
-              mr: 0,
-              mt: { xs: 1.25, sm: 0 },
-              ml: { xs: 0, sm: 'auto' },
-              width: { xs: '100%', sm: 'auto' },
-              alignSelf: { xs: 'stretch', sm: 'center' },
-              '& > *': {
-                width: { xs: '100%', sm: 'auto' }
-              }
-            },
-            ...headerSX
-          }}
-          title={title}
-          action={secondary}
-        />
-      )}
-      {darkTitle && title && (
-        <CardHeader
-          sx={{
-            ...headerStyle,
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: { xs: 'stretch', sm: 'center' },
-            px: { xs: 1.5, sm: 2.5 },
-            py: { xs: 1.5, sm: 2 },
-            '& .MuiCardHeader-content': {
-              width: '100%'
-            },
-            '& .MuiCardHeader-action': {
-              mr: 0,
-              mt: { xs: 1.25, sm: 0 },
-              ml: { xs: 0, sm: 'auto' },
-              width: { xs: '100%', sm: 'auto' },
-              alignSelf: { xs: 'stretch', sm: 'center' },
-              '& > *': {
-                width: { xs: '100%', sm: 'auto' }
-              }
-            },
-            ...headerSX
-          }}
-          title={<Typography variant="h3">{title}</Typography>}
-          action={secondary}
-        />
+      {title && (
+        <Box sx={(theme) => ({ ...headerContainerSx, ...(typeof headerSX === 'function' ? headerSX(theme) : headerSX || {}) })}>
+          <Box sx={headerTitleSx}>{resolvedTitle}</Box>
+          {secondary ? <Box sx={headerActionSx}>{secondary}</Box> : null}
+        </Box>
       )}
 
       {/* content & header divider */}

@@ -249,7 +249,7 @@ export default function PlusLinesExplorer() {
             { title: t('plusLines.cards.unusedLines', 'Líneas sin uso activo'), value: totalUnusedLines, icon: <PendingActionsIcon />, color: '#fb8c00' },
             { title: t('plusLines.cards.inactiveSubs', 'Suscripciones inactivas'), value: totalInactiveSubs, icon: <CancelIcon />, color: '#ef5350' }
           ].map((item, idx) => (
-            <Grid item xs={12} sm={6} md={4} lg={2} key={idx}>
+            <Grid item xs={12} sm={12} md={6} lg={4} xl={2} key={idx}>
               <LionMetricCard {...item} />
             </Grid>
           ))}

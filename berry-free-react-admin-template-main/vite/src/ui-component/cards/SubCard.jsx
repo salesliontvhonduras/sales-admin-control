@@ -54,7 +54,18 @@ export default function SubCard({
               mr: 0,
               mt: { xs: 1, sm: 0 },
               ml: { xs: 0, sm: 'auto' },
-              width: { xs: '100%', sm: 'auto' }
+              width: { xs: '100%', sm: 'auto' },
+              '& .responsive-action-bar': {
+                width: '100%',
+                flexDirection: { xs: 'row', sm: 'row' },
+                flexWrap: 'wrap',
+                justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                alignItems: 'center'
+              },
+              '& .responsive-action-bar > .MuiButton-root': {
+                width: 'auto !important',
+                flex: '0 0 auto'
+              }
             }
           }}
           title={<Typography variant="h5">{title}</Typography>}
@@ -76,7 +87,18 @@ export default function SubCard({
               mr: 0,
               mt: { xs: 1, sm: 0 },
               ml: { xs: 0, sm: 'auto' },
-              width: { xs: '100%', sm: 'auto' }
+              width: { xs: '100%', sm: 'auto' },
+              '& .responsive-action-bar': {
+                width: '100%',
+                flexDirection: { xs: 'row', sm: 'row' },
+                flexWrap: 'wrap',
+                justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+                alignItems: 'center'
+              },
+              '& .responsive-action-bar > .MuiButton-root': {
+                width: 'auto !important',
+                flex: '0 0 auto'
+              }
             }
           }}
           title={<Typography variant="h4">{title}</Typography>}

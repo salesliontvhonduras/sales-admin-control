@@ -36,6 +36,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import WifiTetheringIcon from '@mui/icons-material/WifiTethering';
 
 import MainCard from 'ui-component/cards/MainCard';
+import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 import { withAlpha } from 'utils/colorUtils';
@@ -259,56 +260,44 @@ export default function SubscriptionSharingLionTv() {
           )}
         </Typography>
 
-        <Grid container spacing={gridSpacing}>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
+        <ResponsiveMetricGrid columns={{ xs: 1, md: 2, lg: 3, xl: 6 }}>
             <KpiCard
               icon={<RuleIcon />}
               label={t('subscriptionSharing.kpi.totalSubscriptions', 'Total subscriptions')}
               value={kpi.totalSubscriptions}
               color={theme.vars?.palette?.primary?.main || theme.palette.primary.main}
             />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
             <KpiCard
               icon={<CheckCircleOutlineIcon />}
               label={t('subscriptionSharing.kpi.activeSubscriptions', 'Active')}
               value={kpi.activeSubscriptions}
               color={theme.vars?.palette?.success?.main || theme.palette.success.main}
             />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
             <KpiCard
               icon={<HubIcon />}
               label={t('subscriptionSharing.kpi.sharedClusters', 'Shared clusters')}
               value={kpi.sharedClusters}
               color={theme.vars?.palette?.warning?.main || theme.palette.warning.main}
             />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
             <KpiCard
               icon={<GroupWorkIcon />}
               label={t('subscriptionSharing.kpi.hosts', 'Hosts')}
               value={kpi.hostSubscriptions}
               color={theme.vars?.palette?.secondary?.main || theme.palette.secondary.main}
             />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
             <KpiCard
               icon={<LinkIcon />}
               label={t('subscriptionSharing.kpi.sharedSubscriptions', 'Shared subscriptions')}
               value={kpi.sharedSubscriptions}
               color={theme.vars?.palette?.info?.main || theme.palette.info.main}
             />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
             <KpiCard
               icon={<SignalCellularAltIcon />}
               label={t('subscriptionSharing.kpi.eligibleSubscriptions', 'Eligible')}
               value={kpi.eligibleSubscriptions}
               color={theme.vars?.palette?.success?.main || theme.palette.success.main}
             />
-          </Grid>
-        </Grid>
+        </ResponsiveMetricGrid>
       </MainCard>
 
       <MainCard title={null}>

@@ -9,7 +9,6 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import Chip from '@mui/material/Chip';
-import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -76,6 +75,9 @@ import { useTranslation } from 'react-i18next';
 import MainCard from 'ui-component/cards/MainCard';
 import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
+import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
+import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
+import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi, catalogsApi } from 'utils/api';
 
@@ -150,7 +152,19 @@ function ContactActions({ phone, mail }) {
   if (!phone && !mail) return null;
   const cleanPhone = (phone || '').replace(/\D/g, '');
   return (
-    <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
+    <Stack
+      direction={{ xs: 'column', sm: 'row' }}
+      spacing={1}
+      useFlexGap
+      sx={{
+        mt: 1,
+        flexWrap: 'wrap',
+        width: '100%',
+        '& .MuiButton-root': {
+          width: { xs: '100%', sm: 'auto' }
+        }
+      }}
+    >
       {phone ? (
         <Button size="small" variant="outlined" startIcon={<CallIcon />} component="a" href={`tel:${cleanPhone}`} sx={{ borderRadius: 2 }}>
           {t('crm.contact.call', 'Llamar')}
@@ -293,10 +307,25 @@ function LabelWithIcon({ icon, label, color = 'primary' }) {
       label={label}
       size="small"
       sx={{
+        maxWidth: '100%',
+        height: 'auto',
         borderRadius: 2,
         bgcolor: (theme) => `${theme.palette[color]?.light}26`,
         color: (theme) => theme.palette[color]?.darker || theme.palette[color]?.dark,
-        '& .MuiChip-icon': { color: (theme) => theme.palette[color]?.main }
+        justifyContent: 'flex-start',
+        '& .MuiChip-icon': {
+          color: (theme) => theme.palette[color]?.main,
+          alignSelf: 'flex-start',
+          mt: 0.4
+        },
+        '& .MuiChip-label': {
+          display: 'block',
+          whiteSpace: 'normal',
+          overflowWrap: 'anywhere',
+          lineHeight: 1.35,
+          paddingTop: '6px',
+          paddingBottom: '6px'
+        }
       }}
       variant="outlined"
     />
@@ -314,9 +343,10 @@ function InfoBlock({ title, icon, color = 'primary', children, helper }) {
           theme.palette.mode === 'light'
             ? `linear-gradient(135deg, ${theme.palette[color]?.light}18, ${theme.palette.background.paper})`
             : theme.palette.surface.card,
-        p: 2,
+        p: { xs: 1.5, sm: 2 },
         boxShadow: 2,
         display: 'flex',
+        flexDirection: { xs: 'column', sm: 'row' },
         gap: 1.5
       })}
     >
@@ -324,8 +354,8 @@ function InfoBlock({ title, icon, color = 'primary', children, helper }) {
         sx={(theme) => ({
           bgcolor: theme.palette[color]?.main,
           color: theme.palette[color]?.contrastText,
-          width: 40,
-          height: 40,
+          width: { xs: 36, sm: 40 },
+          height: { xs: 36, sm: 40 },
           boxShadow: 3
         })}
       >
@@ -379,12 +409,54 @@ function ActionableState({ icon, title, subtitle, actions = [] }) {
               startIcon={action.icon || null}
               onClick={action.onClick}
               disabled={Boolean(action.disabled)}
+              fullWidth
+              sx={{ textTransform: 'none', borderRadius: 2 }}
             >
               {action.label}
             </Button>
           ))}
         </Stack>
       ) : null}
+    </Box>
+  );
+}
+
+function CompactInfoTile({ icon, label, value, color = 'primary' }) {
+  return (
+    <Box
+      sx={(theme) => ({
+        minWidth: 0,
+        p: 1.25,
+        borderRadius: 2.5,
+        border: '1px solid',
+        borderColor: theme.palette[color]?.light || theme.palette.divider,
+        background:
+          theme.palette.mode === 'light'
+            ? `linear-gradient(145deg, ${theme.palette[color]?.light}18, ${theme.palette.background.paper})`
+            : theme.palette.surface.card
+      })}
+    >
+      <Stack direction="row" spacing={1.1} alignItems="flex-start">
+        <Avatar
+          sx={(theme) => ({
+            width: 34,
+            height: 34,
+            bgcolor: `${theme.palette[color]?.main || theme.palette.primary.main}20`,
+            color: theme.palette[color]?.main || theme.palette.primary.main,
+            flexShrink: 0
+          })}
+        >
+          {icon}
+        </Avatar>
+        <Stack spacing={0.35} sx={{ minWidth: 0, flex: 1 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, lineHeight: 1.35 }}>
+            {label}
+          </Typography>
+          <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.35, overflowWrap: 'anywhere' }}>
+            {value || '-'}
+          </Typography>
+        </Stack>
+      </Stack>
     </Box>
   );
 }
@@ -1009,290 +1081,313 @@ export default function CustomerCrmLionTv() {
   };
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
-      <MainCard
-        title={t('crm.title', 'CRM de clientes')}
-        secondary={
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
-            <Autocomplete
-              sx={{ minWidth: { xs: 240, sm: 360 } }}
-              options={customers}
-              value={selectedCustomer}
-              onChange={(e, value) => setSelectedCustomer(value)}
-              getOptionLabel={(option) => option?.fullName || option?.mail || option?.username || option?.id?.toString() || ''}
-              isOptionEqualToValue={(opt, val) => (opt?.id ?? opt?.customerId) === (val?.id ?? val?.customerId)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label={t('crm.search.label', 'Buscar cliente')}
-                  placeholder={t('crm.search.placeholder', 'Nombre, correo o usuario')}
-                  size="small"
-                  sx={fieldSx}
-                  InputProps={{
-                    ...params.InputProps,
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon color="primary" />
-                      </InputAdornment>
-                    )
-                  }}
-                />
+    <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto', pb: 3 }}>
+      <Stack spacing={{ xs: 2, md: 3 }}>
+        <MainCard
+          title={t('crm.title', 'CRM de clientes')}
+          contentSX={{ display: 'flex', flexDirection: 'column', gap: 2, p: { xs: 1.5, sm: 2.5 } }}
+        >
+          <Stack spacing={1}>
+            <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 760 }}>
+              {t(
+                'crm.search.helper',
+                'Busca un cliente y obtén una vista 360 con suscripciones, licencias, managed accounts, timeline comercial y facturación.'
               )}
-            />
-            <Button
-              variant="outlined"
-              startIcon={<RefreshIcon />}
-              onClick={() => setRefreshKey((v) => v + 1)}
-              disabled={Object.values(loading).some(Boolean)}
-              sx={{ minHeight: 48, px: 2.5 }}
-            >
-              {t('actions.refresh', 'Recargar')}
-            </Button>
+            </Typography>
           </Stack>
-        }
-      >
-        {hasBlockingErrors ? (
-          <Alert
-            severity="warning"
-            sx={{ mb: 2 }}
-            action={
-              <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={retryAll}>
-                {t('crm.actions.retry', 'Reintentar')}
+          <ResponsiveFilters paperSx={{ width: '100%' }}>
+            <Box sx={{ width: '100%', minWidth: 0, flex: 1 }}>
+              <Autocomplete
+                fullWidth
+                options={customers}
+                value={selectedCustomer}
+                onChange={(e, value) => setSelectedCustomer(value)}
+                getOptionLabel={(option) => option?.fullName || option?.mail || option?.username || option?.id?.toString() || ''}
+                isOptionEqualToValue={(opt, val) => (opt?.id ?? opt?.customerId) === (val?.id ?? val?.customerId)}
+                sx={{
+                  width: '100%',
+                  minWidth: 0,
+                  '& .MuiOutlinedInput-root': {
+                    minHeight: 50,
+                    borderRadius: 2.5
+                  }
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={t('crm.search.label', 'Buscar cliente')}
+                    placeholder={t('crm.search.placeholder', 'Nombre, correo o usuario')}
+                    size="small"
+                    sx={fieldSx}
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon color="primary" />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                )}
+              />
+            </Box>
+            <ResponsiveActionBar sx={{ width: { xs: '100%', md: 'auto' }, flexShrink: 0 }}>
+              <Button
+                variant="outlined"
+                startIcon={<RefreshIcon />}
+                onClick={() => setRefreshKey((v) => v + 1)}
+                disabled={Object.values(loading).some(Boolean)}
+                sx={{ px: 2.5 }}
+              >
+                {t('actions.refresh', 'Recargar')}
               </Button>
-            }
-          >
-            {t('crm.errors.partialData', 'Algunas fuentes fallaron. Puedes reintentar para completar la vista 360.')}
-          </Alert>
-        ) : null}
-        {!selectedCustomer ? (
-          <ActionableState
-            icon={<PersonIcon />}
-            title={t('crm.empty.title', 'Selecciona un cliente para ver su panorama 360°')}
-            subtitle={t('crm.empty.subtitle', 'Encontrarás sus suscripciones, managed accounts, facturación, licencias y métricas clave.')}
-            actions={[
-              {
-                id: 'select-first-customer',
-                label: t('crm.actions.selectFirstCustomer', 'Seleccionar primer cliente'),
-                icon: <DoneAllIcon />,
-                disabled: customers.length === 0,
-                onClick: () => {
-                  if (customers[0]) setSelectedCustomer(customers[0]);
-                }
-              },
-              {
-                id: 'retry-data',
-                label: t('actions.refresh', 'Recargar'),
-                icon: <RefreshIcon />,
-                variant: 'outlined',
-                onClick: retryAll
+            </ResponsiveActionBar>
+          </ResponsiveFilters>
+
+          {hasBlockingErrors ? (
+            <Alert
+              severity="warning"
+              action={
+                <Button color="inherit" size="small" startIcon={<RefreshIcon />} onClick={retryAll}>
+                  {t('crm.actions.retry', 'Reintentar')}
+                </Button>
               }
-            ]}
-          />
+            >
+              {t('crm.errors.partialData', 'Algunas fuentes fallaron. Puedes reintentar para completar la vista 360.')}
+            </Alert>
+          ) : null}
+        </MainCard>
+
+        {!selectedCustomer ? (
+          <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5 } }}>
+            <ActionableState
+              icon={<PersonIcon />}
+              title={t('crm.empty.title', 'Selecciona un cliente para ver su panorama 360°')}
+              subtitle={t('crm.empty.subtitle', 'Encontrarás sus suscripciones, managed accounts, facturación, licencias y métricas clave.')}
+              actions={[
+                {
+                  id: 'select-first-customer',
+                  label: t('crm.actions.selectFirstCustomer', 'Seleccionar primer cliente'),
+                  icon: <DoneAllIcon />,
+                  disabled: customers.length === 0,
+                  onClick: () => {
+                    if (customers[0]) setSelectedCustomer(customers[0]);
+                  }
+                },
+                {
+                  id: 'retry-data',
+                  label: t('actions.refresh', 'Recargar'),
+                  icon: <RefreshIcon />,
+                  variant: 'outlined',
+                  onClick: retryAll
+                }
+              ]}
+            />
+          </MainCard>
         ) : loading.customers ? (
           <Stack spacing={3}>
-            <Skeleton variant="rounded" height={160} />
-            <Skeleton variant="rounded" height={120} />
+            <Skeleton variant="rounded" height={180} />
+            <Skeleton variant="rounded" height={140} />
           </Stack>
         ) : (
-          <Stack spacing={3}>
-            <MainCard content={false}>
-              <Box sx={{ p: { xs: 2, sm: 3 } }}>
-                <Grid container spacing={gridSpacing}>
-                  <Grid item xs={12} md={4}>
-                    <Box
-                      sx={{
-                        p: 2,
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        boxShadow: 3,
-                        display: 'flex',
-                        gap: 2,
-                        alignItems: 'center',
-                        background: (theme) =>
-                          theme.palette.mode === 'light'
-                            ? `linear-gradient(150deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}12 80%)`
-                            : theme.palette.background.paper
-                      }}
-                    >
-                      <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main', color: 'primary.contrastText' }}>
+          <Stack spacing={{ xs: 2, md: 3 }}>
+            <MainCard title={t('crm.summary.title', 'Resumen del cliente')} contentSX={{ p: { xs: 1.5, sm: 2.5 } }}>
+              <Stack spacing={2.25}>
+                <Box
+                  sx={(theme) => ({
+                    p: { xs: 1.5, sm: 2 },
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    boxShadow: theme.palette.mode === 'dark' ? '0 16px 36px rgba(2,8,23,0.34)' : '0 12px 30px rgba(15,23,42,0.08)',
+                    background:
+                      theme.palette.mode === 'light'
+                        ? `linear-gradient(150deg, ${theme.palette.primary.light}18 0%, ${theme.palette.secondary.light}12 80%)`
+                        : `linear-gradient(145deg, ${theme.palette.surface.card} 0%, ${theme.palette.surface.muted} 100%)`
+                  })}
+                >
+                  <Stack spacing={2}>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }}>
+                      <Avatar
+                        sx={{
+                          width: { xs: 56, sm: 60 },
+                          height: { xs: 56, sm: 60 },
+                          bgcolor: 'primary.main',
+                          color: 'primary.contrastText',
+                          boxShadow: 3
+                        }}
+                      >
                         {initials(selectedCustomer.fullName)}
                       </Avatar>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                          {selectedCustomer.fullName}
-                        </Typography>
-                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
-                          <StatusChip status={selectedCustomer.status} />
-                          {selectedCustomer.channel ? (
-                            <LabelWithIcon icon={<LoyaltyIcon fontSize="small" />} label={selectedCustomer.channel} color="secondary" />
-                          ) : null}
-                        </Stack>
-                        <Stack spacing={0.5} sx={{ mt: 0.5 }}>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <MailOutlineIcon fontSize="small" color="action" />
-                            <Typography variant="body2">{selectedCustomer.mail || '-'}</Typography>
+                      <Stack spacing={1} sx={{ minWidth: 0, flex: 1, width: '100%' }}>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography variant="h4" sx={{ fontWeight: 800, overflowWrap: 'anywhere' }}>
+                            {selectedCustomer.fullName}
+                          </Typography>
+                          <Stack
+                            direction="row"
+                            spacing={1}
+                            alignItems="center"
+                            flexWrap="wrap"
+                            useFlexGap
+                            sx={{ mt: 0.75, minWidth: 0 }}
+                          >
+                            <StatusChip status={selectedCustomer.status} />
+                            {selectedCustomer.gender ? <StatusChip status={selectedCustomer.gender} /> : null}
+                            {selectedCustomer.channel ? (
+                              <LabelWithIcon icon={<LoyaltyIcon fontSize="small" />} label={selectedCustomer.channel} color="secondary" />
+                            ) : null}
                           </Stack>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <PhoneIphoneIcon fontSize="small" color="action" />
-                            <Typography variant="body2">{selectedCustomer.phone || '-'}</Typography>
-                          </Stack>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <LoyaltyIcon fontSize="small" color="action" />
-                            <Typography variant="body2">
-                              {t('crm.stats.opening', {
-                                date: selectedCustomer.openingDate ? formatDate(selectedCustomer.openingDate) : '-'
-                              })}
-                            </Typography>
-                          </Stack>
-                        </Stack>
-                        <ContactActions phone={selectedCustomer.phone} mail={selectedCustomer.mail} />
-                      </Box>
+                        </Box>
+                      </Stack>
+                    </Stack>
+
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gap: 1.1,
+                        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }
+                      }}
+                    >
+                      <CompactInfoTile
+                        icon={<MailOutlineIcon fontSize="small" />}
+                        label={t('crm.contact.email', 'Email')}
+                        value={selectedCustomer.mail || '-'}
+                        color="info"
+                      />
+                      <CompactInfoTile
+                        icon={<PhoneIphoneIcon fontSize="small" />}
+                        label={t('crm.contact.phone', 'Teléfono')}
+                        value={selectedCustomer.phone || '-'}
+                        color="primary"
+                      />
+                      <CompactInfoTile
+                        icon={<CalendarMonthIcon fontSize="small" />}
+                        label={t('crm.stats.openingLabel', 'Fecha de alta')}
+                        value={selectedCustomer.openingDate ? formatDate(selectedCustomer.openingDate) : '-'}
+                        color="warning"
+                      />
+                      <CompactInfoTile
+                        icon={<PersonIcon fontSize="small" />}
+                        label={t('crm.stats.referredBy', 'Referido por')}
+                        value={selectedCustomer.refererBy || t('crm.stats.noRef', 'Sin referencia')}
+                        color="secondary"
+                      />
                     </Box>
-                  </Grid>
-                  <Grid item xs={12} md={8}>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6} md={4}>
-                        <StatCard
-                          icon={<CreditCardIcon />}
-                          title={t('crm.stats.billed', 'Total facturado')}
-                          value={formatCurrency(totals.billed)}
-                          helper={t('crm.stats.invoices', { defaultValue: 'Facturas: {{val}}', val: totals.totalInvoices })}
-                          color="success"
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={4}>
-                        <StatCard
-                          icon={<ReceiptLongIcon />}
-                          title={t('crm.stats.subscriptions', 'Suscripciones')}
-                          value={`${customerSubscriptions.length}`}
-                          helper={t('crm.stats.subscriptionsActive', {
-                            defaultValue: 'Activas: {{val}}',
-                            val: totals.activeSubs
-                          })}
-                          color="info"
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={4}>
-                        <StatCard
-                          icon={<LayersIcon />}
-                          title={t('crm.stats.licenses', 'Licencias')}
-                          value={`${customerLicenses.length}`}
-                          helper={t('crm.stats.licensesActive', {
-                            defaultValue: 'Activas: {{val}}',
-                            val: totals.activeLicenses
-                          })}
-                          color="warning"
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={4}>
-                        <StatCard
-                          icon={<ManageAccountsIcon />}
-                          title={t('crm.stats.managedAccounts', 'Managed Accounts')}
-                          value={`${totals.totalManagedAccounts}`}
-                          helper={t('crm.stats.managedAccountsActive', {
-                            defaultValue: 'Activas: {{val}}',
-                            val: totals.activeManagedAccounts
-                          })}
-                          color="secondary"
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={4}>
-                        <StatCard
-                          icon={<CalendarMonthIcon />}
-                          title={t('crm.stats.nextRenewal', 'Próxima renovación')}
-                          value={totals.nextRenewal ? formatDate(totals.nextRenewal) : t('crm.stats.none', 'Sin definir')}
-                          helper={t('crm.stats.closest', 'Fecha más cercana')}
-                          color="primary"
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={4}>
-                        <StatCard
-                          icon={<AlternateEmailIcon />}
-                          title={t('crm.stats.nextManagedExpiration', 'Próx. vencimiento account')}
-                          value={
-                            totals.nextManagedExpiration ? formatDate(totals.nextManagedExpiration) : t('crm.stats.none', 'Sin definir')
-                          }
-                          helper={t('crm.stats.managedAccountsAlias', 'Basado en alias gestionados')}
-                          color="info"
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={4}>
-                        <StatCard
-                          icon={<MonetizationOnIcon />}
-                          title={t('crm.stats.lastPayment', 'Último pago')}
-                          value={totals.lastInvoice ? formatDate(totals.lastInvoice) : t('crm.stats.noPayments', 'No hay pagos')}
-                          helper={t('crm.stats.lastInvoice', 'Fecha de la última factura')}
-                          color="secondary"
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={4}>
-                        <StatCard
-                          icon={<PersonIcon />}
-                          title={t('crm.stats.referredBy', 'Referido por')}
-                          value={selectedCustomer.refererBy || t('crm.stats.noRef', 'Sin referencia')}
-                          helper={
-                            selectedCustomer.openingDate
-                              ? t('crm.stats.opening', {
-                                  defaultValue: 'Alta: {{date}}',
-                                  date: formatDate(selectedCustomer.openingDate)
-                                })
-                              : ''
-                          }
-                          color="default"
-                        />
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                </Grid>
-              </Box>
+
+                    <ContactActions phone={selectedCustomer.phone} mail={selectedCustomer.mail} />
+                  </Stack>
+                </Box>
+
+                <ResponsiveMetricGrid columns={{ xs: 1, sm: 2, xl: 3 }} gap={1.5}>
+                  <StatCard
+                    icon={<CreditCardIcon />}
+                    title={t('crm.stats.billed', 'Total facturado')}
+                    value={formatCurrency(totals.billed)}
+                    helper={t('crm.stats.invoices', { defaultValue: 'Facturas: {{val}}', val: totals.totalInvoices })}
+                    color="success"
+                  />
+                  <StatCard
+                    icon={<ReceiptLongIcon />}
+                    title={t('crm.stats.subscriptions', 'Suscripciones')}
+                    value={`${customerSubscriptions.length}`}
+                    helper={t('crm.stats.subscriptionsActive', { defaultValue: 'Activas: {{val}}', val: totals.activeSubs })}
+                    color="info"
+                  />
+                  <StatCard
+                    icon={<LayersIcon />}
+                    title={t('crm.stats.licenses', 'Licencias')}
+                    value={`${customerLicenses.length}`}
+                    helper={t('crm.stats.licensesActive', { defaultValue: 'Activas: {{val}}', val: totals.activeLicenses })}
+                    color="warning"
+                  />
+                  <StatCard
+                    icon={<ManageAccountsIcon />}
+                    title={t('crm.stats.managedAccounts', 'Managed Accounts')}
+                    value={`${totals.totalManagedAccounts}`}
+                    helper={t('crm.stats.managedAccountsActive', {
+                      defaultValue: 'Activas: {{val}}',
+                      val: totals.activeManagedAccounts
+                    })}
+                    color="secondary"
+                  />
+                  <StatCard
+                    icon={<CalendarMonthIcon />}
+                    title={t('crm.stats.nextRenewal', 'Próxima renovación')}
+                    value={totals.nextRenewal ? formatDate(totals.nextRenewal) : t('crm.stats.none', 'Sin definir')}
+                    helper={t('crm.stats.closest', 'Fecha más cercana')}
+                    color="primary"
+                  />
+                  <StatCard
+                    icon={<AlternateEmailIcon />}
+                    title={t('crm.stats.nextManagedExpiration', 'Próx. vencimiento account')}
+                    value={totals.nextManagedExpiration ? formatDate(totals.nextManagedExpiration) : t('crm.stats.none', 'Sin definir')}
+                    helper={t('crm.stats.managedAccountsAlias', 'Basado en alias gestionados')}
+                    color="info"
+                  />
+                  <StatCard
+                    icon={<MonetizationOnIcon />}
+                    title={t('crm.stats.lastPayment', 'Último pago')}
+                    value={totals.lastInvoice ? formatDate(totals.lastInvoice) : t('crm.stats.noPayments', 'No hay pagos')}
+                    helper={t('crm.stats.lastInvoice', 'Fecha de la última factura')}
+                    color="secondary"
+                  />
+                  <StatCard
+                    icon={<PersonIcon />}
+                    title={t('crm.stats.referredBy', 'Referido por')}
+                    value={selectedCustomer.refererBy || t('crm.stats.noRef', 'Sin referencia')}
+                    helper={
+                      selectedCustomer.openingDate
+                        ? t('crm.stats.opening', { defaultValue: 'Alta: {{date}}', date: formatDate(selectedCustomer.openingDate) })
+                        : ''
+                    }
+                    color="default"
+                  />
+                </ResponsiveMetricGrid>
+              </Stack>
             </MainCard>
 
             {!customerHasRecords ? (
-              <ActionableState
-                icon={<TimelineIcon />}
-                title={t('crm.emptyRecords.title', 'El cliente aún no tiene movimientos')}
-                subtitle={t(
-                  'crm.emptyRecords.subtitle',
-                  'No encontramos suscripciones, facturas, licencias ni managed accounts para este cliente.'
-                )}
-                actions={[
-                  {
-                    id: 'refresh-customer-records',
-                    label: t('actions.refresh', 'Recargar'),
-                    icon: <RefreshIcon />,
-                    onClick: retryAll
-                  }
-                ]}
-              />
+              <MainCard contentSX={{ p: { xs: 1.5, sm: 2.5 } }}>
+                <ActionableState
+                  icon={<TimelineIcon />}
+                  title={t('crm.emptyRecords.title', 'El cliente aún no tiene movimientos')}
+                  subtitle={t('crm.emptyRecords.subtitle', 'No encontramos suscripciones, facturas, licencias ni managed accounts para este cliente.')}
+                  actions={[
+                    {
+                      id: 'refresh-customer-records',
+                      label: t('actions.refresh', 'Recargar'),
+                      icon: <RefreshIcon />,
+                      onClick: retryAll
+                    }
+                  ]}
+                />
+              </MainCard>
             ) : (
-              <MainCard>
-                <Stack spacing={2}>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between" alignItems={{ sm: 'center' }}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <TimelineIcon color="primary" />
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                        {t('crm.timeline.title', 'Timeline 360 del cliente')}
-                      </Typography>
-                    </Stack>
-                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                      {[
-                        { value: 'ALL', label: t('crm.timeline.filters.all', 'Todo') },
-                        { value: 'EXPIRATIONS', label: t('crm.timeline.filters.expirations', 'Vencimientos') },
-                        { value: 'PAYMENTS', label: t('crm.timeline.filters.payments', 'Pagos') },
-                        { value: 'ACTIVITY', label: t('crm.timeline.filters.activity', 'Actividad') }
-                      ].map((option) => (
-                        <Chip
-                          key={option.value}
-                          size="small"
-                          label={option.label}
-                          color={timelineFilter === option.value ? 'primary' : 'default'}
-                          variant={timelineFilter === option.value ? 'filled' : 'outlined'}
-                          onClick={() => setTimelineFilter(option.value)}
-                        />
-                      ))}
-                    </Stack>
+              <MainCard
+                title={t('crm.timeline.title', 'Timeline 360 del cliente')}
+                secondary={
+                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                    {[
+                      { value: 'ALL', label: t('crm.timeline.filters.all', 'Todo') },
+                      { value: 'EXPIRATIONS', label: t('crm.timeline.filters.expirations', 'Vencimientos') },
+                      { value: 'PAYMENTS', label: t('crm.timeline.filters.payments', 'Pagos') },
+                      { value: 'ACTIVITY', label: t('crm.timeline.filters.activity', 'Actividad') }
+                    ].map((option) => (
+                      <Chip
+                        key={option.value}
+                        size="small"
+                        label={option.label}
+                        color={timelineFilter === option.value ? 'primary' : 'default'}
+                        variant={timelineFilter === option.value ? 'filled' : 'outlined'}
+                        onClick={() => setTimelineFilter(option.value)}
+                      />
+                    ))}
                   </Stack>
+                }
+                contentSX={{ p: { xs: 1.5, sm: 2.5 } }}
+              >
+                <Stack spacing={2}>
                   <Typography variant="body2" color="text.secondary">
                     {t('crm.timeline.subtitle', 'Cronología unificada con eventos comerciales y operativos del cliente seleccionado.')}
                   </Typography>
@@ -1302,10 +1397,7 @@ export default function CustomerCrmLionTv() {
                       <ActionableState
                         icon={<WarningAmberIcon />}
                         title={t('crm.timeline.empty.title', 'No hay eventos para este filtro')}
-                        subtitle={t(
-                          'crm.timeline.empty.subtitle',
-                          'Prueba cambiar el filtro o recargar datos para actualizar la cronología.'
-                        )}
+                        subtitle={t('crm.timeline.empty.subtitle', 'Prueba cambiar el filtro o recargar datos para actualizar la cronología.')}
                         actions={[
                           {
                             id: 'timeline-reset-filter',
@@ -1345,22 +1437,22 @@ export default function CustomerCrmLionTv() {
                           <Box
                             key={event.id}
                             sx={(theme) => ({
-                              borderRadius: 2,
+                              borderRadius: 2.5,
                               border: '1px solid',
                               borderColor: 'divider',
-                              p: 1.4,
+                              p: { xs: 1.4, sm: 1.6 },
                               background:
                                 theme.palette.mode === 'light'
                                   ? `linear-gradient(140deg, ${theme.palette[accentColor].light}1A, ${theme.palette.background.paper})`
                                   : theme.palette.surface.card
                             })}
                           >
-                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>
-                              <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: { sm: 160 } }}>
+                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2} alignItems={{ sm: 'center' }}>
+                              <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: { sm: 170 }, flexShrink: 0 }}>
                                 <Avatar
                                   sx={(theme) => ({
-                                    width: 28,
-                                    height: 28,
+                                    width: 30,
+                                    height: 30,
                                     bgcolor: theme.palette[accentColor].main,
                                     color: theme.palette[accentColor].contrastText
                                   })}
@@ -1371,15 +1463,22 @@ export default function CustomerCrmLionTv() {
                                   {formatDateTime(event.rawDate)}
                                 </Typography>
                               </Stack>
-                              <Stack spacing={0.4} sx={{ flex: 1 }}>
-                                <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                              <Stack spacing={0.4} sx={{ flex: 1, minWidth: 0 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}>
                                   {event.title}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography variant="caption" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
                                   {event.subtitle}
                                 </Typography>
                               </Stack>
-                              <Stack direction="row" spacing={0.8} alignItems="center" sx={{ minWidth: { sm: 180 } }}>
+                              <Stack
+                                direction="row"
+                                spacing={0.8}
+                                alignItems="center"
+                                flexWrap="wrap"
+                                useFlexGap
+                                sx={{ minWidth: { xs: 0, sm: 190 } }}
+                              >
                                 <Chip size="small" label={kindLabel} color={accentColor} variant="outlined" />
                                 <StatusChip status={event.status} />
                               </Stack>
@@ -1394,28 +1493,25 @@ export default function CustomerCrmLionTv() {
             )}
 
             <MainCard
+              title={t('crm.modules.title', 'Módulos detallados')}
               sx={{
-                borderRadius: 2,
-                background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.light}26, ${theme.palette.secondary.light}1F)`
+                borderRadius: 2.5,
+                background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.light}20, ${theme.palette.secondary.light}18)`
               }}
+              contentSX={{ p: { xs: 1.5, sm: 2.5 } }}
             >
               <Stack spacing={2}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <AppsIcon color="primary" />
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                    {t('crm.modules.title', 'Módulos detallados')}
-                  </Typography>
-                </Stack>
                 <Typography variant="body2" color="text.secondary">
                   {t('crm.modules.subtitle', 'Abre submódulos dedicados con contexto, iconos y colores para identificar cada entidad.')}
                 </Typography>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                <ResponsiveMetricGrid columns={{ xs: 1, md: 2, xl: 4 }} gap={1.25}>
                   <Button
                     variant="contained"
                     color="primary"
                     startIcon={<WifiTetheringIcon />}
                     onClick={() => openFullModule('subscriptions')}
-                    sx={{ flex: 1, borderRadius: 2, boxShadow: 3, textTransform: 'none' }}
+                    fullWidth
+                    sx={{ minHeight: 48, borderRadius: 2.5, boxShadow: 3, textTransform: 'none' }}
                   >
                     {t('crm.modules.subscriptions', 'Ver suscripciones')}
                   </Button>
@@ -1424,9 +1520,10 @@ export default function CustomerCrmLionTv() {
                     color="secondary"
                     startIcon={<ReceiptLongIcon />}
                     onClick={() => openFullModule('invoices')}
+                    fullWidth
                     sx={{
-                      flex: 1,
-                      borderRadius: 2,
+                      minHeight: 48,
+                      borderRadius: 2.5,
                       boxShadow: 2,
                       textTransform: 'none',
                       backgroundColor: (theme) => `${theme.palette.secondary.light}16`
@@ -1439,9 +1536,10 @@ export default function CustomerCrmLionTv() {
                     color="info"
                     startIcon={<ManageAccountsIcon />}
                     onClick={() => openFullModule('managedAccounts')}
+                    fullWidth
                     sx={{
-                      flex: 1,
-                      borderRadius: 2,
+                      minHeight: 48,
+                      borderRadius: 2.5,
                       boxShadow: 2,
                       textTransform: 'none',
                       backgroundColor: (theme) => `${theme.palette.info.light}16`
@@ -1454,9 +1552,10 @@ export default function CustomerCrmLionTv() {
                     color="error"
                     startIcon={<SmartDisplayIcon />}
                     onClick={() => openFullModule('licenses')}
+                    fullWidth
                     sx={{
-                      flex: 1,
-                      borderRadius: 2,
+                      minHeight: 48,
+                      borderRadius: 2.5,
                       boxShadow: 2,
                       textTransform: 'none',
                       backgroundColor: (theme) => `${theme.palette.error.light}16`
@@ -1464,45 +1563,52 @@ export default function CustomerCrmLionTv() {
                   >
                     {t('crm.modules.licenses', 'Ver licencias')}
                   </Button>
-                </Stack>
+                </ResponsiveMetricGrid>
               </Stack>
             </MainCard>
           </Stack>
         )}
-      </MainCard>
-      <Divider sx={{ my: 3 }} />
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="flex-end">
-        <Chip
-          label={t('crm.datasets.customers', { defaultValue: 'Clientes cargados: {{count}}', count: customers.length })}
-          color="primary"
-          variant="outlined"
-          size="small"
-        />
-        <Chip
-          label={t('crm.datasets.managedAccounts', {
-            defaultValue: 'Managed accounts: {{count}}',
-            count: managedAccounts.length
-          })}
-          color="info"
-          variant="outlined"
-          size="small"
-        />
-        <Chip
-          label={t('crm.datasets.label', {
-            defaultValue: 'Datasets: {{state}}',
-            state:
+
+        <Stack
+          direction="row"
+          spacing={1}
+          flexWrap="wrap"
+          useFlexGap
+          justifyContent={{ xs: 'flex-start', sm: 'flex-end' }}
+          sx={{ px: { xs: 0.25, sm: 0 } }}
+        >
+          <Chip
+            label={t('crm.datasets.customers', { defaultValue: 'Clientes cargados: {{count}}', count: customers.length })}
+            color="primary"
+            variant="outlined"
+            size="small"
+          />
+          <Chip
+            label={t('crm.datasets.managedAccounts', {
+              defaultValue: 'Managed accounts: {{count}}',
+              count: managedAccounts.length
+            })}
+            color="info"
+            variant="outlined"
+            size="small"
+          />
+          <Chip
+            label={t('crm.datasets.label', {
+              defaultValue: 'Datasets: {{state}}',
+              state:
+                loading.customers || loading.subscriptions || loading.invoices || loading.licenses || loading.managedAccounts
+                  ? t('crm.datasets.loading', 'Cargando...')
+                  : t('crm.datasets.ready', 'Listos')
+            })}
+            color={
               loading.customers || loading.subscriptions || loading.invoices || loading.licenses || loading.managedAccounts
-                ? t('crm.datasets.loading', 'Cargando...')
-                : t('crm.datasets.ready', 'Listos')
-          })}
-          color={
-            loading.customers || loading.subscriptions || loading.invoices || loading.licenses || loading.managedAccounts
-              ? 'warning'
-              : 'success'
-          }
-          variant="outlined"
-          size="small"
-        />
+                ? 'warning'
+                : 'success'
+            }
+            variant="outlined"
+            size="small"
+          />
+        </Stack>
       </Stack>
 
       <Dialog

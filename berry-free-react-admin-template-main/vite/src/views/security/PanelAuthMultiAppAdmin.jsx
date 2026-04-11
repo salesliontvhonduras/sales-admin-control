@@ -36,6 +36,7 @@ import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveListSection from 'ui-component/responsive/ResponsiveListSection';
+import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import {
   createPanelAuth,
   deletePanelAuth,
@@ -256,13 +257,11 @@ export default function PanelAuthMultiAppAdmin() {
 
   return (
     <Stack spacing={2}>
-      <Grid container spacing={2}>
+      <ResponsiveMetricGrid columns={{ xs: 1, md: 2, lg: 4 }}>
         {metrics.map((metric) => (
-          <Grid key={`${metric.title}-${metric.value}`} item xs={12} sm={6} lg={3}>
-            <LionMetricCard {...metric} />
-          </Grid>
+          <LionMetricCard {...metric} key={`${metric.title}-${metric.value}`} />
         ))}
-      </Grid>
+      </ResponsiveMetricGrid>
 
       <MainCard
         title={t('panelAuthAdmin.title')}

@@ -594,7 +594,7 @@ export default function CatalogCurationLionTv() {
               <Grid item xs={12} lg={5}>
                 <Grid container spacing={1.25}>
                   {summaryCards.map((card) => (
-                    <Grid item xs={12} sm={6} key={card.label}>
+                    <Grid item xs={12} sm={12} md={6} key={card.label}>
                       <StatusCard label={card.label} value={card.value} helper={card.helper} tone={card.tone} />
                     </Grid>
                   ))}

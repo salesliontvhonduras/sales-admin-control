@@ -71,6 +71,7 @@ import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
+import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi, catalogsApi } from 'utils/api';
 
@@ -687,7 +688,7 @@ export default function InvoicesLionTv() {
           </ResponsiveActionBar>
         }
       >
-        <Grid container spacing={gridSpacing}>
+        <ResponsiveMetricGrid columns={{ xs: 1, md: 2, lg: 3 }}>
           {[
             {
               title: t('invoices.summary.totalLabel', 'Facturas'),
@@ -711,11 +712,9 @@ export default function InvoicesLionTv() {
               color: 'warning'
             }
           ].map((item, idx) => (
-            <Grid item xs={12} sm={4} md={4} key={idx}>
-              <LionMetricCard {...item} />
-            </Grid>
+            <LionMetricCard {...item} key={idx} />
           ))}
-        </Grid>
+        </ResponsiveMetricGrid>
       </MainCard>
 
       <MainCard

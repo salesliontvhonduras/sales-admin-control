@@ -62,6 +62,7 @@ import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
+import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -691,7 +692,7 @@ export default function PotentialCustomersLionTv() {
           </ResponsiveActionBar>
         }
       >
-        <Grid container spacing={gridSpacing}>
+        <ResponsiveMetricGrid columns={{ xs: 1, md: 2, lg: 4 }}>
           {[
             { icon: <GroupIcon fontSize="small" />, title: t('potentialCustomers.kpi.total'), value: total, helper: t('potentialCustomers.title'), color: 'primary' },
             {
@@ -716,11 +717,9 @@ export default function PotentialCustomersLionTv() {
               color: 'success'
             }
           ].map((item, idx) => (
-            <Grid item xs={12} sm={6} md={3} key={idx}>
-              <LionMetricCard {...item} />
-            </Grid>
+            <LionMetricCard {...item} key={idx} />
           ))}
-        </Grid>
+        </ResponsiveMetricGrid>
       </MainCard>
 
       <MainCard title={t('potentialCustomers.search', 'Buscar potenciales')}>

@@ -50,6 +50,7 @@ import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
 import MainCard from 'ui-component/cards/MainCard';
 import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
+import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -848,41 +849,37 @@ export default function ManagedAccountsLionTv() {
 
         {tab === 0 ? (
           <Grid container spacing={gridSpacing}>
-            <Grid item xs={12} sm={6} lg={3}>
-              <MetricCard
-                title={t('managedAccounts.metrics.totalAccounts', 'Total Accounts')}
-                value={accountMetrics.total}
-                helper={t('managedAccounts.metrics.totalAccountsHelper', 'Registered accounts')}
-                icon={<HubOutlinedIcon />}
-                color="primary"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} lg={3}>
-              <MetricCard
-                title={t('managedAccounts.metrics.active', 'Active')}
-                value={accountMetrics.active}
-                helper={t('managedAccounts.metrics.activeHelper', 'ACTIVE status')}
-                icon={<CheckCircleOutlineIcon />}
-                color="success"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} lg={3}>
-              <MetricCard
-                title={t('managedAccounts.metrics.dueToday', 'Due Today')}
-                value={accountMetrics.dueToday}
-                helper={t('managedAccounts.metrics.dueTodayHelper', 'Immediate action')}
-                icon={<HourglassTopIcon />}
-                color="warning"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} lg={3}>
-              <MetricCard
-                title={t('managedAccounts.metrics.expired', 'Expired')}
-                value={accountMetrics.expired}
-                helper={t('managedAccounts.metrics.expiredHelper', 'Potential churn risk')}
-                icon={<ReportProblemOutlinedIcon />}
-                color="error"
-              />
+            <Grid item xs={12}>
+              <ResponsiveMetricGrid columns={{ xs: 1, md: 2, lg: 4 }}>
+                <MetricCard
+                  title={t('managedAccounts.metrics.totalAccounts', 'Total Accounts')}
+                  value={accountMetrics.total}
+                  helper={t('managedAccounts.metrics.totalAccountsHelper', 'Registered accounts')}
+                  icon={<HubOutlinedIcon />}
+                  color="primary"
+                />
+                <MetricCard
+                  title={t('managedAccounts.metrics.active', 'Active')}
+                  value={accountMetrics.active}
+                  helper={t('managedAccounts.metrics.activeHelper', 'ACTIVE status')}
+                  icon={<CheckCircleOutlineIcon />}
+                  color="success"
+                />
+                <MetricCard
+                  title={t('managedAccounts.metrics.dueToday', 'Due Today')}
+                  value={accountMetrics.dueToday}
+                  helper={t('managedAccounts.metrics.dueTodayHelper', 'Immediate action')}
+                  icon={<HourglassTopIcon />}
+                  color="warning"
+                />
+                <MetricCard
+                  title={t('managedAccounts.metrics.expired', 'Expired')}
+                  value={accountMetrics.expired}
+                  helper={t('managedAccounts.metrics.expiredHelper', 'Potential churn risk')}
+                  icon={<ReportProblemOutlinedIcon />}
+                  color="error"
+                />
+              </ResponsiveMetricGrid>
             </Grid>
 
             <Grid item xs={12} md={8}>
@@ -1446,10 +1443,10 @@ export default function ManagedAccountsLionTv() {
             <Grid item xs={12} md={7.5}>
               <Stack spacing={2}>
                 <Grid container spacing={1.5}>
-                  <Grid item xs={12} sm={6} md={3}>
+                  <Grid item xs={12} sm={12} md={6} lg={3}>
                     <MetricCard title={t('managedAccounts.metrics.total', 'Total')} value={eventMetrics.total} icon={<EmailOutlinedIcon />} color="info" />
                   </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
+                  <Grid item xs={12} sm={12} md={6} lg={3}>
                     <MetricCard
                       title={t('managedAccounts.metrics.distributed', 'Distributed')}
                       value={eventMetrics.distributed}
@@ -1457,10 +1454,10 @@ export default function ManagedAccountsLionTv() {
                       color="success"
                     />
                   </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
+                  <Grid item xs={12} sm={12} md={6} lg={3}>
                     <MetricCard title={t('managedAccounts.metrics.failed', 'Failed')} value={eventMetrics.failed} icon={<ReportProblemOutlinedIcon />} color="error" />
                   </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
+                  <Grid item xs={12} sm={12} md={6} lg={3}>
                     <MetricCard
                       title={t('managedAccounts.metrics.unresolved', 'Unresolved')}
                       value={eventMetrics.unresolved}
@@ -1602,10 +1599,10 @@ export default function ManagedAccountsLionTv() {
 
         {tab === 4 ? (
           <Grid container spacing={gridSpacing}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={12} md={6} lg={3}>
               <MetricCard title={t('managedAccounts.metrics.inboundTotal', 'Inbound Total')} value={inboundSummary?.total || 0} icon={<EmailOutlinedIcon />} color="info" />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={12} md={6} lg={3}>
               <MetricCard
                 title={t('managedAccounts.metrics.inboundDistributed', 'Inbound Distributed')}
                 value={inboundSummary?.distributed || 0}
@@ -1613,10 +1610,10 @@ export default function ManagedAccountsLionTv() {
                 color="success"
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={12} md={6} lg={3}>
               <MetricCard title={t('managedAccounts.metrics.sent', 'Sent')} value={distributionSummary?.sent || 0} icon={<MarkEmailReadOutlinedIcon />} color="success" />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={12} md={6} lg={3}>
               <MetricCard title={t('managedAccounts.metrics.failed', 'Failed')} value={distributionSummary?.failed || 0} icon={<ReportProblemOutlinedIcon />} color="error" />
             </Grid>
 

@@ -71,6 +71,7 @@ import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
+import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 
@@ -995,7 +996,7 @@ export default function LicensesLionTv() {
           </ResponsiveActionBar>
         }
       >
-        <Grid container spacing={gridSpacing}>
+        <ResponsiveMetricGrid columns={{ xs: 1, md: 2, lg: 3, xl: 6 }}>
           {[
             { title: t('licenses.title'), value: total, helper: t('licenses.search'), color: 'primary', icon: <SecurityIcon fontSize="small" /> },
             { title: 'ACTIVE', value: rows.filter((r) => r.status === 'ACTIVE').length, helper: t('licenses.filters.status'), color: 'success', icon: <SecurityIcon fontSize="small" /> },
@@ -1004,11 +1005,9 @@ export default function LicensesLionTv() {
             { title: 'AVAILABLE', value: rows.filter((r) => r.status === 'AVAILABLE').length, helper: t('licenses.filters.status'), color: 'info', icon: <SecurityIcon fontSize="small" /> },
             { title: 'EMERGENCY', value: rows.filter((r) => r.status === 'EMERGENCY').length, helper: t('licenses.filters.status'), color: 'secondary', icon: <SecurityIcon fontSize="small" /> }
           ].map((item, idx) => (
-            <Grid item xs={12} sm={6} md={3} key={idx}>
-              <LionMetricCard {...item} />
-            </Grid>
+            <LionMetricCard {...item} key={idx} />
           ))}
-        </Grid>
+        </ResponsiveMetricGrid>
       </MainCard>
 
       {/* ✅ SEARCH + TABLE (ESTILO CUSTOMERS) */}

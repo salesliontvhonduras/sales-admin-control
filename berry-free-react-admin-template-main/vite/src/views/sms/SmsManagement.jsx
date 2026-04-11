@@ -45,6 +45,7 @@ import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveListSection from 'ui-component/responsive/ResponsiveListSection';
+import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { smsApi } from 'utils/api';
 
 const statusColors = {
@@ -297,13 +298,11 @@ export default function SmsManagement() {
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto', display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 3 }, pb: 3 }}>
-      <Grid container spacing={2}>
+      <ResponsiveMetricGrid columns={{ xs: 1, md: 2, lg: 3 }}>
         {metricCards.map((card) => (
-          <Grid key={card.title} item xs={12} sm={6} lg={4}>
-            <LionMetricCard {...card} />
-          </Grid>
+          <LionMetricCard {...card} key={card.title} />
         ))}
-      </Grid>
+      </ResponsiveMetricGrid>
 
       <MainCard
         title={t('sms.title')}

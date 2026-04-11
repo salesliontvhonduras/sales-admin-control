@@ -35,7 +35,35 @@ export default function MobileSummaryCard({ icon, title, subtitle, chips, action
           </Stack>
         ) : null}
         {children}
-        {actions ? <Box>{actions}</Box> : null}
+        {actions ? (
+          <Box
+            sx={(theme) => ({
+              pt: 1.1,
+              borderTop: '1px solid',
+              borderColor: theme.palette.divider,
+              '& .responsive-action-bar': {
+                width: '100%',
+                justifyContent: 'flex-start',
+                alignItems: 'center'
+              },
+              '& .responsive-action-bar > .MuiButton-root': {
+                minHeight: 40,
+                borderRadius: 2.5,
+                textTransform: 'none',
+                fontWeight: 700
+              },
+              '& .responsive-action-bar > .MuiIconButton-root': {
+                borderRadius: 2.5,
+                border: '1px solid',
+                borderColor: theme.palette.divider,
+                bgcolor: theme.palette.background.paper,
+                boxShadow: theme.palette.mode === 'dark' ? '0 8px 18px rgba(2,8,23,0.34)' : '0 8px 18px rgba(15,23,42,0.08)'
+              }
+            })}
+          >
+            {actions}
+          </Box>
+        ) : null}
       </Stack>
     </Card>
   );
