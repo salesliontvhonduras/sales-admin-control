@@ -10,9 +10,7 @@ import { withAlpha } from 'utils/colorUtils';
 
 // constant
 const headerStyle = {
-  '& .MuiCardHeader-root': {
-    gap: 12
-  },
+  gap: 12,
   '& .MuiCardHeader-content': {
     minWidth: 0,
     width: '100%'
@@ -86,12 +84,10 @@ export default function MainCard({
         <CardHeader
           sx={{
             ...headerStyle,
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' },
             px: { xs: 1.5, sm: 2.5 },
             py: { xs: 1.5, sm: 2 },
-            '& .MuiCardHeader-root': {
-              flexDirection: { xs: 'column', sm: 'row' },
-              alignItems: { xs: 'stretch', sm: 'center' }
-            },
             '& .MuiCardHeader-content': {
               width: '100%'
             },
@@ -115,12 +111,10 @@ export default function MainCard({
         <CardHeader
           sx={{
             ...headerStyle,
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' },
             px: { xs: 1.5, sm: 2.5 },
             py: { xs: 1.5, sm: 2 },
-            '& .MuiCardHeader-root': {
-              flexDirection: { xs: 'column', sm: 'row' },
-              alignItems: { xs: 'stretch', sm: 'center' }
-            },
             '& .MuiCardHeader-content': {
               width: '100%'
             },

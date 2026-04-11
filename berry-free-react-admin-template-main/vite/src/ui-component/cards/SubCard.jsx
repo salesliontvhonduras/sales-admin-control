@@ -43,10 +43,9 @@ export default function SubCard({
         <CardHeader
           sx={{
             p: { xs: 1.5, sm: 2.5 },
-            '& .MuiCardHeader-root': {
-              flexDirection: { xs: 'column', sm: 'row' },
-              alignItems: { xs: 'stretch', sm: 'center' }
-            },
+            gap: 12,
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' },
             '& .MuiCardHeader-content': {
               minWidth: 0,
               width: '100%'
@@ -66,10 +65,9 @@ export default function SubCard({
         <CardHeader
           sx={{
             p: { xs: 1.5, sm: 2.5 },
-            '& .MuiCardHeader-root': {
-              flexDirection: { xs: 'column', sm: 'row' },
-              alignItems: { xs: 'stretch', sm: 'center' }
-            },
+            gap: 12,
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' },
             '& .MuiCardHeader-content': {
               minWidth: 0,
               width: '100%'
