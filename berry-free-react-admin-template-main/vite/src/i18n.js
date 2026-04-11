@@ -2015,7 +2015,9 @@ const resources = {
         actions: {
           new: 'New potential customer',
           edit: 'Edit potential customer',
-          markContacted: 'Mark as contacted'
+          markContacted: 'Mark as contacted',
+          sendPaymentFailedEmail: 'Send payment failed email',
+          sendAbandonedCartEmail: 'Send abandoned cart email'
         },
         form: {
           identity: 'Identity',
@@ -2070,6 +2072,11 @@ const resources = {
           markContactedSuccess: 'Status updated to Contacted.',
           markContactedError: 'Could not update status.',
           invalidWhatsAppPhone: 'This prospect has no valid WhatsApp phone.',
+          missingRealEmail: 'This prospect does not have a usable email.',
+          paymentFailedSent: 'Payment failed follow-up email sent.',
+          paymentFailedError: 'Could not send the payment failed email.',
+          abandonedCartSent: 'Abandoned cart email sent.',
+          abandonedCartError: 'Could not send the abandoned cart email.',
           requiredName: 'Complete the name.',
           created: 'Potential customer created.',
           updated: 'Potential customer updated.',

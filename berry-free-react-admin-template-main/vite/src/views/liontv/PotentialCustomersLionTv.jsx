@@ -53,6 +53,8 @@ import GroupIcon from '@mui/icons-material/Group';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ContactPhoneOutlinedIcon from '@mui/icons-material/ContactPhoneOutlined';
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
+import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
+import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
 import LionMetricCard from 'ui-component/cards/LionMetricCard';
@@ -297,7 +299,7 @@ function StatusChip({ status }) {
   );
 }
 
-function RowActions({ row, onEdit, onDelete, onWhatsApp, onMarkContacted }) {
+function RowActions({ row, onEdit, onDelete, onWhatsApp, onMarkContacted, onSendPaymentFailedEmail, onSendAbandonedCartEmail }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { t } = useTranslation();
@@ -342,6 +344,24 @@ function RowActions({ row, onEdit, onDelete, onWhatsApp, onMarkContacted }) {
         >
           <WhatsAppIcon fontSize="small" style={{ marginRight: 8, color: '#25D366' }} />
           {t('actions.whatsapp', 'WhatsApp')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            onSendPaymentFailedEmail?.(row);
+          }}
+        >
+          <PaymentsOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#ef6c00' }} />
+          {t('potentialCustomers.actions.sendPaymentFailedEmail', 'Send payment failed email')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
+            onSendAbandonedCartEmail?.(row);
+          }}
+        >
+          <ShoppingCartOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#8e24aa' }} />
+          {t('potentialCustomers.actions.sendAbandonedCartEmail', 'Send abandoned cart email')}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -628,6 +648,65 @@ export default function PotentialCustomersLionTv() {
     }
   };
 
+  const hasUsableEmail = (row) => {
+    const email = String(row?.email || '')
+      .trim()
+      .toLowerCase();
+    return Boolean(email) && email !== EMAIL_FALLBACK.toLowerCase() && email.includes('@');
+  };
+
+  const handlePotentialEmailAction = async (row, notificationKey) => {
+    const id = row?.potentialCustomerId;
+    if (!id) return;
+
+    if (!hasUsableEmail(row)) {
+      enqueueSnackbar(t('potentialCustomers.messages.missingRealEmail', 'This prospect does not have a usable email.'), {
+        variant: 'warning'
+      });
+      return;
+    }
+
+    const path =
+      notificationKey === 'paymentFailed'
+        ? `/potential-customers/v1/${id}/notifications/payment-failed`
+        : `/potential-customers/v1/${id}/notifications/abandoned-cart`;
+
+    const successKey =
+      notificationKey === 'paymentFailed'
+        ? 'potentialCustomers.messages.paymentFailedSent'
+        : 'potentialCustomers.messages.abandonedCartSent';
+
+    const errorKey =
+      notificationKey === 'paymentFailed'
+        ? 'potentialCustomers.messages.paymentFailedError'
+        : 'potentialCustomers.messages.abandonedCartError';
+
+    setSending(true);
+    try {
+      await lionTvApi.post(
+        path,
+        {},
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          skipAuthRedirect: true
+        }
+      );
+      enqueueSnackbar(t(successKey), { variant: 'success' });
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t(errorKey), {
+          variant: 'error'
+        });
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSendPaymentFailedEmail = (row) => handlePotentialEmailAction(row, 'paymentFailed');
+
+  const handleSendAbandonedCartEmail = (row) => handlePotentialEmailAction(row, 'abandonedCart');
+
   const confirmDelete = async () => {
     const id = openDelete.row?.potentialCustomerId;
     if (!id) {
@@ -790,6 +869,8 @@ export default function PotentialCustomersLionTv() {
                           onDelete={handleDelete}
                           onWhatsApp={handleWhatsApp}
                           onMarkContacted={handleMarkContacted}
+                          onSendPaymentFailedEmail={handleSendPaymentFailedEmail}
+                          onSendAbandonedCartEmail={handleSendAbandonedCartEmail}
                         />
                       </ResponsiveActionBar>
                     }
@@ -885,6 +966,8 @@ export default function PotentialCustomersLionTv() {
                             onDelete={handleDelete}
                             onWhatsApp={handleWhatsApp}
                             onMarkContacted={handleMarkContacted}
+                            onSendPaymentFailedEmail={handleSendPaymentFailedEmail}
+                            onSendAbandonedCartEmail={handleSendAbandonedCartEmail}
                           />
                         </TableCell>
                       </TableRow>
