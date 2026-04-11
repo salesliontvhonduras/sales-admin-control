@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import Avatar from '@mui/material/Avatar';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import Divider from '@mui/material/Divider';
@@ -50,6 +51,7 @@ const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
 
 export default function ProfileSection() {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const {
     state: { borderRadius }
   } = useConfig();
@@ -320,7 +322,7 @@ export default function ProfileSection() {
         )}
       </Popper>
 
-      <Dialog open={openPwd} onClose={() => setOpenPwd(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+      <Dialog open={openPwd} onClose={() => setOpenPwd(false)} maxWidth="xs" fullWidth fullScreen={isMobile} PaperProps={{ sx: { borderRadius: 3 } }}>
         <DialogTitleWithClose
           onClose={() => setOpenPwd(false)}
           sx={{

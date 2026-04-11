@@ -68,9 +68,9 @@ export default function ForgotPassword() {
 
   return (
     <AuthWrapper1>
-      <Stack sx={{ justifyContent: 'flex-end', minHeight: '100vh' }}>
-        <Stack sx={{ justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 68px)' }}>
-          <Box sx={{ m: { xs: 1, sm: 3 }, mb: 0, position: 'relative' }}>
+      <Stack sx={{ justifyContent: 'space-between', minHeight: '100vh' }}>
+        <Stack sx={{ justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 72px)', px: { xs: 1, sm: 2.5 }, py: { xs: 2, sm: 3 } }}>
+          <Box sx={{ width: '100%', maxWidth: { xs: 480, md: 520 }, position: 'relative' }}>
             <AuthCardWrapper>
               <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
                 <Box sx={{ mb: 3 }}>
@@ -140,7 +140,7 @@ export default function ForgotPassword() {
             </AuthCardWrapper>
           </Box>
         </Stack>
-        <Box sx={{ px: 3, my: 3 }}>
+        <Box sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 2, sm: 3 } }}>
           <AuthFooter />
         </Box>
       </Stack>

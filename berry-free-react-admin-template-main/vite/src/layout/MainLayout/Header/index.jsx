@@ -26,10 +26,9 @@ export default function Header() {
   const drawerOpen = menuMaster.isDashboardDrawerOpened;
 
   return (
-    <>
-      {/* logo & toggler button */}
-      <Box sx={{ width: downMD ? 'auto' : 228, display: 'flex', alignItems: 'center', minWidth: 0 }}>
-        <Box component="span" sx={{ display: { xs: 'none', md: 'block' }, flexGrow: 1 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: { xs: 1, sm: 1.5 }, minWidth: 0 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, minWidth: 0, flexShrink: 0 }}>
+        <Box component="span" sx={{ display: { xs: 'none', lg: 'block' }, minWidth: 0 }}>
           <LogoSection />
         </Box>
         <Avatar
@@ -54,20 +53,19 @@ export default function Header() {
         </Avatar>
       </Box>
 
-      {/* header search */}
-      <SearchSection />
-      <Box sx={{ flexGrow: 1 }} />
-
-      {/* notification */}
-      <Box sx={{ mr: 1, display: { xs: 'none', sm: 'block' } }}>
-        <ThemeModeSwitcher compact />
-      </Box>
-      <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-        <NotificationSection />
+      <Box sx={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center' }}>
+        <SearchSection />
       </Box>
 
-      {/* profile */}
-      <ProfileSection />
-    </>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: { xs: 0.75, sm: 1 }, minWidth: 0, flexShrink: 0 }}>
+        <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+          <ThemeModeSwitcher compact />
+        </Box>
+        <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+          <NotificationSection />
+        </Box>
+        <ProfileSection />
+      </Box>
+    </Box>
   );
 }

@@ -6,7 +6,7 @@ export default function ResponsiveFilters({ children, sx = {}, paperSx = {}, ...
     <Paper
       elevation={0}
       sx={(theme) => ({
-        p: { xs: 1.5, sm: 2 },
+        p: { xs: 1.25, sm: 1.75, md: 2 },
         borderRadius: 3,
         border: '1px solid',
         borderColor: 'divider',
@@ -29,11 +29,21 @@ export default function ResponsiveFilters({ children, sx = {}, paperSx = {}, ...
         alignItems={{ xs: 'stretch', md: 'center' }}
         sx={{
           width: '100%',
+          minWidth: 0,
           '& .MuiFormControl-root, & .MuiTextField-root': {
             width: { xs: '100%', md: 'auto' }
           },
+          '& .MuiFormControl-root': {
+            minWidth: { xs: 0, md: 170 }
+          },
           '& .MuiInputBase-root': {
             minHeight: 46
+          },
+          '& .MuiInputLabel-root': {
+            maxWidth: 'calc(100% - 24px)'
+          },
+          '& .MuiInputBase-input, & .MuiSelect-select': {
+            textOverflow: 'ellipsis'
           },
           '& .MuiButton-root': {
             width: { xs: '100%', md: 'auto' },

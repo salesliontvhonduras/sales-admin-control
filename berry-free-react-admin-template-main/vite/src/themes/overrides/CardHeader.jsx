@@ -8,7 +8,8 @@ export default function CardHeader(theme) {
           color: theme.vars.palette.text.primary,
           padding: '18px 20px',
           [theme.breakpoints.down('sm')]: {
-            padding: '14px'
+            padding: '14px',
+            alignItems: 'stretch'
           }
         },
         title: {
@@ -16,7 +17,8 @@ export default function CardHeader(theme) {
           fontWeight: 700,
           lineHeight: 1.25,
           whiteSpace: 'normal',
-          overflowWrap: 'anywhere'
+          overflowWrap: 'anywhere',
+          wordBreak: 'break-word'
         },
         subheader: {
           fontSize: '0.78rem',

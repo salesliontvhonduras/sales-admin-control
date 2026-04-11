@@ -41,7 +41,17 @@ export default function CssBaseline(theme) {
           background: isDark ? theme.vars.palette.grey[600] : theme.vars.palette.grey[400]
         },
         '#root': {
-          minHeight: '100vh'
+          minHeight: '100vh',
+          overflowX: 'clip'
+        },
+        'img, svg, video, canvas': {
+          maxWidth: '100%'
+        },
+        '.MuiCard-root, .MuiPaper-root, .MuiBox-root, .MuiStack-root, .MuiGrid-root, .MuiCardContent-root': {
+          minWidth: 0
+        },
+        '.MuiTypography-root': {
+          overflowWrap: 'anywhere'
         },
         '.MuiTablePagination-toolbar': {
           gap: 8
@@ -59,6 +69,9 @@ export default function CssBaseline(theme) {
           },
           '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
             margin: 0
+          },
+          '.MuiTablePagination-actions': {
+            marginLeft: 'auto'
           }
         }
       }

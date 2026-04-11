@@ -20,19 +20,21 @@ export default function Select(theme) {
           display: 'flex',
           alignItems: 'center',
           borderRadius: 12,
+          minWidth: 0,
           '&:focus': {
             backgroundColor: 'transparent'
           }
         },
         outlined: {
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: theme.vars.palette.primary.main
-          },
+          borderRadius: 12,
           '& .MuiOutlinedInput-notchedOutline': {
             borderColor: theme.vars.palette.divider
           },
           '&:hover .MuiOutlinedInput-notchedOutline': {
             borderColor: withAlpha(theme.vars.palette.primary.main, 0.62)
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.vars.palette.primary.main
           }
         }
       }

@@ -45,7 +45,7 @@ export default function MainLayout() {
   if (menuMasterLoading) return <Loader />;
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', width: '100%', maxWidth: '100%', overflowX: 'clip' }}>
       {/* header */}
       <AppBar
         enableColorOnDark
@@ -71,7 +71,9 @@ export default function MainLayout() {
       <MainContentStyled {...{ borderRadius, open: drawerOpen }}>
         <Box
           sx={{
-            ...{ px: { xs: 0 } },
+            width: '100%',
+            maxWidth: '100%',
+            minWidth: 0,
             minHeight: 'calc(100vh - 116px)',
             display: 'flex',
             flexDirection: 'column'

@@ -26,9 +26,7 @@ export default function TableCell(theme) {
         root: {
           borderCollapse: 'separate',
           borderSpacing: 0,
-          [theme.breakpoints.down('sm')]: {
-            minWidth: 'max-content'
-          }
+          minWidth: 0
         }
       }
     },
@@ -72,7 +70,8 @@ export default function TableCell(theme) {
             whiteSpace: 'nowrap'
           },
           '&.MuiTableCell-body': {
-            fontSize: '0.84rem'
+            fontSize: '0.84rem',
+            overflowWrap: 'anywhere'
           },
           [theme.breakpoints.down('sm')]: {
             paddingTop: 10,

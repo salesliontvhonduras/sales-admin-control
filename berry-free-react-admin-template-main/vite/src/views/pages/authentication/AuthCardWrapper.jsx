@@ -11,8 +11,9 @@ export default function AuthCardWrapper({ children, ...other }) {
   return (
     <MainCard
       sx={{
-        maxWidth: { xs: 400, lg: 475 },
-        margin: { xs: 2.5, md: 3 },
+        width: '100%',
+        maxWidth: { xs: '100%', sm: 440, lg: 475 },
+        margin: { xs: 0, md: 0 },
         border: '1px solid',
         borderColor: 'divider',
         backdropFilter: 'blur(10px)',
@@ -24,7 +25,7 @@ export default function AuthCardWrapper({ children, ...other }) {
       content={false}
       {...other}
     >
-      <Box sx={{ p: { xs: 2, sm: 3, xl: 5 } }}>{children}</Box>
+      <Box sx={{ p: { xs: 1.5, sm: 2.5, xl: 5 } }}>{children}</Box>
     </MainCard>
   );
 }

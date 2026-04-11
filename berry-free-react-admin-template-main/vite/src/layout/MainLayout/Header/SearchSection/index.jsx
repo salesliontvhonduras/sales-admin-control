@@ -538,23 +538,20 @@ function SearchInput({
       sx={(theme) => ({
         width: fullWidth ? '100%' : { md: 280, lg: 470 },
         ml: fullWidth ? 0 : 2,
-        px: 1.4,
+        px: 0.2,
         borderRadius: 12,
-        border: '1px solid',
-        borderColor: theme.palette.divider,
         backgroundColor: theme.palette.mode === 'dark' ? theme.palette.surface.muted : theme.palette.surface.sunken,
         '&:hover': {
-          borderColor: theme.palette.mode === 'dark' ? theme.palette.primary.dark : theme.palette.primary.light
+          backgroundColor: theme.palette.mode === 'dark' ? theme.palette.surface.muted : theme.palette.surface.sunken
         },
         '&.Mui-focused': {
-          borderColor: theme.palette.primary.main,
-          boxShadow: `0 0 0 1px ${theme.palette.primary.main}`
+          backgroundColor: theme.palette.mode === 'dark' ? theme.palette.surface.card : theme.palette.background.paper
         },
         '& .MuiInputBase-input': {
           py: 1.25
         },
-        '& .MuiOutlinedInput-notchedOutline': {
-          border: 'none'
+        [theme.breakpoints.down('lg')]: {
+          width: fullWidth ? '100%' : { md: 240, lg: 400 }
         }
       })}
     />
@@ -920,8 +917,8 @@ export default function SearchSection() {
             <Transitions type="zoom" {...TransitionProps} sx={{ transformOrigin: 'center top' }}>
               <Paper
                 sx={{
-                  width: 620,
-                  maxWidth: 'calc(100vw - 32px)',
+                  width: 'min(680px, calc(100vw - 24px))',
+                  maxWidth: 'calc(100vw - 24px)',
                   borderRadius: 2.5,
                   border: '1px solid',
                   borderColor: 'divider',

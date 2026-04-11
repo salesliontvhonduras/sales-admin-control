@@ -9,7 +9,6 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
-import Divider from '@mui/material/Divider';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -40,6 +39,12 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import useAuth from 'hooks/useAuth';
 
 import MainCard from 'ui-component/cards/MainCard';
+import LionMetricCard from 'ui-component/cards/LionMetricCard';
+import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
+import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
+import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
+import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
+import ResponsiveListSection from 'ui-component/responsive/ResponsiveListSection';
 import { smsApi } from 'utils/api';
 
 const statusColors = {
@@ -144,6 +149,32 @@ export default function SmsManagement() {
 
   const parsedPhones = useMemo(() => parsePhones(form.phoneNumbersText), [form.phoneNumbersText]);
   const estimatedCost = useMemo(() => parsedPhones.length * 1, [parsedPhones.length]);
+  const metricCards = useMemo(
+    () => [
+      {
+        title: t('sms.enqueue'),
+        value: parsedPhones.length,
+        helper: t('sms.chips.ready', { count: parsedPhones.length }),
+        color: 'primary',
+        icon: <SendIcon fontSize="small" />
+      },
+      {
+        title: t('sms.history'),
+        value: total,
+        helper: t('sms.chips.total', { count: total }),
+        color: 'secondary',
+        icon: <InfoOutlinedIcon fontSize="small" />
+      },
+      {
+        title: t('sms.form.chips.cost', { cost: estimatedCost }),
+        value: estimatedCost,
+        helper: form.scheduledAt ? t('sms.form.chips.scheduled', { value: formatDate(form.scheduledAt) }) : t('sms.form.chips.immediate'),
+        color: 'success',
+        icon: <SendIcon fontSize="small" />
+      }
+    ],
+    [estimatedCost, form.scheduledAt, parsedPhones.length, t, total]
+  );
 
   const loadMessages = useCallback(async () => {
     if (!accessToken) return;
@@ -266,19 +297,26 @@ export default function SmsManagement() {
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto', display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 3 }, pb: 3 }}>
+      <Grid container spacing={2}>
+        {metricCards.map((card) => (
+          <Grid key={card.title} item xs={12} sm={6} lg={4}>
+            <LionMetricCard {...card} />
+          </Grid>
+        ))}
+      </Grid>
+
       <MainCard
         title={t('sms.title')}
         secondary={
-          <Stack direction="row" spacing={1} alignItems="center">
+          <ResponsiveActionBar justifyContent="flex-end">
             <Chip label="Secure" size="small" color="primary" />
             <Button variant="contained" startIcon={<SendIcon />} onClick={() => setOpenModal(true)}>
               {t('sms.enqueue')}
             </Button>
-          </Stack>
+          </ResponsiveActionBar>
         }
         contentSX={{ display: 'flex', flexDirection: 'column', gap: 1 }}
       >
-        
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
           <Chip label={t('sms.chips.ready', { count: parsedPhones.length })} size="small" color="secondary" variant="outlined" />
           <Chip label={t('sms.chips.total', { count: total })} size="small" variant="outlined" />
@@ -288,23 +326,24 @@ export default function SmsManagement() {
       <MainCard
         title={t('sms.history')}
         secondary={
-          <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <ResponsiveActionBar justifyContent="flex-end">
             <Chip label={t('sms.chips.total', { count: total })} size="small" variant="outlined" />
             <Button size="small" variant="outlined" startIcon={<RefreshIcon />} onClick={handleRefresh} disabled={loading}>
               {t('actions.refresh')}
             </Button>
-          </Stack>
+          </ResponsiveActionBar>
         }
       >
         <Stack spacing={2}>
-          <Box
+          <ResponsiveFilters
             sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' },
-              gap: 1.5
+              '& .filter-search': { flex: { md: 1 }, minWidth: { md: 260 } },
+              '& .filter-date': { minWidth: { md: 170 } },
+              '& .filter-select': { minWidth: { md: 180 } }
             }}
           >
             <TextField
+              className="filter-search"
               label={t('sms.search')}
               value={filters.search}
               onChange={handleFilterChange('search')}
@@ -320,6 +359,7 @@ export default function SmsManagement() {
               }}
             />
             <TextField
+              className="filter-date"
               label={t('sms.filters.from')}
               type="date"
               InputLabelProps={{ shrink: true }}
@@ -329,6 +369,7 @@ export default function SmsManagement() {
               sx={filterFieldSx}
             />
             <TextField
+              className="filter-date"
               label={t('sms.filters.to')}
               type="date"
               InputLabelProps={{ shrink: true }}
@@ -337,7 +378,7 @@ export default function SmsManagement() {
               size="small"
               sx={filterFieldSx}
             />
-            <FormControl size="small" sx={{ ...filterFieldSx }}>
+            <FormControl className="filter-select" size="small" sx={{ ...filterFieldSx }}>
               <InputLabel id="status-filter-label">{t('sms.filters.status')}</InputLabel>
               <Select
                 labelId="status-filter-label"
@@ -352,10 +393,13 @@ export default function SmsManagement() {
                 ))}
               </Select>
             </FormControl>
-          </Box>
+          </ResponsiveFilters>
 
-          <Box sx={{ width: '100%', overflowX: 'auto' }}>
-              <TableContainer component={Paper} variant="outlined" sx={{ minWidth: 880 }}>
+          <ResponsiveListSection
+            isMobile={isMobile}
+            desktopContent={
+              <Box sx={{ width: '100%', overflowX: 'auto' }}>
+                <TableContainer component={Paper} variant="outlined" sx={{ minWidth: 760 }}>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
@@ -414,10 +458,59 @@ export default function SmsManagement() {
                 </TableBody>
               </Table>
             </TableContainer>
-          </Box>
-
-          <Divider />
-            <Box display="flex" justifyContent="flex-end">
+              </Box>
+            }
+            mobileContent={
+              <Stack spacing={1.5}>
+                {rows.map((row) => (
+                  <MobileSummaryCard
+                    key={row.id ?? `${row.phoneNumber}-${row.createdAt}`}
+                    title={row.phoneNumber || '-'}
+                    subtitle={row.messageText || '-'}
+                    chips={[
+                      <StatusChip key="status" status={row.status} />,
+                      <Chip key="priority" size="small" variant="outlined" label={`${t('sms.detail.priority')} ${row.priority ?? '-'}`} />
+                    ]}
+                    actions={
+                      <ResponsiveActionBar>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<InfoOutlinedIcon />}
+                          onClick={() => setDetailModal({ open: true, row })}
+                        >
+                          {t('sms.mobile.view')}
+                        </Button>
+                      </ResponsiveActionBar>
+                    }
+                  >
+                    <MobileFieldGrid
+                      fields={[
+                        { label: t('sms.mobile.scheduled'), value: formatDate(row.scheduledAt) },
+                        { label: t('sms.detail.created'), value: formatDate(row.createdAt) },
+                        { label: t('sms.detail.source'), value: row.sourceSystem || '-' }
+                      ]}
+                    />
+                  </MobileSummaryCard>
+                ))}
+                {!loading && rows.length === 0 ? (
+                  <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3 }}>
+                    <Typography variant="body2" color="text.secondary" align="center">
+                      {t('sms.table.empty')}
+                    </Typography>
+                  </Paper>
+                ) : null}
+                {loading ? (
+                  <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3 }}>
+                    <Typography variant="body2" color="text.secondary" align="center">
+                      {t('sms.table.loading')}
+                    </Typography>
+                  </Paper>
+                ) : null}
+              </Stack>
+            }
+            pagination={
+              <Box display="flex" justifyContent={{ xs: 'stretch', md: 'flex-end' }}>
               <TablePagination
                 component="div"
                 count={total}
@@ -426,41 +519,14 @@ export default function SmsManagement() {
                 rowsPerPage={rowsPerPage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
                 rowsPerPageOptions={[5, 10, 20, 50]}
-            />
-          </Box>
+              />
+              </Box>
+            }
+          />
         </Stack>
       </MainCard>
 
-      {isMobile && (
-        <Stack spacing={1.5}>
-          {rows.map((row) => (
-            <Paper key={row.id ?? `${row.phoneNumber}-${row.createdAt}`} variant="outlined" sx={{ p: 2 }}>
-              <Stack spacing={1}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography variant="subtitle1">{row.phoneNumber || '-'}</Typography>
-                  <StatusChip status={row.status} />
-                </Stack>
-                <Typography variant="body2" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {row.messageText || '-'}
-                </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                  {t('sms.mobile.scheduled')}: {formatDate(row.scheduledAt)}
-                </Typography>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<InfoOutlinedIcon />}
-                  onClick={() => setDetailModal({ open: true, row })}
-                >
-                  {t('sms.mobile.view')}
-                </Button>
-              </Stack>
-            </Paper>
-          ))}
-        </Stack>
-      )}
-
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="md">
+      <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth fullScreen={isMobile} maxWidth="md">
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {t('sms.enqueue')}
           <IconButton onClick={() => setOpenModal(false)} size="small">
@@ -554,29 +620,24 @@ export default function SmsManagement() {
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-          <Button
-            variant="outlined"
-            color="secondary"
-            startIcon={<ClearIcon />}
-            onClick={handleReset}
-            sx={{ minWidth: 150 }}
-          >
-            {t('sms.form.actions.clear')}
-          </Button>
-          <Button
-          variant="contained"
-          startIcon={<SendIcon />}
-          onClick={handleSend}
-          disabled={sending}
-          sx={{ minWidth: 150 }}
-        >
-            {sending ? t('sms.form.actions.sending') : t('sms.form.actions.send')}
-          </Button>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <ResponsiveActionBar>
+            <Button
+              variant="outlined"
+              color="secondary"
+              startIcon={<ClearIcon />}
+              onClick={handleReset}
+            >
+              {t('sms.form.actions.clear')}
+            </Button>
+            <Button variant="contained" startIcon={<SendIcon />} onClick={handleSend} disabled={sending}>
+              {sending ? t('sms.form.actions.sending') : t('sms.form.actions.send')}
+            </Button>
+          </ResponsiveActionBar>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={detailModal.open} onClose={() => setDetailModal({ open: false, row: null })} fullWidth maxWidth="sm">
+      <Dialog open={detailModal.open} onClose={() => setDetailModal({ open: false, row: null })} fullWidth fullScreen={isMobile} maxWidth="sm">
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {t('sms.detail.title')}
           <IconButton onClick={() => setDetailModal({ open: false, row: null })} size="small">

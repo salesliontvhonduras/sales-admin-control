@@ -4,11 +4,8 @@ import useAuth from 'hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 
 import Alert from '@mui/material/Alert';
-import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
 import Checkbox from '@mui/material/Checkbox';
 import Dialog from '@mui/material/Dialog';
@@ -34,6 +31,8 @@ import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { withAlpha } from 'utils/colorUtils';
 
 import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
@@ -47,7 +46,13 @@ import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
 import MainCard from 'ui-component/cards/MainCard';
+import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
+import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
+import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
+import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
+import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
+import ResponsiveListSection from 'ui-component/responsive/ResponsiveListSection';
 import { gridSpacing } from 'store/constant';
 import {
   createAdminUser,
@@ -67,18 +72,6 @@ const defaultCreateForm = {
   roles: ['ROLE_USER'],
   permissions: []
 };
-
-const cardGlassSx = (theme) => ({
-  borderRadius: 2.5,
-  border: '1px solid',
-  borderColor: 'divider',
-  boxShadow: `0 14px 32px ${withAlpha('#020617', 0.5)}`,
-  background: `linear-gradient(145deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 100%)`,
-  ...theme.applyStyles('light', {
-    boxShadow: `0 12px 26px ${withAlpha('#0f172a', 0.1)}`,
-    background: `linear-gradient(145deg, ${theme.vars.palette.surface.card} 0%, ${withAlpha(theme.vars.palette.primary.main, 0.08)} 46%, ${theme.vars.palette.surface.muted} 100%)`
-  })
-});
 
 const sectionCardSx = (theme) => ({
   border: '1px solid',
@@ -196,44 +189,15 @@ function statusColor(active) {
 }
 
 function MetricCard({ title, value, helper, icon, color = 'primary' }) {
-  return (
-    <Card sx={(theme) => cardGlassSx(theme)}>
-      <CardContent>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.5}>
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              {title}
-            </Typography>
-            <Typography variant="h2" sx={{ mt: 0.75 }}>
-              {value}
-            </Typography>
-            {helper ? (
-              <Typography variant="caption" color="text.secondary">
-                {helper}
-              </Typography>
-            ) : null}
-          </Box>
-          <Avatar
-            variant="rounded"
-            sx={(theme) => ({
-              width: 46,
-              height: 46,
-              bgcolor: theme.palette[color]?.lighter || theme.palette.primary.lighter,
-              color: theme.palette[color]?.main || theme.palette.primary.main
-            })}
-          >
-            {icon}
-          </Avatar>
-        </Stack>
-      </CardContent>
-    </Card>
-  );
+  return <LionMetricCard title={title} value={value} helper={helper} icon={icon} color={color} />;
 }
 
 export default function UserAccessAdmin() {
   const { accessToken } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const { t, i18n } = useTranslation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const locale = (i18n?.resolvedLanguage || i18n?.language || 'es').startsWith('en') ? 'en-US' : 'es-HN';
 
   const headers = useMemo(() => ({ Authorization: `Bearer ${accessToken}` }), [accessToken]);
@@ -438,7 +402,7 @@ export default function UserAccessAdmin() {
           sx={sectionCardSx}
           title={t('userAccess.title')}
           secondary={
-            <Stack direction="row" spacing={1}>
+            <ResponsiveActionBar justifyContent="flex-end">
               <Button
                 variant="outlined"
                 startIcon={<RefreshIcon />}
@@ -450,7 +414,7 @@ export default function UserAccessAdmin() {
               <Button variant="contained" startIcon={<PersonAddAlt1OutlinedIcon />} onClick={() => setCreateOpen(true)}>
                 {t('userAccess.actions.newUser')}
               </Button>
-            </Stack>
+            </ResponsiveActionBar>
           }
         >
           <Typography variant="body2" color="text.secondary">
@@ -498,163 +462,236 @@ export default function UserAccessAdmin() {
       <Grid item xs={12}>
         <MainCard title={t('userAccess.listTitle')} sx={sectionCardSx}>
           <Stack spacing={2.5}>
-            <Box sx={filterPanelSx}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={5}>
-                  <TextField
-                    fullWidth
-                    value={search}
-                    label={t('userAccess.filters.search')}
-                    onChange={(event) => {
-                      setIndex(0);
-                      setSearch(event.target.value);
-                    }}
-                    InputProps={{
-                      startAdornment: <SearchIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <TextField
-                    fullWidth
-                    select
-                    label={t('userAccess.filters.status')}
-                    value={statusFilter}
-                    onChange={(event) => {
-                      setIndex(0);
-                      setStatusFilter(event.target.value);
-                    }}
-                  >
-                    {statusFilterOptions.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <Alert severity="info" variant="outlined" sx={infoAlertSx}>
-                    {t('userAccess.catalog.loaded')}{' '}
-                    {catalogLoading
-                      ? t('userAccess.catalog.loading')
-                      : t('userAccess.catalog.ready', { roles: roleTemplates.length, permissions: permissionCatalog.length })}
-                  </Alert>
-                </Grid>
-              </Grid>
-            </Box>
+            <ResponsiveFilters
+              paperSx={filterPanelSx}
+              sx={{
+                '& .filter-search': { flex: { md: 1 }, minWidth: { md: 280 } },
+                '& .filter-status': { minWidth: { md: 180 } },
+                '& .filter-alert': { flex: { md: 1 }, minWidth: { md: 280 } }
+              }}
+            >
+              <TextField
+                className="filter-search"
+                fullWidth
+                value={search}
+                label={t('userAccess.filters.search')}
+                onChange={(event) => {
+                  setIndex(0);
+                  setSearch(event.target.value);
+                }}
+                InputProps={{
+                  startAdornment: <SearchIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                }}
+              />
+              <TextField
+                className="filter-status"
+                fullWidth
+                select
+                label={t('userAccess.filters.status')}
+                value={statusFilter}
+                onChange={(event) => {
+                  setIndex(0);
+                  setStatusFilter(event.target.value);
+                }}
+              >
+                {statusFilterOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Alert className="filter-alert" severity="info" variant="outlined" sx={infoAlertSx}>
+                {t('userAccess.catalog.loaded')}{' '}
+                {catalogLoading
+                  ? t('userAccess.catalog.loading')
+                  : t('userAccess.catalog.ready', { roles: roleTemplates.length, permissions: permissionCatalog.length })}
+              </Alert>
+            </ResponsiveFilters>
 
             {(loading || refreshing) && <LinearProgress sx={{ borderRadius: 999, height: 7 }} />}
 
-            <TableContainer sx={tableContainerSx}>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>{t('userAccess.table.user')}</TableCell>
-                    <TableCell>{t('userAccess.table.status')}</TableCell>
-                    <TableCell>{t('userAccess.table.primaryRole')}</TableCell>
-                    <TableCell>{t('userAccess.table.license')}</TableCell>
-                    <TableCell>{t('userAccess.table.permissions')}</TableCell>
-                    <TableCell align="right">{t('userAccess.table.actions')}</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
+            <ResponsiveListSection
+              isMobile={isMobile}
+              desktopContent={
+                <TableContainer sx={tableContainerSx}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>{t('userAccess.table.user')}</TableCell>
+                        <TableCell>{t('userAccess.table.status')}</TableCell>
+                        <TableCell>{t('userAccess.table.primaryRole')}</TableCell>
+                        <TableCell>{t('userAccess.table.license')}</TableCell>
+                        <TableCell>{t('userAccess.table.permissions')}</TableCell>
+                        <TableCell align="right">{t('userAccess.table.actions')}</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {users.map((item) => (
+                        <TableRow key={item.id} hover>
+                          <TableCell>
+                            <Stack spacing={0.4}>
+                              <Typography variant="subtitle2">{item.name || '-'}</Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {item.email} | {item.provider || t('userAccess.table.localProvider')}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {t('userAccess.table.createdAt', { value: formatDateTime(item.createdAt, locale) })}
+                              </Typography>
+                            </Stack>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              size="small"
+                              color={statusColor(item.active)}
+                              label={item.active ? t('userAccess.status.active') : t('userAccess.status.inactive')}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip size="small" color={roleColor(item.primaryRole)} label={item.primaryRole || t('userAccess.table.noRole')} />
+                          </TableCell>
+                          <TableCell>
+                            <Stack spacing={0.4}>
+                              <Chip
+                                size="small"
+                                color={item.hasActiveLicense ? 'success' : 'warning'}
+                                label={item.hasActiveLicense ? t('userAccess.license.active') : t('userAccess.license.inactive')}
+                              />
+                              <Typography variant="caption" color="text.secondary">
+                                {t('userAccess.table.expiresAt', { value: formatDateTime(item.licenseExpiresAt, locale) })}
+                              </Typography>
+                            </Stack>
+                          </TableCell>
+                          <TableCell>
+                            <Stack direction="row" spacing={0.6} flexWrap="wrap" useFlexGap>
+                              {(item.permissions || []).slice(0, 3).map((permission) => (
+                                <Chip key={`${item.id}-${permission}`} size="small" variant="outlined" label={permission} />
+                              ))}
+                              {(item.permissions || []).length > 3 && (
+                                <Chip size="small" variant="outlined" label={t('userAccess.table.morePermissions', { count: item.permissions.length - 3 })} />
+                              )}
+                            </Stack>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Stack direction="row" justifyContent="flex-end" spacing={1}>
+                              <Tooltip title={t('userAccess.tooltips.editAccess')}>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  startIcon={<SecurityOutlinedIcon />}
+                                  onClick={() => openAccessModal(item.id)}
+                                >
+                                  {t('userAccess.actions.access')}
+                                </Button>
+                              </Tooltip>
+                              <Tooltip title={t('userAccess.tooltips.toggleStatus')}>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  color="secondary"
+                                  startIcon={<ManageAccountsOutlinedIcon />}
+                                  onClick={() => openStatusModal(item)}
+                                >
+                                  {t('userAccess.actions.status')}
+                                </Button>
+                              </Tooltip>
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {!loading && users.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={6}>
+                            <Alert severity="warning" variant="outlined" sx={warningAlertSx}>
+                              {t('userAccess.table.empty')}
+                            </Alert>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              }
+              mobileContent={
+                <Stack spacing={1.5}>
                   {users.map((item) => (
-                    <TableRow key={item.id} hover>
-                      <TableCell>
-                        <Stack spacing={0.4}>
-                          <Typography variant="subtitle2">{item.name || '-'}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {item.email} | {item.provider || t('userAccess.table.localProvider')}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {t('userAccess.table.createdAt', { value: formatDateTime(item.createdAt, locale) })}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
+                    <MobileSummaryCard
+                      key={item.id}
+                      title={item.name || '-'}
+                      subtitle={`${item.email || '-'} | ${item.provider || t('userAccess.table.localProvider')}`}
+                      chips={[
                         <Chip
+                          key="status"
                           size="small"
                           color={statusColor(item.active)}
                           label={item.active ? t('userAccess.status.active') : t('userAccess.status.inactive')}
+                        />,
+                        <Chip
+                          key="role"
+                          size="small"
+                          color={roleColor(item.primaryRole)}
+                          label={item.primaryRole || t('userAccess.table.noRole')}
+                        />,
+                        <Chip
+                          key="license"
+                          size="small"
+                          color={item.hasActiveLicense ? 'success' : 'warning'}
+                          label={item.hasActiveLicense ? t('userAccess.license.active') : t('userAccess.license.inactive')}
                         />
-                      </TableCell>
-                      <TableCell>
-                        <Chip size="small" color={roleColor(item.primaryRole)} label={item.primaryRole || t('userAccess.table.noRole')} />
-                      </TableCell>
-                      <TableCell>
-                        <Stack spacing={0.4}>
-                          <Chip
+                      ]}
+                      actions={
+                        <ResponsiveActionBar>
+                          <Button size="small" variant="outlined" startIcon={<SecurityOutlinedIcon />} onClick={() => openAccessModal(item.id)}>
+                            {t('userAccess.actions.access')}
+                          </Button>
+                          <Button
                             size="small"
-                            color={item.hasActiveLicense ? 'success' : 'warning'}
-                            label={item.hasActiveLicense ? t('userAccess.license.active') : t('userAccess.license.inactive')}
-                          />
-                          <Typography variant="caption" color="text.secondary">
-                            {t('userAccess.table.expiresAt', { value: formatDateTime(item.licenseExpiresAt, locale) })}
-                          </Typography>
-                        </Stack>
-                      </TableCell>
-                      <TableCell>
-                        <Stack direction="row" spacing={0.6} flexWrap="wrap" useFlexGap>
-                          {(item.permissions || []).slice(0, 3).map((permission) => (
-                            <Chip key={`${item.id}-${permission}`} size="small" variant="outlined" label={permission} />
-                          ))}
-                          {(item.permissions || []).length > 3 && (
-                            <Chip size="small" variant="outlined" label={t('userAccess.table.morePermissions', { count: item.permissions.length - 3 })} />
-                          )}
-                        </Stack>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Stack direction="row" justifyContent="flex-end" spacing={1}>
-                          <Tooltip title={t('userAccess.tooltips.editAccess')}>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              startIcon={<SecurityOutlinedIcon />}
-                              onClick={() => openAccessModal(item.id)}
-                            >
-                              {t('userAccess.actions.access')}
-                            </Button>
-                          </Tooltip>
-                          <Tooltip title={t('userAccess.tooltips.toggleStatus')}>
-                            <Button
-                              size="small"
-                              variant="contained"
-                              color="secondary"
-                              startIcon={<ManageAccountsOutlinedIcon />}
-                              onClick={() => openStatusModal(item)}
-                            >
-                              {t('userAccess.actions.status')}
-                            </Button>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
+                            variant="contained"
+                            color="secondary"
+                            startIcon={<ManageAccountsOutlinedIcon />}
+                            onClick={() => openStatusModal(item)}
+                          >
+                            {t('userAccess.actions.status')}
+                          </Button>
+                        </ResponsiveActionBar>
+                      }
+                    >
+                      <MobileFieldGrid
+                        fields={[
+                          { label: t('userAccess.table.createdAt', { value: '' }).replace(/:\s*$/, ''), value: formatDateTime(item.createdAt, locale) },
+                          { label: t('userAccess.table.expiresAt', { value: '' }).replace(/:\s*$/, ''), value: formatDateTime(item.licenseExpiresAt, locale) },
+                          {
+                            label: t('userAccess.table.permissions'),
+                            value:
+                              (item.permissions || []).length > 0
+                                ? (item.permissions || []).slice(0, 3).join(', ')
+                                : t('userAccess.table.morePermissions', { count: 0, defaultValue: 'Sin permisos extra' })
+                          }
+                        ]}
+                      />
+                    </MobileSummaryCard>
                   ))}
-                  {!loading && users.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={6}>
-                        <Alert severity="warning" variant="outlined" sx={warningAlertSx}>
-                          {t('userAccess.table.empty')}
-                        </Alert>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            <TablePagination
-              component="div"
-              count={total}
-              page={index}
-              onPageChange={(_, newPage) => setIndex(newPage)}
-              rowsPerPage={size}
-              onRowsPerPageChange={(event) => {
-                setSize(parseInt(event.target.value, 10));
-                setIndex(0);
-              }}
-              rowsPerPageOptions={[10, 25, 50]}
-              labelRowsPerPage={t('userAccess.pagination.rowsPerPage')}
+                  {!loading && users.length === 0 ? (
+                    <Alert severity="warning" variant="outlined" sx={warningAlertSx}>
+                      {t('userAccess.table.empty')}
+                    </Alert>
+                  ) : null}
+                </Stack>
+              }
+              pagination={
+                <TablePagination
+                  component="div"
+                  count={total}
+                  page={index}
+                  onPageChange={(_, newPage) => setIndex(newPage)}
+                  rowsPerPage={size}
+                  onRowsPerPageChange={(event) => {
+                    setSize(parseInt(event.target.value, 10));
+                    setIndex(0);
+                  }}
+                  rowsPerPageOptions={[10, 25, 50]}
+                  labelRowsPerPage={t('userAccess.pagination.rowsPerPage')}
+                />
+              }
             />
           </Stack>
         </MainCard>
@@ -664,6 +701,7 @@ export default function UserAccessAdmin() {
         open={createOpen}
         onClose={() => !createSaving && setCreateOpen(false)}
         fullWidth
+        fullScreen={isMobile}
         maxWidth="md"
         PaperProps={{ sx: modalPaperSx }}
       >
@@ -767,6 +805,7 @@ export default function UserAccessAdmin() {
         open={accessOpen}
         onClose={() => !accessSaving && setAccessOpen(false)}
         fullWidth
+        fullScreen={isMobile}
         maxWidth="md"
         PaperProps={{ sx: modalPaperSx }}
       >
@@ -831,6 +870,7 @@ export default function UserAccessAdmin() {
         open={statusOpen}
         onClose={() => !statusSaving && setStatusOpen(false)}
         fullWidth
+        fullScreen={isMobile}
         maxWidth="sm"
         PaperProps={{ sx: modalPaperSx }}
       >

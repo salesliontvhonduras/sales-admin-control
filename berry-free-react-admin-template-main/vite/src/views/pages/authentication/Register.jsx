@@ -23,9 +23,9 @@ export default function Register() {
 
   return (
     <AuthWrapper1>
-      <Stack sx={{ justifyContent: 'flex-end', minHeight: '100vh' }}>
-        <Stack sx={{ justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 68px)' }}>
-          <Box sx={{ m: { xs: 1, sm: 3 }, mb: 0, position: 'relative' }}>
+      <Stack sx={{ justifyContent: 'space-between', minHeight: '100vh' }}>
+        <Stack sx={{ justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 72px)', px: { xs: 1, sm: 2.5 }, py: { xs: 2, sm: 3 } }}>
+          <Box sx={{ width: '100%', maxWidth: { xs: 520, md: 620 }, position: 'relative' }}>
             <AuthCardWrapper>
               <Stack sx={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
                 <Box sx={{ mb: 3 }}>
@@ -59,7 +59,7 @@ export default function Register() {
             </AuthCardWrapper>
           </Box>
         </Stack>
-        <Stack sx={{ px: 3, mb: 3, mt: 1 }}>
+        <Stack sx={{ px: { xs: 1.5, sm: 3 }, pb: { xs: 2, sm: 3 }, pt: 1 }}>
           <AuthFooter />
         </Stack>
       </Stack>

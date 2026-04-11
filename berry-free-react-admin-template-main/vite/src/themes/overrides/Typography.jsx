@@ -7,14 +7,16 @@ export default function Typography(theme) {
     MuiTypography: {
       styleOverrides: {
         root: {
+          minWidth: 0,
+          overflowWrap: 'anywhere',
           variants: [
             {
               props: { variant: 'h1' },
-              style: { color: headingColor }
+              style: { color: headingColor, overflowWrap: 'anywhere', lineHeight: 1.08 }
             },
             {
               props: { variant: 'h2' },
-              style: { color: headingColor }
+              style: { color: headingColor, overflowWrap: 'anywhere', lineHeight: 1.12 }
             },
             {
               props: { variant: 'h3' },

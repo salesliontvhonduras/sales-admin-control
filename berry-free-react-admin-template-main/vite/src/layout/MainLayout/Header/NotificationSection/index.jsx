@@ -403,7 +403,7 @@ export default function NotificationSection() {
                     content={false}
                     boxShadow
                     shadow={theme.shadows[16]}
-                    sx={{ width: 420, maxWidth: '95vw' }}
+                    sx={{ width: 'min(420px, calc(100vw - 20px))', maxWidth: 'calc(100vw - 20px)' }}
                   >
                     <Stack sx={{ gap: 2 }}>
                       <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', pt: 2, px: 2 }}>

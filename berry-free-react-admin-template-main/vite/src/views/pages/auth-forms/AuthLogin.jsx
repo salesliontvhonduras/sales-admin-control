@@ -190,8 +190,8 @@ export default function AuthLogin() {
             />
           </CustomFormControl>
 
-          <Grid container sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-            <Grid>
+      <Grid container spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            <Grid item xs={12} sm="auto">
           <FormControlLabel
             control={
               <Checkbox
@@ -204,12 +204,12 @@ export default function AuthLogin() {
             label={t('auth.keepLogged')}
           />
         </Grid>
-        <Grid>
+        <Grid item xs={12} sm="auto">
           <Typography
             variant="subtitle1"
             component={Link}
             to="/pages/forgot-password"
-            sx={{ textDecoration: 'none', color: 'secondary.main' }}
+            sx={{ textDecoration: 'none', color: 'secondary.main', display: 'inline-flex' }}
           >
             {t('auth.forgot')}
           </Typography>
@@ -247,13 +247,14 @@ export default function AuthLogin() {
             inputProps={{ inputMode: 'numeric', maxLength: 8 }}
             autoFocus
           />
-          <Stack direction="row" spacing={1} justifyContent="space-between">
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between">
             <Button
               variant="outlined"
               color="secondary"
               onClick={handleResend}
               disabled={loading.resend}
               startIcon={loading.resend ? <CircularProgress size={16} /> : null}
+              fullWidth
             >
               {loading.resend ? t('auth.sendingCode') : t('auth.resend')}
             </Button>
@@ -263,6 +264,7 @@ export default function AuthLogin() {
               onClick={handleVerifyOtp}
               disabled={loading.otp}
               startIcon={loading.otp ? <CircularProgress color="inherit" size={16} /> : null}
+              fullWidth
             >
               {loading.otp ? t('auth.verifyingCode') : t('auth.confirm')}
             </Button>

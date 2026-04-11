@@ -25,6 +25,9 @@ const headerStyle = {
   '& .MuiCardHeader-action': {
     mr: 0,
     alignSelf: 'center'
+  },
+  '& .MuiCardHeader-action > *': {
+    maxWidth: '100%'
   }
 };
 
@@ -54,6 +57,8 @@ export default function MainCard({
         ...theme.applyStyles('light', {
           boxShadow: border ? 'none' : `0 10px 24px ${withAlpha('#0f172a', 0.1)}`
         }),
+        minWidth: 0,
+        maxWidth: '100%',
         border: border ? '1px solid' : 'none',
         borderColor: 'divider',
         borderRadius: 3.5,
@@ -95,7 +100,10 @@ export default function MainCard({
               mt: { xs: 1.25, sm: 0 },
               ml: { xs: 0, sm: 'auto' },
               width: { xs: '100%', sm: 'auto' },
-              alignSelf: { xs: 'stretch', sm: 'center' }
+              alignSelf: { xs: 'stretch', sm: 'center' },
+              '& > *': {
+                width: { xs: '100%', sm: 'auto' }
+              }
             },
             ...headerSX
           }}
@@ -121,7 +129,10 @@ export default function MainCard({
               mt: { xs: 1.25, sm: 0 },
               ml: { xs: 0, sm: 'auto' },
               width: { xs: '100%', sm: 'auto' },
-              alignSelf: { xs: 'stretch', sm: 'center' }
+              alignSelf: { xs: 'stretch', sm: 'center' },
+              '& > *': {
+                width: { xs: '100%', sm: 'auto' }
+              }
             },
             ...headerSX
           }}
@@ -150,12 +161,12 @@ MainCard.propTypes = {
   children: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
   content: PropTypes.bool,
   contentClass: PropTypes.string,
-  contentSX: PropTypes.object,
-  headerSX: PropTypes.object,
+  contentSX: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
+  headerSX: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
   darkTitle: PropTypes.bool,
   secondary: PropTypes.any,
   shadow: PropTypes.string,
-  sx: PropTypes.object,
+  sx: PropTypes.oneOfType([PropTypes.object, PropTypes.func]),
   title: PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
   ref: PropTypes.object,
   others: PropTypes.any

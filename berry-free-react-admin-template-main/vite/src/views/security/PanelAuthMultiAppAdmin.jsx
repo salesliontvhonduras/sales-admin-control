@@ -26,8 +26,16 @@ import {
   Tooltip,
   Typography
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { IconEdit, IconPlus, IconRefresh, IconTrash, IconX } from '@tabler/icons-react';
 import MainCard from 'ui-component/cards/MainCard';
+import LionMetricCard from 'ui-component/cards/LionMetricCard';
+import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
+import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
+import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
+import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
+import ResponsiveListSection from 'ui-component/responsive/ResponsiveListSection';
 import {
   createPanelAuth,
   deletePanelAuth,
@@ -59,6 +67,8 @@ function formatDateTime(value) {
 export default function PanelAuthMultiAppAdmin() {
   const { t } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const apiConfigured = useMemo(() => {
     if (import.meta.env.VITE_API_VIVO_PLAYER) return true;
     const lionTv = import.meta.env.VITE_API_LIONTV;
@@ -208,13 +218,56 @@ export default function PanelAuthMultiAppAdmin() {
   };
 
   const providerLabel = (provider) => (provider === 'NINEXTREAM' ? '9xtream' : 'Vivo Player');
+  const metrics = useMemo(() => {
+    const activeCount = rows.filter((row) => row.active).length;
+    const vivoCount = rows.filter((row) => row.provider === 'VIVO_PLAYER').length;
+    const nineXtreamCount = rows.filter((row) => row.provider === 'NINEXTREAM').length;
+    return [
+      {
+        title: t('panelAuthAdmin.metrics.total', { defaultValue: 'Configuraciones' }),
+        value: total,
+        helper: t('panelAuthAdmin.subtitle'),
+        color: 'primary',
+        icon: <IconPlus size={18} />
+      },
+      {
+        title: t('panelAuthAdmin.metrics.active', { defaultValue: 'Activas' }),
+        value: activeCount,
+        helper: t('panelAuthAdmin.status.active'),
+        color: 'success',
+        icon: <IconRefresh size={18} />
+      },
+      {
+        title: 'Vivo Player',
+        value: vivoCount,
+        helper: t('panelAuthAdmin.filters.provider'),
+        color: 'info',
+        icon: <IconEdit size={18} />
+      },
+      {
+        title: '9xtream',
+        value: nineXtreamCount,
+        helper: t('panelAuthAdmin.filters.provider'),
+        color: 'secondary',
+        icon: <IconEdit size={18} />
+      }
+    ];
+  }, [rows, t, total]);
 
   return (
     <Stack spacing={2}>
+      <Grid container spacing={2}>
+        {metrics.map((metric) => (
+          <Grid key={`${metric.title}-${metric.value}`} item xs={12} sm={6} lg={3}>
+            <LionMetricCard {...metric} />
+          </Grid>
+        ))}
+      </Grid>
+
       <MainCard
         title={t('panelAuthAdmin.title')}
         secondary={
-          <Stack direction="row" spacing={1}>
+          <ResponsiveActionBar justifyContent="flex-end">
             <Button
               variant="outlined"
               startIcon={<IconRefresh size={16} />}
@@ -226,7 +279,7 @@ export default function PanelAuthMultiAppAdmin() {
             <Button variant="contained" startIcon={<IconPlus size={16} />} onClick={openCreate} disabled={!apiConfigured}>
               {t('panelAuthAdmin.actions.new')}
             </Button>
-          </Stack>
+          </ResponsiveActionBar>
         }
       >
         <Stack spacing={2}>
@@ -236,137 +289,201 @@ export default function PanelAuthMultiAppAdmin() {
 
           {!apiConfigured && <Alert severity="warning">{t('panelAuthAdmin.messages.apiMissing')}</Alert>}
 
-          <Grid container spacing={2}>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label={t('panelAuthAdmin.filters.username')}
-                value={filterUsername}
-                onChange={(event) => {
-                  setPage(0);
-                  setFilterUsername(event.target.value);
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                select
-                label={t('panelAuthAdmin.filters.provider')}
-                value={filterProvider}
-                onChange={(event) => {
-                  setPage(0);
-                  setFilterProvider(event.target.value);
-                }}
-              >
-                <MenuItem value="">{t('panelAuthAdmin.filters.all')}</MenuItem>
-                {PROVIDERS.map((provider) => (
-                  <MenuItem key={provider} value={provider}>
-                    {providerLabel(provider)}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                select
-                label={t('panelAuthAdmin.filters.status')}
-                value={filterActive}
-                onChange={(event) => {
-                  setPage(0);
-                  setFilterActive(event.target.value);
-                }}
-              >
-                {ACTIVE_FILTERS.map((status) => (
-                  <MenuItem key={status} value={status}>
-                    {t(`panelAuthAdmin.filters.${status}`)}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-          </Grid>
+          <ResponsiveFilters
+            sx={{
+              '& .filter-username': { flex: { md: 1 }, minWidth: { md: 260 } },
+              '& .filter-select': { minWidth: { md: 190 } }
+            }}
+          >
+            <TextField
+              className="filter-username"
+              fullWidth
+              label={t('panelAuthAdmin.filters.username')}
+              value={filterUsername}
+              onChange={(event) => {
+                setPage(0);
+                setFilterUsername(event.target.value);
+              }}
+            />
+            <TextField
+              className="filter-select"
+              fullWidth
+              select
+              label={t('panelAuthAdmin.filters.provider')}
+              value={filterProvider}
+              onChange={(event) => {
+                setPage(0);
+                setFilterProvider(event.target.value);
+              }}
+            >
+              <MenuItem value="">{t('panelAuthAdmin.filters.all')}</MenuItem>
+              {PROVIDERS.map((provider) => (
+                <MenuItem key={provider} value={provider}>
+                  {providerLabel(provider)}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              className="filter-select"
+              fullWidth
+              select
+              label={t('panelAuthAdmin.filters.status')}
+              value={filterActive}
+              onChange={(event) => {
+                setPage(0);
+                setFilterActive(event.target.value);
+              }}
+            >
+              {ACTIVE_FILTERS.map((status) => (
+                <MenuItem key={status} value={status}>
+                  {t(`panelAuthAdmin.filters.${status}`)}
+                </MenuItem>
+              ))}
+            </TextField>
+          </ResponsiveFilters>
 
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>{t('panelAuthAdmin.table.user')}</TableCell>
-                  <TableCell>{t('panelAuthAdmin.table.provider')}</TableCell>
-                  <TableCell>{t('panelAuthAdmin.table.panelUser')}</TableCell>
-                  <TableCell>{t('panelAuthAdmin.table.apiUrl')}</TableCell>
-                  <TableCell>{t('panelAuthAdmin.table.cmsUrl')}</TableCell>
-                  <TableCell>{t('panelAuthAdmin.table.status')}</TableCell>
-                  <TableCell>{t('panelAuthAdmin.table.updatedAt')}</TableCell>
-                  <TableCell align="right">{t('panelAuthAdmin.table.actions')}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {!loading && rows.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={8}>
-                      <Typography variant="body2" color="text.secondary">
-                        {t('panelAuthAdmin.table.empty')}
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
+          <ResponsiveListSection
+            isMobile={isMobile}
+            desktopContent={
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>{t('panelAuthAdmin.table.user')}</TableCell>
+                      <TableCell>{t('panelAuthAdmin.table.provider')}</TableCell>
+                      <TableCell>{t('panelAuthAdmin.table.panelUser')}</TableCell>
+                      <TableCell>{t('panelAuthAdmin.table.apiUrl')}</TableCell>
+                      <TableCell>{t('panelAuthAdmin.table.cmsUrl')}</TableCell>
+                      <TableCell>{t('panelAuthAdmin.table.status')}</TableCell>
+                      <TableCell>{t('panelAuthAdmin.table.updatedAt')}</TableCell>
+                      <TableCell align="right">{t('panelAuthAdmin.table.actions')}</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {!loading && rows.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={8}>
+                          <Typography variant="body2" color="text.secondary">
+                            {t('panelAuthAdmin.table.empty')}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {rows.map((row) => (
+                      <TableRow key={row.id} hover>
+                        <TableCell>{row.username}</TableCell>
+                        <TableCell>
+                          <Chip size="small" label={providerLabel(row.provider)} color={row.provider === 'NINEXTREAM' ? 'secondary' : 'primary'} />
+                        </TableCell>
+                        <TableCell>{row.usernamePanel}</TableCell>
+                        <TableCell>{row.apiBaseUrl || '-'}</TableCell>
+                        <TableCell>{row.cmsBaseUrl || '-'}</TableCell>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            label={row.active ? t('panelAuthAdmin.status.active') : t('panelAuthAdmin.status.inactive')}
+                            color={row.active ? 'success' : 'default'}
+                          />
+                        </TableCell>
+                        <TableCell>{formatDateTime(row.updatedAt)}</TableCell>
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                            <Tooltip title={t('panelAuthAdmin.actions.edit')}>
+                              <IconButton color="primary" size="small" onClick={() => openEdit(row)}>
+                                <IconEdit size={16} />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title={row.active ? t('panelAuthAdmin.actions.deactivate') : t('panelAuthAdmin.actions.activate')}>
+                              <Switch size="small" checked={Boolean(row.active)} onChange={() => onToggleStatus(row)} />
+                            </Tooltip>
+                            <Tooltip title={t('panelAuthAdmin.actions.delete')}>
+                              <IconButton color="error" size="small" onClick={() => setDeleteTarget(row)}>
+                                <IconTrash size={16} />
+                              </IconButton>
+                            </Tooltip>
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            }
+            mobileContent={
+              <Stack spacing={1.5}>
                 {rows.map((row) => (
-                  <TableRow key={row.id} hover>
-                    <TableCell>{row.username}</TableCell>
-                    <TableCell>
-                      <Chip size="small" label={providerLabel(row.provider)} color={row.provider === 'NINEXTREAM' ? 'secondary' : 'primary'} />
-                    </TableCell>
-                    <TableCell>{row.usernamePanel}</TableCell>
-                    <TableCell>{row.apiBaseUrl || '-'}</TableCell>
-                    <TableCell>{row.cmsBaseUrl || '-'}</TableCell>
-                    <TableCell>
+                  <MobileSummaryCard
+                    key={row.id}
+                    title={row.username}
+                    subtitle={row.usernamePanel || '-'}
+                    chips={[
                       <Chip
+                        key="provider"
+                        size="small"
+                        label={providerLabel(row.provider)}
+                        color={row.provider === 'NINEXTREAM' ? 'secondary' : 'primary'}
+                      />,
+                      <Chip
+                        key="status"
                         size="small"
                         label={row.active ? t('panelAuthAdmin.status.active') : t('panelAuthAdmin.status.inactive')}
                         color={row.active ? 'success' : 'default'}
                       />
-                    </TableCell>
-                    <TableCell>{formatDateTime(row.updatedAt)}</TableCell>
-                    <TableCell align="right">
-                      <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                        <Tooltip title={t('panelAuthAdmin.actions.edit')}>
-                          <IconButton color="primary" size="small" onClick={() => openEdit(row)}>
-                            <IconEdit size={16} />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title={row.active ? t('panelAuthAdmin.actions.deactivate') : t('panelAuthAdmin.actions.activate')}>
-                          <Switch size="small" checked={Boolean(row.active)} onChange={() => onToggleStatus(row)} />
-                        </Tooltip>
-                        <Tooltip title={t('panelAuthAdmin.actions.delete')}>
-                          <IconButton color="error" size="small" onClick={() => setDeleteTarget(row)}>
-                            <IconTrash size={16} />
-                          </IconButton>
-                        </Tooltip>
+                    ]}
+                    actions={
+                      <ResponsiveActionBar>
+                        <Button size="small" variant="outlined" startIcon={<IconEdit size={16} />} onClick={() => openEdit(row)}>
+                          {t('panelAuthAdmin.actions.edit')}
+                        </Button>
+                        <Button size="small" variant="outlined" color="error" startIcon={<IconTrash size={16} />} onClick={() => setDeleteTarget(row)}>
+                          {t('panelAuthAdmin.actions.delete')}
+                        </Button>
+                      </ResponsiveActionBar>
+                    }
+                  >
+                    <MobileFieldGrid
+                      fields={[
+                        { label: t('panelAuthAdmin.table.apiUrl'), value: row.apiBaseUrl || '-' },
+                        { label: t('panelAuthAdmin.table.cmsUrl'), value: row.cmsBaseUrl || '-' },
+                        { label: t('panelAuthAdmin.table.updatedAt'), value: formatDateTime(row.updatedAt) }
+                      ]}
+                    />
+                    <Box sx={{ pt: 1 }}>
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <Typography variant="caption" color="text.secondary">
+                          {row.active ? t('panelAuthAdmin.actions.deactivate') : t('panelAuthAdmin.actions.activate')}
+                        </Typography>
+                        <Switch size="small" checked={Boolean(row.active)} onChange={() => onToggleStatus(row)} />
                       </Stack>
-                    </TableCell>
-                  </TableRow>
+                    </Box>
+                  </MobileSummaryCard>
                 ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <TablePagination
-            component="div"
-            count={total}
-            page={page}
-            onPageChange={(_, nextPage) => setPage(nextPage)}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={(event) => {
-              setPage(0);
-              setRowsPerPage(Number(event.target.value));
-            }}
-            rowsPerPageOptions={[10, 20, 50]}
+                {!loading && rows.length === 0 ? (
+                  <Alert severity="info" variant="outlined">
+                    {t('panelAuthAdmin.table.empty')}
+                  </Alert>
+                ) : null}
+              </Stack>
+            }
+            pagination={
+              <TablePagination
+                component="div"
+                count={total}
+                page={page}
+                onPageChange={(_, nextPage) => setPage(nextPage)}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={(event) => {
+                  setPage(0);
+                  setRowsPerPage(Number(event.target.value));
+                }}
+                rowsPerPageOptions={[10, 20, 50]}
+              />
+            }
           />
         </Stack>
       </MainCard>
 
-      <Dialog open={openForm} onClose={closeForm} fullWidth maxWidth="sm">
+      <Dialog open={openForm} onClose={closeForm} fullWidth fullScreen={isMobile} maxWidth="sm">
         <DialogTitle sx={{ pr: 7 }}>
           {editingId ? t('panelAuthAdmin.dialogs.editTitle') : t('panelAuthAdmin.dialogs.createTitle')}
           <IconButton onClick={closeForm} sx={{ position: 'absolute', right: 8, top: 8 }}>
@@ -431,14 +548,16 @@ export default function PanelAuthMultiAppAdmin() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={closeForm}>{t('panelAuthAdmin.actions.cancel')}</Button>
-          <Button onClick={onSubmit} variant="contained" disabled={saving}>
-            {editingId ? t('panelAuthAdmin.actions.save') : t('panelAuthAdmin.actions.create')}
-          </Button>
+          <ResponsiveActionBar>
+            <Button onClick={closeForm}>{t('panelAuthAdmin.actions.cancel')}</Button>
+            <Button onClick={onSubmit} variant="contained" disabled={saving}>
+              {editingId ? t('panelAuthAdmin.actions.save') : t('panelAuthAdmin.actions.create')}
+            </Button>
+          </ResponsiveActionBar>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} fullWidth maxWidth="xs">
+      <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} fullWidth fullScreen={isMobile} maxWidth="xs">
         <DialogTitle sx={{ pr: 7 }}>
           {t('panelAuthAdmin.dialogs.deleteTitle')}
           <IconButton onClick={() => setDeleteTarget(null)} sx={{ position: 'absolute', right: 8, top: 8 }}>
@@ -449,10 +568,12 @@ export default function PanelAuthMultiAppAdmin() {
           <Typography variant="body2">{t('panelAuthAdmin.dialogs.deleteMessage')}</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)}>{t('panelAuthAdmin.actions.cancel')}</Button>
-          <Button color="error" variant="contained" onClick={onDelete} disabled={saving}>
-            {t('panelAuthAdmin.actions.delete')}
-          </Button>
+          <ResponsiveActionBar>
+            <Button onClick={() => setDeleteTarget(null)}>{t('panelAuthAdmin.actions.cancel')}</Button>
+            <Button color="error" variant="contained" onClick={onDelete} disabled={saving}>
+              {t('panelAuthAdmin.actions.delete')}
+            </Button>
+          </ResponsiveActionBar>
         </DialogActions>
       </Dialog>
     </Stack>

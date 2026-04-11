@@ -14,8 +14,9 @@ export default function OutlinedInput(theme, borderRadius, outlinedFilled) {
               : theme.vars.palette.surface.sunken
             : theme.vars.palette.surface.card,
           borderRadius: `${radius}px`,
-          transition: 'border-color 80ms ease, box-shadow 80ms ease, background-color 80ms ease',
+          transition: 'border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease',
           backgroundClip: 'padding-box',
+          boxShadow: 'none',
 
           '& .MuiOutlinedInput-notchedOutline': {
             borderColor: theme.vars.palette.divider,
@@ -27,13 +28,13 @@ export default function OutlinedInput(theme, borderRadius, outlinedFilled) {
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
             borderColor: theme.vars.palette.primary.main,
-            borderWidth: 1.1
+            borderWidth: 1
           },
           '&.Mui-focused': {
-            boxShadow: `0 0 0 2px ${withAlpha(theme.vars.palette.primary.main, theme.palette.mode === 'dark' ? 0.24 : 0.16)}`
+            boxShadow: `0 0 0 3px ${withAlpha(theme.vars.palette.primary.main, theme.palette.mode === 'dark' ? 0.18 : 0.12)}`
           },
           '&.Mui-error .MuiOutlinedInput-notchedOutline': {
-            borderWidth: 1.1
+            borderWidth: 1
           },
           '&.Mui-disabled': {
             backgroundColor:
@@ -62,6 +63,12 @@ export default function OutlinedInput(theme, borderRadius, outlinedFilled) {
         },
         inputAdornedStart: {
           paddingLeft: 4
+        },
+        adornedStart: {
+          paddingLeft: 10
+        },
+        adornedEnd: {
+          paddingRight: 10
         },
         notchedOutline: {
           borderRadius: `${radius}px`

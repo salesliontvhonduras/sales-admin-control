@@ -123,7 +123,7 @@ export default function AuthRegister() {
         <Typography variant="subtitle1">{t('auth.register')}</Typography>
       </Stack>
 
-      <Grid container spacing={{ xs: 0, sm: 2 }}>
+      <Grid container spacing={{ xs: 1.5, sm: 2 }}>
         <Grid item xs={12} sm={6}>
           <CustomFormControl fullWidth>
             <InputLabel htmlFor="outlined-adornment-first-register">{t('auth.firstName')}</InputLabel>
@@ -204,8 +204,8 @@ export default function AuthRegister() {
       {strength !== 0 && (
         <FormControl fullWidth>
           <Box sx={{ mb: 2 }}>
-            <Stack direction="row" sx={{ gap: 2, alignItems: 'center' }}>
-              <Box sx={{ width: 85, height: 8, borderRadius: '7px', bgcolor: level?.color }} />
+            <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ gap: 1, alignItems: { xs: 'flex-start', sm: 'center' } }}>
+              <Box sx={{ width: { xs: '100%', sm: 85 }, maxWidth: 85, height: 8, borderRadius: '7px', bgcolor: level?.color }} />
               <Typography variant="subtitle1" sx={{ fontSize: '0.75rem' }}>
                 {strengthLabelMap[level?.label] || level?.label}
               </Typography>

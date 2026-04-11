@@ -41,12 +41,16 @@ export default function Dialog(theme) {
           backgroundColor: theme.vars.palette.surface.card,
           boxShadow:
             theme.palette.mode === 'dark' ? `0 30px 70px ${withAlpha('#020617', 0.62)}` : `0 24px 56px ${withAlpha('#0f172a', 0.26)}`,
+          overflow: 'hidden',
           [theme.breakpoints.down('sm')]: {
             width: 'calc(100% - 12px)',
             maxWidth: 'calc(100% - 12px)',
             maxHeight: 'calc(100% - 12px)',
             margin: 6,
             borderRadius: 16
+          },
+          [theme.breakpoints.down('md')]: {
+            maxWidth: 'calc(100vw - 24px)'
           }
         }
       }

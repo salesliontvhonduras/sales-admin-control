@@ -40,6 +40,7 @@ export default function Chip(theme) {
           borderRadius: 999,
           fontWeight: 600,
           borderWidth: 1,
+          maxWidth: '100%',
           variants: [
             {
               props: { variant: 'light' }, // Variant for light Chip
@@ -47,15 +48,15 @@ export default function Chip(theme) {
                 const paletteColor = resolveChipColor(ownerState.color);
 
                 return {
-                  color: paletteColor.main,
-                  backgroundColor: theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.2) : paletteColor.light,
-                  borderColor: theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.28) : withAlpha(paletteColor.main, 0.14),
+                  color: theme.palette.mode === 'dark' ? paletteColor.light || paletteColor.main : paletteColor.main,
+                  backgroundColor: theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.24) : paletteColor.light,
+                  borderColor: theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.4) : withAlpha(paletteColor.main, 0.14),
                   borderStyle: 'solid',
 
                   '&.MuiChip-clickable': {
                     '&:hover': {
-                      color: theme.palette.mode === 'dark' ? paletteColor.main : paletteColor.dark,
-                      backgroundColor: theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.28) : withAlpha(paletteColor.main, 0.18)
+                      color: theme.palette.mode === 'dark' ? paletteColor.contrastText || paletteColor.main : paletteColor.dark,
+                      backgroundColor: theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.34) : withAlpha(paletteColor.main, 0.18)
                     }
                   }
                 };
@@ -67,14 +68,19 @@ export default function Chip(theme) {
                 const paletteColor = resolveChipColor(ownerState.color);
                 return {
                   backgroundColor: theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.08) : 'transparent',
-                  borderColor: theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.5) : withAlpha(paletteColor.main, 0.34),
-                  color: theme.palette.mode === 'dark' ? paletteColor.main : paletteColor.dark
+                  borderColor: theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.6) : withAlpha(paletteColor.main, 0.34),
+                  color: theme.palette.mode === 'dark' ? paletteColor.light || paletteColor.main : paletteColor.dark
                 };
               }
             }
           ],
           '&.MuiChip-deletable .MuiChip-deleteIcon': {
             color: 'inherit'
+          },
+          '& .MuiChip-label': {
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
           }
         },
         sizeSmall: {
