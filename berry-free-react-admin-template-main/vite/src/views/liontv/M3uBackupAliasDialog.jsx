@@ -28,6 +28,7 @@ import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import {
+  buildClientAliasDownloadUrl,
   buildClientAliasDeliveryUrl,
   getClientAliasByLine,
   getLineSourceByLine,
@@ -90,6 +91,14 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
   const previewUrl = useMemo(
     () =>
       buildClientAliasDeliveryUrl({
+        aliasUsername: form.aliasUsername,
+        aliasPasswordPlain: form.aliasPasswordPlain
+      }),
+    [form.aliasPasswordPlain, form.aliasUsername]
+  );
+  const downloadUrl = useMemo(
+    () =>
+      buildClientAliasDownloadUrl({
         aliasUsername: form.aliasUsername,
         aliasPasswordPlain: form.aliasPasswordPlain
       }),
@@ -213,7 +222,16 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
       return;
     }
     await navigator.clipboard.writeText(previewUrl);
-    enqueueSnackbar(t('m3uBackup.messages.linkCopied', 'Backup link copied.'), { variant: 'success' });
+    enqueueSnackbar(t('m3uBackup.messages.linkCopied', 'Player link copied.'), { variant: 'success' });
+  };
+
+  const handleCopyDownloadLink = async () => {
+    if (!form.aliasUsername || !form.aliasPasswordPlain) {
+      enqueueSnackbar(t('m3uBackup.messages.missingPreview', 'Define alias username and password first.'), { variant: 'warning' });
+      return;
+    }
+    await navigator.clipboard.writeText(downloadUrl);
+    enqueueSnackbar(t('m3uBackup.messages.downloadLinkCopied', 'Download link copied.'), { variant: 'success' });
   };
 
   const handleSave = async () => {
@@ -420,7 +438,18 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
           <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2.5 }}>
             <Stack spacing={1}>
               <Typography variant="subtitle2">{t('m3uBackup.previewTitle', 'Client link preview')}</Typography>
-              <TextField fullWidth value={previewUrl} InputProps={{ readOnly: true }} helperText={t('m3uBackup.previewHelper', 'This is the Xtream-style URL that the client will use.')} />
+              <TextField
+                fullWidth
+                value={previewUrl}
+                InputProps={{ readOnly: true }}
+                helperText={t('m3uBackup.previewHelper', 'Use this URL inside IPTV players or apps that consume M3U by URL.')}
+              />
+              <TextField
+                fullWidth
+                value={downloadUrl}
+                InputProps={{ readOnly: true }}
+                helperText={t('m3uBackup.downloadHelper', 'Use this URL in a browser when you want the .m3u file to download directly.')}
+              />
               {form.lastError ? <Alert severity="warning">{form.lastError}</Alert> : null}
             </Stack>
           </Paper>
@@ -443,7 +472,10 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
           {loadingConfig ? t('m3uBackup.loading', 'Loading...') : t('m3uBackup.reload', 'Reload')}
         </Button>
         <Button variant="outlined" startIcon={<ContentCopyIcon />} onClick={handleCopyLink} disabled={!form.aliasUsername || !form.aliasPasswordPlain}>
-          {t('m3uBackup.copyLink', 'Copy link')}
+          {t('m3uBackup.copyLink', 'Copy player link')}
+        </Button>
+        <Button variant="outlined" startIcon={<ContentCopyIcon />} onClick={handleCopyDownloadLink} disabled={!form.aliasUsername || !form.aliasPasswordPlain}>
+          {t('m3uBackup.copyDownloadLink', 'Copy download link')}
         </Button>
         <Button variant="contained" startIcon={<SaveOutlinedIcon />} onClick={handleSave} disabled={saving || !form.lineId}>
           {saving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}

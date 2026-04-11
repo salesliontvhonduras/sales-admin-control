@@ -362,12 +362,29 @@ export async function deleteClientAlias({ accessToken, id } = {}) {
   await m3uCatalogApi.delete(`${CLIENT_ALIASES_BASE_PATH}/${encodeURIComponent(id)}`, buildConfig(accessToken));
 }
 
-export function buildClientAliasDeliveryUrl({ aliasUsername, aliasPasswordPlain, type = 'm3u_plus', output = 'ts' } = {}) {
+function buildClientAliasUrl({ aliasUsername, aliasPasswordPlain, type = 'm3u_plus', output = 'ts', download = false } = {}) {
   const baseUrl = String(m3uCatalogApi.defaults?.baseURL || '').replace(/\/+$/, '');
-  const relative = `/get.php?username=${encodeURIComponent(aliasUsername || '')}&password=${encodeURIComponent(aliasPasswordPlain || '')}&type=${encodeURIComponent(
-    type
-  )}&output=${encodeURIComponent(output)}`;
+  const params = new URLSearchParams({
+    username: aliasUsername || '',
+    password: aliasPasswordPlain || '',
+    type,
+    output
+  });
+
+  if (download) {
+    params.set('download', '1');
+  }
+
+  const relative = `/get.php?${params.toString()}`;
   return baseUrl ? `${baseUrl}${relative}` : relative;
+}
+
+export function buildClientAliasDeliveryUrl({ aliasUsername, aliasPasswordPlain, type = 'm3u_plus', output = 'ts' } = {}) {
+  return buildClientAliasUrl({ aliasUsername, aliasPasswordPlain, type, output, download: false });
+}
+
+export function buildClientAliasDownloadUrl({ aliasUsername, aliasPasswordPlain, type = 'm3u_plus', output = 'ts' } = {}) {
+  return buildClientAliasUrl({ aliasUsername, aliasPasswordPlain, type, output, download: true });
 }
 
 export async function listProviderTemplates({ accessToken } = {}) {

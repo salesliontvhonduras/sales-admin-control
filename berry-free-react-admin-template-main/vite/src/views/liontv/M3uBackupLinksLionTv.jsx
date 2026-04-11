@@ -35,6 +35,7 @@ import SyncIcon from '@mui/icons-material/Sync';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 import {
+  buildClientAliasDownloadUrl,
   buildClientAliasDeliveryUrl,
   deleteClientAlias,
   listClientAliases,
@@ -139,7 +140,16 @@ export default function M3uBackupLinksLionTv() {
       aliasPasswordPlain: row.aliasPasswordPlain
     });
     await navigator.clipboard.writeText(link);
-    enqueueSnackbar(t('m3uBackup.messages.linkCopied', 'Backup link copied.'), { variant: 'success' });
+    enqueueSnackbar(t('m3uBackup.messages.linkCopied', 'Player link copied.'), { variant: 'success' });
+  };
+
+  const handleCopyDownloadLink = async (row) => {
+    const link = buildClientAliasDownloadUrl({
+      aliasUsername: row.aliasUsername,
+      aliasPasswordPlain: row.aliasPasswordPlain
+    });
+    await navigator.clipboard.writeText(link);
+    enqueueSnackbar(t('m3uBackup.messages.downloadLinkCopied', 'Download link copied.'), { variant: 'success' });
   };
 
   const handleToggleStatus = async (row) => {
@@ -251,7 +261,10 @@ export default function M3uBackupLinksLionTv() {
                   actions={
                     <ResponsiveActionBar>
                       <Button size="small" variant="outlined" startIcon={<ContentCopyIcon />} onClick={() => handleCopyLink(row)}>
-                        {t('m3uBackup.copyLink', 'Copy link')}
+                        {t('m3uBackup.copyLink', 'Copy player link')}
+                      </Button>
+                      <Button size="small" variant="outlined" startIcon={<ContentCopyIcon />} onClick={() => handleCopyDownloadLink(row)}>
+                        {t('m3uBackup.copyDownloadLink', 'Copy download link')}
                       </Button>
                       <Button
                         size="small"
@@ -322,7 +335,10 @@ export default function M3uBackupLinksLionTv() {
                       <TableCell align="right">
                         <ResponsiveActionBar spacing={0.75}>
                           <Button size="small" variant="outlined" startIcon={<ContentCopyIcon />} onClick={() => handleCopyLink(row)}>
-                            {t('m3uBackup.copyLink', 'Copy link')}
+                            {t('m3uBackup.copyLink', 'Copy player link')}
+                          </Button>
+                          <Button size="small" variant="outlined" startIcon={<ContentCopyIcon />} onClick={() => handleCopyDownloadLink(row)}>
+                            {t('m3uBackup.copyDownloadLink', 'Copy download link')}
                           </Button>
                           <Button
                             size="small"
