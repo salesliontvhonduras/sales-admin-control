@@ -149,6 +149,15 @@ const liontv = {
           permission: { any: ['LIONTV_PLUS_LINES_VIEW', 'LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         },
         {
+          id: 'liontv-m3u-backup-links',
+          title: 'menu.m3uBackupLinks',
+          type: 'item',
+          url: '/liontv/m3u-backup-links',
+          breadcrumbs: true,
+          icon: icons.IconLink,
+          permission: { any: ['LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+        },
+        {
           id: 'liontv-licenses',
           title: 'menu.licenses',
           type: 'item',

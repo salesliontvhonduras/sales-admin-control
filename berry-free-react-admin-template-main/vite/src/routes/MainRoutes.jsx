@@ -19,6 +19,7 @@ const SeriesFeedLionTv = Loadable(lazy(() => import('views/liontv/SeriesFeedLion
 const FutbolEventsFeedLionTv = Loadable(lazy(() => import('views/liontv/FutbolEventsFeedLionTv')));
 const CatalogCurationLionTv = Loadable(lazy(() => import('views/liontv/CatalogCurationLionTv')));
 const M3uLineSourcesLionTv = Loadable(lazy(() => import('views/liontv/M3uLineSourcesLionTv')));
+const M3uBackupLinksLionTv = Loadable(lazy(() => import('views/liontv/M3uBackupLinksLionTv')));
 const ManagedAccountsLionTv = Loadable(lazy(() => import('views/liontv/ManagedAccountsLionTv')));
 const CustomerCrmLionTv = Loadable(lazy(() => import('views/liontv/CustomerCrmLionTv')));
 const SubscriptionsLionTv = Loadable(lazy(() => import('views/liontv/SubscriptionsLionTv')));
@@ -116,6 +117,13 @@ const MainRoutes = {
           element: protectPage(
             { any: ['LIONTV_FEED_VIEW', 'LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
             <M3uLineSourcesLionTv />
+          )
+        },
+        {
+          path: '/liontv/m3u-backup-links',
+          element: protectPage(
+            { any: ['LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+            <M3uBackupLinksLionTv />
           )
         },
         {

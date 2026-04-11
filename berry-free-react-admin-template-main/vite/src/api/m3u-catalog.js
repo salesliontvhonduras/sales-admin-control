@@ -7,6 +7,7 @@ const CATEGORIES_BASE_PATH = '/api/v1/categories';
 const LINE_SOURCES_BASE_PATH = '/api/v1/line-sources';
 const PROVIDER_TEMPLATES_BASE_PATH = '/api/v1/provider-templates';
 const PLAYLIST_BASE_PATH = '/api/v1/m3u';
+const CLIENT_ALIASES_BASE_PATH = '/api/v1/client-aliases';
 
 function buildConfig(accessToken, extra = {}) {
   const headers = { ...(extra.headers || {}) };
@@ -93,10 +94,25 @@ function normalizeLineSource(item = {}) {
     id: item.id ?? null,
     lineId: item.lineId ?? item.line_id ?? '',
     usernameEncode: item.usernameEncode ?? item.username_encode ?? '',
+    sourcePlaylistUrl: item.sourcePlaylistUrl ?? item.source_playlist_url ?? '',
     sourceProviderName: item.sourceProviderName ?? item.source_provider_name ?? '',
     cacheTtlMinutes: item.cacheTtlMinutes ?? item.cache_ttl_minutes ?? 30,
     active: item.active !== undefined ? Boolean(item.active) : true,
     lastDownloadedAt: item.lastDownloadedAt ?? item.last_downloaded_at ?? null,
+    createdAt: item.createdAt ?? item.created_at ?? null,
+    updatedAt: item.updatedAt ?? item.updated_at ?? null
+  };
+}
+
+function normalizeClientAlias(item = {}) {
+  return {
+    id: item.id ?? null,
+    lineId: item.lineId ?? item.line_id ?? '',
+    aliasUsername: item.aliasUsername ?? item.alias_username ?? '',
+    aliasPasswordPlain: item.aliasPasswordPlain ?? item.alias_password_plain ?? '',
+    active: item.active !== undefined ? Boolean(item.active) : true,
+    lastServedAt: item.lastServedAt ?? item.last_served_at ?? null,
+    lastError: item.lastError ?? item.last_error ?? '',
     createdAt: item.createdAt ?? item.created_at ?? null,
     updatedAt: item.updatedAt ?? item.updated_at ?? null
   };
@@ -302,6 +318,56 @@ export async function getLineSourceByLine({ accessToken, lineId, username } = {}
 export async function upsertLineSource({ accessToken, payload } = {}) {
   const response = await m3uCatalogApi.put(LINE_SOURCES_BASE_PATH, payload || {}, buildConfig(accessToken));
   return normalizeLineSource(unwrap(response) || {});
+}
+
+export async function listClientAliases({ accessToken, lineId = '', aliasUsername = '', active } = {}) {
+  const params = {};
+  if (lineId) params.lineId = String(lineId).trim();
+  if (aliasUsername) params.aliasUsername = String(aliasUsername).trim();
+  if (active !== undefined && active !== null && String(active).length > 0) params.active = active;
+
+  const response = await m3uCatalogApi.get(CLIENT_ALIASES_BASE_PATH, buildConfig(accessToken, { params }));
+  const payload = unwrap(response);
+  return Array.isArray(payload) ? payload.map(normalizeClientAlias) : [];
+}
+
+export async function getClientAliasByLine({ accessToken, lineId } = {}) {
+  const safeLineId = String(lineId || '').trim();
+  if (!safeLineId) {
+    throw new Error('lineId is required');
+  }
+
+  const response = await m3uCatalogApi.get(
+    `${CLIENT_ALIASES_BASE_PATH}/by-line`,
+    buildConfig(accessToken, { params: { lineId: safeLineId } })
+  );
+  return normalizeClientAlias(unwrap(response) || {});
+}
+
+export async function upsertClientAlias({ accessToken, payload } = {}) {
+  const response = await m3uCatalogApi.put(CLIENT_ALIASES_BASE_PATH, payload || {}, buildConfig(accessToken));
+  return normalizeClientAlias(unwrap(response) || {});
+}
+
+export async function updateClientAliasStatus({ accessToken, id, active } = {}) {
+  const response = await m3uCatalogApi.patch(
+    `${CLIENT_ALIASES_BASE_PATH}/${encodeURIComponent(id)}/status`,
+    { active },
+    buildConfig(accessToken)
+  );
+  return normalizeClientAlias(unwrap(response) || {});
+}
+
+export async function deleteClientAlias({ accessToken, id } = {}) {
+  await m3uCatalogApi.delete(`${CLIENT_ALIASES_BASE_PATH}/${encodeURIComponent(id)}`, buildConfig(accessToken));
+}
+
+export function buildClientAliasDeliveryUrl({ aliasUsername, aliasPasswordPlain, type = 'm3u_plus', output = 'ts' } = {}) {
+  const baseUrl = String(m3uCatalogApi.defaults?.baseURL || '').replace(/\/+$/, '');
+  const relative = `/get.php?username=${encodeURIComponent(aliasUsername || '')}&password=${encodeURIComponent(aliasPasswordPlain || '')}&type=${encodeURIComponent(
+    type
+  )}&output=${encodeURIComponent(output)}`;
+  return baseUrl ? `${baseUrl}${relative}` : relative;
 }
 
 export async function listProviderTemplates({ accessToken } = {}) {

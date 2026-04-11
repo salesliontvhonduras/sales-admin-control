@@ -147,6 +147,7 @@ function ChecklistItem({ done, label }) {
 const defaultLineSourceForm = {
   lineId: '',
   usernameEncode: '',
+  sourcePlaylistUrl: '',
   sourceProviderName: '',
   cacheTtlMinutes: 30,
   active: true,
@@ -313,6 +314,7 @@ export default function M3uLineSourcesLionTv() {
         setLineSourceForm({
           lineId: source.lineId || lineId,
           usernameEncode: source.usernameEncode || fallbackName,
+          sourcePlaylistUrl: source.sourcePlaylistUrl || '',
           sourceProviderName: resolvedProvider,
           cacheTtlMinutes: source.cacheTtlMinutes ?? 30,
           active: source.active !== undefined ? Boolean(source.active) : true,
@@ -327,6 +329,7 @@ export default function M3uLineSourcesLionTv() {
           setLineSourceForm({
             lineId,
             usernameEncode: fallbackName,
+            sourcePlaylistUrl: '',
             sourceProviderName: fallbackProvider,
             cacheTtlMinutes: 30,
             active: true,
@@ -351,9 +354,10 @@ export default function M3uLineSourcesLionTv() {
 
   const saveLineSourceConfig = useCallback(async () => {
     const lineId = String(lineSourceForm.lineId || '').trim();
+    const sourcePlaylistUrl = String(lineSourceForm.sourcePlaylistUrl || '').trim();
     const sourceProviderName = String(lineSourceForm.sourceProviderName || '').trim();
-    if (!lineId || !sourceProviderName) {
-      enqueueSnackbar(t('catalog.messages.lineSourceRequiredFields', 'Line ID and provider are required.'), {
+    if (!lineId || (!sourceProviderName && !sourcePlaylistUrl)) {
+      enqueueSnackbar(t('catalog.messages.lineSourceRequiredFields', 'Line ID and either provider or source URL are required.'), {
         variant: 'warning'
       });
       return;
@@ -365,6 +369,7 @@ export default function M3uLineSourcesLionTv() {
         accessToken,
         payload: {
           lineId,
+          sourcePlaylistUrl,
           sourceProviderName,
           cacheTtlMinutes: Number(lineSourceForm.cacheTtlMinutes) || 30,
           active: Boolean(lineSourceForm.active)
@@ -375,6 +380,7 @@ export default function M3uLineSourcesLionTv() {
         ...previous,
         lineId: saved.lineId || lineId,
         usernameEncode: saved.usernameEncode || previous.usernameEncode,
+        sourcePlaylistUrl: saved.sourcePlaylistUrl || sourcePlaylistUrl,
         sourceProviderName: saved.sourceProviderName || sourceProviderName,
         cacheTtlMinutes: saved.cacheTtlMinutes ?? 30,
         active: saved.active !== undefined ? Boolean(saved.active) : true,
@@ -391,7 +397,17 @@ export default function M3uLineSourcesLionTv() {
     } finally {
       setSavingLineSource(false);
     }
-  }, [accessToken, enqueueSnackbar, lineSourceForm.active, lineSourceForm.cacheTtlMinutes, lineSourceForm.lineId, lineSourceForm.sourceProviderName, refreshLineOptions, t]);
+  }, [
+    accessToken,
+    enqueueSnackbar,
+    lineSourceForm.active,
+    lineSourceForm.cacheTtlMinutes,
+    lineSourceForm.lineId,
+    lineSourceForm.sourcePlaylistUrl,
+    lineSourceForm.sourceProviderName,
+    refreshLineOptions,
+    t
+  ]);
 
   const saveProviderTemplateConfig = useCallback(async () => {
     const providerCode = String(providerTemplateForm.providerCode || '').trim();
@@ -527,6 +543,7 @@ export default function M3uLineSourcesLionTv() {
       ...previous,
       lineId: selectedLineOption.lineId,
       usernameEncode: selectedLineOption.usernameEncode || '',
+      sourcePlaylistUrl: previous.sourcePlaylistUrl || '',
       sourceProviderName: selectedLineOption.provider || ''
     }));
     setSelectedProviderCode(selectedLineOption.provider || '');
@@ -544,7 +561,7 @@ export default function M3uLineSourcesLionTv() {
   const activeLineId = String(selectedLineId || lineSourceForm.lineId || '').trim();
   const activeProviderCode = String(lineSourceForm.sourceProviderName || selectedProviderCode || selectedLineOption?.provider || '').trim();
   const lineSelected = Boolean(activeLineId);
-  const lineConfigured = Boolean(lineSourceForm.lineId && lineSourceForm.sourceProviderName);
+  const lineConfigured = Boolean(lineSourceForm.lineId && (lineSourceForm.sourceProviderName || lineSourceForm.sourcePlaylistUrl));
   const templateConfigured = Boolean(activeProviderCode && providerTemplateForm.baseUrl.trim());
   const flowReady = Boolean(lineSelected && lineConfigured && templateConfigured);
   const templatePreview = buildTemplatePreview(providerTemplateForm);
@@ -761,7 +778,7 @@ export default function M3uLineSourcesLionTv() {
                     <Typography variant="body2" color="text.secondary">
                       {t(
                         'catalog.lineSources.configBody',
-                        'Start by identifying the line visually, then save the provider and cache policy that the backend should use for this line.'
+                        'Start by identifying the line visually, then save the source URL or provider/cache policy that the backend should use for this line.'
                       )}
                     </Typography>
                   </Stack>
@@ -769,7 +786,7 @@ export default function M3uLineSourcesLionTv() {
                   <Alert severity="info">
                     {t(
                       'catalog.hints.dynamicUrl',
-                      'The source URL is not stored per line. Only the provider and cache rules are saved; the backend builds the real Xtream URL with the active line credentials.'
+                      'You can save a direct source URL per line. If it contains {username_encode} and {password_encode}, the backend resolves them with the active line credentials.'
                     )}
                   </Alert>
 
@@ -813,6 +830,7 @@ export default function M3uLineSourcesLionTv() {
                           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                             <Chip size="small" label={`${t('catalog.source.lineId', 'Line ID')}: ${lineSourceForm.lineId || '-'}`} />
                             <Chip size="small" label={`${t('catalog.source.provider', 'Assigned provider')}: ${lineSourceForm.sourceProviderName || '-'}`} />
+                            <Chip size="small" label={`${t('catalog.source.url', 'Source URL')}: ${lineSourceForm.sourcePlaylistUrl ? 'CUSTOM' : 'TEMPLATE'}`} />
                           </Stack>
                         </Stack>
                       </Paper>
@@ -861,6 +879,20 @@ export default function M3uLineSourcesLionTv() {
                           </MenuItem>
                         ))}
                       </TextField>
+                    </Grid>
+
+                    <Grid item xs={12} md={4}>
+                      <TextField
+                        fullWidth
+                        label={t('catalog.source.url', 'Source playlist URL')}
+                        value={lineSourceForm.sourcePlaylistUrl}
+                        onChange={(event) => setLineSourceForm((previous) => ({ ...previous, sourcePlaylistUrl: event.target.value }))}
+                        placeholder="https://provider.example.com/get.php?username={username_encode}&password={password_encode}&type=m3u_plus&output=ts"
+                        helperText={t(
+                          'catalog.source.urlHelper',
+                          'Optional. If present, it overrides the provider template. Supports {username_encode} and {password_encode}.'
+                        )}
+                      />
                     </Grid>
 
                     <Grid item xs={12} md={4}>

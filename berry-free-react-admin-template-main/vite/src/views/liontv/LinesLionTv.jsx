@@ -81,6 +81,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import FormHelperText from '@mui/material/FormHelperText';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
+import M3uBackupAliasDialog from './M3uBackupAliasDialog';
 
 const detailCardSx = {
   p: 2,
@@ -279,7 +280,7 @@ function StatusChip({ enabled, expired, t }) {
   return <Chip size="small" color={color} label={label} />;
 }
 
-function LineRowActions({ row, onEdit, onDelete, onDetail }) {
+function LineRowActions({ row, onEdit, onDelete, onDetail, onBackup }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { t } = useTranslation();
@@ -329,6 +330,18 @@ function LineRowActions({ row, onEdit, onDelete, onDetail }) {
             {t('lines.detail.title', 'Detail')}
           </MenuItem>
         ) : null}
+        {onBackup ? (
+          <MenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              setAnchorEl(null);
+              onBackup?.(row);
+            }}
+          >
+            <PlayCircleOutlineIcon fontSize="small" style={{ marginRight: 8, color: '#7c4dff' }} />
+            Backup M3U
+          </MenuItem>
+        ) : null}
         <MenuItem
           onClick={(e) => {
             e.stopPropagation();
@@ -376,6 +389,7 @@ export default function LinesLionTv() {
   const [statusFilter, setStatusFilter] = useState('');
   const [providerFilter, setProviderFilter] = useState('');
   const [detail, setDetail] = useState({ open: false, row: null });
+  const [backupDialog, setBackupDialog] = useState({ open: false, line: null });
   const [showPassword, setShowPassword] = useState(false);
   const [visibleRowPassword, setVisibleRowPassword] = useState({});
   const [openModal, setOpenModal] = useState(false);
@@ -422,6 +436,18 @@ export default function LinesLionTv() {
       _isEdit: true
     });
     setOpenModal(true);
+  };
+
+  const handleOpenBackup = (row) => {
+    if (!row) return;
+    setBackupDialog({
+      open: true,
+      line: {
+        lineId: row.id || row.lineId || '',
+        usernameEncode: row.usernameEncode || row.username || '',
+        provider: row.provider || 'LION_TV'
+      }
+    });
   };
 
   const handleSave = async () => {
@@ -730,6 +756,7 @@ export default function LinesLionTv() {
                           onEdit={() => handleOpenEdit(row)}
                           onDelete={() => setOpenDelete({ open: true, row })}
                           onDetail={() => setDetail({ open: true, row })}
+                          onBackup={() => handleOpenBackup(row)}
                         />
                       </ResponsiveActionBar>
                     }
@@ -878,6 +905,7 @@ export default function LinesLionTv() {
                             onEdit={() => handleOpenEdit(row)}
                             onDelete={() => setOpenDelete({ open: true, row })}
                             onDetail={() => setDetail({ open: true, row })}
+                            onBackup={() => handleOpenBackup(row)}
                           />
                         </TableCell>
                       </TableRow>
@@ -1061,6 +1089,14 @@ export default function LinesLionTv() {
                   sx={{ borderRadius: 2, textTransform: 'none', width: { xs: '100%', md: 'auto' } }}
                 >
                   {t('lines.detail.copy', 'Copiar')}
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<PlayCircleOutlineIcon fontSize="small" />}
+                  onClick={() => handleOpenBackup(detail.row)}
+                  sx={{ borderRadius: 2, textTransform: 'none', width: { xs: '100%', md: 'auto' } }}
+                >
+                  Backup M3U
                 </Button>
               </Stack>
             </Box>
@@ -1654,6 +1690,13 @@ export default function LinesLionTv() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <M3uBackupAliasDialog
+        open={backupDialog.open}
+        line={backupDialog.line}
+        lockLine
+        onClose={() => setBackupDialog({ open: false, line: null })}
+      />
     </Box>
   );
 }
