@@ -39,6 +39,7 @@ import {
 
 const defaultForm = {
   lineId: '',
+  sourceUsername: '',
   usernameEncode: '',
   providerHint: '',
   aliasId: null,
@@ -70,6 +71,10 @@ function formatDate(value) {
   return date.toLocaleString();
 }
 
+function buildLineOptionValue(lineId, username) {
+  return `${String(lineId || '').trim()}::${String(username || '').trim()}`;
+}
+
 export default function M3uBackupAliasDialog({ open, onClose, line = null, lockLine = false, onSaved }) {
   const { accessToken } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
@@ -85,8 +90,12 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
 
   const selectedLineOption = useMemo(() => {
     if (!form.lineId) return null;
-    return lineOptions.find((item) => item.lineId === form.lineId) || null;
-  }, [form.lineId, lineOptions]);
+    return (
+      lineOptions.find((item) => item.lineId === form.lineId && (!form.sourceUsername || item.username === form.sourceUsername)) ||
+      lineOptions.find((item) => item.lineId === form.lineId) ||
+      null
+    );
+  }, [form.lineId, form.sourceUsername, lineOptions]);
 
   const previewUrl = useMemo(
     () =>
@@ -122,12 +131,14 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
     if (!open) return;
 
     const nextLineId = String(line?.lineId || line?.id || '').trim();
+    const nextSourceUsername = String(line?.sourceUsername || line?.username || '').trim();
     const nextUsernameEncode = String(line?.usernameEncode || line?.username || '').trim();
     const nextProvider = String(line?.provider || '').trim();
 
     setForm((previous) => ({
       ...defaultForm,
       lineId: nextLineId,
+      sourceUsername: nextSourceUsername,
       usernameEncode: nextUsernameEncode,
       providerHint: nextProvider,
       sourceProviderName: nextProvider
@@ -143,7 +154,7 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
       try {
         const [lineSourceResult, aliasResult] = await Promise.allSettled([
           getLineSourceByLine({ accessToken, lineId: safeLineId }),
-          getClientAliasByLine({ accessToken, lineId: safeLineId })
+          getClientAliasByLine({ accessToken, lineId: safeLineId, sourceUsername: form.sourceUsername || selectedLineOption?.username || '' })
         ]);
 
         setForm((previous) => {
@@ -159,6 +170,7 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
           return {
             ...previous,
             lineId: safeLineId,
+            sourceUsername: alias.sourceUsername || previous.sourceUsername || selectedLineOption?.username || '',
             usernameEncode: lineSource.usernameEncode || previous.usernameEncode || selectedLineOption?.usernameEncode || '',
             providerHint: previous.providerHint || selectedLineOption?.provider || '',
             aliasId: alias.id ?? null,
@@ -183,7 +195,7 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
         setLoadingConfig(false);
       }
     },
-    [accessToken, enqueueSnackbar, selectedLineOption?.provider, selectedLineOption?.usernameEncode, t]
+    [accessToken, enqueueSnackbar, form.sourceUsername, selectedLineOption?.provider, selectedLineOption?.username, selectedLineOption?.usernameEncode, t]
   );
 
   useEffect(() => {
@@ -206,6 +218,7 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
     if (!selectedLineOption) return;
     setForm((previous) => ({
       ...previous,
+      sourceUsername: previous.sourceUsername || selectedLineOption.username || '',
       usernameEncode: previous.usernameEncode || selectedLineOption.usernameEncode || '',
       providerHint: selectedLineOption.provider || '',
       sourceProviderName: previous.sourceProviderName || selectedLineOption.provider || ''
@@ -236,12 +249,13 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
 
   const handleSave = async () => {
     const lineId = String(form.lineId || '').trim();
+    const sourceUsername = String(form.sourceUsername || '').trim();
     const aliasUsername = String(form.aliasUsername || '').trim();
     const aliasPasswordPlain = String(form.aliasPasswordPlain || '').trim();
     const sourcePlaylistUrl = String(form.sourcePlaylistUrl || '').trim();
     const sourceProviderName = String(form.sourceProviderName || '').trim();
 
-    if (!lineId || !aliasUsername || !aliasPasswordPlain) {
+    if (!lineId || !sourceUsername || !aliasUsername || !aliasPasswordPlain) {
       enqueueSnackbar(t('m3uBackup.errors.required', 'Line, alias username and alias password are required.'), { variant: 'warning' });
       return;
     }
@@ -268,6 +282,7 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
         accessToken,
         payload: {
           lineId,
+          sourceUsername,
           aliasUsername,
           aliasPasswordPlain,
           active: form.aliasActive
@@ -277,6 +292,7 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
       setForm((previous) => ({
         ...previous,
         aliasId: alias.id ?? previous.aliasId,
+        sourceUsername: alias.sourceUsername || previous.sourceUsername,
         aliasUsername: alias.aliasUsername || previous.aliasUsername,
         aliasPasswordPlain: alias.aliasPasswordPlain || previous.aliasPasswordPlain,
         aliasActive: alias.active !== undefined ? Boolean(alias.active) : previous.aliasActive,
@@ -343,18 +359,31 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
                   fullWidth
                   disabled={lockLine || loadingOptions}
                   label={t('m3uBackup.line', 'Line')}
-                  value={form.lineId}
-                  onChange={(event) => setForm((previous) => ({ ...previous, lineId: event.target.value, usernameEncode: '', aliasId: null }))}
+                  value={buildLineOptionValue(form.lineId, form.sourceUsername)}
+                  onChange={(event) => {
+                    const [nextLineId, nextSourceUsername] = String(event.target.value || '').split('::');
+                    const option = lineOptions.find((item) => item.lineId === nextLineId && item.username === nextSourceUsername) || null;
+                    setForm((previous) => ({
+                      ...previous,
+                      lineId: nextLineId,
+                      sourceUsername: nextSourceUsername || option?.username || '',
+                      usernameEncode: option?.usernameEncode || '',
+                      aliasId: null
+                    }));
+                  }}
                   helperText={
                     lockLine
                       ? t('m3uBackup.lineLocked', 'This backup link is bound to the selected line.')
                       : t('m3uBackup.lineHelper', 'Select the active line that should back this alias.')
                   }
                 >
-                  <MenuItem value="">{t('m3uBackup.linePlaceholder', 'Select line...')}</MenuItem>
+                  <MenuItem value="::">{t('m3uBackup.linePlaceholder', 'Select line...')}</MenuItem>
                   {lineOptions.map((option) => (
-                    <MenuItem key={option.lineId} value={option.lineId}>
-                      {`${option.lineId} / ${option.usernameEncode || option.lineId}${option.provider ? ` (${option.provider})` : ''}`}
+                    <MenuItem
+                      key={buildLineOptionValue(option.lineId, option.username || option.usernameEncode || option.lineId)}
+                      value={buildLineOptionValue(option.lineId, option.username)}
+                    >
+                      {`${option.lineId} / ${option.usernameEncode || option.username || option.lineId}${option.provider ? ` (${option.provider})` : ''}`}
                     </MenuItem>
                   ))}
                 </TextField>

@@ -108,6 +108,7 @@ function normalizeClientAlias(item = {}) {
   return {
     id: item.id ?? null,
     lineId: item.lineId ?? item.line_id ?? '',
+    sourceUsername: item.sourceUsername ?? item.source_username ?? '',
     aliasUsername: item.aliasUsername ?? item.alias_username ?? '',
     aliasPasswordPlain: item.aliasPasswordPlain ?? item.alias_password_plain ?? '',
     active: item.active !== undefined ? Boolean(item.active) : true,
@@ -121,6 +122,7 @@ function normalizeClientAlias(item = {}) {
 function normalizeLineOption(item = {}) {
   return {
     lineId: item.lineId ?? item.line_id ?? '',
+    username: item.username ?? '',
     usernameEncode: item.usernameEncode ?? item.username_encode ?? '',
     provider: item.provider ?? ''
   };
@@ -285,6 +287,7 @@ export async function listLineOptions({ accessToken } = {}) {
   return sorted.map((item) =>
     normalizeLineOption({
       lineId: item.lineId ?? item.line_id ?? item.id ?? '',
+      username: item.username ?? '',
       usernameEncode: item.usernameEncode ?? item.username_encode ?? '',
       provider: item.provider ?? ''
     })
@@ -331,15 +334,16 @@ export async function listClientAliases({ accessToken, lineId = '', aliasUsernam
   return Array.isArray(payload) ? payload.map(normalizeClientAlias) : [];
 }
 
-export async function getClientAliasByLine({ accessToken, lineId } = {}) {
+export async function getClientAliasByLine({ accessToken, lineId, sourceUsername } = {}) {
   const safeLineId = String(lineId || '').trim();
   if (!safeLineId) {
     throw new Error('lineId is required');
   }
+  const safeSourceUsername = String(sourceUsername || '').trim();
 
   const response = await m3uCatalogApi.get(
     `${CLIENT_ALIASES_BASE_PATH}/by-line`,
-    buildConfig(accessToken, { params: { lineId: safeLineId } })
+    buildConfig(accessToken, { params: { lineId: safeLineId, ...(safeSourceUsername ? { sourceUsername: safeSourceUsername } : {}) } })
   );
   return normalizeClientAlias(unwrap(response) || {});
 }

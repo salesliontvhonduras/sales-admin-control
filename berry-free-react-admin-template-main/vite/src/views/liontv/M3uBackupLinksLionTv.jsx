@@ -106,6 +106,7 @@ export default function M3uBackupLinksLionTv() {
       return (
         String(item.aliasUsername || '').toLowerCase().includes(term) ||
         String(item.lineId || '').toLowerCase().includes(term) ||
+        String(item.sourceUsername || '').toLowerCase().includes(term) ||
         String(item.lastError || '').toLowerCase().includes(term)
       );
     });
@@ -253,7 +254,7 @@ export default function M3uBackupLinksLionTv() {
                   key={row.id || row.aliasUsername}
                   icon={<Chip size="small" color={row.active ? 'success' : 'default'} label={row.active ? t('m3uBackup.status.active', 'Active') : t('m3uBackup.status.inactive', 'Inactive')} />}
                   title={row.aliasUsername}
-                  subtitle={`${t('m3uBackup.line', 'Line')}: ${row.lineId}`}
+                  subtitle={`${t('m3uBackup.line', 'Line')}: ${row.lineId}${row.sourceUsername ? ` / ${row.sourceUsername}` : ''}`}
                   chips={[
                     <Chip key="status" size="small" color={row.active ? 'success' : 'default'} label={row.active ? t('m3uBackup.status.active', 'Active') : t('m3uBackup.status.inactive', 'Inactive')} />,
                     row.lastError ? <Chip key="error" size="small" color="warning" variant="outlined" label={t('m3uBackup.lastError', 'Last error')} /> : null
@@ -269,7 +270,13 @@ export default function M3uBackupLinksLionTv() {
                       <Button
                         size="small"
                         variant="outlined"
-                        onClick={() => setDialog({ open: true, line: { lineId: row.lineId, usernameEncode: row.lineId }, lockLine: true })}
+                        onClick={() =>
+                          setDialog({
+                            open: true,
+                            line: { lineId: row.lineId, sourceUsername: row.sourceUsername, usernameEncode: row.sourceUsername || row.lineId },
+                            lockLine: true
+                          })
+                        }
                       >
                         {t('actions.edit', 'Edit')}
                       </Button>
@@ -284,6 +291,7 @@ export default function M3uBackupLinksLionTv() {
                 >
                   <MobileFieldGrid
                     fields={[
+                      { label: t('m3uBackup.sourceUsername', 'Real username'), value: row.sourceUsername || '-' },
                       { label: t('m3uBackup.aliasPassword', 'Alias password'), value: row.aliasPasswordPlain || '-' },
                       { label: t('m3uBackup.lastServedAt', 'Last served'), value: formatDate(row.lastServedAt) },
                       { label: t('m3uBackup.updatedAt', 'Updated'), value: formatDate(row.updatedAt) }
@@ -306,6 +314,7 @@ export default function M3uBackupLinksLionTv() {
                   <TableRow>
                     <TableCell>{t('m3uBackup.aliasUsername', 'Alias username')}</TableCell>
                     <TableCell>{t('m3uBackup.line', 'Line')}</TableCell>
+                    <TableCell>{t('m3uBackup.sourceUsername', 'Real username')}</TableCell>
                     <TableCell>{t('m3uBackup.aliasPassword', 'Alias password')}</TableCell>
                     <TableCell>{t('common.status', 'Status')}</TableCell>
                     <TableCell>{t('m3uBackup.lastServedAt', 'Last served')}</TableCell>
@@ -321,6 +330,7 @@ export default function M3uBackupLinksLionTv() {
                         <Typography variant="subtitle2">{row.aliasUsername}</Typography>
                       </TableCell>
                       <TableCell>{row.lineId}</TableCell>
+                      <TableCell>{row.sourceUsername || '-'}</TableCell>
                       <TableCell>{row.aliasPasswordPlain || '-'}</TableCell>
                       <TableCell>
                         <Chip size="small" color={row.active ? 'success' : 'default'} label={row.active ? t('m3uBackup.status.active', 'Active') : t('m3uBackup.status.inactive', 'Inactive')} />
@@ -343,7 +353,13 @@ export default function M3uBackupLinksLionTv() {
                           <Button
                             size="small"
                             variant="outlined"
-                            onClick={() => setDialog({ open: true, line: { lineId: row.lineId, usernameEncode: row.lineId }, lockLine: true })}
+                            onClick={() =>
+                              setDialog({
+                                open: true,
+                                line: { lineId: row.lineId, sourceUsername: row.sourceUsername, usernameEncode: row.sourceUsername || row.lineId },
+                                lockLine: true
+                              })
+                            }
                           >
                             {t('actions.edit', 'Edit')}
                           </Button>
@@ -359,7 +375,7 @@ export default function M3uBackupLinksLionTv() {
                   ))}
                   {!loading && paginatedRows.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8}>
+                      <TableCell colSpan={9}>
                         <Alert severity="info">{t('m3uBackup.empty', 'No backup aliases configured yet.')}</Alert>
                       </TableCell>
                     </TableRow>

@@ -444,6 +444,7 @@ export default function LinesLionTv() {
       open: true,
       line: {
         lineId: row.id || row.lineId || '',
+        sourceUsername: row.username || '',
         usernameEncode: row.usernameEncode || row.username || '',
         provider: row.provider || 'LION_TV'
       }
