@@ -2116,6 +2116,15 @@ const resources = {
         },
         empty: 'No potential customers found.',
         emailDefault: 'If empty, nomail@gmail.com will be saved.',
+        whatsappMessage: `Hi, how are you?
+
+I'm reaching out because I think my service could be a very good fit for your business. It is a TV entertainment solution that helps your customers feel more comfortable and entertained while they wait or are being served.
+
+You can have sports, movies, series, live channels and varied content, helping your business feel more modern and with a better atmosphere.
+
+You can learn more about our service at www.liontvpremium.com
+
+If you want, I can share a demo with no commitment so you can see how it looks in your business.`,
         selectCountry: 'Select country',
         deleteTitle: 'Delete potential customer',
         deleteBody: 'Delete {{name}}?',
@@ -2458,6 +2467,15 @@ const resources = {
         },
         empty: 'No hay clientes potenciales registrados.',
         emailDefault: 'Si lo dejas vacío se guardará nomail@gmail.com',
+        whatsappMessage: `Hola, ¿qué tal?
+
+Te escribo porque creo que mi servicio te puede servir muy bien en tu negocio. Es una solución de entretenimiento para TV que ayuda a que tus clientes estén más cómodos y entretenidos mientras esperan o se atienden.
+
+Puedes tener deportes, películas, series, canales en vivo y contenido variado, haciendo que tu negocio se vea más moderno y con mejor ambiente.
+
+Puedes conocer más sobre nuestro servicio en www.liontvpremium.com
+
+Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu local.`,
         selectCountry: 'Seleccionar país',
         deleteTitle: 'Eliminar cliente potencial',
         deleteBody: '¿Eliminar a {{name}}?',

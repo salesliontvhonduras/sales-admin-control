@@ -109,31 +109,38 @@ const buildStatusOptions = (t) => [
 const EMAIL_FALLBACK = 'nomail@gmail.com';
 const ISO_CODE_REGEX = /^[A-Z]{2}$/;
 const fallbackIsoCountries = [
-  { value: 'AR', label: 'Argentina' },
-  { value: 'CA', label: 'Canada' },
-  { value: 'CO', label: 'Colombia' },
-  { value: 'CR', label: 'Costa Rica' },
-  { value: 'ES', label: 'Spain' },
-  { value: 'GT', label: 'Guatemala' },
-  { value: 'HN', label: 'Honduras' },
-  { value: 'MX', label: 'Mexico' },
-  { value: 'NI', label: 'Nicaragua' },
-  { value: 'PA', label: 'Panama' },
-  { value: 'SV', label: 'El Salvador' },
-  { value: 'US', label: 'United States' }
+  { value: 'AR', labels: { en: 'Argentina', es: 'Argentina' } },
+  { value: 'CA', labels: { en: 'Canada', es: 'Canadá' } },
+  { value: 'CO', labels: { en: 'Colombia', es: 'Colombia' } },
+  { value: 'CR', labels: { en: 'Costa Rica', es: 'Costa Rica' } },
+  { value: 'ES', labels: { en: 'Spain', es: 'España' } },
+  { value: 'GT', labels: { en: 'Guatemala', es: 'Guatemala' } },
+  { value: 'HN', labels: { en: 'Honduras', es: 'Honduras' } },
+  { value: 'MX', labels: { en: 'Mexico', es: 'México' } },
+  { value: 'NI', labels: { en: 'Nicaragua', es: 'Nicaragua' } },
+  { value: 'PA', labels: { en: 'Panama', es: 'Panamá' } },
+  { value: 'SV', labels: { en: 'El Salvador', es: 'El Salvador' } },
+  { value: 'US', labels: { en: 'United States', es: 'Estados Unidos' } }
 ];
 
-function buildIsoCountryOptions() {
+function normalizeUiLanguage(language) {
+  return String(language || '').toLowerCase().startsWith('es') ? 'es' : 'en';
+}
+
+function buildIsoCountryOptions(language) {
+  const normalizedLanguage = normalizeUiLanguage(language);
   const hasIntlDisplayNames = typeof Intl !== 'undefined' && typeof Intl.DisplayNames === 'function';
-  const locale = typeof navigator !== 'undefined' ? navigator.language || 'en' : 'en';
 
   if (!hasIntlDisplayNames) {
     return [...fallbackIsoCountries]
-      .sort((a, b) => a.label.localeCompare(b.label))
-      .map((country) => ({ ...country, label: `${country.label} (${country.value})` }));
+      .map((country) => ({
+        value: country.value,
+        label: `${country.labels[normalizedLanguage] || country.labels.en} (${country.value})`
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }
 
-  const displayNames = new Intl.DisplayNames([locale, 'en'], { type: 'region' });
+  const displayNames = new Intl.DisplayNames([normalizedLanguage, 'en'], { type: 'region' });
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const generated = [];
 
@@ -156,14 +163,15 @@ function buildIsoCountryOptions() {
 
   if (!generated.length) {
     return [...fallbackIsoCountries]
-      .sort((a, b) => a.label.localeCompare(b.label))
-      .map((country) => ({ ...country, label: `${country.label} (${country.value})` }));
+      .map((country) => ({
+        value: country.value,
+        label: `${country.labels[normalizedLanguage] || country.labels.en} (${country.value})`
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }
 
   return generated.sort((a, b) => a.label.localeCompare(b.label));
 }
-
-const isoCountryOptions = buildIsoCountryOptions();
 
 const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
@@ -195,16 +203,25 @@ function optionLabel(options, value, fallback = '-') {
   return options.find((opt) => opt.value === value)?.label || value;
 }
 
-function formatDateTime(value) {
+function formatDateTime(value, language) {
   if (!value) return '-';
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+  if (Number.isNaN(date.getTime())) return value;
+  const locale = normalizeUiLanguage(language);
+  try {
+    return new Intl.DateTimeFormat(locale, {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    }).format(date);
+  } catch (error) {
+    return date.toLocaleString(locale);
+  }
 }
 
-function formatCountryLabel(value) {
+function formatCountryLabel(value, countryOptions) {
   const isoValue = (value || '').toUpperCase();
   if (!isoValue) return '-';
-  return isoCountryOptions.find((country) => country.value === isoValue)?.label || isoValue;
+  return countryOptions.find((country) => country.value === isoValue)?.label || isoValue;
 }
 
 function normalizePotential(item = {}) {
@@ -219,16 +236,6 @@ function normalizePotential(item = {}) {
     createdAt: item.createdAt ?? item.created_at ?? null
   };
 }
-
-const WHATSAPP_MESSAGE = `Hola, ¿qué tal?
-
-Te escribo porque creo que mi servicio te puede servir muy bien en tu negocio. Es una solución de entretenimiento para TV que ayuda a que tus clientes estén más cómodos y entretenidos mientras esperan o se atienden.
-
-Puedes tener deportes, Peliculas , Series, canales en vivo y contenido variado, haciendo que tu negocio se vea más moderno y con mejor ambiente.
-
-Puedes conocer más sobre nuestro servicio en www.liontvpremium.com
-
-Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu local.`;
 
 const countryPhonePrefixMap = {
   AR: '54',
@@ -264,7 +271,7 @@ function normalizePhoneForWhatsApp(phone, countryIso = '') {
 }
 
 function StatusChip({ status }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const map = {
     NEW: 'info',
     CONTACTED: 'warning',
@@ -430,9 +437,10 @@ const defaultForm = {
 export default function PotentialCustomersLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const uiLanguage = i18n.resolvedLanguage || i18n.language || 'en';
 
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -448,6 +456,8 @@ export default function PotentialCustomersLionTv() {
   const [sending, setSending] = useState(false);
   const categoryOptions = useMemo(() => buildCategoryOptions(t), [t]);
   const statusOptions = useMemo(() => buildStatusOptions(t), [t]);
+  const isoCountryOptions = useMemo(() => buildIsoCountryOptions(uiLanguage), [uiLanguage]);
+  const whatsAppMessage = useMemo(() => t('potentialCustomers.whatsappMessage'), [t]);
 
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
@@ -478,7 +488,7 @@ export default function PotentialCustomersLionTv() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar]);
+  }, [accessToken, enqueueSnackbar, t]);
 
   useEffect(() => {
     loadPotentialCustomers();
@@ -600,7 +610,7 @@ export default function PotentialCustomersLionTv() {
       return;
     }
 
-    const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
+    const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(whatsAppMessage)}`;
     window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 
@@ -878,8 +888,8 @@ export default function PotentialCustomersLionTv() {
                     <MobileFieldGrid
                       fields={[
                         { label: t('potentialCustomers.headers.phone', 'Teléfono'), value: row.phone || '-' },
-                        { label: t('potentialCustomers.headers.country', 'País'), value: formatCountryLabel(row.country) },
-                        { label: t('potentialCustomers.headers.createdAt', 'Creado'), value: formatDateTime(row.createdAt) }
+                        { label: t('potentialCustomers.headers.country', 'País'), value: formatCountryLabel(row.country, isoCountryOptions) },
+                        { label: t('potentialCustomers.headers.createdAt', 'Creado'), value: formatDateTime(row.createdAt, uiLanguage) }
                       ]}
                     />
                   </MobileSummaryCard>
@@ -944,7 +954,7 @@ export default function PotentialCustomersLionTv() {
                         <TableCell>
                           <Stack direction="row" spacing={0.5} alignItems="center">
                             <PublicIcon fontSize="small" color="action" />
-                            <Typography variant="body2">{formatCountryLabel(row.country)}</Typography>
+                            <Typography variant="body2">{formatCountryLabel(row.country, isoCountryOptions)}</Typography>
                           </Stack>
                         </TableCell>
                         <TableCell>
@@ -956,7 +966,7 @@ export default function PotentialCustomersLionTv() {
                         <TableCell>
                           <Stack direction="row" spacing={0.5} alignItems="center">
                             <CalendarMonthIcon fontSize="small" color="action" />
-                            <Typography variant="body2">{formatDateTime(row.createdAt)}</Typography>
+                            <Typography variant="body2">{formatDateTime(row.createdAt, uiLanguage)}</Typography>
                           </Stack>
                         </TableCell>
                         <TableCell align="right">
