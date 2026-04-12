@@ -58,7 +58,11 @@ const resources = {
         catalogBanks: 'Banks',
         catalogServices: 'Services',
         catalogCountryPhoneCodes: 'Country Phone Codes',
-        catalogPackages: 'Packages'
+        catalogPackages: 'Packages',
+        liontvMarketing: 'Marketing',
+        liontvMarketingCaption: 'Email templates and campaigns',
+        emailTemplates: 'Email Templates',
+        emailCampaigns: 'Email Campaigns'
       },
       auth: {
         hi: 'Hi, Welcome Back',
@@ -2964,7 +2968,11 @@ const resources = {
         catalogBanks: 'Bancos',
         catalogServices: 'Servicios',
         catalogCountryPhoneCodes: 'Códigos telefónicos',
-        catalogPackages: 'Paquetes'
+        catalogPackages: 'Paquetes',
+        liontvMarketing: 'Marketing',
+        liontvMarketingCaption: 'Templates y campañas de correo',
+        emailTemplates: 'Templates de Email',
+        emailCampaigns: 'Campañas de Email'
       },
       auth: {
         hi: 'Hola, bienvenido',

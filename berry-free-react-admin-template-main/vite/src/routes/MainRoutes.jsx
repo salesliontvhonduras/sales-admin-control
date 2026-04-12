@@ -14,6 +14,8 @@ const DemosLionTv = Loadable(lazy(() => import('views/liontv/DemosLionTv')));
 const CustomersLionTv = Loadable(lazy(() => import('views/liontv/CustomersLionTv')));
 const PotentialCustomersLionTv = Loadable(lazy(() => import('views/liontv/PotentialCustomersLionTv')));
 const ReferralLeadsLionTv = Loadable(lazy(() => import('views/liontv/ReferralLeadsLionTv')));
+const EmailTemplatesLionTv = Loadable(lazy(() => import('views/liontv/EmailTemplatesLionTv')));
+const EmailCampaignsLionTv = Loadable(lazy(() => import('views/liontv/EmailCampaignsLionTv')));
 const PaymentCommitmentsLionTv = Loadable(lazy(() => import('views/liontv/PaymentCommitmentsLionTv')));
 const MoviesFeedLionTv = Loadable(lazy(() => import('views/liontv/MoviesFeedLionTv')));
 const SeriesFeedLionTv = Loadable(lazy(() => import('views/liontv/SeriesFeedLionTv')));
@@ -145,6 +147,20 @@ const MainRoutes = {
         {
           path: '/liontv/crm',
           element: protectPage({ any: ['LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <CustomerCrmLionTv />)
+        },
+        {
+          path: '/liontv/email-templates',
+          element: protectPage(
+            { any: ['LIONTV_EMAIL_TEMPLATES_VIEW', 'LIONTV_MARKETING_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+            <EmailTemplatesLionTv />
+          )
+        },
+        {
+          path: '/liontv/email-campaigns',
+          element: protectPage(
+            { any: ['LIONTV_EMAIL_CAMPAIGNS_VIEW', 'LIONTV_MARKETING_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+            <EmailCampaignsLionTv />
+          )
         },
         {
           path: '/liontv/subscriptions',

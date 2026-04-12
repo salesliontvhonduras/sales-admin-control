@@ -129,6 +129,32 @@ const liontv = {
       ]
     },
     {
+      id: 'liontv-marketing',
+      title: 'menu.liontvMarketing',
+      caption: 'menu.liontvMarketingCaption',
+      type: 'collapse',
+      icon: icons.IconMailCog,
+      permission: { any: ['LIONTV_EMAIL_TEMPLATES_VIEW', 'LIONTV_EMAIL_CAMPAIGNS_VIEW', 'LIONTV_MARKETING_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+      children: [
+        {
+          id: 'liontv-email-templates',
+          title: 'menu.emailTemplates',
+          type: 'item',
+          url: '/liontv/email-templates',
+          breadcrumbs: true,
+          permission: { any: ['LIONTV_EMAIL_TEMPLATES_VIEW', 'LIONTV_MARKETING_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+        },
+        {
+          id: 'liontv-email-campaigns',
+          title: 'menu.emailCampaigns',
+          type: 'item',
+          url: '/liontv/email-campaigns',
+          breadcrumbs: true,
+          permission: { any: ['LIONTV_EMAIL_CAMPAIGNS_VIEW', 'LIONTV_MARKETING_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+        }
+      ]
+    },
+    {
       id: 'liontv-operations',
       title: 'menu.liontvOperations',
       caption: 'menu.liontvOperationsCaption',
