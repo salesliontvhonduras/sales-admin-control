@@ -37,7 +37,21 @@ export async function deleteService(id, config = {}) {
 }
 
 export async function listCountryPhoneCodes(config = {}) {
-  return unwrap(await catalogsApi.get('/countries/v1', config));
+  try {
+    return unwrap(await catalogsApi.get('/countries/v1', config));
+  } catch (error) {
+    if (error?.response?.status !== 404) {
+      throw error;
+    }
+
+    const fallback = unwrap(await catalogsApi.get('/countries/v1/list-all', config));
+    return Array.isArray(fallback)
+      ? fallback.map((item, index) => ({
+          id: item?.id ?? `legacy-${index}`,
+          ...item
+        }))
+      : [];
+  }
 }
 
 export async function createCountryPhoneCode(payload, config = {}) {

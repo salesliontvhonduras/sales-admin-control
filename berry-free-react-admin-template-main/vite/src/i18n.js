@@ -54,7 +54,7 @@ const resources = {
         panelAuths: 'Panel Integrations',
         panelAuthsCaption: 'Vivo/9xtream credentials by user',
         catalogs: 'Catalogs',
-        catalogsCaption: 'Banks, services, countries and packages',
+        catalogsCaption: 'catalogs for system',
         catalogBanks: 'Banks',
         catalogServices: 'Services',
         catalogCountryPhoneCodes: 'Country Phone Codes',

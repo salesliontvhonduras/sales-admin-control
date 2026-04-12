@@ -812,7 +812,7 @@ export default function LicensesLionTv() {
       username: linkedLine?.username || '',
       password: linkedLine?.password || '',
       country,
-      playlistName: 'Principal'
+      playlistName: 'Lion Tv Premium'
     });
     setOpenServerChange({ open: true, row });
   };
