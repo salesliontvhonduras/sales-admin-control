@@ -32,6 +32,10 @@ const LinesLionTv = Loadable(lazy(() => import('views/liontv/LinesLionTv')));
 const PlusLinesExplorer = Loadable(lazy(() => import('views/liontv/PlusLinesExplorer')));
 const UserAccessAdmin = Loadable(lazy(() => import('views/security/UserAccessAdmin')));
 const PanelAuthMultiAppAdmin = Loadable(lazy(() => import('views/security/PanelAuthMultiAppAdmin')));
+const BanksCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/BanksCatalogAdmin')));
+const ServicesCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/ServicesCatalogAdmin')));
+const CountryPhoneCodesCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/CountryPhoneCodesCatalogAdmin')));
+const PackagesCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/PackagesCatalogAdmin')));
 
 const protectPage = (permission, element, fallbackPath = '/dashboard/default') => (
   <RequirePermission permission={permission} fallbackPath={fallbackPath}>
@@ -200,6 +204,22 @@ const MainRoutes = {
             {
               path: '/admin/panel-auths',
               element: <PanelAuthMultiAppAdmin />
+            },
+            {
+              path: '/admin/catalogs/banks',
+              element: <BanksCatalogAdmin />
+            },
+            {
+              path: '/admin/catalogs/services',
+              element: <ServicesCatalogAdmin />
+            },
+            {
+              path: '/admin/catalogs/country-phone-codes',
+              element: <CountryPhoneCodesCatalogAdmin />
+            },
+            {
+              path: '/admin/catalogs/packages',
+              element: <PackagesCatalogAdmin />
             }
           ]
         }

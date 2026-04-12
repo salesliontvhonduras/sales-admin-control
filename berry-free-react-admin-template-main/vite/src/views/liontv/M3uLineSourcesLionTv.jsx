@@ -6,13 +6,13 @@ import { alpha, useTheme } from '@mui/material/styles';
 import useAuth from 'hooks/useAuth';
 
 import Alert from '@mui/material/Alert';
+import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
-import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
@@ -78,6 +78,11 @@ function buildTemplatePreview(template) {
   const playlistType = String(template?.playlistType || 'm3u_plus').trim() || 'm3u_plus';
   const outputFormat = String(template?.outputFormat || 'ts').trim() || 'ts';
   return `${baseUrl}/get.php?username={username_encode}&password={password_encode}&type=${playlistType}&output=${outputFormat}`;
+}
+
+function buildLineOptionLabel(option) {
+  if (!option) return '';
+  return `${option.usernameEncode || option.username || option.lineId}${option.provider ? ` (${option.provider})` : ''} · ${option.lineId}`;
 }
 
 function StatusCard({ label, value, helper, tone = 'primary' }) {
@@ -792,24 +797,25 @@ export default function M3uLineSourcesLionTv() {
 
                   <Grid container spacing={1.5}>
                     <Grid item xs={12} md={7}>
-                      <TextField
-                        select
+                      <Autocomplete
                         fullWidth
-                        label={t('catalog.lineSources.lineSelect', 'Select line (lineId / usernameEncode)')}
-                        value={selectedLineId}
-                        onChange={(event) => setSelectedLineId(event.target.value)}
-                        helperText={t(
-                          'catalog.lineSources.lineSelectHelper',
-                          'This selector uses /api/v1/line-sources/line-options and no longer depends on token.'
+                        options={lineOptions}
+                        value={selectedLineOption}
+                        getOptionLabel={buildLineOptionLabel}
+                        isOptionEqualToValue={(option, value) => option.lineId === value?.lineId}
+                        onChange={(_, option) => setSelectedLineId(option?.lineId || '')}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label={t('catalog.lineSources.lineSelect', 'Select line (lineId / usernameEncode)')}
+                            placeholder={t('catalog.lineSources.lineSelectPlaceholder', 'Search line by name...')}
+                            helperText={t(
+                              'catalog.lineSources.lineSelectHelper',
+                              'Search by name, username, provider or line ID. This selector uses /api/v1/line-sources/line-options.'
+                            )}
+                          />
                         )}
-                      >
-                        <MenuItem value="">{t('catalog.lineSources.lineSelectPlaceholder', 'Select line...')}</MenuItem>
-                        {lineOptions.map((option) => (
-                          <MenuItem key={option.lineId} value={option.lineId}>
-                            {option.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                      />
                     </Grid>
 
                     <Grid item xs={12} md={5}>

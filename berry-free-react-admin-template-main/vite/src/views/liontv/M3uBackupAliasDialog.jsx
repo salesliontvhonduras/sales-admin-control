@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import useAuth from 'hooks/useAuth';
 
 import Alert from '@mui/material/Alert';
+import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -73,6 +74,11 @@ function formatDate(value) {
 
 function buildLineOptionValue(lineId, username) {
   return `${String(lineId || '').trim()}::${String(username || '').trim()}`;
+}
+
+function buildLineOptionLabel(option) {
+  if (!option) return '';
+  return `${option.usernameEncode || option.username || option.lineId}${option.provider ? ` (${option.provider})` : ''} · ${option.lineId}`;
 }
 
 export default function M3uBackupAliasDialog({ open, onClose, line = null, lockLine = false, onSaved }) {
@@ -354,39 +360,36 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
                   gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' }
                 }}
               >
-                <TextField
-                  select
+                <Autocomplete
                   fullWidth
                   disabled={lockLine || loadingOptions}
-                  label={t('m3uBackup.line', 'Line')}
-                  value={buildLineOptionValue(form.lineId, form.sourceUsername)}
-                  onChange={(event) => {
-                    const [nextLineId, nextSourceUsername] = String(event.target.value || '').split('::');
-                    const option = lineOptions.find((item) => item.lineId === nextLineId && item.username === nextSourceUsername) || null;
+                  options={lineOptions}
+                  value={selectedLineOption}
+                  getOptionLabel={buildLineOptionLabel}
+                  isOptionEqualToValue={(option, value) => buildLineOptionValue(option.lineId, option.username) === buildLineOptionValue(value?.lineId, value?.username)}
+                  onChange={(_, option) => {
                     setForm((previous) => ({
                       ...previous,
-                      lineId: nextLineId,
-                      sourceUsername: nextSourceUsername || option?.username || '',
+                      lineId: option?.lineId || '',
+                      sourceUsername: option?.username || '',
                       usernameEncode: option?.usernameEncode || '',
+                      providerHint: option?.provider || '',
                       aliasId: null
                     }));
                   }}
-                  helperText={
-                    lockLine
-                      ? t('m3uBackup.lineLocked', 'This backup link is bound to the selected line.')
-                      : t('m3uBackup.lineHelper', 'Select the active line that should back this alias.')
-                  }
-                >
-                  <MenuItem value="::">{t('m3uBackup.linePlaceholder', 'Select line...')}</MenuItem>
-                  {lineOptions.map((option) => (
-                    <MenuItem
-                      key={buildLineOptionValue(option.lineId, option.username || option.usernameEncode || option.lineId)}
-                      value={buildLineOptionValue(option.lineId, option.username)}
-                    >
-                      {`${option.lineId} / ${option.usernameEncode || option.username || option.lineId}${option.provider ? ` (${option.provider})` : ''}`}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={t('m3uBackup.line', 'Line')}
+                      placeholder={t('m3uBackup.linePlaceholder', 'Search line by name...')}
+                      helperText={
+                        lockLine
+                          ? t('m3uBackup.lineLocked', 'This backup link is bound to the selected line.')
+                          : t('m3uBackup.lineHelper', 'Search and select the active line that should back this alias.')
+                      }
+                    />
+                  )}
+                />
 
                 <TextField
                   fullWidth

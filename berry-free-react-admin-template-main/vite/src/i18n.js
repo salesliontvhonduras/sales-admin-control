@@ -52,7 +52,13 @@ const resources = {
         userAccess: 'Users & Access',
         userAccessCaption: 'Roles and permissions',
         panelAuths: 'Panel Integrations',
-        panelAuthsCaption: 'Vivo/9xtream credentials by user'
+        panelAuthsCaption: 'Vivo/9xtream credentials by user',
+        catalogs: 'Catalogs',
+        catalogsCaption: 'Banks, services, countries and packages',
+        catalogBanks: 'Banks',
+        catalogServices: 'Services',
+        catalogCountryPhoneCodes: 'Country Phone Codes',
+        catalogPackages: 'Packages'
       },
       auth: {
         hi: 'Hi, Welcome Back',
@@ -2783,7 +2789,13 @@ const resources = {
         userAccess: 'Usuarios y Accesos',
         userAccessCaption: 'Roles y permisos',
         panelAuths: 'Integraciones de Panel',
-        panelAuthsCaption: 'Credenciales Vivo/9xtream por usuario'
+        panelAuthsCaption: 'Credenciales Vivo/9xtream por usuario',
+        catalogs: 'Catálogos',
+        catalogsCaption: 'Bancos, servicios, países y paquetes',
+        catalogBanks: 'Bancos',
+        catalogServices: 'Servicios',
+        catalogCountryPhoneCodes: 'Códigos telefónicos',
+        catalogPackages: 'Paquetes'
       },
       auth: {
         hi: 'Hola, bienvenido',

@@ -1,8 +1,9 @@
-import { IconKey, IconShieldLock } from '@tabler/icons-react';
+import { IconDatabase, IconKey, IconShieldLock } from '@tabler/icons-react';
 
 const icons = {
   IconShieldLock,
-  IconKey
+  IconKey,
+  IconDatabase
 };
 
 const security = {
@@ -30,6 +31,48 @@ const security = {
       icon: icons.IconKey,
       breadcrumbs: true,
       permission: { any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
+    },
+    {
+      id: 'security-catalogs',
+      title: 'menu.catalogs',
+      caption: 'menu.catalogsCaption',
+      type: 'collapse',
+      icon: icons.IconDatabase,
+      permission: { any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] },
+      children: [
+        {
+          id: 'security-catalogs-banks',
+          title: 'menu.catalogBanks',
+          type: 'item',
+          url: '/admin/catalogs/banks',
+          breadcrumbs: true,
+          permission: { any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
+        },
+        {
+          id: 'security-catalogs-services',
+          title: 'menu.catalogServices',
+          type: 'item',
+          url: '/admin/catalogs/services',
+          breadcrumbs: true,
+          permission: { any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
+        },
+        {
+          id: 'security-catalogs-country-phone-codes',
+          title: 'menu.catalogCountryPhoneCodes',
+          type: 'item',
+          url: '/admin/catalogs/country-phone-codes',
+          breadcrumbs: true,
+          permission: { any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
+        },
+        {
+          id: 'security-catalogs-packages',
+          title: 'menu.catalogPackages',
+          type: 'item',
+          url: '/admin/catalogs/packages',
+          breadcrumbs: true,
+          permission: { any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
+        }
+      ]
     }
   ]
 };

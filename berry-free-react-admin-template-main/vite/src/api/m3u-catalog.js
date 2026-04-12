@@ -274,14 +274,19 @@ export async function listLineOptions({ accessToken } = {}) {
   const list = Array.isArray(raw) ? raw : [];
 
   const sorted = list.sort((a, b) => {
+    const aVisibleName = String(a.usernameEncode ?? a.username ?? '').toLowerCase();
+    const bVisibleName = String(b.usernameEncode ?? b.username ?? '').toLowerCase();
+    const nameCompare = aVisibleName.localeCompare(bVisibleName);
+    if (nameCompare !== 0) return nameCompare;
+
+    const aProvider = String(a.provider ?? '').toLowerCase();
+    const bProvider = String(b.provider ?? '').toLowerCase();
+    const providerCompare = aProvider.localeCompare(bProvider);
+    if (providerCompare !== 0) return providerCompare;
+
     const aLineId = String(a.lineId ?? a.line_id ?? '').toLowerCase();
     const bLineId = String(b.lineId ?? b.line_id ?? '').toLowerCase();
-    const lineIdCompare = aLineId.localeCompare(bLineId);
-    if (lineIdCompare !== 0) return lineIdCompare;
-
-    const aName = String(a.usernameEncode ?? '').toLowerCase();
-    const bName = String(b.usernameEncode ?? '').toLowerCase();
-    return aName.localeCompare(bName);
+    return aLineId.localeCompare(bLineId);
   });
 
   return sorted.map((item) =>

@@ -4,8 +4,6 @@ import {
   IconReceipt2,
   IconFileInvoice,
   IconRouter,
-  IconLink,
-  IconUserPlus,
   IconMailCog,
   IconDashboard,
   IconUserSearch,
@@ -20,8 +18,6 @@ const icons = {
   IconRouter,
   IconKey,
   IconUserSearch,
-  IconLink,
-  IconUserPlus,
   IconMailCog,
   IconDashboard
 };
@@ -80,7 +76,6 @@ const liontv = {
           type: 'item',
           url: '/liontv/referrals',
           breadcrumbs: true,
-          icon: icons.IconUserPlus,
           permission: { any: ['LIONTV_POTENTIAL_CUSTOMERS_VIEW', 'LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         },
         {
@@ -163,7 +158,6 @@ const liontv = {
           type: 'item',
           url: '/liontv/m3u-backup-links',
           breadcrumbs: true,
-          icon: icons.IconLink,
           permission: { any: ['LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         },
         {
