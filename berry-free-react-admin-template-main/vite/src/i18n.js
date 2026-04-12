@@ -5284,15 +5284,32 @@ const missingKeyFallback = (key, language, options) => {
   return label;
 };
 
+const normalizeLanguageCode = (language) => {
+  const raw = String(language || '')
+    .trim()
+    .toLowerCase();
+
+  if (!raw) return null;
+  if (raw.startsWith('es')) return 'es';
+  if (raw.startsWith('en')) return 'en';
+  return null;
+};
+
 const storedLng = typeof window !== 'undefined' ? localStorage.getItem('lng') : null;
+const initialLng = normalizeLanguageCode(storedLng) || 'es';
 
 i18n.use(initReactI18next).init({
   resources,
-  lng: storedLng || 'es',
+  lng: initialLng,
   fallbackLng: 'en',
+  supportedLngs: ['es', 'en'],
+  nonExplicitSupportedLngs: true,
+  load: 'languageOnly',
+  cleanCode: true,
+  lowerCaseLng: true,
   interpolation: { escapeValue: false },
   parseMissingKeyHandler: (key, _defaultValue, options) =>
-    missingKeyFallback(key, options?.lng || i18n.language || storedLng || 'es', options),
+    missingKeyFallback(key, options?.lng || i18n.resolvedLanguage || i18n.language || initialLng, options),
   returnNull: false,
   returnEmptyString: false
 });

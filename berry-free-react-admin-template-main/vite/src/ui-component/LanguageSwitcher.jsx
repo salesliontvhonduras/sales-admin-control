@@ -30,7 +30,8 @@ const StyledChip = styled(Chip)(({ theme }) => ({
 
 export default function LanguageSwitcher({ overlay = false, compact = false, sx = {} }) {
   const { i18n, t } = useTranslation();
-  const isEs = i18n.language === 'es';
+  const currentLanguage = String(i18n.resolvedLanguage || i18n.language || '').toLowerCase();
+  const isEs = currentLanguage.startsWith('es');
   const next = isEs ? 'en' : 'es';
   const flag = isEs ? '🇪🇸' : '🇺🇸';
   const label = isEs ? t('actions.spanish') : t('actions.english');
