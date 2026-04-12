@@ -61,6 +61,7 @@ import {
   updateEmailTemplate,
   updateEmailTemplateStatus
 } from 'api/email-campaigns';
+import { buildImportantMatchTemplatePreset } from './emailTemplatePresets';
 
 const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
@@ -97,7 +98,7 @@ const defaultVariable = (sortOrder = 1) => ({
   sortOrder
 });
 
-const defaultFormState = {
+const createDefaultFormState = () => ({
   code: '',
   name: '',
   subjectTemplate: '',
@@ -106,7 +107,7 @@ const defaultFormState = {
   category: '',
   active: true,
   variables: []
-};
+});
 
 function extractPlaceholders(subjectTemplate = '', htmlTemplate = '') {
   const found = new Set();
@@ -291,7 +292,7 @@ export default function EmailTemplatesLionTv() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTab, setDialogTab] = useState(0);
   const [editingTemplateId, setEditingTemplateId] = useState(null);
-  const [formState, setFormState] = useState(defaultFormState);
+  const [formState, setFormState] = useState(() => createDefaultFormState());
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -337,9 +338,22 @@ export default function EmailTemplatesLionTv() {
 
   const openCreateDialog = () => {
     setEditingTemplateId(null);
-    setFormState(defaultFormState);
+    setFormState(createDefaultFormState());
     setDialogTab(0);
     setDialogOpen(true);
+  };
+
+  const openImportantMatchPresetDialog = () => {
+    setEditingTemplateId(null);
+    setFormState(buildImportantMatchTemplatePreset());
+    setDialogTab(0);
+    setDialogOpen(true);
+    enqueueSnackbar(
+      t('emailTemplates.messages.presetLoaded', {
+        defaultValue: 'Important match preset loaded. Review the variables and save it.'
+      }),
+      { variant: 'info' }
+    );
   };
 
   const openEditDialog = async (row) => {
@@ -530,6 +544,9 @@ export default function EmailTemplatesLionTv() {
             <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => setRefreshKey((value) => value + 1)}>
               {t('actions.refresh')}
             </Button>
+            <Button variant="outlined" startIcon={<AddIcon />} onClick={openImportantMatchPresetDialog}>
+              {t('emailTemplates.actions.importantMatchPreset', { defaultValue: 'Important match preset' })}
+            </Button>
             <Button variant="contained" startIcon={<AddIcon />} onClick={openCreateDialog}>
               {t('emailTemplates.actions.new', { defaultValue: 'New template' })}
             </Button>
@@ -711,6 +728,20 @@ export default function EmailTemplatesLionTv() {
 
             {dialogTab === 0 && (
               <Stack spacing={2}>
+                {!editingTemplateId && (
+                  <Alert
+                    severity="info"
+                    action={
+                      <Button color="inherit" size="small" onClick={openImportantMatchPresetDialog}>
+                        {t('emailTemplates.actions.loadPreset', { defaultValue: 'Load preset' })}
+                      </Button>
+                    }
+                  >
+                    {t('emailTemplates.messages.presetHelp', {
+                      defaultValue: 'You can start from a reusable preset for important matches and adjust the copy before saving.'
+                    })}
+                  </Alert>
+                )}
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' }, gap: 2 }}>
                   <TextField
                     label={t('emailTemplates.form.code', { defaultValue: 'Code' })}
