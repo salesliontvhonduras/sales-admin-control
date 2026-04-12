@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 // material-ui
 import Avatar from '@mui/material/Avatar';
@@ -27,6 +28,7 @@ import KeyboardArrowUpOutlinedIcon from '@mui/icons-material/KeyboardArrowUpOutl
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
 
 export default function PopularCard({ isLoading }) {
+  const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleClick = (event) => {
@@ -46,8 +48,8 @@ export default function PopularCard({ isLoading }) {
           <CardContent>
             <Stack sx={{ gap: gridSpacing }}>
               <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography variant="h4">Popular Stocks</Typography>
-                <IconButton size="small" sx={{ mt: -0.625 }}>
+                <Typography variant="h4">{t('dashboardDefault.widgets.popularStocks')}</Typography>
+                <IconButton size="small" sx={{ mt: -0.625 }} aria-label={t('common.actions')}>
                   <MoreHorizOutlinedIcon
                     fontSize="small"
                     sx={{ cursor: 'pointer' }}
@@ -67,9 +69,9 @@ export default function PopularCard({ isLoading }) {
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                 transformOrigin={{ vertical: 'top', horizontal: 'right' }}
               >
-                <MenuItem onClick={handleClose}> Today</MenuItem>
-                <MenuItem onClick={handleClose}> This Month</MenuItem>
-                <MenuItem onClick={handleClose}> This Year </MenuItem>
+                <MenuItem onClick={handleClose}>{t('dashboardDefault.widgets.today')}</MenuItem>
+                <MenuItem onClick={handleClose}>{t('dashboardDefault.widgets.thisMonth')}</MenuItem>
+                <MenuItem onClick={handleClose}>{t('dashboardDefault.widgets.thisYear')}</MenuItem>
               </Menu>
 
               <BajajAreaChartCard />
@@ -98,7 +100,7 @@ export default function PopularCard({ isLoading }) {
                   </Stack>
                 </Stack>
                 <Typography variant="subtitle2" sx={{ color: 'success.dark' }}>
-                  10% Profit
+                  {t('dashboardDefault.widgets.profit', { value: '10%' })}
                 </Typography>
                 <Divider sx={{ my: 1.5 }} />
                 <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
@@ -125,7 +127,7 @@ export default function PopularCard({ isLoading }) {
                   </Stack>
                 </Stack>
                 <Typography variant="subtitle2" sx={{ color: 'orange.dark' }}>
-                  10% loss
+                  {t('dashboardDefault.widgets.loss', { value: '10%' })}
                 </Typography>
                 <Divider sx={{ my: 1.5 }} />
                 <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
@@ -152,7 +154,7 @@ export default function PopularCard({ isLoading }) {
                   </Stack>
                 </Stack>
                 <Typography variant="subtitle2" sx={{ color: 'success.dark' }}>
-                  10% Profit
+                  {t('dashboardDefault.widgets.profit', { value: '10%' })}
                 </Typography>
                 <Divider sx={{ my: 1.5 }} />
                 <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
@@ -179,7 +181,7 @@ export default function PopularCard({ isLoading }) {
                   </Stack>
                 </Stack>
                 <Typography variant="subtitle2" sx={{ color: 'orange.dark' }}>
-                  10% loss
+                  {t('dashboardDefault.widgets.loss', { value: '10%' })}
                 </Typography>
                 <Divider sx={{ my: 1.5 }} />
                 <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
@@ -206,14 +208,14 @@ export default function PopularCard({ isLoading }) {
                   </Stack>
                 </Stack>
                 <Typography variant="subtitle2" sx={{ color: 'orange.dark' }}>
-                  10% loss
+                  {t('dashboardDefault.widgets.loss', { value: '10%' })}
                 </Typography>
               </Box>
             </Stack>
           </CardContent>
           <CardActions sx={{ p: 1.25, pt: 0, justifyContent: 'center' }}>
             <Button size="small" disableElevation>
-              View All
+              {t('dashboardDefault.widgets.viewAll')}
               <ChevronRightOutlinedIcon />
             </Button>
           </CardActions>

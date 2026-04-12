@@ -861,7 +861,7 @@ export default function CustomersLionTv() {
                     <MobileFieldGrid
                       fields={[
                         { label: t('customers.headers.phone'), value: row.phone || '-' },
-                        { label: t('customers.headers.referred'), value: row.refererBy || (row.isReferred ? 'Sí' : 'No') },
+                        { label: t('customers.headers.referred'), value: row.refererBy || (row.isReferred ? t('common.yes') : t('common.no')) },
                         { label: t('customers.headers.channel'), value: row.channel || '-' },
                         { label: t('customers.headers.gender'), value: row.gender || '-' }
                       ]}
@@ -1017,7 +1017,7 @@ export default function CustomersLionTv() {
                                 fontWeight: 700
                               }}
                             >
-                              {row.isReferred || row.refererBy ? 'Sí' : 'No'}
+                              {row.isReferred || row.refererBy ? t('common.yes') : t('common.no')}
                             </Box>
                           }
                           sx={(theme) => {

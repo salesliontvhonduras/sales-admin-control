@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -27,6 +28,7 @@ import ArchiveTwoToneIcon from '@mui/icons-material/ArchiveOutlined';
 
 export default function EarningCard({ isLoading }) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const [anchorEl, setAnchorEl] = React.useState(null);
 
@@ -120,16 +122,16 @@ export default function EarningCard({ isLoading }) {
               }}
             >
               <MenuItem onClick={handleClose}>
-                <GetAppTwoToneIcon sx={{ mr: 1.75 }} /> Import Card
+                <GetAppTwoToneIcon sx={{ mr: 1.75 }} /> {t('dashboardDefault.widgets.importCard')}
               </MenuItem>
               <MenuItem onClick={handleClose}>
-                <FileCopyTwoToneIcon sx={{ mr: 1.75 }} /> Copy Data
+                <FileCopyTwoToneIcon sx={{ mr: 1.75 }} /> {t('dashboardDefault.widgets.copyData')}
               </MenuItem>
               <MenuItem onClick={handleClose}>
-                <PictureAsPdfTwoToneIcon sx={{ mr: 1.75 }} /> Export
+                <PictureAsPdfTwoToneIcon sx={{ mr: 1.75 }} /> {t('dashboardDefault.widgets.export')}
               </MenuItem>
               <MenuItem onClick={handleClose}>
-                <ArchiveTwoToneIcon sx={{ mr: 1.75 }} /> Archive File
+                <ArchiveTwoToneIcon sx={{ mr: 1.75 }} /> {t('dashboardDefault.widgets.archiveFile')}
               </MenuItem>
             </Menu>
             <Stack direction="row" sx={{ alignItems: 'center' }}>
@@ -146,7 +148,7 @@ export default function EarningCard({ isLoading }) {
                 color: 'secondary.200'
               }}
             >
-              Total Earning
+              {t('dashboardDefault.widgets.totalEarning')}
             </Typography>
           </Box>
         </MainCard>

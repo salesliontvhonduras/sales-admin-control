@@ -999,11 +999,11 @@ export default function LicensesLionTv() {
         <ResponsiveMetricGrid columns={{ xs: 1, md: 2, lg: 3, xl: 6 }}>
           {[
             { title: t('licenses.title'), value: total, helper: t('licenses.search'), color: 'primary', icon: <SecurityIcon fontSize="small" /> },
-            { title: 'ACTIVE', value: rows.filter((r) => r.status === 'ACTIVE').length, helper: t('licenses.filters.status'), color: 'success', icon: <SecurityIcon fontSize="small" /> },
-            { title: 'INACTIVE', value: rows.filter((r) => r.status === 'INACTIVE').length, helper: t('licenses.filters.status'), color: 'warning', icon: <SecurityIcon fontSize="small" /> },
-            { title: 'EXPIRED', value: rows.filter((r) => r.status === 'EXPIRED').length, helper: t('licenses.filters.status'), color: 'error', icon: <SecurityIcon fontSize="small" /> },
-            { title: 'AVAILABLE', value: rows.filter((r) => r.status === 'AVAILABLE').length, helper: t('licenses.filters.status'), color: 'info', icon: <SecurityIcon fontSize="small" /> },
-            { title: 'EMERGENCY', value: rows.filter((r) => r.status === 'EMERGENCY').length, helper: t('licenses.filters.status'), color: 'secondary', icon: <SecurityIcon fontSize="small" /> }
+            { title: t('licenses.status.ACTIVE', 'ACTIVE'), value: rows.filter((r) => r.status === 'ACTIVE').length, helper: t('licenses.filters.status'), color: 'success', icon: <SecurityIcon fontSize="small" /> },
+            { title: t('licenses.status.INACTIVE', 'INACTIVE'), value: rows.filter((r) => r.status === 'INACTIVE').length, helper: t('licenses.filters.status'), color: 'warning', icon: <SecurityIcon fontSize="small" /> },
+            { title: t('licenses.status.EXPIRED', 'EXPIRED'), value: rows.filter((r) => r.status === 'EXPIRED').length, helper: t('licenses.filters.status'), color: 'error', icon: <SecurityIcon fontSize="small" /> },
+            { title: t('licenses.status.AVAILABLE', 'AVAILABLE'), value: rows.filter((r) => r.status === 'AVAILABLE').length, helper: t('licenses.filters.status'), color: 'info', icon: <SecurityIcon fontSize="small" /> },
+            { title: t('licenses.status.EMERGENCY', 'EMERGENCY'), value: rows.filter((r) => r.status === 'EMERGENCY').length, helper: t('licenses.filters.status'), color: 'secondary', icon: <SecurityIcon fontSize="small" /> }
           ].map((item, idx) => (
             <LionMetricCard {...item} key={idx} />
           ))}

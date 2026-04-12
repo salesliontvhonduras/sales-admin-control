@@ -57,20 +57,20 @@ const glassCard = (theme) => ({
 });
 
 const countryOptions = [
-  { code: 'GLOBAL', label: 'Global', flag: '🌐' },
-  { code: 'HN', label: 'Honduras', flag: '🇭🇳' },
-  { code: 'SV', label: 'El Salvador', flag: '🇸🇻' },
-  { code: 'GT', label: 'Guatemala', flag: '🇬🇹' },
-  { code: 'NI', label: 'Nicaragua', flag: '🇳🇮' },
-  { code: 'BZ', label: 'Belice', flag: '🇧🇿' },
-  { code: 'PA', label: 'Panamá', flag: '🇵🇦' },
-  { code: 'CR', label: 'Costa Rica', flag: '🇨🇷' },
-  { code: 'MX', label: 'México', flag: '🇲🇽' },
-  { code: 'AR', label: 'Argentina', flag: '🇦🇷' },
-  { code: 'CA', label: 'Canadá', flag: '🇨🇦' },
-  { code: 'US', label: 'Estados Unidos', flag: '🇺🇸' },
-  { code: 'ES', label: 'España', flag: '🇪🇸' },
-  { code: 'CO', label: 'Colombia', flag: '🇨🇴' }
+  { code: 'GLOBAL', flag: '🌐' },
+  { code: 'HN', flag: '🇭🇳' },
+  { code: 'SV', flag: '🇸🇻' },
+  { code: 'GT', flag: '🇬🇹' },
+  { code: 'NI', flag: '🇳🇮' },
+  { code: 'BZ', flag: '🇧🇿' },
+  { code: 'PA', flag: '🇵🇦' },
+  { code: 'CR', flag: '🇨🇷' },
+  { code: 'MX', flag: '🇲🇽' },
+  { code: 'AR', flag: '🇦🇷' },
+  { code: 'CA', flag: '🇨🇦' },
+  { code: 'US', flag: '🇺🇸' },
+  { code: 'ES', flag: '🇪🇸' },
+  { code: 'CO', flag: '🇨🇴' }
 ];
 
 const statusIcon = {
@@ -82,7 +82,18 @@ const statusIcon = {
   CANCELLED: <CancelIcon fontSize="small" color="error" />
 };
 
-const countryLabel = (code) => countryOptions.find((c) => c.code === code)?.label || code || 'Global';
+function localizedRegionName(code, locale) {
+  if (!code || code === 'GLOBAL') return null;
+  if (typeof Intl === 'undefined' || typeof Intl.DisplayNames !== 'function') return null;
+  try {
+    const displayNames = new Intl.DisplayNames([locale, 'en'], { type: 'region' });
+    return displayNames.of(code) || null;
+  } catch {
+    return null;
+  }
+}
+
+const countryLabel = (code, t, locale) => localizedRegionName(code, locale) || (code === 'GLOBAL' ? t('common.global') : code || t('common.global'));
 const countryFlag = (code) => countryOptions.find((c) => c.code === code)?.flag || '🌐';
 const formatDate = (val) => {
   if (!val) return '-';
@@ -147,7 +158,7 @@ function semaphoreColor(maxConnectionsPlus, sumPrimaryConnections, t) {
 export default function PlusLinesExplorer() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -296,7 +307,7 @@ export default function PlusLinesExplorer() {
                     <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.dark', boxShadow: 2 }}>{item.flag}</Avatar>
                     <Box>
                       <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-                        {countryLabel(item.country)}
+                        {countryLabel(item.country, t, i18n.language)}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {t('plusLines.countryItemSummary', {
@@ -319,7 +330,7 @@ export default function PlusLinesExplorer() {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
             <PublicIcon color="primary" />
             <Typography variant="h6">
-              {selectedCountry ? countryLabel(selectedCountry) : t('plusLines.pickCountry', 'Elige un país')}
+              {selectedCountry ? countryLabel(selectedCountry, t, i18n.language) : t('plusLines.pickCountry', 'Elige un país')}
             </Typography>
           </Stack>
         }

@@ -817,8 +817,8 @@ export default function CatalogCurationLionTv() {
                         onChange={(event) => setActiveFilter(event.target.value)}
                       >
                         <MenuItem value="">{t('catalog.filters.all', 'All')}</MenuItem>
-                        <MenuItem value="true">true</MenuItem>
-                        <MenuItem value="false">false</MenuItem>
+                        <MenuItem value="true">{t('common.yes')}</MenuItem>
+                        <MenuItem value="false">{t('common.no')}</MenuItem>
                       </TextField>
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -871,7 +871,7 @@ export default function CatalogCurationLionTv() {
                     <Table size="small" sx={{ minWidth: { xs: 1120, md: '100%' } }}>
                       <TableHead>
                         <TableRow>
-                          <TableCell>ID</TableCell>
+                          <TableCell>{t('common.id')}</TableCell>
                           <TableCell>{t('catalog.table.title', 'Title')}</TableCell>
                           <TableCell>{t('catalog.table.type', 'Type')}</TableCell>
                           <TableCell>{t('catalog.table.groupTitle', 'Original group')}</TableCell>

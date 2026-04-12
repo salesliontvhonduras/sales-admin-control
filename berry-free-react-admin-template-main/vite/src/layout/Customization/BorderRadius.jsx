@@ -1,4 +1,5 @@
 // material-ui
+import { useTranslation } from 'react-i18next';
 import Grid from '@mui/material/Grid';
 import Slider from '@mui/material/Slider';
 import Stack from '@mui/material/Stack';
@@ -13,6 +14,7 @@ function valueText(value) {
 }
 
 export default function BorderRadius() {
+  const { t } = useTranslation();
   const {
     state: { borderRadius },
     setField
@@ -24,7 +26,7 @@ export default function BorderRadius() {
 
   return (
     <Stack sx={{ pl: 2, pb: 2, pr: 4, gap: 2.5 }}>
-      <Typography variant="h5">BORDER RADIUS</Typography>
+      <Typography variant="h5">{t('layout.customization.borderRadius')}</Typography>
       <Grid container spacing={1.25} sx={{ pt: 2, alignItems: 'center', justifyContent: 'center' }}>
         <Grid>
           <Typography variant="h6">4px</Typography>

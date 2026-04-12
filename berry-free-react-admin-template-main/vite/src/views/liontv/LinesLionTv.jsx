@@ -128,20 +128,20 @@ const pillSx = {
 };
 
 const countryOptions = [
-  { code: 'GLOBAL', label: 'Global' },
-  { code: 'HN', label: 'Honduras' },
-  { code: 'SV', label: 'El Salvador' },
-  { code: 'GT', label: 'Guatemala' },
-  { code: 'NI', label: 'Nicaragua' },
-  { code: 'BZ', label: 'Belice' },
-  { code: 'PA', label: 'Panamá' },
-  { code: 'CR', label: 'Costa Rica' },
-  { code: 'MX', label: 'México' },
-  { code: 'AR', label: 'Argentina' },
-  { code: 'CA', label: 'Canadá' },
-  { code: 'US', label: 'Estados Unidos' },
-  { code: 'ES', label: 'España' },
-  { code: 'CO', label: 'Colombia' }
+  { code: 'GLOBAL' },
+  { code: 'HN' },
+  { code: 'SV' },
+  { code: 'GT' },
+  { code: 'NI' },
+  { code: 'BZ' },
+  { code: 'PA' },
+  { code: 'CR' },
+  { code: 'MX' },
+  { code: 'AR' },
+  { code: 'CA' },
+  { code: 'US' },
+  { code: 'ES' },
+  { code: 'CO' }
 ];
 
 const lineProviderOptions = [
@@ -156,7 +156,18 @@ const lineProviderOptions = [
   'DISNEY_PLUS_PREMIUM'
 ];
 
-const countryLabel = (code) => countryOptions.find((c) => c.code === code)?.label || code || 'Global';
+function localizedRegionName(code, locale) {
+  if (!code || code === 'GLOBAL') return null;
+  if (typeof Intl === 'undefined' || typeof Intl.DisplayNames !== 'function') return null;
+  try {
+    const displayNames = new Intl.DisplayNames([locale, 'en'], { type: 'region' });
+    return displayNames.of(code) || null;
+  } catch {
+    return null;
+  }
+}
+
+const countryLabel = (code, t, locale) => localizedRegionName(code, locale) || (code === 'GLOBAL' ? t('common.global') : code || t('common.global'));
 
 const glassCard = (theme) => ({
   p: 2.5,
@@ -375,7 +386,7 @@ const defaultForm = {
 export default function LinesLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -745,7 +756,7 @@ export default function LinesLionTv() {
                     chips={[
                       <StatusChip key="status" enabled={row.enabled} expired={row.expired} t={t} />,
                       <Chip key="provider" size="small" variant="outlined" label={row.provider || 'LION_TV'} />,
-                      <Chip key="country" size="small" variant="outlined" label={countryLabel(row.lineCountry || 'GLOBAL')} />
+                      <Chip key="country" size="small" variant="outlined" label={countryLabel(row.lineCountry || 'GLOBAL', t, i18n.language)} />
                     ]}
                     actions={
                       <ResponsiveActionBar>
@@ -874,7 +885,7 @@ export default function LinesLionTv() {
                             >
                               {flagFromCountry(row.lineCountry)}
                             </Avatar>
-                            <Typography variant="body2">{countryLabel(row.lineCountry || 'GLOBAL')}</Typography>
+                            <Typography variant="body2">{countryLabel(row.lineCountry || 'GLOBAL', t, i18n.language)}</Typography>
                           </Stack>
                         </TableCell>
                         <TableCell>
@@ -1474,14 +1485,14 @@ export default function LinesLionTv() {
                         <Stack direction="row" spacing={1} alignItems="center">
                           <PublicIcon fontSize="small" color="primary" />
                           <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'}>
-                            {countryLabel(value || 'GLOBAL')}
+                            {countryLabel(value || 'GLOBAL', t, i18n.language)}
                           </Typography>
                         </Stack>
                       )}
                     >
                       {countryOptions.map((opt) => (
                         <MenuItem key={opt.code} value={opt.code}>
-                          {opt.label}
+                          {countryLabel(opt.code, t, i18n.language)}
                         </MenuItem>
                       ))}
                     </Select>

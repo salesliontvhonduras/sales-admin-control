@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import useMediaQuery from '@mui/material/useMediaQuery';
 import Chip from '@mui/material/Chip';
@@ -21,6 +22,7 @@ import { handlerDrawerOpen, useGetMenuMaster } from 'api/menu';
 // ==============================|| SIDEBAR DRAWER ||============================== //
 
 function Sidebar() {
+  const { t } = useTranslation();
   const downMD = useMediaQuery((theme) => theme.breakpoints.down('md'));
 
   const { menuMaster } = useGetMenuMaster();
@@ -81,7 +83,7 @@ function Sidebar() {
             duration: 180
           })
       }}
-      aria-label="mailbox folders"
+      aria-label={t('layout.aria.navigationMenu')}
     >
       {downMD || (miniDrawer && drawerOpen) ? (
         <Drawer

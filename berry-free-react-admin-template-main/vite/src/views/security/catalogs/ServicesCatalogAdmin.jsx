@@ -1,46 +1,56 @@
 import Chip from '@mui/material/Chip';
+import { useTranslation } from 'react-i18next';
 
 import CatalogCrudPage from './CatalogCrudPage';
 import { createService, deleteService, listServices, updateService } from 'api/catalog-admin';
 
 export default function ServicesCatalogAdmin() {
+  const { t } = useTranslation();
+
   return (
     <CatalogCrudPage
-      title="Servicios"
-      subtitle="Administra el catálogo de servicios usado por clientes, facturas y CRM."
-      helperText="Los nombres de servicio se consumen en varios módulos comerciales."
-      entityLabel="servicio"
-      createLabel="Nuevo servicio"
-      searchPlaceholder="Buscar por nombre de servicio"
+      title={t('catalogAdmin.service.title')}
+      subtitle={t('catalogAdmin.service.subtitle')}
+      helperText={t('catalogAdmin.service.helperText')}
+      entityLabel={t('catalogAdmin.service.entityLabel')}
+      createLabel={t('catalogAdmin.service.createLabel')}
+      searchPlaceholder={t('catalogAdmin.service.searchPlaceholder')}
       api={{ list: listServices, create: createService, update: updateService, remove: deleteService }}
       idField="serviceId"
       titleField="serviceName"
-      subtitleField={(row) => `ID ${row.serviceId}`}
+      subtitleField={(row) => `${t('common.id')} ${row.serviceId}`}
       searchFields={['serviceName', 'serviceId']}
       statusField="status"
       fields={[
-        { name: 'serviceName', label: 'Servicio', type: 'text', required: true, fullWidth: true },
-        { name: 'status', label: 'Activo', type: 'switch', defaultValue: true }
+        { name: 'serviceName', label: t('catalogAdmin.service.fields.serviceName'), type: 'text', required: true, fullWidth: true },
+        { name: 'status', label: t('catalogAdmin.service.fields.status'), type: 'switch', defaultValue: true }
       ]}
       columns={[
-        { key: 'serviceId', label: 'ID' },
-        { key: 'serviceName', label: 'Servicio' },
+        { key: 'serviceId', label: t('common.id') },
+        { key: 'serviceName', label: t('catalogAdmin.service.fields.serviceName') },
         {
           key: 'status',
-          label: 'Estado',
-          render: (row) => <Chip size="small" color={row.status ? 'success' : 'default'} label={row.status ? 'Activo' : 'Inactivo'} />
+          label: t('common.status'),
+          render: (row) => (
+            <Chip size="small" color={row.status ? 'success' : 'default'} label={row.status ? t('common.active') : t('common.inactive')} />
+          )
         }
       ]}
       summaryFields={[
-        { label: 'ID', key: 'serviceId' },
-        { label: 'Estado', render: (row) => (row.status ? 'Activo' : 'Inactivo') }
+        { label: t('common.id'), key: 'serviceId' },
+        { label: t('common.status'), render: (row) => (row.status ? t('common.active') : t('common.inactive')) }
       ]}
       metricCards={(rows) => {
         const active = rows.filter((row) => row.status).length;
         return [
-          { title: 'Total servicios', value: rows.length, helper: 'Catálogo total', color: 'primary' },
-          { title: 'Activos', value: active, helper: 'Disponibles para venta', color: 'success' },
-          { title: 'Inactivos', value: rows.length - active, helper: 'Ocultos en operación', color: 'default' }
+          {
+            title: `${t('common.total')} ${t('catalogAdmin.service.title').toLowerCase()}`,
+            value: rows.length,
+            helper: t('catalogAdmin.metrics.totalCatalog'),
+            color: 'primary'
+          },
+          { title: t('common.active'), value: active, helper: t('catalogAdmin.metrics.available'), color: 'success' },
+          { title: t('common.inactive'), value: rows.length - active, helper: t('catalogAdmin.metrics.hidden'), color: 'default' }
         ];
       }}
     />

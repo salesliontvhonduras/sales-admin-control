@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -11,12 +12,15 @@ import Avatar from '../extended/Avatar';
 
 export default function CardSecondaryAction({ title, link, icon }) {
   const theme = useTheme();
+  const { t } = useTranslation();
+  const resolvedTitle = title || t('common.reference', { defaultValue: 'Reference' });
+  const ariaLabel = t('layout.aria.openReference');
 
   return (
-    <Tooltip title={title || 'Reference'} placement="left">
+    <Tooltip title={resolvedTitle} placement="left">
       <ButtonBase disableRipple>
         {!icon && (
-          <Avatar component={Link} href={link} aria-label="redirect pages" target="_blank" alt="MUI Logo" size="badge" outline>
+          <Avatar component={Link} href={link} aria-label={ariaLabel} target="_blank" alt={resolvedTitle} size="badge" outline>
             <svg width="500" height="500" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
               <g clipPath="url(#clip0)">
                 <path d="M100 260.9V131L212.5 195.95V239.25L137.5 195.95V282.55L100 260.9Z" fill={theme.vars.palette.primary[800]} />
@@ -39,7 +43,7 @@ export default function CardSecondaryAction({ title, link, icon }) {
           </Avatar>
         )}
         {icon && (
-          <Avatar component={Link} href={link} target="_blank" size="badge" color="primary" outline aria-label="material-ui">
+          <Avatar component={Link} href={link} target="_blank" size="badge" color="primary" outline aria-label={ariaLabel}>
             {icon}
           </Avatar>
         )}

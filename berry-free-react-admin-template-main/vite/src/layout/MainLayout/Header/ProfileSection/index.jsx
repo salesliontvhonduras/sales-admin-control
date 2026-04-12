@@ -196,7 +196,7 @@ export default function ProfileSection() {
                           </InputAdornment>
                         }
                         aria-describedby="search-helper-text"
-                        slotProps={{ input: { 'aria-label': 'weight' } }}
+                        slotProps={{ input: { 'aria-label': t('common.search') } }}
                       />
                       <Divider />
                     </Box>

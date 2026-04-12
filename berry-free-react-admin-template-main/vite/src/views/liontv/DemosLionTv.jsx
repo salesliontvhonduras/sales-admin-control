@@ -167,8 +167,13 @@ function flagFromPhone(phone = '') {
   return null;
 }
 
+function demoStatusLabel(t, status) {
+  return t(`demos.status.${status}`, status || '-');
+}
+
 function StatusChip({ status }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const map = statusTokens(theme);
   const cfg =
     map[status] || {
@@ -181,7 +186,7 @@ function StatusChip({ status }) {
     <Chip
       size="small"
       icon={cfg.icon}
-      label={status || '-'}
+      label={demoStatusLabel(t, status)}
       sx={{
         fontWeight: 700,
         bgcolor: cfg.bg,
@@ -549,21 +554,21 @@ export default function DemosLionTv() {
           {[
             { title: t('demos.cards.total', 'Demos'), value: rows.length, helper: t('demos.title', 'Demos'), color: 'primary', icon: <AppsIcon fontSize="small" /> },
             {
-              title: 'ACTIVE',
+              title: t('demos.status.ACTIVE', 'ACTIVE'),
               value: summary.active,
               helper: t('demos.headers.status'),
               color: 'success',
               icon: <CheckCircleOutlineIcon fontSize="small" />
             },
             {
-              title: 'PENDING',
+              title: t('demos.status.PENDING', 'PENDING'),
               value: summary.pending,
               helper: t('demos.headers.status'),
               color: 'info',
               icon: <PendingOutlinedIcon fontSize="small" />
             },
             {
-              title: 'EXPIRED',
+              title: t('demos.status.EXPIRED', 'EXPIRED'),
               value: summary.expired,
               helper: t('demos.headers.status'),
               color: 'warning',
@@ -632,7 +637,7 @@ export default function DemosLionTv() {
                   .filter((status) => rows.some((r) => r.status === status))
                   .map((s) => (
                     <MenuItem key={s} value={s}>
-                      {s}
+                      {demoStatusLabel(t, s)}
                     </MenuItem>
                   ))}
               </Select>
@@ -1065,7 +1070,7 @@ export default function DemosLionTv() {
                     >
                       {['ACTIVE', 'ACTIVATED', 'PENDING', 'EXPIRED', 'CANCELLED'].map((s) => (
                         <MenuItem key={s} value={s}>
-                          {s}
+                          {demoStatusLabel(t, s)}
                         </MenuItem>
                       ))}
                     </Select>

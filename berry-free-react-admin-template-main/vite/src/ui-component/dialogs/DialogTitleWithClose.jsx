@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -6,7 +7,10 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import CloseIcon from '@mui/icons-material/Close';
 
-export default function DialogTitleWithClose({ children, onClose, closeLabel = 'Cerrar', sx, closeButtonSx, ...props }) {
+export default function DialogTitleWithClose({ children, onClose, closeLabel, sx, closeButtonSx, ...props }) {
+  const { t } = useTranslation();
+  const resolvedCloseLabel = closeLabel || t('common.close');
+
   return (
     <DialogTitle
       sx={[
@@ -30,10 +34,10 @@ export default function DialogTitleWithClose({ children, onClose, closeLabel = '
       {...props}
     >
       <Box className="dialog-title-content">{children}</Box>
-      <Tooltip title={closeLabel} placement="left">
+      <Tooltip title={resolvedCloseLabel} placement="left">
         <span style={{ display: 'inline-flex' }}>
           <IconButton
-            aria-label={closeLabel}
+            aria-label={resolvedCloseLabel}
             onClick={onClose}
             edge="end"
             sx={{

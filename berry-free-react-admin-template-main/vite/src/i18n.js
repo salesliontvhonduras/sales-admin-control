@@ -704,6 +704,13 @@ const resources = {
           removePlaylists: 'Remove all playlists'
         },
         filters: { status: 'Status', payment: 'Payment', all: 'All' },
+        status: {
+          ACTIVE: 'ACTIVE',
+          INACTIVE: 'INACTIVE',
+          EXPIRED: 'EXPIRED',
+          AVAILABLE: 'AVAILABLE',
+          EMERGENCY: 'EMERGENCY'
+        },
         paid: { paid: 'Paid', pending: 'Pending' },
         messages: {
           subscriptionsLoadError: 'Could not load subscriptions.',
@@ -770,6 +777,13 @@ const resources = {
         title: 'Lion TV demos',
         listTitle: 'Demo list',
         search: 'Search (phone, user, package, app)',
+        status: {
+          ACTIVE: 'ACTIVE',
+          ACTIVATED: 'ACTIVATED',
+          PENDING: 'PENDING',
+          EXPIRED: 'EXPIRED',
+          CANCELLED: 'CANCELLED'
+        },
         headers: {
           phone: 'Phone',
           email: 'Email',
@@ -1023,6 +1037,13 @@ const resources = {
           status: 'Status',
           adminNotes: 'Admin notes',
           notes: 'Notes'
+        },
+        status: {
+          NEW: 'New',
+          CONTACTED: 'Contacted',
+          CONVERTED: 'Converted',
+          REWARDED: 'Rewarded',
+          REJECTED: 'Rejected'
         },
         dialog: {
           title: 'Referral detail'
@@ -1627,6 +1648,28 @@ const resources = {
           inactiveCustomers: 'Inactive customers: {{count}}',
           expiredSubs: 'Expired subscriptions: {{count}}',
           expiringLicenses30d: 'Licenses expiring (30d): {{count}}'
+        },
+        widgets: {
+          popularStocks: 'Popular stocks',
+          totalEarning: 'Total earning',
+          totalOrder: 'Total order',
+          totalGrowth: 'Total growth',
+          today: 'Today',
+          thisMonth: 'This month',
+          thisYear: 'This year',
+          month: 'Month',
+          year: 'Year',
+          viewAll: 'View all',
+          importCard: 'Import card',
+          copyData: 'Copy data',
+          export: 'Export',
+          archiveFile: 'Archive file',
+          profit: '{{value}} profit',
+          loss: '{{value}} loss',
+          profitLabel: 'Profit',
+          lossLabel: 'Loss',
+          investment: 'Investment',
+          maintenance: 'Maintenance'
         }
       },
       feedCrud: {
@@ -2687,13 +2730,139 @@ const resources = {
         deleting: 'Deleting...',
         edit: 'Edit',
         new: 'New',
-        selectOption: 'Select an option'
+        selectOption: 'Select an option',
+        search: 'Search',
+        status: 'Status',
+        all: 'All',
+        total: 'Total',
+        global: 'Global',
+        active: 'Active',
+        inactive: 'Inactive',
+        actions: 'Actions',
+        id: 'ID',
+        loading: 'Loading...',
+        rowsPerPage: 'Rows per page:',
+        secure: 'Secure',
+        reference: 'Reference'
+      },
+      layout: {
+        footer: {
+          allRightsReserved: 'All rights reserved',
+          x: 'X',
+          discord: 'Discord'
+        },
+        customization: {
+          borderRadius: 'Border radius',
+          fontStyle: 'Font style',
+          fontSelector: 'Font selector'
+        },
+        aria: {
+          breadcrumb: 'Breadcrumb',
+          themeLogo: 'Lion Services home',
+          navigationMenu: 'Navigation menu',
+          menuItemIcon: 'Menu item icon',
+          openReference: 'Open reference link'
+        }
+      },
+      catalogAdmin: {
+        searchLabel: 'Search',
+        empty: 'No records to display.',
+        dialogSubtitle: 'Complete the catalog information.',
+        deleteMessage: 'Delete {{name}}? This action cannot be undone.',
+        messages: {
+          loadError: 'Could not load {{entity}}.',
+          saveError: 'Could not save {{entity}}.',
+          deleteError: 'Could not delete {{entity}}.',
+          created: '{{entity}} created successfully.',
+          updated: '{{entity}} updated successfully.',
+          deleted: '{{entity}} deleted successfully.'
+        },
+        metrics: {
+          totalRegistered: '{{entity}} registered',
+          totalCatalog: 'Full catalog',
+          available: 'Available for use',
+          hidden: 'Hidden or disabled',
+          coverage: 'Registered coverage',
+          localCatalog: 'Local catalog',
+          trialEnabled: 'Trial enabled',
+          officialEnabled: 'Official enabled',
+          adminLocked: 'Locked for editing'
+        },
+        bank: {
+          title: 'Banks',
+          subtitle: 'Manage the bank catalog used by invoices and commercial flows.',
+          helperText: 'Changes here affect bank selectors across the system.',
+          entityLabel: 'bank',
+          createLabel: 'New bank',
+          searchPlaceholder: 'Search by bank name',
+          fields: {
+            bank: 'Bank',
+            status: 'Active'
+          }
+        },
+        service: {
+          title: 'Services',
+          subtitle: 'Manage the service catalog used by customers, invoices and CRM.',
+          helperText: 'Service names are consumed by multiple commercial modules.',
+          entityLabel: 'service',
+          createLabel: 'New service',
+          searchPlaceholder: 'Search by service name',
+          fields: {
+            serviceName: 'Service',
+            status: 'Active'
+          }
+        },
+        countryPhoneCode: {
+          title: 'Phone codes',
+          subtitle: 'Manage the global catalog of phone prefixes by country.',
+          helperText: 'This catalog is used in forms and contact normalization.',
+          entityLabel: 'phone code',
+          createLabel: 'New phone code',
+          searchPlaceholder: 'Search by country, continent or prefix',
+          fields: {
+            phoneCode: 'Code',
+            country: 'Country',
+            continent: 'Continent'
+          }
+        },
+        package: {
+          title: 'Packages',
+          subtitle: 'Manage the local package catalog synced and used by the Lion TV panel.',
+          helperText: 'The package identifier is set manually and should not change after creation.',
+          entityLabel: 'package',
+          createLabel: 'New package',
+          searchPlaceholder: 'Search by name, id, type or credits',
+          fields: {
+            packageId: 'Package ID',
+            name: 'Name',
+            type: 'Type',
+            ord: 'Order',
+            roleCount: 'Role count',
+            bouquetCount: 'Bouquet count',
+            trialCredits: 'Trial credits',
+            trialDuration: 'Trial duration',
+            trialDurationIn: 'Trial duration unit',
+            officialCredits: 'Official credits',
+            officialDuration: 'Official duration',
+            officialDurationIn: 'Official duration unit',
+            isTrial: 'Trial enabled',
+            isOfficial: 'Official enabled',
+            isp: 'ISP',
+            stb: 'STB',
+            canRestream: 'Can restream',
+            adminLocked: 'Admin locked',
+            flags: 'Flags',
+            trial: 'Trial',
+            official: 'Official',
+            locked: 'Locked'
+          }
+        }
       },
       sms: {
         title: 'SMS Management',
         enqueue: 'Enqueue SMS',
         history: 'SMS history',
-        chips: { ready: '{{count}} numbers ready', total: '{{count}} records' },
+        chips: { ready: '{{count}} numbers ready', total: '{{count}} records', secure: 'Secure' },
         search: 'Search (phone, message, external)',
         filters: { from: 'From', to: 'To', status: 'Status', all: 'All' },
         headers: { phone: 'Phone', message: 'Message', status: 'Status', scheduled: 'Scheduled', detail: 'Detail' },
@@ -3441,6 +3610,13 @@ const resources = {
           removePlaylists: 'Quitar todas las playlists'
         },
         filters: { status: 'Estado', payment: 'Pago', all: 'Todos' },
+        status: {
+          ACTIVE: 'ACTIVO',
+          INACTIVE: 'INACTIVO',
+          EXPIRED: 'EXPIRADA',
+          AVAILABLE: 'DISPONIBLE',
+          EMERGENCY: 'EMERGENCIA'
+        },
         paid: { paid: 'Pagada', pending: 'Pendiente' },
         messages: {
           subscriptionsLoadError: 'No se pudieron cargar suscripciones.',
@@ -3507,6 +3683,13 @@ const resources = {
         title: 'Demos Lion TV',
         listTitle: 'Listado de demos',
         search: 'Buscar (celular, usuario, paquete, app)',
+        status: {
+          ACTIVE: 'ACTIVA',
+          ACTIVATED: 'ACTIVADA',
+          PENDING: 'PENDIENTE',
+          EXPIRED: 'EXPIRADA',
+          CANCELLED: 'CANCELADA'
+        },
         headers: {
           phone: 'Celular',
           email: 'Email',
@@ -3760,6 +3943,13 @@ const resources = {
           status: 'Estado',
           adminNotes: 'Notas admin',
           notes: 'Notas'
+        },
+        status: {
+          NEW: 'Nueva',
+          CONTACTED: 'Contactada',
+          CONVERTED: 'Convertida',
+          REWARDED: 'Bonificada',
+          REJECTED: 'Rechazada'
         },
         dialog: {
           title: 'Detalle del referido'
@@ -4364,6 +4554,28 @@ const resources = {
           inactiveCustomers: 'Clientes inactivos: {{count}}',
           expiredSubs: 'Subs expiradas: {{count}}',
           expiringLicenses30d: 'Licencias por vencer (30d): {{count}}'
+        },
+        widgets: {
+          popularStocks: 'Acciones populares',
+          totalEarning: 'Ganancia total',
+          totalOrder: 'Órdenes totales',
+          totalGrowth: 'Crecimiento total',
+          today: 'Hoy',
+          thisMonth: 'Este mes',
+          thisYear: 'Este año',
+          month: 'Mes',
+          year: 'Año',
+          viewAll: 'Ver todo',
+          importCard: 'Importar tarjeta',
+          copyData: 'Copiar datos',
+          export: 'Exportar',
+          archiveFile: 'Archivar archivo',
+          profit: '{{value}} ganancia',
+          loss: '{{value}} pérdida',
+          profitLabel: 'Ganancia',
+          lossLabel: 'Pérdida',
+          investment: 'Inversión',
+          maintenance: 'Mantenimiento'
         }
       },
       feedCrud: {
@@ -4746,13 +4958,139 @@ const resources = {
         deleting: 'Eliminando...',
         edit: 'Editar',
         new: 'Nuevo',
-        selectOption: 'Selecciona una opción'
+        selectOption: 'Selecciona una opción',
+        search: 'Buscar',
+        status: 'Estado',
+        all: 'Todos',
+        total: 'Total',
+        global: 'Global',
+        active: 'Activo',
+        inactive: 'Inactivo',
+        actions: 'Acciones',
+        id: 'ID',
+        loading: 'Cargando...',
+        rowsPerPage: 'Filas por página:',
+        secure: 'Seguro',
+        reference: 'Referencia'
+      },
+      layout: {
+        footer: {
+          allRightsReserved: 'Todos los derechos reservados',
+          x: 'X',
+          discord: 'Discord'
+        },
+        customization: {
+          borderRadius: 'Radio del borde',
+          fontStyle: 'Estilo de fuente',
+          fontSelector: 'Selector de fuente'
+        },
+        aria: {
+          breadcrumb: 'Ruta de navegación',
+          themeLogo: 'Inicio Lion Services',
+          navigationMenu: 'Menú de navegación',
+          menuItemIcon: 'Icono del menú',
+          openReference: 'Abrir enlace de referencia'
+        }
+      },
+      catalogAdmin: {
+        searchLabel: 'Buscar',
+        empty: 'No hay registros para mostrar.',
+        dialogSubtitle: 'Completa la información del catálogo.',
+        deleteMessage: '¿Eliminar {{name}}? Esta acción no se puede deshacer.',
+        messages: {
+          loadError: 'No se pudo cargar {{entity}}.',
+          saveError: 'No se pudo guardar {{entity}}.',
+          deleteError: 'No se pudo eliminar {{entity}}.',
+          created: '{{entity}} creado correctamente.',
+          updated: '{{entity}} actualizado correctamente.',
+          deleted: '{{entity}} eliminado correctamente.'
+        },
+        metrics: {
+          totalRegistered: '{{entity}} registrados',
+          totalCatalog: 'Catálogo total',
+          available: 'Disponibles para uso',
+          hidden: 'Ocultos o deshabilitados',
+          coverage: 'Cobertura registrada',
+          localCatalog: 'Catálogo local',
+          trialEnabled: 'Prueba habilitada',
+          officialEnabled: 'Venta oficial habilitada',
+          adminLocked: 'Bloqueados para edición'
+        },
+        bank: {
+          title: 'Bancos',
+          subtitle: 'Administra el catálogo de bancos usado por facturas y flujos comerciales.',
+          helperText: 'Los cambios aquí impactan los selectores de bancos del sistema.',
+          entityLabel: 'banco',
+          createLabel: 'Nuevo banco',
+          searchPlaceholder: 'Buscar por nombre de banco',
+          fields: {
+            bank: 'Banco',
+            status: 'Activo'
+          }
+        },
+        service: {
+          title: 'Servicios',
+          subtitle: 'Administra el catálogo de servicios usado por clientes, facturas y CRM.',
+          helperText: 'Los nombres de servicio se consumen en varios módulos comerciales.',
+          entityLabel: 'servicio',
+          createLabel: 'Nuevo servicio',
+          searchPlaceholder: 'Buscar por nombre de servicio',
+          fields: {
+            serviceName: 'Servicio',
+            status: 'Activo'
+          }
+        },
+        countryPhoneCode: {
+          title: 'Códigos telefónicos',
+          subtitle: 'Administra el catálogo global de prefijos telefónicos por país.',
+          helperText: 'Este catálogo se usa para formularios y normalización de contactos.',
+          entityLabel: 'código telefónico',
+          createLabel: 'Nuevo código',
+          searchPlaceholder: 'Buscar por país, continente o prefijo',
+          fields: {
+            phoneCode: 'Código',
+            country: 'País',
+            continent: 'Continente'
+          }
+        },
+        package: {
+          title: 'Paquetes',
+          subtitle: 'Administra el catálogo local de paquetes sincronizados y usados por el panel Lion TV.',
+          helperText: 'El identificador del paquete se define manualmente y no debe cambiarse después de creado.',
+          entityLabel: 'paquete',
+          createLabel: 'Nuevo paquete',
+          searchPlaceholder: 'Buscar por nombre, id, tipo o créditos',
+          fields: {
+            packageId: 'Package ID',
+            name: 'Nombre',
+            type: 'Tipo',
+            ord: 'Orden',
+            roleCount: 'Role count',
+            bouquetCount: 'Bouquet count',
+            trialCredits: 'Trial credits',
+            trialDuration: 'Trial duration',
+            trialDurationIn: 'Trial duration unit',
+            officialCredits: 'Official credits',
+            officialDuration: 'Official duration',
+            officialDurationIn: 'Official duration unit',
+            isTrial: 'Prueba habilitada',
+            isOfficial: 'Venta oficial habilitada',
+            isp: 'ISP',
+            stb: 'STB',
+            canRestream: 'Puede restream',
+            adminLocked: 'Bloqueado por admin',
+            flags: 'Flags',
+            trial: 'Trial',
+            official: 'Official',
+            locked: 'Locked'
+          }
+        }
       },
       sms: {
         title: 'Gestión de SMS',
         enqueue: 'Encolar SMS',
         history: 'Historial de SMS',
-        chips: { ready: '{{count}} números listos', total: '{{count}} registros' },
+        chips: { ready: '{{count}} números listos', total: '{{count}} registros', secure: 'Seguro' },
         search: 'Buscar (teléfono, mensaje, external)',
         filters: { from: 'Desde', to: 'Hasta', status: 'Estado', all: 'Todos' },
         headers: { phone: 'Teléfono', message: 'Mensaje', status: 'Estado', scheduled: 'Programado', detail: 'Detalle' },

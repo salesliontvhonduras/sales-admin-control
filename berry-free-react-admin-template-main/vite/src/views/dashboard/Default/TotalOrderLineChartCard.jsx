@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -28,6 +29,7 @@ const yearlyData = [{ data: [35, 44, 9, 54, 45, 66, 41, 69] }];
 
 export default function TotalOrderLineChartCard({ isLoading }) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const [timeValue, setTimeValue] = React.useState(false);
   const [series, setSeries] = useState(yearlyData);
@@ -103,7 +105,7 @@ export default function TotalOrderLineChartCard({ isLoading }) {
                   sx={{ color: 'inherit' }}
                   onClick={(e) => handleChangeTime(e, true)}
                 >
-                  Month
+                  {t('dashboardDefault.widgets.month')}
                 </Button>
                 <Button
                   disableElevation
@@ -112,7 +114,7 @@ export default function TotalOrderLineChartCard({ isLoading }) {
                   sx={{ color: 'inherit' }}
                   onClick={(e) => handleChangeTime(e, false)}
                 >
-                  Year
+                  {t('dashboardDefault.widgets.year')}
                 </Button>
               </Box>
             </Stack>
@@ -136,7 +138,7 @@ export default function TotalOrderLineChartCard({ isLoading }) {
                         color: 'primary.200'
                       }}
                     >
-                      Total Order
+                      {t('dashboardDefault.widgets.totalOrder')}
                     </Typography>
                   </Box>
                 </Grid>

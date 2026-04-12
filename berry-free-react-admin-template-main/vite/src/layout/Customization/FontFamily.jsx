@@ -1,4 +1,5 @@
 // material-ui
+import { useTranslation } from 'react-i18next';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
 import Radio from '@mui/material/Radio';
@@ -13,6 +14,7 @@ import MainCard from 'ui-component/cards/MainCard';
 // ==============================|| CUSTOMIZATION - FONT FAMILY ||============================== //
 
 export default function FontFamilyPage() {
+  const { t } = useTranslation();
   const {
     state: { fontFamily },
     setField
@@ -42,8 +44,13 @@ export default function FontFamilyPage() {
 
   return (
     <Stack sx={{ p: 2, gap: 2.5 }}>
-      <Typography variant="h5">FONT STYLE</Typography>
-      <RadioGroup aria-label="payment-card" name="payment-card" value={fontFamily} onChange={handleFontChange}>
+      <Typography variant="h5">{t('layout.customization.fontStyle')}</Typography>
+      <RadioGroup
+        aria-label={t('layout.customization.fontSelector')}
+        name="payment-card"
+        value={fontFamily}
+        onChange={handleFontChange}
+      >
         <Grid container spacing={1.25}>
           {fonts.map((item, index) => (
             <Grid key={index} size={12}>

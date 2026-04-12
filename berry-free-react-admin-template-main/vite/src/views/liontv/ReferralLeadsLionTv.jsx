@@ -104,32 +104,32 @@ function normalizeReferral(item = {}) {
   return row;
 }
 
-function statusConfig(theme, status) {
+function statusConfig(theme, status, t) {
   const map = {
     NEW: {
       color: 'info',
       icon: <HourglassEmptyRoundedIcon fontSize="small" />,
-      label: 'NEW'
+      label: t('referrals.status.NEW')
     },
     CONTACTED: {
       color: 'primary',
       icon: <ContactPhoneOutlinedIcon fontSize="small" />,
-      label: 'CONTACTED'
+      label: t('referrals.status.CONTACTED')
     },
     CONVERTED: {
       color: 'success',
       icon: <CheckCircleOutlineIcon fontSize="small" />,
-      label: 'CONVERTED'
+      label: t('referrals.status.CONVERTED')
     },
     REWARDED: {
       color: 'success',
       icon: <GiftRoundedIcon fontSize="small" />,
-      label: 'REWARDED'
+      label: t('referrals.status.REWARDED')
     },
     REJECTED: {
       color: 'error',
       icon: <HighlightOffIcon fontSize="small" />,
-      label: 'REJECTED'
+      label: t('referrals.status.REJECTED')
     }
   };
 
@@ -144,7 +144,8 @@ function statusConfig(theme, status) {
 
 function StatusChip({ status }) {
   const theme = useTheme();
-  const cfg = statusConfig(theme, status);
+  const { t } = useTranslation();
+  const cfg = statusConfig(theme, status, t);
 
   return (
     <Chip

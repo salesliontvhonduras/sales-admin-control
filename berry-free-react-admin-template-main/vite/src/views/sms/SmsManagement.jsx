@@ -306,7 +306,7 @@ export default function SmsManagement() {
         title={t('sms.title')}
         secondary={
           <ResponsiveActionBar justifyContent="flex-end">
-            <Chip label="Secure" size="small" color="primary" />
+            <Chip label={t('sms.chips.secure')} size="small" color="primary" />
             <Button variant="contained" startIcon={<SendIcon />} onClick={() => setOpenModal(true)}>
               {t('sms.enqueue')}
             </Button>

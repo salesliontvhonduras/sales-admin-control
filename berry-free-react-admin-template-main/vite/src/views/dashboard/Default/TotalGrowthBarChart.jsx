@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -21,21 +22,9 @@ import { gridSpacing } from 'store/constant';
 // chart data
 import barChartOptions from './chart-data/total-growth-bar-chart';
 
-const status = [
-  { value: 'today', label: 'Today' },
-  { value: 'month', label: 'This Month' },
-  { value: 'year', label: 'This Year' }
-];
-
-const series = [
-  { name: 'Investment', data: [35, 125, 35, 35, 35, 80, 35, 20, 35, 45, 15, 75] },
-  { name: 'Loss', data: [35, 15, 15, 35, 65, 40, 80, 25, 15, 85, 25, 75] },
-  { name: 'Profit', data: [35, 145, 35, 35, 20, 105, 100, 10, 65, 45, 30, 10] },
-  { name: 'Maintenance', data: [0, 0, 75, 0, 0, 115, 0, 0, 0, 0, 150, 0] }
-];
-
 export default function TotalGrowthBarChart({ isLoading }) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const {
     state: { fontFamily }
   } = useConfig();
@@ -51,6 +40,25 @@ export default function TotalGrowthBarChart({ isLoading }) {
   const primaryDark = theme.vars.palette.primary.dark;
   const secondaryMain = theme.vars.palette.secondary.main;
   const secondaryLight = theme.vars.palette.secondary.light;
+
+  const status = useMemo(
+    () => [
+      { value: 'today', label: t('dashboardDefault.widgets.today') },
+      { value: 'month', label: t('dashboardDefault.widgets.thisMonth') },
+      { value: 'year', label: t('dashboardDefault.widgets.thisYear') }
+    ],
+    [t]
+  );
+
+  const series = useMemo(
+    () => [
+      { name: t('dashboardDefault.widgets.investment'), data: [35, 125, 35, 35, 35, 80, 35, 20, 35, 45, 15, 75] },
+      { name: t('dashboardDefault.widgets.lossLabel'), data: [35, 15, 15, 35, 65, 40, 80, 25, 15, 85, 25, 75] },
+      { name: t('dashboardDefault.widgets.profitLabel'), data: [35, 145, 35, 35, 20, 105, 100, 10, 65, 45, 30, 10] },
+      { name: t('dashboardDefault.widgets.maintenance'), data: [0, 0, 75, 0, 0, 115, 0, 0, 0, 0, 150, 0] }
+    ],
+    [t]
+  );
 
   useEffect(() => {
     setChartOptions({
@@ -74,7 +82,7 @@ export default function TotalGrowthBarChart({ isLoading }) {
           <Stack sx={{ gap: gridSpacing }}>
             <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
               <Stack sx={{ gap: 1 }}>
-                <Typography variant="subtitle2">Total Growth</Typography>
+                <Typography variant="subtitle2">{t('dashboardDefault.widgets.totalGrowth')}</Typography>
                 <Typography variant="h3">$2,324.00</Typography>
               </Stack>
               <TextField id="standard-select-currency" select value={value} onChange={(e) => setValue(e.target.value)}>

@@ -167,7 +167,7 @@ export default function Breadcrumbs({
             {title && !titleBottom && <BTitle title={t(main.title, { defaultValue: main.title })} />}
             <Grid>
               <MuiBreadcrumbs
-                aria-label="breadcrumb"
+                aria-label={t('layout.aria.breadcrumb')}
                 maxItems={maxItems || (downSM ? 3 : 8)}
                 separator={separatorIcon}
                 sx={{ '& .MuiBreadcrumbs-separator': { width: 16, ml: 1.25, mr: 1.25 } }}
@@ -214,7 +214,7 @@ export default function Breadcrumbs({
 
     let tempContent = (
       <MuiBreadcrumbs
-        aria-label="breadcrumb"
+        aria-label={t('layout.aria.breadcrumb')}
         maxItems={maxItems || (downSM ? 3 : 8)}
         separator={separatorIcon}
         sx={{ '& .MuiBreadcrumbs-separator': { width: 16, mx: 0.75 } }}
@@ -232,7 +232,7 @@ export default function Breadcrumbs({
     if (custom && links && links?.length > 0) {
       tempContent = (
         <MuiBreadcrumbs
-          aria-label="breadcrumb"
+          aria-label={t('layout.aria.breadcrumb')}
           maxItems={maxItems || 8}
           separator={separatorIcon}
           sx={{ '& .MuiBreadcrumbs-separator': { width: 16, ml: 1.25, mr: 1.25 } }}

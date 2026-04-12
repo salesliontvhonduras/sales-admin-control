@@ -1,4 +1,5 @@
 import { Link as RouterLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 // material-ui
 import Link from '@mui/material/Link';
@@ -6,6 +7,8 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 export default function Footer() {
+  const { t } = useTranslation();
+
   return (
     <Stack
       direction="row"
@@ -19,7 +22,7 @@ export default function Footer() {
       }}
     >
       <Typography variant="caption">
-        &copy; All rights reserved{' '}
+        &copy; {t('layout.footer.allRightsReserved')}{' '}
         <Typography component={Link} href="https://liontvpremium.com" underline="hover" target="_blank" sx={{ color: 'secondary.main' }}>
           Lion Services
         </Typography>
@@ -33,7 +36,7 @@ export default function Footer() {
           variant="caption"
           color="text.primary"
         >
-          Instagram
+          {t('layout.footer.x')}
         </Link>
         <Link
           component={RouterLink}
@@ -43,7 +46,7 @@ export default function Footer() {
           variant="caption"
           color="text.primary"
         >
-          Facebook
+          {t('layout.footer.discord')}
         </Link>
       </Stack>
     </Stack>
