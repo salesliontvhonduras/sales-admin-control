@@ -48,6 +48,7 @@ function normalizeRow(item = {}) {
     customerName: item.customerName ?? item.customer_name ?? '-',
     lineId: item.lineId ?? '-',
     linePlusId: item.linePlusId ?? '-',
+    provider: item.provider ?? '-',
     subscriptionStatus: String(item.subscriptionStatus || item.status || '').toUpperCase(),
     billing: item.billing ?? '-',
     startDate: item.startDate ?? null,
@@ -205,6 +206,7 @@ export default function SubscriptionSharingLionTv() {
         String(row.subscriptionId || '').toLowerCase().includes(term) ||
         String(row.customerName || '').toLowerCase().includes(term) ||
         String(row.lineId || '').toLowerCase().includes(term) ||
+        String(row.provider || '').toLowerCase().includes(term) ||
         String(row.billing || '').toLowerCase().includes(term) ||
         String(row.subscriptionStatus || '').toLowerCase().includes(term)
       );
@@ -316,7 +318,7 @@ export default function SubscriptionSharingLionTv() {
               size="small"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={t('subscriptionSharing.filters.searchPlaceholder', 'Search by subscription, customer, line, status')}
+              placeholder={t('subscriptionSharing.filters.searchPlaceholder', 'Search by subscription, customer, line, provider, status')}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -398,6 +400,11 @@ export default function SubscriptionSharingLionTv() {
                         color="info"
                         variant="outlined"
                         label={t('subscriptionSharing.card.clusterSize', { count: host.sharedClusterSize || 0, defaultValue: 'Cluster: {{count}}' })}
+                      />
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${host.provider || '-'}`}
                       />
                     </Stack>
 
@@ -485,6 +492,7 @@ export default function SubscriptionSharingLionTv() {
                               </Stack>
                               <RoleChip role={item.sharingRole} t={t} />
                               <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.status', 'Status')}: ${item.subscriptionStatus || '-'}`} />
+                              <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${item.provider || '-'}`} />
                               <Chip
                                 size="small"
                                 variant="outlined"
@@ -529,6 +537,7 @@ export default function SubscriptionSharingLionTv() {
                   <RoleChip role={row.sharingRole} t={t} />
                   <Chip size="small" color="success" variant="filled" label={t('subscriptionSharing.card.eligible', 'Eligible')} />
                   <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.line', 'Line')}: ${row.lineId || '-'}`} />
+                  <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${row.provider || '-'}`} />
                   <Chip
                     size="small"
                     variant="outlined"

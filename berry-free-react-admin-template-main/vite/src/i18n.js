@@ -655,7 +655,7 @@ const resources = {
           eligibleSubscriptions: 'Eligible'
         },
         filters: {
-          searchPlaceholder: 'Search by subscription, customer, line, status',
+          searchPlaceholder: 'Search by subscription, customer, line, provider, status',
           status: 'Sharing role',
           eligible: 'Eligible',
           options: {
@@ -687,6 +687,7 @@ const resources = {
           notEligible: 'Not eligible',
           clusterSize: 'Cluster: {{count}}',
           line: 'Line',
+          provider: 'Provider',
           renewal: 'Renewal',
           capacity: 'Capacity {{activated}} · Usage {{used}} · Available {{available}}',
           term: 'Term {{months}} months',
@@ -1101,6 +1102,7 @@ const resources = {
         },
         headers: {
           line: 'Line',
+          provider: 'Provider',
           renewal: 'Renewal',
           method: 'Method',
           package: 'Package',
@@ -3583,7 +3585,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           eligibleSubscriptions: 'Elegibles'
         },
         filters: {
-          searchPlaceholder: 'Buscar por suscripción, cliente, línea o estado',
+          searchPlaceholder: 'Buscar por suscripción, cliente, línea, proveedor o estado',
           status: 'Rol de compartición',
           eligible: 'Elegible',
           options: {
@@ -3615,6 +3617,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           notEligible: 'No elegible',
           clusterSize: 'Clúster: {{count}}',
           line: 'Línea',
+          provider: 'Proveedor',
           renewal: 'Renovación',
           capacity: 'Capacidad {{activated}} · Uso {{used}} · Disponible {{available}}',
           term: 'Duración {{months}} meses',
@@ -4029,6 +4032,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         },
         headers: {
           line: 'Línea',
+          provider: 'Proveedor',
           renewal: 'Renovación',
           method: 'Método',
           package: 'Paquete',
