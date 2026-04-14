@@ -68,6 +68,7 @@ import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
+import { listCountryPhoneCodes } from 'api/catalog-admin';
 import { lionTvApi } from 'utils/api';
 import { withAlpha } from 'utils/colorUtils';
 
@@ -111,6 +112,19 @@ function formatDate(value) {
   if (!value) return '-';
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
+}
+
+function normalizePhoneDigits(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (!digits) return '';
+  return digits.startsWith('00') ? digits.slice(2) : digits;
+}
+
+function resolveCountryFromPhone(phoneValue, phoneCodes) {
+  const digits = normalizePhoneDigits(phoneValue);
+  if (!digits || !Array.isArray(phoneCodes) || phoneCodes.length === 0) return '';
+  const match = phoneCodes.find((item) => digits.startsWith(item.digits));
+  return match?.country || '';
 }
 
 function StatusChip({ status }) {
@@ -359,6 +373,8 @@ export default function SubscriptionsLionTv() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [customerFilter, setCustomerFilter] = useState('');
+  const [providerFilter, setProviderFilter] = useState('');
+  const [customerCountryFilter, setCustomerCountryFilter] = useState('');
   const [renewalFilter, setRenewalFilter] = useState(''); // '', 'yesterday', 'today', 'tomorrow'
   const [renewalSort, setRenewalSort] = useState('asc'); // asc | desc
   const [lineHealthFilter, setLineHealthFilter] = useState(''); // '' | 'activeExpired'
@@ -369,6 +385,7 @@ export default function SubscriptionsLionTv() {
   const [sending, setSending] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(false);
+  const [countryPhoneCodes, setCountryPhoneCodes] = useState([]);
   const [packages, setPackages] = useState([]);
   const [packagesLoading, setPackagesLoading] = useState(false);
   const [lines, setLines] = useState([]);
@@ -394,6 +411,38 @@ export default function SubscriptionsLionTv() {
     });
     return map;
   }, [customers]);
+
+  const customerPhoneMap = useMemo(() => {
+    const map = {};
+    customers.forEach((c) => {
+      const id = c.customerId ?? c.id;
+      if (!id) return;
+      map[id] = c.customerPhone || c.customer_phone || c.phone || '';
+    });
+    return map;
+  }, [customers]);
+
+  const countryPhoneCodeRules = useMemo(() => {
+    return (Array.isArray(countryPhoneCodes) ? countryPhoneCodes : [])
+      .map((item) => {
+        const country = String(item?.country || item?.name || '').trim();
+        const digits = String(item?.phoneCode ?? item?.phone_code ?? item?.code ?? '')
+          .replace(/\D/g, '')
+          .trim();
+        if (!country || !digits) return null;
+        return { country, digits };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.digits.length - a.digits.length || a.country.localeCompare(b.country));
+  }, [countryPhoneCodes]);
+
+  const customerCountryMap = useMemo(() => {
+    const map = {};
+    Object.entries(customerPhoneMap).forEach(([customerId, phone]) => {
+      map[customerId] = resolveCountryFromPhone(phone, countryPhoneCodeRules);
+    });
+    return map;
+  }, [customerPhoneMap, countryPhoneCodeRules]);
 
   const packageMap = useMemo(() => {
     const map = {};
@@ -440,6 +489,16 @@ export default function SubscriptionsLionTv() {
     });
     return map;
   }, [lines]);
+
+  const providerOptions = useMemo(() => {
+    return [...new Set(rows.map((row) => String(row.provider || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  }, [rows]);
+
+  const customerCountryOptions = useMemo(() => {
+    return [...new Set(rows.map((row) => customerCountryMap[row.customerId] || '').filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  }, [rows, customerCountryMap]);
+
+  const hasUnknownCustomerCountry = useMemo(() => rows.some((row) => !(customerCountryMap[row.customerId] || '')), [rows, customerCountryMap]);
 
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
@@ -514,6 +573,21 @@ export default function SubscriptionsLionTv() {
     }
   }, [accessToken, enqueueSnackbar, t]);
 
+  const loadCountryPhoneCodes = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      const list = await listCountryPhoneCodes({
+        headers: { Authorization: `Bearer ${accessToken}` },
+        skipAuthRedirect: true
+      });
+      setCountryPhoneCodes(Array.isArray(list) ? list : []);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(t('subscriptions.messages.countryCodesLoadError', 'Could not load country phone codes.'), { variant: 'warning' });
+      }
+    }
+  }, [accessToken, enqueueSnackbar, t]);
+
   const loadSubscriptions = useCallback(async () => {
     if (!accessToken) return;
     setLoading(true);
@@ -543,9 +617,10 @@ export default function SubscriptionsLionTv() {
   useEffect(() => {
     loadSubscriptions();
     loadCustomers();
+    loadCountryPhoneCodes();
     loadPackages();
     loadLines();
-  }, [loadSubscriptions, loadCustomers, loadPackages, loadLines, refreshKey]);
+  }, [loadSubscriptions, loadCustomers, loadCountryPhoneCodes, loadPackages, loadLines, refreshKey]);
 
   const fetchCustomerContact = useCallback(
     async (customerId) => {
@@ -617,8 +692,14 @@ export default function SubscriptionsLionTv() {
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     const filtered = rows.filter((row) => {
+      const rowProvider = String(row.provider || '').trim();
+      const rowCustomerCountry = customerCountryMap[row.customerId] || '';
+
       if (statusFilter && (row.status || '').toLowerCase() !== statusFilter.toLowerCase()) return false;
       if (customerFilter && String(row.customerId || '') !== String(customerFilter)) return false;
+      if (providerFilter && rowProvider.toLowerCase() !== providerFilter.toLowerCase()) return false;
+      if (customerCountryFilter === '__UNKNOWN__' && rowCustomerCountry) return false;
+      if (customerCountryFilter && customerCountryFilter !== '__UNKNOWN__' && rowCustomerCountry.toLowerCase() !== customerCountryFilter.toLowerCase()) return false;
       if (lineHealthFilter === 'activeExpired' && !hasActiveExpiredLine(row, lineMetaById, todayMs)) return false;
       const matchesSearch =
         !term ||
@@ -627,7 +708,9 @@ export default function SubscriptionsLionTv() {
         (row.lineId || '').toLowerCase().includes(term) ||
         (row.billing || '').toLowerCase().includes(term) ||
         (row.status || '').toLowerCase().includes(term) ||
-        String(row.packageId || '').toLowerCase().includes(term);
+        String(row.packageId || '').toLowerCase().includes(term) ||
+        rowProvider.toLowerCase().includes(term) ||
+        rowCustomerCountry.toLowerCase().includes(term);
       if (!matchesSearch) return false;
 
       if (!renewalFilter) return true;
@@ -648,7 +731,7 @@ export default function SubscriptionsLionTv() {
     });
 
     return sorted;
-  }, [rows, search, statusFilter, customerFilter, renewalFilter, renewalSort, lineHealthFilter, lineMetaById]);
+  }, [rows, search, statusFilter, customerFilter, providerFilter, customerCountryFilter, renewalFilter, renewalSort, lineHealthFilter, lineMetaById, customerCountryMap]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -1085,6 +1168,53 @@ export default function SubscriptionsLionTv() {
                     </MenuItem>
                   );
                 })}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 220 }, '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}>
+              <InputLabel>{t('subscriptions.filters.provider', 'Provider')}</InputLabel>
+              <Select
+                value={providerFilter}
+                label={t('subscriptions.filters.provider', 'Provider')}
+                onChange={(e) => setProviderFilter(e.target.value)}
+                startAdornment={
+                  <InputAdornment position="start" sx={{ pl: 1 }}>
+                    <WifiTetheringIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                }
+              >
+                <MenuItem value="">
+                  <em>{t('subscriptions.filters.allProviders', 'All providers')}</em>
+                </MenuItem>
+                {providerOptions.map((provider) => (
+                  <MenuItem key={provider} value={provider}>
+                    {provider}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 220 }, '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}>
+              <InputLabel>{t('subscriptions.filters.customerCountry', 'Country')}</InputLabel>
+              <Select
+                value={customerCountryFilter}
+                label={t('subscriptions.filters.customerCountry', 'Country')}
+                onChange={(e) => setCustomerCountryFilter(e.target.value)}
+                startAdornment={
+                  <InputAdornment position="start" sx={{ pl: 1 }}>
+                    <FilterAltOutlinedIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                }
+              >
+                <MenuItem value="">
+                  <em>{t('subscriptions.filters.allCountries', 'All countries')}</em>
+                </MenuItem>
+                {hasUnknownCustomerCountry ? (
+                  <MenuItem value="__UNKNOWN__">{t('subscriptions.filters.unknownCountry', 'Unknown country')}</MenuItem>
+                ) : null}
+                {customerCountryOptions.map((country) => (
+                  <MenuItem key={country} value={country}>
+                    {country}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} flexShrink={0}>

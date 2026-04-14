@@ -466,7 +466,7 @@ const resources = {
           account: 'Account',
           accountName: 'Account',
           alias: 'Alias',
-          provider: 'Provider',
+          provider: 'Proveedor',
           customer: 'Customer',
           expiration: 'Expiration',
           status: 'Status',
@@ -587,12 +587,17 @@ const resources = {
       },
       subscriptions: {
         title: 'Subscriptions',
-        search: 'Search (customer, line, package, status)',
+        search: 'Search (customer, line, package, status, provider, country)',
         filters: {
           status: 'Status',
           customer: 'Customer',
+          provider: 'Provider',
+          customerCountry: 'Country',
           all: 'All',
           allCustomers: 'All customers',
+          allProviders: 'All providers',
+          allCountries: 'All countries',
+          unknownCountry: 'Unknown country',
           activeLineExpired: 'Active line expired'
         },
         kpi: {
@@ -627,6 +632,7 @@ const resources = {
           m3uCopyError: 'Could not generate the M3U list.',
           m3uPlusCopySuccess: 'Plus M3U list copied.',
           m3uPlusCopyError: 'Could not generate the Plus M3U list.',
+          countryCodesLoadError: 'Could not load country phone codes.',
           notificationError: 'Could not send notification.',
           required: 'Complete required fields.',
           created: 'Subscription created successfully.',
@@ -3543,12 +3549,17 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
       },
       subscriptions: {
         title: 'Suscripciones',
-        search: 'Buscar (cliente, línea, paquete, estado)',
+        search: 'Buscar (cliente, línea, paquete, estado, proveedor, país)',
         filters: {
           status: 'Estado',
           customer: 'Cliente',
+          provider: 'Proveedor',
+          customerCountry: 'País',
           all: 'Todos',
           allCustomers: 'Todos los clientes',
+          allProviders: 'Todos los proveedores',
+          allCountries: 'Todos los países',
+          unknownCountry: 'País no detectado',
           activeLineExpired: 'Línea activa vencida'
         },
         kpi: {
@@ -3583,6 +3594,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           m3uCopyError: 'No se pudo generar la lista M3U.',
           m3uPlusCopySuccess: 'Lista M3U Plus copiada.',
           m3uPlusCopyError: 'No se pudo generar la lista M3U Plus.',
+          countryCodesLoadError: 'No se pudieron cargar los códigos telefónicos de país.',
           notificationError: 'No se pudo enviar la notificación.',
           required: 'Completa los campos requeridos.',
           created: 'Suscripción creada correctamente.',
