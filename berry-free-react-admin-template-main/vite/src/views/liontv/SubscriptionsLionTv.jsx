@@ -162,7 +162,7 @@ function normalizeSubscription(item = {}) {
   };
 }
 
-function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengage, onNotifyRenewed, onCopyWhatsapp, onCopyM3u, busy }) {
+function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengage, onNotifyRenewed, onCopyWhatsapp, onCopyM3u, onCopyLinePlusM3u, busy }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { t } = useTranslation();
@@ -245,6 +245,16 @@ function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengag
         >
           <LinkIcon fontSize="small" sx={{ mr: 1, color: 'info.dark' }} />
           {t('subscriptions.actions.copyM3u', 'Copiar M3U')}
+        </MenuItem>
+        <MenuItem
+          disabled={busy || !row?.linePlusId}
+          onClick={() => {
+            setAnchorEl(null);
+            onCopyLinePlusM3u?.(row);
+          }}
+        >
+          <LinkIcon fontSize="small" sx={{ mr: 1, color: 'secondary.dark' }} />
+          {t('subscriptions.actions.copyM3uPlus', 'Copiar M3U Plus')}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -795,12 +805,33 @@ export default function SubscriptionsLionTv() {
         skipAuthRedirect: true
       });
       const data = res?.data?.data ?? res?.data ?? {};
-      const textToCopy = data.copyText || [data.providerLabel, data.m3uUrl].filter(Boolean).join('\n');
+      const textToCopy = data.copyText || data.m3uUrl || '';
       await navigator.clipboard.writeText(textToCopy || '');
       enqueueSnackbar(t('subscriptions.messages.m3uCopySuccess', 'Lista M3U copiada.'), { variant: 'success' });
     } catch (err) {
       if (!handleUnauthorized(err)) {
         enqueueSnackbar(err?.response?.data?.message || t('subscriptions.messages.m3uCopyError', 'No se pudo generar la lista M3U.'), { variant: 'error' });
+      }
+    } finally {
+      setNotifLoadingId(null);
+    }
+  };
+
+  const handleCopyLinePlusM3u = async (row) => {
+    if (!row?.subscriptionId || !row?.linePlusId) return;
+    setNotifLoadingId(row.subscriptionId);
+    try {
+      const res = await lionTvApi.get(`/subscriptions/v1/${row.subscriptionId}/line-plus-m3u-copy`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        skipAuthRedirect: true
+      });
+      const data = res?.data?.data ?? res?.data ?? {};
+      const textToCopy = data.copyText || data.m3uUrl || '';
+      await navigator.clipboard.writeText(textToCopy || '');
+      enqueueSnackbar(t('subscriptions.messages.m3uPlusCopySuccess', 'Lista M3U Plus copiada.'), { variant: 'success' });
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || t('subscriptions.messages.m3uPlusCopyError', 'No se pudo generar la lista M3U Plus.'), { variant: 'error' });
       }
     } finally {
       setNotifLoadingId(null);
@@ -1155,6 +1186,7 @@ export default function SubscriptionsLionTv() {
                             onNotifyRenewed={handleNotifyRenewed}
                             onCopyWhatsapp={handleCopyWhatsapp}
                             onCopyM3u={handleCopyM3u}
+                            onCopyLinePlusM3u={handleCopyLinePlusM3u}
                             busy={notifLoadingId === row.subscriptionId}
                           />
                         </ResponsiveActionBar>
@@ -1366,6 +1398,7 @@ export default function SubscriptionsLionTv() {
                             onNotifyRenewed={handleNotifyRenewed}
                             onCopyWhatsapp={handleCopyWhatsapp}
                             onCopyM3u={handleCopyM3u}
+                            onCopyLinePlusM3u={handleCopyLinePlusM3u}
                             busy={notifLoadingId === row.subscriptionId}
                           />
                         </TableCell>

@@ -625,6 +625,8 @@ const resources = {
           copyError: 'Could not generate subscription copy.',
           m3uCopySuccess: 'M3U list copied.',
           m3uCopyError: 'Could not generate the M3U list.',
+          m3uPlusCopySuccess: 'Plus M3U list copied.',
+          m3uPlusCopyError: 'Could not generate the Plus M3U list.',
           notificationError: 'Could not send notification.',
           required: 'Complete required fields.',
           created: 'Subscription created successfully.',
@@ -639,7 +641,8 @@ const resources = {
           notifyReengage: 'Send reengagement email',
           notifyRenewed: 'Send renewal notice',
           copyWhatsapp: 'Copy WhatsApp',
-          copyM3u: 'Copy M3U'
+          copyM3u: 'Copy M3U',
+          copyM3uPlus: 'Copy Plus M3U'
         },
         form: {
           autopayLinkPlaceholder: 'https://...'
@@ -833,6 +836,8 @@ const resources = {
         messages: {
           m3uCopySuccess: 'M3U list copied.',
           m3uCopyError: 'Could not generate the M3U list.',
+          m3uPlusCopySuccess: 'Plus M3U list copied.',
+          m3uPlusCopyError: 'Could not generate the Plus M3U list.',
           m3uUnsupportedProvider: 'Provider not supported for M3U generation.',
           m3uMissingCredentials: 'The line does not have encoded credentials to generate the M3U.'
         },
@@ -3576,6 +3581,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           copyError: 'No se pudo generar el resumen de la suscripción.',
           m3uCopySuccess: 'Lista M3U copiada.',
           m3uCopyError: 'No se pudo generar la lista M3U.',
+          m3uPlusCopySuccess: 'Lista M3U Plus copiada.',
+          m3uPlusCopyError: 'No se pudo generar la lista M3U Plus.',
           notificationError: 'No se pudo enviar la notificación.',
           required: 'Completa los campos requeridos.',
           created: 'Suscripción creada correctamente.',
@@ -3590,7 +3597,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           notifyReengage: 'Notificar reenganche',
           notifyRenewed: 'Notificar renovación exitosa',
           copyWhatsapp: 'Copiar WhatsApp',
-          copyM3u: 'Copiar M3U'
+          copyM3u: 'Copiar M3U',
+          copyM3uPlus: 'Copiar M3U Plus'
         },
         form: {
           autopayLinkPlaceholder: 'https://...'
@@ -3784,6 +3792,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         messages: {
           m3uCopySuccess: 'Lista M3U copiada.',
           m3uCopyError: 'No se pudo generar la lista M3U.',
+          m3uPlusCopySuccess: 'Lista M3U Plus copiada.',
+          m3uPlusCopyError: 'No se pudo generar la lista M3U Plus.',
           m3uUnsupportedProvider: 'Provider no soportado para generar M3U.',
           m3uMissingCredentials: 'La línea no tiene credenciales codificadas para generar M3U.'
         },

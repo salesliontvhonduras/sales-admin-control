@@ -163,7 +163,8 @@ const m3uProviderConfigMap = {
   NEXOLATV: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php' },
   FLOWZY: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php' },
   LIONTV: { label: 'Lion Tv', baseUrl: 'http://liontv.es:8080/get.php' },
-  LIONTVPLUS: { label: 'Lion Tv', baseUrl: 'http://liontv.es:8080/get.php' }
+  LIONTVPLUS: { label: 'Lion Tv', baseUrl: 'http://liontv.es:8080/get.php' },
+  LIONPLUS: { label: 'Lion Tv', baseUrl: 'http://liontv.es:8080/get.php' }
 };
 
 function localizedRegionName(code, locale) {
@@ -315,7 +316,7 @@ function buildM3uCopyText(row) {
   return {
     providerLabel: providerConfig.label,
     m3uUrl,
-    copyText: `${providerConfig.label}\n${m3uUrl}`
+    copyText: m3uUrl
   };
 }
 
