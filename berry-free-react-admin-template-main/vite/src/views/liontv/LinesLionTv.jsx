@@ -296,23 +296,46 @@ function normalizeLine(item = {}) {
   };
 }
 
-function resolveM3uProviderConfig(provider = '') {
-  const normalized = String(provider || '')
+function normalizeM3uProvider(provider = '') {
+  return String(provider || '')
     .trim()
     .toUpperCase()
     .replace(/[^A-Z0-9]/g, '');
-  return m3uProviderConfigMap[normalized] || null;
+}
+
+function normalizeLineCountry(country = '') {
+  return String(country || '')
+    .trim()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+}
+
+function isSpainLineCountry(country = '') {
+  const normalized = normalizeLineCountry(country);
+  return normalized === 'ES' || normalized === 'SPAIN' || normalized === 'ESPANA';
+}
+
+function resolveM3uProviderConfig(provider = '', lineCountry = '') {
+  const normalized = normalizeM3uProvider(provider);
+  if ((normalized === 'LIONTV' || normalized === 'LIONTVPLUS' || normalized === 'LIONPLUS') && isSpainLineCountry(lineCountry)) {
+    return { label: 'Lion Tv', baseUrl: 'http://107.152.41.152:8080/get.php', playlistType: 'm3u' };
+  }
+
+  const baseConfig = m3uProviderConfigMap[normalized];
+  return baseConfig ? { ...baseConfig, playlistType: 'm3u_plus' } : null;
 }
 
 function buildM3uCopyText(row) {
-  const providerConfig = resolveM3uProviderConfig(row?.provider);
+  const providerConfig = resolveM3uProviderConfig(row?.provider, row?.lineCountry);
   if (!providerConfig) return null;
 
   const username = String(row?.usernameEncode || '').trim();
   const password = String(row?.passwordEncode || '').trim();
   if (!username || !password) return null;
 
-  const m3uUrl = `${providerConfig.baseUrl}?username=${username}&password=${password}&type=m3u_plus&output=ts`;
+  const m3uUrl = `${providerConfig.baseUrl}?username=${username}&password=${password}&type=${providerConfig.playlistType}&output=ts`;
   return {
     providerLabel: providerConfig.label,
     m3uUrl,
@@ -471,7 +494,7 @@ export default function LinesLionTv() {
 
   const copyM3u = useCallback(
     (row) => {
-      const providerConfig = resolveM3uProviderConfig(row?.provider);
+      const providerConfig = resolveM3uProviderConfig(row?.provider, row?.lineCountry);
       if (!providerConfig) {
         enqueueSnackbar(t('lines.messages.m3uUnsupportedProvider', 'Provider no soportado para generar M3U.'), { variant: 'error' });
         return;
