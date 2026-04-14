@@ -371,6 +371,7 @@ export default function LicensesLionTv() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
+  const [customerFilter, setCustomerFilter] = useState('');
 
   const [customers, setCustomers] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -505,13 +506,15 @@ export default function LicensesLionTv() {
       const all = [];
       const pageSize = 5000;
       let index = 0;
+      let reportedTotal = null;
       while (true) {
         const res = await lionTvApi.get('/licenses/v1', {
           headers: { Authorization: `Bearer ${accessToken}` },
-          params: { index, size: pageSize },
+          params: { index, size: pageSize, ...(customerFilter ? { customerId: customerFilter } : {}) },
           skipAuthRedirect: true
         });
         const payload = res?.data?.data ?? res?.data ?? {};
+        if (reportedTotal === null && payload?.total != null) reportedTotal = Number(payload.total);
         const raw = payload.data ?? payload.items ?? payload.content ?? payload ?? [];
         const batch = Array.isArray(raw) ? raw : [];
         all.push(...batch);
@@ -520,7 +523,7 @@ export default function LicensesLionTv() {
       }
       const normalized = all.map(normalizeLicense);
       setRows(normalized);
-      setTotal(normalized.length);
+      setTotal(reportedTotal ?? normalized.length);
     } catch (err) {
       if (!handleUnauthorized(err)) {
         enqueueSnackbar(t('licenses.messages.loadError'), { variant: 'error' });
@@ -528,7 +531,7 @@ export default function LicensesLionTv() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar, t]);
+  }, [accessToken, customerFilter, enqueueSnackbar, t]);
 
   const loadCustomers = useCallback(async () => {
     if (!accessToken) return;
@@ -603,12 +606,13 @@ export default function LicensesLionTv() {
 
   // Nota: busca en todas las licencias cargadas, incluye filtro por status y pago
   const filteredRows = useMemo(() => {
-    if (!search && !statusFilter && !paymentFilter) return rows;
+    if (!search && !statusFilter && !paymentFilter && !customerFilter) return rows;
     const term = search.toLowerCase();
     return rows.filter((row) => {
       if (statusFilter && (row.status || '').toLowerCase() !== statusFilter.toLowerCase()) return false;
       if (paymentFilter === 'PAID' && !row.isPaid) return false;
       if (paymentFilter === 'PENDING' && row.isPaid) return false;
+      if (customerFilter && !idsMatch(row.customerId, customerFilter)) return false;
       const paidLabel = row.isPaid ? 'paid pagada' : 'pending pendiente no pagada';
       const subscription = row.subscriptionId ? subscriptionMap[String(row.subscriptionId)] : null;
       const subscriptionSearch = `${row.subscriptionId || ''} ${subscription?.lineId || ''} ${subscription?.lineUsername || ''} ${subscription?.status || ''}`.toLowerCase();
@@ -624,7 +628,7 @@ export default function LicensesLionTv() {
         (row.customerName || customerNameMap[row.customerId] || '').toLowerCase().includes(term)
       );
     });
-  }, [rows, search, customerNameMap, statusFilter, paymentFilter, subscriptionMap]);
+  }, [rows, search, customerNameMap, statusFilter, paymentFilter, customerFilter, subscriptionMap]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -1102,6 +1106,42 @@ export default function LicensesLionTv() {
                     {value === 'PAID' ? t('licenses.paid.paid', 'Paid') : t('licenses.paid.pending', 'Pending')}
                   </MenuItem>
                 ))}
+              </Select>
+            </FormControl>
+
+            <FormControl
+              size="small"
+              sx={{
+                minWidth: 220,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  backgroundColor: 'background.paper'
+                }
+              }}
+            >
+              <InputLabel>{t('licenses.filters.customer', 'Customer')}</InputLabel>
+              <Select
+                value={customerFilter}
+                label={t('licenses.filters.customer', 'Customer')}
+                onChange={(e) => setCustomerFilter(e.target.value)}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <PersonOutlineIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                }
+              >
+                <MenuItem value="">
+                  <em>{t('licenses.filters.allCustomers', 'All customers')}</em>
+                </MenuItem>
+                {customers.map((customer) => {
+                  const value = customer.customerId ?? customer.id;
+                  if (!value) return null;
+                  return (
+                    <MenuItem key={value} value={value}>
+                      {customer.customerFullname || customer.fullName || customer.username || customer.customerMail || `#${value}`}
+                    </MenuItem>
+                  );
+                })}
               </Select>
             </FormControl>
           </ResponsiveFilters>

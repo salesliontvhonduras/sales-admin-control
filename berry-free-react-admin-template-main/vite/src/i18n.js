@@ -590,7 +590,9 @@ const resources = {
         search: 'Search (customer, line, package, status)',
         filters: {
           status: 'Status',
+          customer: 'Customer',
           all: 'All',
+          allCustomers: 'All customers',
           activeLineExpired: 'Active line expired'
         },
         kpi: {
@@ -619,6 +621,10 @@ const resources = {
           expirationSent: 'Expiration notification sent.',
           reengageSent: 'Reengagement email sent.',
           renewalSent: 'Renewal notification sent.',
+          copySuccess: 'Subscription copy generated.',
+          copyError: 'Could not generate subscription copy.',
+          m3uCopySuccess: 'M3U list copied.',
+          m3uCopyError: 'Could not generate the M3U list.',
           notificationError: 'Could not send notification.',
           required: 'Complete required fields.',
           created: 'Subscription created successfully.',
@@ -626,6 +632,14 @@ const resources = {
           deleted: 'Subscription deleted successfully.',
           saveError: 'Could not save subscription.',
           deleteError: 'Could not delete subscription.'
+        },
+        actions: {
+          new: 'New subscription',
+          notifyExpiration: 'Send expiration notice',
+          notifyReengage: 'Send reengagement email',
+          notifyRenewed: 'Send renewal notice',
+          copyWhatsapp: 'Copy WhatsApp',
+          copyM3u: 'Copy M3U'
         },
         form: {
           autopayLinkPlaceholder: 'https://...'
@@ -708,7 +722,7 @@ const resources = {
           history: 'History',
           removePlaylists: 'Remove all playlists'
         },
-        filters: { status: 'Status', payment: 'Payment', all: 'All' },
+        filters: { status: 'Status', payment: 'Payment', customer: 'Customer', all: 'All', allCustomers: 'All customers' },
         status: {
           ACTIVE: 'ACTIVE',
           INACTIVE: 'INACTIVE',
@@ -815,6 +829,13 @@ const resources = {
         summary: { total: '{{count}} lines', active: 'Active: {{count}}', expired: 'Expired: {{count}}' },
         search: 'Search (user, package, IP, status)',
         filters: { status: 'Status', all: 'All' },
+        actions: { copyM3u: 'Copy M3U' },
+        messages: {
+          m3uCopySuccess: 'M3U list copied.',
+          m3uCopyError: 'Could not generate the M3U list.',
+          m3uUnsupportedProvider: 'Provider not supported for M3U generation.',
+          m3uMissingCredentials: 'The line does not have encoded credentials to generate the M3U.'
+        },
         status: { active: 'Active', expired: 'Expired', inactive: 'Inactive', trial: 'Trial' },
         headers: {
           user: 'User',
@@ -3087,7 +3108,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           paid: 'Estado: PAGADAS {{count}}',
           pending: 'Estado: PENDIENTES {{count}}'
         },
-        filters: { status: 'Estado', all: 'Todos' },
+        filters: { status: 'Estado', customer: 'Cliente', all: 'Todos', allCustomers: 'Todos los clientes' },
         search: 'Buscar (id, cliente, estado, método)',
         edit: 'Editar factura',
         dialogSubtitle: 'Ingresa los datos de pago y asignación.',
@@ -3520,7 +3541,9 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         search: 'Buscar (cliente, línea, paquete, estado)',
         filters: {
           status: 'Estado',
+          customer: 'Cliente',
           all: 'Todos',
+          allCustomers: 'Todos los clientes',
           activeLineExpired: 'Línea activa vencida'
         },
         kpi: {
@@ -3549,6 +3572,10 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           expirationSent: 'Notificación de vencimiento enviada.',
           reengageSent: 'Correo de reenganche enviado.',
           renewalSent: 'Notificación de renovación enviada.',
+          copySuccess: 'Resumen de suscripción copiado.',
+          copyError: 'No se pudo generar el resumen de la suscripción.',
+          m3uCopySuccess: 'Lista M3U copiada.',
+          m3uCopyError: 'No se pudo generar la lista M3U.',
           notificationError: 'No se pudo enviar la notificación.',
           required: 'Completa los campos requeridos.',
           created: 'Suscripción creada correctamente.',
@@ -3556,6 +3583,14 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           deleted: 'Suscripción eliminada correctamente.',
           saveError: 'No se pudo guardar la suscripción.',
           deleteError: 'No se pudo eliminar la suscripción.'
+        },
+        actions: {
+          new: 'Nueva suscripción',
+          notifyExpiration: 'Enviar aviso vencimiento',
+          notifyReengage: 'Notificar reenganche',
+          notifyRenewed: 'Notificar renovación exitosa',
+          copyWhatsapp: 'Copiar WhatsApp',
+          copyM3u: 'Copiar M3U'
         },
         form: {
           autopayLinkPlaceholder: 'https://...'
@@ -3638,7 +3673,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           history: 'Historial',
           removePlaylists: 'Quitar todas las playlists'
         },
-        filters: { status: 'Estado', payment: 'Pago', all: 'Todos' },
+        filters: { status: 'Estado', payment: 'Pago', customer: 'Cliente', all: 'Todos', allCustomers: 'Todos los clientes' },
         status: {
           ACTIVE: 'ACTIVO',
           INACTIVE: 'INACTIVO',
@@ -3745,6 +3780,13 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         summary: { total: '{{count}} líneas', active: 'Activas: {{count}}', expired: 'Expiradas: {{count}}' },
         search: 'Buscar (usuario, paquete, IP, estado)',
         filters: { status: 'Estado', all: 'Todos' },
+        actions: { copyM3u: 'Copiar M3U' },
+        messages: {
+          m3uCopySuccess: 'Lista M3U copiada.',
+          m3uCopyError: 'No se pudo generar la lista M3U.',
+          m3uUnsupportedProvider: 'Provider no soportado para generar M3U.',
+          m3uMissingCredentials: 'La línea no tiene credenciales codificadas para generar M3U.'
+        },
         status: { active: 'Activa', expired: 'Expirada', inactive: 'Inactiva', trial: 'Prueba' },
         headers: {
           user: 'Usuario',

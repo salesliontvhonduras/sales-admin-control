@@ -43,6 +43,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LanIcon from '@mui/icons-material/Lan';
+import LinkIcon from '@mui/icons-material/Link';
 import BoltIcon from '@mui/icons-material/Bolt';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
@@ -155,6 +156,15 @@ const lineProviderOptions = [
   'YOUTUBE_PREMIUM',
   'DISNEY_PLUS_PREMIUM'
 ];
+
+const m3uProviderConfigMap = {
+  TITAN: { label: 'Titan', baseUrl: 'http://supremeplay.fun:80/get.php' },
+  NEXOLAT: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php' },
+  NEXOLATV: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php' },
+  FLOWZY: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php' },
+  LIONTV: { label: 'Lion Tv', baseUrl: 'http://liontv.es:8080/get.php' },
+  LIONTVPLUS: { label: 'Lion Tv', baseUrl: 'http://liontv.es:8080/get.php' }
+};
 
 function localizedRegionName(code, locale) {
   if (!code || code === 'GLOBAL') return null;
@@ -285,13 +295,37 @@ function normalizeLine(item = {}) {
   };
 }
 
+function resolveM3uProviderConfig(provider = '') {
+  const normalized = String(provider || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+  return m3uProviderConfigMap[normalized] || null;
+}
+
+function buildM3uCopyText(row) {
+  const providerConfig = resolveM3uProviderConfig(row?.provider);
+  if (!providerConfig) return null;
+
+  const username = String(row?.usernameEncode || '').trim();
+  const password = String(row?.passwordEncode || '').trim();
+  if (!username || !password) return null;
+
+  const m3uUrl = `${providerConfig.baseUrl}?username=${username}&password=${password}&type=m3u_plus&output=ts`;
+  return {
+    providerLabel: providerConfig.label,
+    m3uUrl,
+    copyText: `${providerConfig.label}\n${m3uUrl}`
+  };
+}
+
 function StatusChip({ enabled, expired, t }) {
   const color = enabled ? (expired ? 'warning' : 'success') : 'default';
   const label = expired ? t('lines.status.expired') : enabled ? t('lines.status.active') : t('lines.status.inactive');
   return <Chip size="small" color={color} label={label} />;
 }
 
-function LineRowActions({ row, onEdit, onDelete, onDetail, onBackup }) {
+function LineRowActions({ row, onEdit, onDelete, onDetail, onBackup, onCopyM3u }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { t } = useTranslation();
@@ -353,6 +387,16 @@ function LineRowActions({ row, onEdit, onDelete, onDetail, onBackup }) {
             Backup M3U
           </MenuItem>
         ) : null}
+        <MenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            setAnchorEl(null);
+            onCopyM3u?.(row);
+          }}
+        >
+          <LinkIcon fontSize="small" style={{ marginRight: 8, color: '#1565c0' }} />
+          {t('lines.actions.copyM3u', 'Copiar M3U')}
+        </MenuItem>
         <MenuItem
           onClick={(e) => {
             e.stopPropagation();
@@ -419,6 +463,32 @@ export default function LinesLionTv() {
         enqueueSnackbar(t('lines.detail.copied', 'Credenciales copiadas'), { variant: 'success' });
       } else {
         enqueueSnackbar(t('lines.detail.copyFallback', 'No se pudo copiar, inténtalo manualmente'), { variant: 'warning' });
+      }
+    },
+    [enqueueSnackbar, t]
+  );
+
+  const copyM3u = useCallback(
+    (row) => {
+      const providerConfig = resolveM3uProviderConfig(row?.provider);
+      if (!providerConfig) {
+        enqueueSnackbar(t('lines.messages.m3uUnsupportedProvider', 'Provider no soportado para generar M3U.'), { variant: 'error' });
+        return;
+      }
+
+      const payload = buildM3uCopyText(row);
+      if (!payload) {
+        enqueueSnackbar(t('lines.messages.m3uMissingCredentials', 'La línea no tiene credenciales codificadas para generar M3U.'), {
+          variant: 'error'
+        });
+        return;
+      }
+
+      if (navigator?.clipboard?.writeText) {
+        navigator.clipboard.writeText(payload.copyText);
+        enqueueSnackbar(t('lines.messages.m3uCopySuccess', 'Lista M3U copiada.'), { variant: 'success' });
+      } else {
+        enqueueSnackbar(t('lines.messages.m3uCopyError', 'No se pudo generar la lista M3U.'), { variant: 'warning' });
       }
     },
     [enqueueSnackbar, t]
@@ -769,6 +839,7 @@ export default function LinesLionTv() {
                           onDelete={() => setOpenDelete({ open: true, row })}
                           onDetail={() => setDetail({ open: true, row })}
                           onBackup={() => handleOpenBackup(row)}
+                          onCopyM3u={() => copyM3u(row)}
                         />
                       </ResponsiveActionBar>
                     }
@@ -918,6 +989,7 @@ export default function LinesLionTv() {
                             onDelete={() => setOpenDelete({ open: true, row })}
                             onDetail={() => setDetail({ open: true, row })}
                             onBackup={() => handleOpenBackup(row)}
+                            onCopyM3u={() => copyM3u(row)}
                           />
                         </TableCell>
                       </TableRow>

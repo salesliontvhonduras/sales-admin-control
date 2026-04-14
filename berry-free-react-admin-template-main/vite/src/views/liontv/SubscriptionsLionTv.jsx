@@ -56,6 +56,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import LinkIcon from '@mui/icons-material/Link';
 import EmailIcon from '@mui/icons-material/Email';
 import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
+import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 
 import MainCard from 'ui-component/cards/MainCard';
 import LionMetricCard from 'ui-component/cards/LionMetricCard';
@@ -161,7 +162,7 @@ function normalizeSubscription(item = {}) {
   };
 }
 
-function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengage, onNotifyRenewed, busy }) {
+function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengage, onNotifyRenewed, onCopyWhatsapp, onCopyM3u, busy }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { t } = useTranslation();
@@ -224,6 +225,26 @@ function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengag
         >
           <EmailIcon fontSize="small" sx={{ mr: 1, color: 'success.main' }} />
           {t('subscriptions.actions.notifyRenewed', 'Notificar renovación exitosa')}
+        </MenuItem>
+        <MenuItem
+          disabled={busy}
+          onClick={() => {
+            setAnchorEl(null);
+            onCopyWhatsapp?.(row);
+          }}
+        >
+          <ContentCopyRoundedIcon fontSize="small" sx={{ mr: 1, color: 'info.main' }} />
+          {t('subscriptions.actions.copyWhatsapp', 'Copiar WhatsApp')}
+        </MenuItem>
+        <MenuItem
+          disabled={busy}
+          onClick={() => {
+            setAnchorEl(null);
+            onCopyM3u?.(row);
+          }}
+        >
+          <LinkIcon fontSize="small" sx={{ mr: 1, color: 'info.dark' }} />
+          {t('subscriptions.actions.copyM3u', 'Copiar M3U')}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -327,6 +348,7 @@ export default function SubscriptionsLionTv() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [customerFilter, setCustomerFilter] = useState('');
   const [renewalFilter, setRenewalFilter] = useState(''); // '', 'yesterday', 'today', 'tomorrow'
   const [renewalSort, setRenewalSort] = useState('asc'); // asc | desc
   const [lineHealthFilter, setLineHealthFilter] = useState(''); // '' | 'activeExpired'
@@ -488,7 +510,7 @@ export default function SubscriptionsLionTv() {
     try {
       const res = await lionTvApi.get('/subscriptions/v1', {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: 0, size: 5000 },
+        params: { index: 0, size: 5000, ...(customerFilter ? { customerId: customerFilter } : {}) },
         skipAuthRedirect: true
       });
       const payload = res?.data?.data ?? res?.data ?? {};
@@ -496,7 +518,7 @@ export default function SubscriptionsLionTv() {
       const items = Array.isArray(raw) ? raw : [];
       const normalized = items.map(normalizeSubscription);
       setRows(normalized);
-      setTotal(normalized.length);
+      setTotal(payload?.total ?? normalized.length);
     } catch (err) {
       if (!handleUnauthorized(err)) {
         enqueueSnackbar(err?.response?.data?.message || err.message || t('subscriptions.messages.loadError'), {
@@ -506,7 +528,7 @@ export default function SubscriptionsLionTv() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar]);
+  }, [accessToken, customerFilter, enqueueSnackbar]);
 
   useEffect(() => {
     loadSubscriptions();
@@ -586,6 +608,7 @@ export default function SubscriptionsLionTv() {
 
     const filtered = rows.filter((row) => {
       if (statusFilter && (row.status || '').toLowerCase() !== statusFilter.toLowerCase()) return false;
+      if (customerFilter && String(row.customerId || '') !== String(customerFilter)) return false;
       if (lineHealthFilter === 'activeExpired' && !hasActiveExpiredLine(row, lineMetaById, todayMs)) return false;
       const matchesSearch =
         !term ||
@@ -615,7 +638,7 @@ export default function SubscriptionsLionTv() {
     });
 
     return sorted;
-  }, [rows, search, statusFilter, renewalFilter, renewalSort, lineHealthFilter, lineMetaById]);
+  }, [rows, search, statusFilter, customerFilter, renewalFilter, renewalSort, lineHealthFilter, lineMetaById]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -736,6 +759,48 @@ export default function SubscriptionsLionTv() {
     } catch (err) {
       if (!handleUnauthorized(err)) {
         enqueueSnackbar(err?.response?.data?.message || t('subscriptions.messages.notificationError'), { variant: 'error' });
+      }
+    } finally {
+      setNotifLoadingId(null);
+    }
+  };
+
+  const handleCopyWhatsapp = async (row) => {
+    if (!row?.subscriptionId) return;
+    setNotifLoadingId(row.subscriptionId);
+    try {
+      const res = await lionTvApi.get(`/subscriptions/v1/${row.subscriptionId}/whatsapp-copy`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        skipAuthRedirect: true
+      });
+      const data = res?.data?.data ?? res?.data ?? {};
+      const textToCopy = data.copyText || [data.title, data.whatsappText].filter(Boolean).join('\n\n');
+      await navigator.clipboard.writeText(textToCopy || '');
+      enqueueSnackbar(t('subscriptions.messages.copySuccess', 'Resumen de suscripción copiado.'), { variant: 'success' });
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || t('subscriptions.messages.copyError', 'No se pudo generar el resumen de la suscripción.'), { variant: 'error' });
+      }
+    } finally {
+      setNotifLoadingId(null);
+    }
+  };
+
+  const handleCopyM3u = async (row) => {
+    if (!row?.subscriptionId) return;
+    setNotifLoadingId(row.subscriptionId);
+    try {
+      const res = await lionTvApi.get(`/subscriptions/v1/${row.subscriptionId}/m3u-copy`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        skipAuthRedirect: true
+      });
+      const data = res?.data?.data ?? res?.data ?? {};
+      const textToCopy = data.copyText || [data.providerLabel, data.m3uUrl].filter(Boolean).join('\n');
+      await navigator.clipboard.writeText(textToCopy || '');
+      enqueueSnackbar(t('subscriptions.messages.m3uCopySuccess', 'Lista M3U copiada.'), { variant: 'success' });
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || t('subscriptions.messages.m3uCopyError', 'No se pudo generar la lista M3U.'), { variant: 'error' });
       }
     } finally {
       setNotifLoadingId(null);
@@ -965,6 +1030,32 @@ export default function SubscriptionsLionTv() {
                 ))}
               </Select>
             </FormControl>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 240 }, '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}>
+              <InputLabel>{t('subscriptions.filters.customer', 'Customer')}</InputLabel>
+              <Select
+                value={customerFilter}
+                label={t('subscriptions.filters.customer', 'Customer')}
+                onChange={(e) => setCustomerFilter(e.target.value)}
+                startAdornment={
+                  <InputAdornment position="start" sx={{ pl: 1 }}>
+                    <PersonOutlineIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                }
+              >
+                <MenuItem value="">
+                  <em>{t('subscriptions.filters.allCustomers', 'All customers')}</em>
+                </MenuItem>
+                {customers.map((customer) => {
+                  const value = customer.customerId ?? customer.id;
+                  if (!value) return null;
+                  return (
+                    <MenuItem key={value} value={value}>
+                      {customer.customerFullname || customer.fullName || customer.username || customer.customerMail || `#${value}`}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} flexShrink={0}>
               <Button
                 variant={renewalFilter === 'yesterday' ? 'contained' : 'outlined'}
@@ -1062,6 +1153,8 @@ export default function SubscriptionsLionTv() {
                             onNotifyExpiration={handleNotifyExpiration}
                             onNotifyReengage={handleNotifyReengage}
                             onNotifyRenewed={handleNotifyRenewed}
+                            onCopyWhatsapp={handleCopyWhatsapp}
+                            onCopyM3u={handleCopyM3u}
                             busy={notifLoadingId === row.subscriptionId}
                           />
                         </ResponsiveActionBar>
@@ -1271,6 +1364,8 @@ export default function SubscriptionsLionTv() {
                             onNotifyExpiration={handleNotifyExpiration}
                             onNotifyReengage={handleNotifyReengage}
                             onNotifyRenewed={handleNotifyRenewed}
+                            onCopyWhatsapp={handleCopyWhatsapp}
+                            onCopyM3u={handleCopyM3u}
                             busy={notifLoadingId === row.subscriptionId}
                           />
                         </TableCell>
