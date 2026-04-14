@@ -1106,14 +1106,28 @@ export default function SubscriptionsLionTv() {
       </MainCard>
 
       <MainCard title={null}>
-        <ResponsiveFilters paperSx={{ mb: 2 }}>
+        <ResponsiveFilters
+          paperSx={{ mb: 2 }}
+          sx={{
+            flexWrap: 'wrap',
+            alignItems: { xs: 'stretch', md: 'flex-start' },
+            '& > *': {
+              minWidth: 0
+            }
+          }}
+        >
             <TextField
+              className="subscriptions-filter-search"
               size="small"
               placeholder={t('subscriptions.search')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               fullWidth
-              sx={{ '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}
+              sx={{
+                flex: { xs: '1 1 100%', md: '1 1 220px' },
+                minWidth: { xs: '100%', md: 220 },
+                '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 }
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -1217,7 +1231,13 @@ export default function SubscriptionsLionTv() {
                 ))}
               </Select>
             </FormControl>
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} flexShrink={0}>
+            <Stack
+              direction="row"
+              spacing={1}
+              useFlexGap
+              flexWrap="wrap"
+              sx={{ flex: '1 1 100%', minWidth: 0 }}
+            >
               <Button
                 variant={renewalFilter === 'yesterday' ? 'contained' : 'outlined'}
                 color="info"
