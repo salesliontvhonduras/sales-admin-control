@@ -42,6 +42,7 @@ import Typography from '@mui/material/Typography';
 import { useMediaQuery, useTheme } from '@mui/material';
 
 import AddIcon from '@mui/icons-material/Add';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import CancelScheduleSendRoundedIcon from '@mui/icons-material/CancelScheduleSendRounded';
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded';
