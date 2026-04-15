@@ -1165,7 +1165,7 @@ function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, edit
     setImportingExternalRecipients(true);
     try {
       const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined;
-      const [potentialResponse, demosResponse] = await Promise.all([
+      const [potentialResponse, demosResponse, customersPayload] = await Promise.all([
         lionTvApi.get('/potential-customers/v1', {
           headers,
           params: { index: 0, size: 5000 },
@@ -1174,8 +1174,16 @@ function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, edit
         shopifyDemosApi.get('/demos/all', {
           headers,
           skipAuthRedirect: true
-        })
+        }),
+        searchEmailCampaignCustomers({ index: 0, size: 5000 })
       ]);
+
+      const customerCollection = customersPayload?.data || [];
+      const customerEmailSet = new Set(
+        (Array.isArray(customerCollection) ? customerCollection : [])
+          .map((item) => normalizeTextValue(item?.customerMail ?? item?.customer_mail ?? item?.email).toLowerCase())
+          .filter(Boolean)
+      );
 
       const potentialPayload = potentialResponse?.data?.data ?? potentialResponse?.data ?? {};
       const potentialCollection = potentialPayload.data ?? potentialPayload.items ?? potentialPayload.content ?? [];
@@ -1185,17 +1193,19 @@ function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, edit
           item?.email,
           item?.fullName ?? item?.full_name ?? item?.customerFullname ?? item?.customer_fullname
         ))
-        .filter(Boolean);
+        .filter((item) => item && !customerEmailSet.has(item.email));
 
       const demosCollection = demosResponse?.data?.data ?? [];
       const demoRecipients = (Array.isArray(demosCollection) ? demosCollection : [])
         .filter((item) => normalizeTextValue(item?.status).toUpperCase() !== 'ACTIVATED')
         .map((item) => normalizeImportedRecipient(item?.email, item?.customerName ?? item?.customer_name))
-        .filter(Boolean);
+        .filter((item) => item && !customerEmailSet.has(item.email));
 
       const existingRecipients = parseExternalRecipients(formState.externalRecipientsText);
-      const mergedRecipients = mergeExternalRecipientCollections(existingRecipients, potentialRecipients, demoRecipients);
-      const addedCount = Math.max(0, mergedRecipients.length - existingRecipients.length);
+      const sanitizedExistingRecipients = existingRecipients.filter((item) => !customerEmailSet.has(item.email));
+      const mergedRecipients = mergeExternalRecipientCollections(sanitizedExistingRecipients, potentialRecipients, demoRecipients)
+        .filter((item) => !customerEmailSet.has(item.email));
+      const addedCount = Math.max(0, mergedRecipients.length - sanitizedExistingRecipients.length);
 
       setFormState((current) => ({
         ...current,
