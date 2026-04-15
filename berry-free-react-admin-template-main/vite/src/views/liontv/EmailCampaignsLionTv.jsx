@@ -375,6 +375,11 @@ function CustomerPickerDialog({ open, onClose, filters, selectedCustomerIds, onS
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
+    if (!open) return;
+    setPage(0);
+  }, [open, filters.search, filters.status, filters.channel, filters.fromDate, filters.toDate]);
+
+  useEffect(() => {
     if (!open) return undefined;
     let active = true;
     setLoading(true);
