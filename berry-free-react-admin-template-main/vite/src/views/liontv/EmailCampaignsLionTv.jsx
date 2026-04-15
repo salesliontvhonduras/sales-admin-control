@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
+import useAuth from 'hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 
 import Alert from '@mui/material/Alert';
@@ -76,6 +77,7 @@ import {
   sendEmailCampaignTest,
   updateEmailCampaign
 } from 'api/email-campaigns';
+import { lionTvApi, shopifyDemosApi } from 'utils/api';
 
 const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
@@ -88,55 +90,120 @@ const sendTypes = ['IMMEDIATE', 'SCHEDULED'];
 const customerModes = ['MIXED', 'FILTERED', 'SELECTED'];
 const customerStatusOptions = ['', 'ACTIVE', 'INACTIVE', 'SUSPENDED', 'BLOCKED'];
 const commonChannels = ['', 'WEB', 'SOCIAL_MEDIA', 'REFERRAL', 'GOOGLE', 'WHATSAPP'];
+const IMPORTABLE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+const BLOCKED_IMPORTED_EMAILS = new Set(['nomail@gmail.com', 'notiene@gmail.com']);
 
-const emptyAudience = {
-  customerSelection: {
-    mode: 'MIXED',
-    filters: {
-      status: '',
-      channel: '',
-      search: '',
-      fromDate: '',
-      toDate: ''
+function createEmptyAudience() {
+  return {
+    customerSelection: {
+      mode: 'MIXED',
+      filters: {
+        status: '',
+        channel: '',
+        search: '',
+        fromDate: '',
+        toDate: ''
+      },
+      selectedCustomerIds: []
     },
-    selectedCustomerIds: []
-  },
-  externalRecipients: []
-};
+    externalRecipients: []
+  };
+}
 
-const emptyCampaignForm = {
-  name: '',
-  templateId: '',
-  sendType: 'IMMEDIATE',
-  scheduledAt: '',
-  variableValues: {},
-  audience: emptyAudience,
-  externalRecipientsText: '',
-  testEmail: ''
-};
+function createEmptyCampaignForm() {
+  return {
+    name: '',
+    templateId: '',
+    sendType: 'IMMEDIATE',
+    scheduledAt: '',
+    variableValues: {},
+    audience: createEmptyAudience(),
+    externalRecipientsText: '',
+    testEmail: ''
+  };
+}
+
+function normalizeTextValue(value) {
+  if (value === null || value === undefined) return '';
+  const normalized = String(value).trim();
+  if (!normalized) return '';
+  const lower = normalized.toLowerCase();
+  if (lower === 'null' || lower === 'undefined') return '';
+  return normalized;
+}
+
+function normalizeOptionValue(value, allowedOptions = []) {
+  const normalized = normalizeTextValue(value).toUpperCase();
+  if (!normalized || normalized === 'ALL') return '';
+  return allowedOptions.includes(normalized) ? normalized : '';
+}
+
+function normalizeDateFilterValue(value) {
+  if (!value) return '';
+  if (Array.isArray(value) && value.length >= 3) {
+    const [year, month, day] = value.map((item) => Number(item));
+    if ([year, month, day].every((item) => Number.isInteger(item) && item > 0)) {
+      return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+    return '';
+  }
+  if (typeof value === 'object') {
+    const year = Number(value.year);
+    const month = Number(value.monthValue ?? value.month);
+    const day = Number(value.dayOfMonth ?? value.day);
+    if ([year, month, day].every((item) => Number.isInteger(item) && item > 0)) {
+      return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+    return '';
+  }
+  const normalized = normalizeTextValue(value);
+  if (!normalized) return '';
+  const match = normalized.match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : '';
+}
+
+function normalizeSelectedCustomerIds(values) {
+  return Array.from(
+    new Set(
+      (Array.isArray(values) ? values : [])
+        .map((value) => Number(value))
+        .filter((value) => Number.isInteger(value) && value > 0)
+    )
+  );
+}
+
+function normalizeExternalRecipients(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((recipient) => ({
+      email: normalizeTextValue(recipient?.email).toLowerCase(),
+      fullName: normalizeTextValue(recipient?.fullName) || null
+    }))
+    .filter((recipient) => recipient.email);
+}
 
 function parseAudienceDefinition(audienceDefinitionJson) {
-  if (!audienceDefinitionJson) return emptyAudience;
+  if (!audienceDefinitionJson) return createEmptyAudience();
   try {
-    const parsed = JSON.parse(audienceDefinitionJson);
+    const parsed = typeof audienceDefinitionJson === 'string' ? JSON.parse(audienceDefinitionJson) : audienceDefinitionJson;
+    const filters = parsed?.customerSelection?.filters || {};
+    const mode = normalizeOptionValue(parsed?.customerSelection?.mode, customerModes) || 'MIXED';
     return {
       customerSelection: {
-        mode: parsed?.customerSelection?.mode || 'MIXED',
+        mode,
         filters: {
-          status: parsed?.customerSelection?.filters?.status || '',
-          channel: parsed?.customerSelection?.filters?.channel || '',
-          search: parsed?.customerSelection?.filters?.search || '',
-          fromDate: parsed?.customerSelection?.filters?.fromDate || '',
-          toDate: parsed?.customerSelection?.filters?.toDate || ''
+          status: normalizeOptionValue(filters.status, customerStatusOptions),
+          channel: normalizeOptionValue(filters.channel, commonChannels),
+          search: normalizeTextValue(filters.search),
+          fromDate: normalizeDateFilterValue(filters.fromDate),
+          toDate: normalizeDateFilterValue(filters.toDate)
         },
-        selectedCustomerIds: Array.isArray(parsed?.customerSelection?.selectedCustomerIds)
-          ? parsed.customerSelection.selectedCustomerIds.map((value) => Number(value)).filter(Boolean)
-          : []
+        selectedCustomerIds: normalizeSelectedCustomerIds(parsed?.customerSelection?.selectedCustomerIds)
       },
-      externalRecipients: Array.isArray(parsed?.externalRecipients) ? parsed.externalRecipients : []
+      externalRecipients: normalizeExternalRecipients(parsed?.externalRecipients)
     };
   } catch {
-    return emptyAudience;
+    return createEmptyAudience();
   }
 }
 
@@ -168,6 +235,26 @@ function buildExternalRecipientsText(externalRecipients = []) {
     .map((recipient) => (recipient?.fullName ? `${recipient.fullName} <${recipient.email}>` : recipient?.email || ''))
     .filter(Boolean)
     .join('\n');
+}
+
+function normalizeImportedRecipient(email, fullName) {
+  const normalizedEmail = normalizeTextValue(email).toLowerCase();
+  if (!normalizedEmail || !IMPORTABLE_EMAIL_PATTERN.test(normalizedEmail) || BLOCKED_IMPORTED_EMAILS.has(normalizedEmail)) return null;
+  const normalizedFullName = normalizeTextValue(fullName);
+  return {
+    email: normalizedEmail,
+    fullName: normalizedFullName || null
+  };
+}
+
+function mergeExternalRecipientCollections(...collections) {
+  const merged = new Map();
+  collections.flat().forEach((recipient) => {
+    const normalized = normalizeImportedRecipient(recipient?.email, recipient?.fullName);
+    if (!normalized || merged.has(normalized.email)) return;
+    merged.set(normalized.email, normalized);
+  });
+  return Array.from(merged.values());
 }
 
 function toDatetimeLocal(value) {
@@ -747,6 +834,7 @@ function CampaignDetailDialog({ open, onClose, campaign }) {
 function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, editingCampaignId, onSaved }) {
   const { t } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
+  const { accessToken } = useAuth();
   const [activeStep, setActiveStep] = useState(0);
   const [savingDraft, setSavingDraft] = useState(false);
   const [sending, setSending] = useState(false);
@@ -758,7 +846,8 @@ function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, edit
   const [preview, setPreview] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [customerPickerOpen, setCustomerPickerOpen] = useState(false);
-  const [formState, setFormState] = useState(emptyCampaignForm);
+  const [importingExternalRecipients, setImportingExternalRecipients] = useState(false);
+  const [formState, setFormState] = useState(createEmptyCampaignForm);
 
   const stepLabels = useMemo(
     () => [
@@ -780,16 +869,20 @@ function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, edit
 
   useEffect(() => {
     if (!open) return;
+    setActiveStep(0);
+    setPreview(null);
+    setCustomerPickerOpen(false);
     if (!editingCampaignId) {
-      setActiveStep(0);
       setCampaignId(null);
-      setPreview(null);
       setSelectedTemplate(null);
-      setFormState(emptyCampaignForm);
+      setFormState(createEmptyCampaignForm());
       return;
     }
 
     let active = true;
+    setCampaignId(null);
+    setSelectedTemplate(null);
+    setFormState(createEmptyCampaignForm());
     setLoadingCampaign(true);
     getEmailCampaign(editingCampaignId)
       .then(async (payload) => {
@@ -902,27 +995,36 @@ function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, edit
     }));
   };
 
-  const buildPayload = () => ({
-    name: formState.name.trim(),
-    templateId: Number(formState.templateId),
-    sendType: formState.sendType,
-    scheduledAt: formState.sendType === 'SCHEDULED' && formState.scheduledAt ? formState.scheduledAt : null,
-    variableValues: formState.variableValues,
-    audience: {
-      customerSelection: {
-        mode: formState.audience.customerSelection.mode || 'MIXED',
-        filters: {
-          status: formState.audience.customerSelection.filters.status || null,
-          channel: formState.audience.customerSelection.filters.channel || null,
-          search: formState.audience.customerSelection.filters.search || null,
-          fromDate: formState.audience.customerSelection.filters.fromDate || null,
-          toDate: formState.audience.customerSelection.filters.toDate || null
+  const buildPayload = () => {
+    const filters = formState.audience.customerSelection.filters || {};
+    const normalizedStatus = normalizeOptionValue(filters.status, customerStatusOptions);
+    const normalizedChannel = normalizeOptionValue(filters.channel, commonChannels);
+    const normalizedSearch = normalizeTextValue(filters.search);
+    const normalizedFromDate = normalizeDateFilterValue(filters.fromDate);
+    const normalizedToDate = normalizeDateFilterValue(filters.toDate);
+
+    return {
+      name: formState.name.trim(),
+      templateId: Number(formState.templateId),
+      sendType: formState.sendType,
+      scheduledAt: formState.sendType === 'SCHEDULED' && formState.scheduledAt ? formState.scheduledAt : null,
+      variableValues: formState.variableValues,
+      audience: {
+        customerSelection: {
+          mode: normalizeOptionValue(formState.audience.customerSelection.mode, customerModes) || 'MIXED',
+          filters: {
+            status: normalizedStatus || null,
+            channel: normalizedChannel || null,
+            search: normalizedSearch || null,
+            fromDate: normalizedFromDate || null,
+            toDate: normalizedToDate || null
+          },
+          selectedCustomerIds: normalizeSelectedCustomerIds(formState.audience.customerSelection.selectedCustomerIds)
         },
-        selectedCustomerIds: formState.audience.customerSelection.selectedCustomerIds || []
-      },
-      externalRecipients: parseExternalRecipients(formState.externalRecipientsText)
-    }
-  });
+        externalRecipients: parseExternalRecipients(formState.externalRecipientsText)
+      }
+    };
+  };
 
   const validateCurrentStep = () => {
     if (activeStep === 0) {
@@ -1058,6 +1160,70 @@ function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, edit
     }
     setActiveStep((current) => Math.min(current + 1, stepLabels.length - 1));
   };
+
+  const handleImportLeadEmails = useCallback(async () => {
+    setImportingExternalRecipients(true);
+    try {
+      const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined;
+      const [potentialResponse, demosResponse] = await Promise.all([
+        lionTvApi.get('/potential-customers/v1', {
+          headers,
+          params: { index: 0, size: 5000 },
+          skipAuthRedirect: true
+        }),
+        shopifyDemosApi.get('/demos/all', {
+          headers,
+          skipAuthRedirect: true
+        })
+      ]);
+
+      const potentialPayload = potentialResponse?.data?.data ?? potentialResponse?.data ?? {};
+      const potentialCollection = potentialPayload.data ?? potentialPayload.items ?? potentialPayload.content ?? [];
+      const potentialRecipients = (Array.isArray(potentialCollection) ? potentialCollection : [])
+        .filter((item) => normalizeTextValue(item?.status ?? item?.customerStatus ?? '').toUpperCase() !== 'CONVERTED')
+        .map((item) => normalizeImportedRecipient(
+          item?.email,
+          item?.fullName ?? item?.full_name ?? item?.customerFullname ?? item?.customer_fullname
+        ))
+        .filter(Boolean);
+
+      const demosCollection = demosResponse?.data?.data ?? [];
+      const demoRecipients = (Array.isArray(demosCollection) ? demosCollection : [])
+        .filter((item) => normalizeTextValue(item?.status).toUpperCase() !== 'ACTIVATED')
+        .map((item) => normalizeImportedRecipient(item?.email, item?.customerName ?? item?.customer_name))
+        .filter(Boolean);
+
+      const existingRecipients = parseExternalRecipients(formState.externalRecipientsText);
+      const mergedRecipients = mergeExternalRecipientCollections(existingRecipients, potentialRecipients, demoRecipients);
+      const addedCount = Math.max(0, mergedRecipients.length - existingRecipients.length);
+
+      setFormState((current) => ({
+        ...current,
+        externalRecipientsText: buildExternalRecipientsText(mergedRecipients)
+      }));
+
+      enqueueSnackbar(
+        addedCount
+          ? t('emailCampaigns.messages.externalRecipientsImported', {
+              defaultValue: '{{count}} external recipient(s) imported.',
+              count: addedCount
+            })
+          : t('emailCampaigns.messages.externalRecipientsImportedEmpty', {
+              defaultValue: 'No new external recipients were found to import.'
+            }),
+        { variant: addedCount ? 'success' : 'info' }
+      );
+    } catch (error) {
+      enqueueSnackbar(
+        error?.response?.data?.message || t('emailCampaigns.messages.externalRecipientsImportError', {
+          defaultValue: 'Unable to import external recipients from potential customers and demos.'
+        }),
+        { variant: 'error' }
+      );
+    } finally {
+      setImportingExternalRecipients(false);
+    }
+  }, [accessToken, enqueueSnackbar, formState.externalRecipientsText, t]);
 
   const selectedCustomerCount = formState.audience.customerSelection.selectedCustomerIds?.length || 0;
   const externalRecipientsCount = parseExternalRecipients(formState.externalRecipientsText).length;
@@ -1255,6 +1421,17 @@ function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, edit
                   <ResponsiveActionBar justifyContent="flex-start">
                     <Button variant="outlined" startIcon={<PersonSearchRoundedIcon />} onClick={() => setCustomerPickerOpen(true)}>
                       {t('emailCampaigns.audience.selectCustomers', { defaultValue: 'Select customers' })}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      startIcon={<MailOutlineRoundedIcon />}
+                      onClick={handleImportLeadEmails}
+                      disabled={importingExternalRecipients}
+                    >
+                      {importingExternalRecipients
+                        ? t('emailCampaigns.actions.importingExternalRecipients', { defaultValue: 'Importing emails...' })
+                        : t('emailCampaigns.actions.importExternalRecipients', { defaultValue: 'Import leads and demos' })}
                     </Button>
                     <Chip label={t('emailCampaigns.audience.selectedCustomers', { defaultValue: '{{count}} selected', count: selectedCustomerCount })} color="primary" variant="outlined" />
                   </ResponsiveActionBar>
