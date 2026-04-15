@@ -1165,7 +1165,35 @@ function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, edit
     setImportingExternalRecipients(true);
     try {
       const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined;
-      const [potentialResponse, demosResponse, customersPayload] = await Promise.all([
+      const loadAllCustomerEmails = async () => {
+        const size = 1000;
+        let index = 0;
+        let total = 0;
+        const emails = new Set();
+
+        do {
+          const response = await lionTvApi.get('/customers/v1', {
+            headers,
+            params: { index, size },
+            skipAuthRedirect: true
+          });
+          const payload = response?.data?.data ?? response?.data ?? {};
+          const collection = payload.data ?? payload.items ?? payload.content ?? [];
+          total = Number(payload.total ?? 0);
+
+          (Array.isArray(collection) ? collection : []).forEach((item) => {
+            const email = normalizeTextValue(item?.customerMail ?? item?.customer_mail ?? item?.email).toLowerCase();
+            if (email) emails.add(email);
+          });
+
+          index += 1;
+          if (!Array.isArray(collection) || collection.length < size) break;
+        } while (index * size < total);
+
+        return emails;
+      };
+
+      const [potentialResponse, demosResponse, customerEmailSet] = await Promise.all([
         lionTvApi.get('/potential-customers/v1', {
           headers,
           params: { index: 0, size: 5000 },
@@ -1175,15 +1203,8 @@ function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, edit
           headers,
           skipAuthRedirect: true
         }),
-        searchEmailCampaignCustomers({ index: 0, size: 5000 })
+        loadAllCustomerEmails()
       ]);
-
-      const customerCollection = customersPayload?.data || [];
-      const customerEmailSet = new Set(
-        (Array.isArray(customerCollection) ? customerCollection : [])
-          .map((item) => normalizeTextValue(item?.customerMail ?? item?.customer_mail ?? item?.email).toLowerCase())
-          .filter(Boolean)
-      );
 
       const potentialPayload = potentialResponse?.data?.data ?? potentialResponse?.data ?? {};
       const potentialCollection = potentialPayload.data ?? potentialPayload.items ?? potentialPayload.content ?? [];
