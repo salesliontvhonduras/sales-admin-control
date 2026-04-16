@@ -36,6 +36,7 @@ const UserAccessAdmin = Loadable(lazy(() => import('views/security/UserAccessAdm
 const PanelAuthMultiAppAdmin = Loadable(lazy(() => import('views/security/PanelAuthMultiAppAdmin')));
 const BanksCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/BanksCatalogAdmin')));
 const ServicesCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/ServicesCatalogAdmin')));
+const LicenseAppsCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/LicenseAppsCatalogAdmin')));
 const CountryPhoneCodesCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/CountryPhoneCodesCatalogAdmin')));
 const PackagesCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/PackagesCatalogAdmin')));
 
@@ -228,6 +229,10 @@ const MainRoutes = {
             {
               path: '/admin/catalogs/services',
               element: <ServicesCatalogAdmin />
+            },
+            {
+              path: '/admin/catalogs/license-apps',
+              element: <LicenseAppsCatalogAdmin />
             },
             {
               path: '/admin/catalogs/country-phone-codes',

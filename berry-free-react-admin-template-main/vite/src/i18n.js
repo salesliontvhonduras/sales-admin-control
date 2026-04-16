@@ -57,6 +57,7 @@ const resources = {
         catalogsCaption: 'catalogs for system',
         catalogBanks: 'Banks',
         catalogServices: 'Services',
+        catalogLicenseApps: 'License Apps',
         catalogCountryPhoneCodes: 'Country Phone Codes',
         catalogPackages: 'Packages',
         liontvMarketing: 'Marketing',
@@ -746,6 +747,8 @@ const resources = {
           serversLoadError: 'Could not load servers.',
           loadError: 'Could not load licenses.',
           customersLoadError: 'Could not load customers.',
+          appsLoadError: 'Could not load license apps.',
+          noActiveApps: 'No active apps available in the catalog.',
           required: 'Complete required fields.',
           invalidMac: 'Invalid MAC format. Use AA:BB:CC:DD:EE:FF.',
           created: 'License created.',
@@ -784,7 +787,11 @@ const resources = {
           subscriptionHelper: 'Optional relation to one customer subscription.',
           subscriptionEmpty: 'This customer has no subscriptions available.',
           paid: 'Payment status',
-          paidHelper: 'Track if this license was already paid'
+          paidHelper: 'Track if this license was already paid',
+          loadingApps: 'Loading apps...',
+          appHelper: 'Associated application',
+          appEmpty: 'No active apps available. Configure the catalog first.',
+          appLegacyHelper: 'This license uses an inactive app from the catalog. Choose an active app to replace it.'
         },
         server: {
           updated: 'Server updated.',
@@ -2881,6 +2888,18 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             continent: 'Continent'
           }
         },
+        licenseApp: {
+          title: 'License Apps',
+          subtitle: 'Manage the applications available in the licenses form selector.',
+          helperText: 'Only active apps appear when creating a new license.',
+          entityLabel: 'license app',
+          createLabel: 'New license app',
+          searchPlaceholder: 'Search by name or id',
+          fields: {
+            licenseAppName: 'App name',
+            status: 'Status'
+          }
+        },
         package: {
           title: 'Packages',
           subtitle: 'Manage the local package catalog synced and used by the Lion TV panel.',
@@ -3019,6 +3038,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         catalogsCaption: 'Bancos, servicios, países y paquetes',
         catalogBanks: 'Bancos',
         catalogServices: 'Servicios',
+        catalogLicenseApps: 'Apps de Licencias',
         catalogCountryPhoneCodes: 'Códigos telefónicos',
         catalogPackages: 'Paquetes',
         liontvMarketing: 'Marketing',
@@ -3708,6 +3728,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           serversLoadError: 'No se pudieron cargar los servidores.',
           loadError: 'No se pudieron cargar las licencias.',
           customersLoadError: 'No se pudieron cargar los clientes.',
+          appsLoadError: 'No se pudieron cargar las apps de licencias.',
+          noActiveApps: 'No hay apps activas disponibles en el catálogo.',
           required: 'Completa los campos requeridos.',
           invalidMac: 'Formato MAC inválido. Usa AA:BB:CC:DD:EE:FF.',
           created: 'Licencia creada.',
@@ -3746,7 +3768,11 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           subscriptionHelper: 'Relación opcional con una suscripción del cliente.',
           subscriptionEmpty: 'Este cliente no tiene suscripciones disponibles.',
           paid: 'Estado de pago',
-          paidHelper: 'Indica si esta licencia ya fue pagada'
+          paidHelper: 'Indica si esta licencia ya fue pagada',
+          loadingApps: 'Cargando apps...',
+          appHelper: 'Aplicación asociada',
+          appEmpty: 'No hay apps activas disponibles. Configura primero el catálogo.',
+          appLegacyHelper: 'Esta licencia usa una app inactiva del catálogo. Elige una app activa para reemplazarla.'
         },
         server: {
           updated: 'Servidor actualizado.',
@@ -5145,6 +5171,18 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             phoneCode: 'Código',
             country: 'País',
             continent: 'Continente'
+          }
+        },
+        licenseApp: {
+          title: 'Apps de Licencias',
+          subtitle: 'Administra las aplicaciones disponibles en el selector del formulario de licencias.',
+          helperText: 'Solo las apps activas aparecen al crear una licencia nueva.',
+          entityLabel: 'app de licencia',
+          createLabel: 'Nueva app de licencia',
+          searchPlaceholder: 'Buscar por nombre o id',
+          fields: {
+            licenseAppName: 'Nombre de la app',
+            status: 'Estado'
           }
         },
         package: {

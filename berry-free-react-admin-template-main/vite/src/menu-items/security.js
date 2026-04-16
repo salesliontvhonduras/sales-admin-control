@@ -57,6 +57,14 @@ const security = {
           permission: { any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
         },
         {
+          id: 'security-catalogs-license-apps',
+          title: 'menu.catalogLicenseApps',
+          type: 'item',
+          url: '/admin/catalogs/license-apps',
+          breadcrumbs: true,
+          permission: { any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
+        },
+        {
           id: 'security-catalogs-country-phone-codes',
           title: 'menu.catalogCountryPhoneCodes',
           type: 'item',

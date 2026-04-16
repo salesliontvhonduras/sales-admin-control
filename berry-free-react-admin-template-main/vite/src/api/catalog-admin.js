@@ -36,6 +36,22 @@ export async function deleteService(id, config = {}) {
   return unwrap(await catalogsApi.delete(`/services/v1/${id}`, config));
 }
 
+export async function listLicenseApps(config = {}) {
+  return unwrap(await catalogsApi.get('/license-apps/v1', config));
+}
+
+export async function createLicenseApp(payload, config = {}) {
+  return unwrap(await catalogsApi.post('/license-apps/v1', payload, config));
+}
+
+export async function updateLicenseApp(id, payload, config = {}) {
+  return unwrap(await catalogsApi.put(`/license-apps/v1/${id}`, payload, config));
+}
+
+export async function deleteLicenseApp(id, config = {}) {
+  return unwrap(await catalogsApi.delete(`/license-apps/v1/${id}`, config));
+}
+
 export async function listCountryPhoneCodes(config = {}) {
   try {
     return unwrap(await catalogsApi.get('/countries/v1', config));

@@ -74,6 +74,7 @@ import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
+import { listLicenseApps } from 'api/catalog-admin';
 import { lionTvApi } from 'utils/api';
 
 function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onHistory, onDelete, t }) {
@@ -160,7 +161,6 @@ function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onHi
 }
 
 const STATUS_OPTIONS = ['ACTIVE', 'INACTIVE', 'EXPIRED', 'AVAILABLE', 'EMERGENCY', 'NOT_TRANSFERRABLE'];
-const APPS = ['Vivo Player', 'Smart One', 'IboPro Player', 'Bob Player', '9xtream4k'];
 const LICENSE_PERIOD = ['ANNUAL', 'LIFETIME'];
 const TYPE_LICENSE = ['PRIMARY', 'USED'];
 const PAYMENT_FILTER_OPTIONS = ['PAID', 'PENDING'];
@@ -187,6 +187,23 @@ function parsePaidValue(value) {
   if (value === true || value === 1 || value === '1') return true;
   if (typeof value === 'string' && value.trim().toLowerCase() === 'true') return true;
   return false;
+}
+
+function parseCatalogStatus(value) {
+  if (value === true || value === 1 || value === '1') return true;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return normalized === 'true' || normalized === '1';
+  }
+  return false;
+}
+
+function normalizeLicenseApp(item = {}) {
+  return {
+    licenseAppId: item.licenseAppId ?? item.license_app_id ?? item.id ?? null,
+    licenseAppName: item.licenseAppName ?? item.license_app_name ?? item.name ?? '',
+    status: parseCatalogStatus(item.status)
+  };
 }
 
 function idsMatch(left, right) {
@@ -378,6 +395,8 @@ export default function LicensesLionTv() {
   const [subscriptions, setSubscriptions] = useState([]);
   const [lines, setLines] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(false);
+  const [licenseApps, setLicenseApps] = useState([]);
+  const [licenseAppsLoading, setLicenseAppsLoading] = useState(false);
 
   const [form, setForm] = useState({
     licenseId: null,
@@ -387,7 +406,7 @@ export default function LicensesLionTv() {
     customerId: '',
     subscriptionId: '',
     status: 'ACTIVE',
-    app: 'Vivo Player',
+    app: '',
     price: '',
     isPaid: false,
     expireAt: '',
@@ -569,13 +588,33 @@ export default function LicensesLionTv() {
     }
   }, [accessToken, enqueueSnackbar, t]);
 
+  const loadLicenseApps = useCallback(async () => {
+    if (!accessToken) return;
+    setLicenseAppsLoading(true);
+    try {
+      const response = await listLicenseApps({
+        headers: { Authorization: `Bearer ${accessToken}` },
+        skipAuthRedirect: true
+      });
+      const items = Array.isArray(response) ? response : [];
+      setLicenseApps(items.map(normalizeLicenseApp));
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(t('licenses.messages.appsLoadError', 'Could not load license apps.'), { variant: 'warning' });
+      }
+    } finally {
+      setLicenseAppsLoading(false);
+    }
+  }, [accessToken, enqueueSnackbar, t]);
+
   useEffect(() => {
     loadLicenses();
     loadCustomers();
     loadSubscriptions();
     loadLines();
     loadServers();
-  }, [loadLicenses, loadCustomers, loadSubscriptions, loadLines, loadServers, refreshKey]);
+    loadLicenseApps();
+  }, [loadLicenses, loadCustomers, loadSubscriptions, loadLines, loadServers, loadLicenseApps, refreshKey]);
 
   const customerNameMap = useMemo(() => {
     const map = {};
@@ -604,6 +643,29 @@ export default function LicensesLionTv() {
         .sort((a, b) => Number(b.id ?? 0) - Number(a.id ?? 0)),
     [form.customerId, subscriptions]
   );
+
+  const activeLicenseAppOptions = useMemo(
+    () =>
+      licenseApps
+        .filter((item) => item.status)
+        .map((item) => ({ value: item.licenseAppName, label: item.licenseAppName })),
+    [licenseApps]
+  );
+
+  const defaultLicenseApp = activeLicenseAppOptions[0]?.value ?? '';
+
+  const formHasLegacyApp = useMemo(
+    () => Boolean(form.licenseId && form.app && !activeLicenseAppOptions.some((option) => option.value === form.app)),
+    [activeLicenseAppOptions, form.app, form.licenseId]
+  );
+
+  const formLicenseAppOptions = useMemo(() => {
+    if (!formHasLegacyApp) {
+      return activeLicenseAppOptions;
+    }
+
+    return [{ value: form.app, label: `${form.app} (legacy)` }, ...activeLicenseAppOptions];
+  }, [activeLicenseAppOptions, form.app, formHasLegacyApp]);
 
   // Nota: busca en todas las licencias cargadas, incluye filtro por status y pago
   const filteredRows = useMemo(() => {
@@ -653,7 +715,7 @@ export default function LicensesLionTv() {
     return '';
   };
 
-  const resetForm = () =>
+  const resetForm = useCallback(() =>
     setForm({
       licenseId: null,
       macAddress: '',
@@ -662,13 +724,20 @@ export default function LicensesLionTv() {
       customerId: '',
       subscriptionId: '',
       status: 'ACTIVE',
-      app: 'Vivo Player',
+      app: defaultLicenseApp,
       price: 125,
       isPaid: false,
       expireAt: computeExpireDate('ANNUAL'),
       licensePeriod: 'ANNUAL',
       typeLicense: 'PRIMARY'
-    });
+    }),
+  [defaultLicenseApp]);
+
+  useEffect(() => {
+    if (openModal && !form.licenseId && !form.app && defaultLicenseApp) {
+      setForm((prev) => ({ ...prev, app: defaultLicenseApp }));
+    }
+  }, [defaultLicenseApp, form.app, form.licenseId, openModal]);
 
   const handleFormChange = (field) => (e) => {
     const value = e.target.value;
@@ -718,6 +787,10 @@ export default function LicensesLionTv() {
   const handleDelete = (row) => setOpenDelete({ open: true, row });
 
   const handleSave = async () => {
+    if (!form.licenseId && !activeLicenseAppOptions.length) {
+      enqueueSnackbar(t('licenses.messages.noActiveApps', 'No active apps available in the catalog.'), { variant: 'warning' });
+      return;
+    }
     if (!form.macAddress || !form.name || !form.customerId || !form.status || !form.app || !form.licensePeriod || !form.typeLicense) {
       enqueueSnackbar(t('licenses.messages.required'), { variant: 'warning' });
       return;
@@ -1664,7 +1737,7 @@ export default function LicensesLionTv() {
                 </Grid>
 
                 <Grid item xs={12} sm={3}>
-                  <FormControl fullWidth required sx={fieldSx}>
+                  <FormControl fullWidth required sx={fieldSx} disabled={licenseAppsLoading || (!activeLicenseAppOptions.length && !formHasLegacyApp)}>
                     <InputLabel>{t('licenses.form.app', 'App')}</InputLabel>
                     <Select
                       value={form.app}
@@ -1676,13 +1749,26 @@ export default function LicensesLionTv() {
                         </InputAdornment>
                       }
                     >
-                      {APPS.map((s) => (
-                        <MenuItem key={s} value={s}>
-                          {s}
+                      {!formHasLegacyApp ? (
+                        <MenuItem value="">
+                          <em>{t('licenses.form.select', 'Select')}</em>
+                        </MenuItem>
+                      ) : null}
+                      {formLicenseAppOptions.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
                         </MenuItem>
                       ))}
                     </Select>
-                    <FormHelperText>{t('licenses.form.appHelper', 'Associated application')}</FormHelperText>
+                    <FormHelperText>
+                      {licenseAppsLoading
+                        ? t('licenses.form.loadingApps', 'Loading apps...')
+                        : !activeLicenseAppOptions.length && !formHasLegacyApp
+                          ? t('licenses.form.appEmpty', 'No active apps available. Configure the catalog first.')
+                          : formHasLegacyApp
+                            ? t('licenses.form.appLegacyHelper', 'This license uses an inactive app from the catalog. Choose an active app to replace it.')
+                            : t('licenses.form.appHelper', 'Associated application')}
+                    </FormHelperText>
                   </FormControl>
                 </Grid>
 
@@ -1781,7 +1867,7 @@ export default function LicensesLionTv() {
           <Button
             variant="contained"
             onClick={handleSave}
-            disabled={sending}
+            disabled={sending || (!form.licenseId && !activeLicenseAppOptions.length)}
             startIcon={<RocketLaunchIcon />}
             sx={{ borderRadius: 2, boxShadow: '0 12px 28px rgba(0,0,0,0.16)', px: 2.4 }}
           >
