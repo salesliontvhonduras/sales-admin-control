@@ -198,10 +198,22 @@ function parseCatalogStatus(value) {
   return false;
 }
 
+const LEGACY_LICENSE_APP_LABELS = Object.freeze({
+  VIVO_PLAYER: 'Vivo Player',
+  SMART_ONE: 'Smart One',
+  IBO_PRO: 'IboPro Player',
+  BOB_PLAYER: 'Bob Player',
+  NINEXTREAM: '9xtream4k'
+});
+
 function normalizeLicenseApp(item = {}) {
+  const licenseAppName = item.licenseAppName ?? item.license_app_name ?? item.name ?? '';
+  const licenseAppCode = item.licenseAppCode ?? item.license_app_code ?? item.code ?? licenseAppName;
+
   return {
     licenseAppId: item.licenseAppId ?? item.license_app_id ?? item.id ?? null,
-    licenseAppName: item.licenseAppName ?? item.license_app_name ?? item.name ?? '',
+    licenseAppCode: typeof licenseAppCode === 'string' ? licenseAppCode.trim() : licenseAppCode ?? '',
+    licenseAppName: typeof licenseAppName === 'string' ? licenseAppName.trim() : '',
     status: parseCatalogStatus(item.status)
   };
 }
@@ -644,11 +656,24 @@ export default function LicensesLionTv() {
     [form.customerId, subscriptions]
   );
 
+  const licenseAppLabelMap = useMemo(
+    () => new Map(licenseApps.filter((item) => item.licenseAppCode).map((item) => [item.licenseAppCode, item.licenseAppName])),
+    [licenseApps]
+  );
+
+  const getLicenseAppLabel = useCallback(
+    (value) => {
+      if (!value) return '-';
+      return licenseAppLabelMap.get(value) || LEGACY_LICENSE_APP_LABELS[value] || value;
+    },
+    [licenseAppLabelMap]
+  );
+
   const activeLicenseAppOptions = useMemo(
     () =>
       licenseApps
-        .filter((item) => item.status)
-        .map((item) => ({ value: item.licenseAppName, label: item.licenseAppName })),
+        .filter((item) => item.status && item.licenseAppCode)
+        .map((item) => ({ value: item.licenseAppCode, label: item.licenseAppName })),
     [licenseApps]
   );
 
@@ -664,8 +689,8 @@ export default function LicensesLionTv() {
       return activeLicenseAppOptions;
     }
 
-    return [{ value: form.app, label: `${form.app} (legacy)` }, ...activeLicenseAppOptions];
-  }, [activeLicenseAppOptions, form.app, formHasLegacyApp]);
+    return [{ value: form.app, label: `${getLicenseAppLabel(form.app)} (legacy)` }, ...activeLicenseAppOptions];
+  }, [activeLicenseAppOptions, form.app, formHasLegacyApp, getLicenseAppLabel]);
 
   // Nota: busca en todas las licencias cargadas, incluye filtro por status y pago
   const filteredRows = useMemo(() => {
@@ -679,11 +704,13 @@ export default function LicensesLionTv() {
       const paidLabel = row.isPaid ? 'paid pagada' : 'pending pendiente no pagada';
       const subscription = row.subscriptionId ? subscriptionMap[String(row.subscriptionId)] : null;
       const subscriptionSearch = `${row.subscriptionId || ''} ${subscription?.lineId || ''} ${subscription?.lineUsername || ''} ${subscription?.status || ''}`.toLowerCase();
+      const licenseAppLabel = getLicenseAppLabel(row.app).toLowerCase();
       return (
         (row.macAddress || '').toLowerCase().includes(term) ||
         (row.name || '').toLowerCase().includes(term) ||
         (row.deviceKey || '').toLowerCase().includes(term) ||
         (row.app || '').toLowerCase().includes(term) ||
+        licenseAppLabel.includes(term) ||
         (row.status || '').toLowerCase().includes(term) ||
         (row.typeLicense || '').toLowerCase().includes(term) ||
         paidLabel.includes(term) ||
@@ -691,7 +718,7 @@ export default function LicensesLionTv() {
         (row.customerName || customerNameMap[row.customerId] || '').toLowerCase().includes(term)
       );
     });
-  }, [rows, search, customerNameMap, statusFilter, paymentFilter, customerFilter, subscriptionMap]);
+  }, [rows, search, customerNameMap, statusFilter, paymentFilter, customerFilter, subscriptionMap, getLicenseAppLabel]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -1245,7 +1272,7 @@ export default function LicensesLionTv() {
                     chips={[
                       <LicenseStatusChip key="status" status={row.status} />,
                       <LicensePaidChip key="paid" isPaid={row.isPaid} t={t} />,
-                      <Chip key="app" size="small" variant="outlined" label={row.app || '-'} />
+                      <Chip key="app" size="small" variant="outlined" label={getLicenseAppLabel(row.app)} />
                     ]}
                     actions={
                       <ResponsiveActionBar>
@@ -1396,7 +1423,7 @@ export default function LicensesLionTv() {
                         <Chip
                           size="small"
                           icon={<AppsIcon fontSize="small" />}
-                          label={row.app || '-'}
+                          label={getLicenseAppLabel(row.app)}
                           sx={(theme) => ({
                             bgcolor: theme.palette.info.lighter,
                             color: theme.palette.info.darker,

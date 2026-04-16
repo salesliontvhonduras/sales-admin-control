@@ -2890,12 +2890,14 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         },
         licenseApp: {
           title: 'License Apps',
-          subtitle: 'Manage the applications available in the licenses form selector.',
-          helperText: 'Only active apps appear when creating a new license.',
+          subtitle: 'Manage the canonical applications available in the licenses form selector.',
+          helperText: 'Only active apps appear when creating a new license. The code is persisted in licenses and cannot be changed after creation.',
           entityLabel: 'license app',
           createLabel: 'New license app',
-          searchPlaceholder: 'Search by name or id',
+          searchPlaceholder: 'Search by code, name or id',
           fields: {
+            licenseAppCode: 'App code',
+            licenseAppCodeHelper: 'Canonical code in UPPER_SNAKE_CASE. Example: VIVO_PLAYER. This value is immutable after creation.',
             licenseAppName: 'App name',
             status: 'Status'
           }
@@ -5175,12 +5177,14 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         },
         licenseApp: {
           title: 'Apps de Licencias',
-          subtitle: 'Administra las aplicaciones disponibles en el selector del formulario de licencias.',
-          helperText: 'Solo las apps activas aparecen al crear una licencia nueva.',
+          subtitle: 'Administra las aplicaciones canónicas disponibles en el selector del formulario de licencias.',
+          helperText: 'Solo las apps activas aparecen al crear una licencia nueva. El código se persiste en licencias y no puede cambiarse después de crear la app.',
           entityLabel: 'app de licencia',
           createLabel: 'Nueva app de licencia',
-          searchPlaceholder: 'Buscar por nombre o id',
+          searchPlaceholder: 'Buscar por código, nombre o id',
           fields: {
+            licenseAppCode: 'Código de la app',
+            licenseAppCodeHelper: 'Código canónico en UPPER_SNAKE_CASE. Ejemplo: VIVO_PLAYER. Este valor es inmutable después de crear la app.',
             licenseAppName: 'Nombre de la app',
             status: 'Estado'
           }

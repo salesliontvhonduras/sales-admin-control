@@ -219,7 +219,10 @@ export default function CatalogCrudPage({
   };
 
   const handleChange = (field, value) => {
-    setFormState((current) => ({ ...current, [field.name]: value }));
+    setFormState((current) => ({
+      ...current,
+      [field.name]: typeof field.normalizeValue === 'function' ? field.normalizeValue(value, current, dialogState.row) : value
+    }));
   };
 
   const handleSubmit = async () => {

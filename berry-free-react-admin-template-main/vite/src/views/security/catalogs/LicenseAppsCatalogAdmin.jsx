@@ -4,6 +4,14 @@ import { useTranslation } from 'react-i18next';
 import CatalogCrudPage from './CatalogCrudPage';
 import { createLicenseApp, deleteLicenseApp, listLicenseApps, updateLicenseApp } from 'api/catalog-admin';
 
+function normalizeLicenseAppCode(value) {
+  return String(value ?? '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9_]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+/, '');
+}
+
 export default function LicenseAppsCatalogAdmin() {
   const { t } = useTranslation();
 
@@ -18,15 +26,26 @@ export default function LicenseAppsCatalogAdmin() {
       api={{ list: listLicenseApps, create: createLicenseApp, update: updateLicenseApp, remove: deleteLicenseApp }}
       idField="licenseAppId"
       titleField="licenseAppName"
-      subtitleField={(row) => `${t('common.id')} ${row.licenseAppId}`}
-      searchFields={['licenseAppName', 'licenseAppId']}
+      subtitleField={(row) => `${t('common.id')} ${row.licenseAppId} · ${row.licenseAppCode || '-'}`}
+      searchFields={['licenseAppCode', 'licenseAppName', 'licenseAppId']}
       statusField="status"
       fields={[
+        {
+          name: 'licenseAppCode',
+          label: t('catalogAdmin.licenseApp.fields.licenseAppCode'),
+          type: 'text',
+          required: true,
+          fullWidth: true,
+          disabledOnEdit: true,
+          helperText: t('catalogAdmin.licenseApp.fields.licenseAppCodeHelper'),
+          normalizeValue: normalizeLicenseAppCode
+        },
         { name: 'licenseAppName', label: t('catalogAdmin.licenseApp.fields.licenseAppName'), type: 'text', required: true, fullWidth: true },
         { name: 'status', label: t('catalogAdmin.licenseApp.fields.status'), type: 'switch', defaultValue: true }
       ]}
       columns={[
         { key: 'licenseAppId', label: t('common.id') },
+        { key: 'licenseAppCode', label: t('catalogAdmin.licenseApp.fields.licenseAppCode') },
         { key: 'licenseAppName', label: t('catalogAdmin.licenseApp.fields.licenseAppName') },
         {
           key: 'status',
@@ -38,6 +57,7 @@ export default function LicenseAppsCatalogAdmin() {
       ]}
       summaryFields={[
         { label: t('common.id'), key: 'licenseAppId' },
+        { label: t('catalogAdmin.licenseApp.fields.licenseAppCode'), key: 'licenseAppCode' },
         { label: t('common.status'), render: (row) => (row.status ? t('common.active') : t('common.inactive')) }
       ]}
       metricCards={(rows) => {
