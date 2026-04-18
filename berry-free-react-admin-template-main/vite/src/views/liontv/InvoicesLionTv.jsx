@@ -74,6 +74,7 @@ import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi, catalogsApi } from 'utils/api';
+import { getLoyaltyConfig, getLoyaltyCustomerBalance } from 'api/liontv-engagement';
 
 const statusColors = {
   PAID: 'success',
@@ -88,14 +89,16 @@ const paymentMethodIcons = {
   Paypal: PaidOutlinedIcon,
   Ecommerce: ShoppingCartIcon,
   'Link pago': LinkIcon,
-  'Debito Automatico': AutorenewIcon
+  'Debito Automatico': AutorenewIcon,
+  'Loyalty Points': AutoAwesomeIcon
 };
 const paymentMethodColors = {
   'Bank Transfer': 'info.main',
   Paypal: 'success.main',
   Ecommerce: 'secondary.main',
   'Link pago': 'info.main',
-  'Debito Automatico': 'warning.main'
+  'Debito Automatico': 'warning.main',
+  'Loyalty Points': 'warning.main'
 };
 
 const fieldSx = {
@@ -249,6 +252,8 @@ function normalizeInvoice(item = {}) {
     paymentDate: item.paymentDate ?? null,
     amountPaid: item.amountPaid ?? 0,
     amountDiscount: item.amountDiscount ?? 0,
+    loyaltyPointsUsed: item.loyaltyPointsUsed ?? item.loyalty_points_used ?? 0,
+    loyaltyAmountRedeemed: item.loyaltyAmountRedeemed ?? item.loyalty_amount_redeemed ?? 0,
     status: (item.status ?? '').toUpperCase(),
     packageId: item.packageId ?? null,
     customerId: item.customerId ?? null,
@@ -272,12 +277,17 @@ const createDefaultForm = () => {
     paymentDate: todayStr,
     amountPaid: '',
     amountDiscount: '',
+    loyaltyPointsUsed: '',
+    loyaltyAmountRedeemed: 0,
     status: 'PENDING',
     packageId: '',
     customerId: '',
     paymentMethod: '',
     bankId: '',
-    notes: ''
+    notes: '',
+    originalStatus: '',
+    originalCustomerId: null,
+    originalLoyaltyPointsUsed: 0
   };
 };
 
@@ -310,6 +320,10 @@ export default function InvoicesLionTv() {
   const [banksLoading, setBanksLoading] = useState(false);
   const [services, setServices] = useState([]);
   const [servicesLoading, setServicesLoading] = useState(false);
+  const [loyaltyConfig, setLoyaltyConfig] = useState(null);
+  const [loyaltyConfigLoading, setLoyaltyConfigLoading] = useState(false);
+  const [loyaltyByCustomerId, setLoyaltyByCustomerId] = useState({});
+  const [loyaltyCustomerLoading, setLoyaltyCustomerLoading] = useState(false);
 
   const statusOptions = useMemo(() => ['PAID', 'PENDING'], []);
 
@@ -331,6 +345,8 @@ export default function InvoicesLionTv() {
           return t('invoices.form.paymentMethods.link');
         case 'Debito Automatico':
           return t('invoices.form.paymentMethods.debit');
+        case 'Loyalty Points':
+          return t('invoices.form.paymentMethods.loyalty', 'Loyalty points');
         default:
           return value || t('invoices.form.placeholderSelect');
       }
@@ -344,7 +360,8 @@ export default function InvoicesLionTv() {
       { value: 'Paypal', label: t('invoices.form.paymentMethods.paypal') },
       { value: 'Ecommerce', label: t('invoices.form.paymentMethods.ecommerce') },
       { value: 'Link pago', label: t('invoices.form.paymentMethods.link') },
-      { value: 'Debito Automatico', label: t('invoices.form.paymentMethods.debit') }
+      { value: 'Debito Automatico', label: t('invoices.form.paymentMethods.debit') },
+      { value: 'Loyalty Points', label: t('invoices.form.paymentMethods.loyalty', 'Loyalty points') }
     ],
     [t]
   );
@@ -463,13 +480,61 @@ export default function InvoicesLionTv() {
     }
   }, [enqueueSnackbar, t]);
 
+  const loadLoyaltyConfig = useCallback(async () => {
+    if (!accessToken) return;
+    setLoyaltyConfigLoading(true);
+    try {
+      const config = await getLoyaltyConfig();
+      setLoyaltyConfig(config || null);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(t('invoices.form.loyalty.configError', 'No se pudo cargar la configuración de lealtad.'), {
+          variant: 'warning'
+        });
+      }
+    } finally {
+      setLoyaltyConfigLoading(false);
+    }
+  }, [accessToken, enqueueSnackbar, t]);
+
+  const loadCustomerLoyalty = useCallback(
+    async (customerId) => {
+      const safeId = Number(customerId);
+      if (!accessToken || !safeId) return;
+      if (loyaltyByCustomerId[safeId]) return;
+      setLoyaltyCustomerLoading(true);
+      try {
+        const summary = await getLoyaltyCustomerBalance(safeId);
+        setLoyaltyByCustomerId((prev) => ({
+          ...prev,
+          [safeId]: summary || {
+            customerId: safeId,
+            availablePoints: 0,
+            lifetimeEarned: 0,
+            lifetimeAdjusted: 0
+          }
+        }));
+      } catch (err) {
+        if (!handleUnauthorized(err)) {
+          enqueueSnackbar(t('invoices.form.loyalty.balanceError', 'No se pudo cargar el saldo de puntos del cliente.'), {
+            variant: 'warning'
+          });
+        }
+      } finally {
+        setLoyaltyCustomerLoading(false);
+      }
+    },
+    [accessToken, enqueueSnackbar, handleUnauthorized, loyaltyByCustomerId, t]
+  );
+
   useEffect(() => {
     loadInvoices();
     loadCustomers();
     loadPackages();
     loadBanks();
     loadServices();
-  }, [loadInvoices, loadCustomers, loadPackages, loadBanks, loadServices, refreshKey]);
+    loadLoyaltyConfig();
+  }, [loadInvoices, loadCustomers, loadPackages, loadBanks, loadServices, loadLoyaltyConfig, refreshKey]);
 
   useEffect(() => {
     if (!customerNameMap || Object.keys(customerNameMap).length === 0) return;
@@ -484,6 +549,47 @@ export default function InvoicesLionTv() {
     });
     if (changed) setRows(updated);
   }, [customerNameMap, rows]);
+
+  useEffect(() => {
+    if (!openModal || !form.customerId) return;
+    loadCustomerLoyalty(form.customerId);
+  }, [openModal, form.customerId, loadCustomerLoyalty]);
+
+  const selectedCustomerLoyalty = useMemo(() => {
+    const customerId = Number(form.customerId || 0);
+    return customerId ? loyaltyByCustomerId[customerId] || null : null;
+  }, [form.customerId, loyaltyByCustomerId]);
+
+  const loyaltyPointsRequested = useMemo(() => {
+    const parsed = Number(form.loyaltyPointsUsed || 0);
+    if (!Number.isFinite(parsed) || parsed <= 0) return 0;
+    return Math.floor(parsed);
+  }, [form.loyaltyPointsUsed]);
+
+  const selectedCustomerAvailablePoints = Number(selectedCustomerLoyalty?.availablePoints || 0);
+  const effectiveAvailablePoints =
+    selectedCustomerAvailablePoints +
+    (form.invoiceId && form.originalStatus === 'PAID' && Number(form.originalCustomerId) === Number(form.customerId)
+      ? Number(form.originalLoyaltyPointsUsed || 0)
+      : 0);
+
+  const loyaltyPreviewAmount = useMemo(() => {
+    if (!loyaltyConfig?.active || loyaltyPointsRequested <= 0) return 0;
+    const pointsPerUnit = Math.max(Number(loyaltyConfig?.pointsPerUnit || 1), 1);
+    const amountUnit = Number(loyaltyConfig?.amountUnit || 10);
+    return Number(((loyaltyPointsRequested * amountUnit) / pointsPerUnit).toFixed(2));
+  }, [loyaltyConfig, loyaltyPointsRequested]);
+
+  const invoiceNetAfterLoyalty = useMemo(() => {
+    const gross = Number(form.amountPaid || 0);
+    const discount = Number(form.amountDiscount || 0);
+    return Number((gross - discount - loyaltyPreviewAmount).toFixed(2));
+  }, [form.amountPaid, form.amountDiscount, loyaltyPreviewAmount]);
+
+  const loyaltyPointsExceeded = loyaltyPointsRequested > effectiveAvailablePoints;
+  const loyaltyProgramInactive = Boolean(form.customerId) && !loyaltyConfigLoading && !loyaltyConfig?.active;
+  const loyaltyAmountExceeded = invoiceNetAfterLoyalty < 0;
+
   const filteredRows = useMemo(() => {
     if (!search && !statusFilter) return rows;
     const term = search.toLowerCase();
@@ -528,6 +634,20 @@ export default function InvoicesLionTv() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleCustomerChange = async (event) => {
+    const value = event.target.value;
+    setForm((prev) => ({
+      ...prev,
+      customerId: value,
+      loyaltyPointsUsed:
+        Number(prev.originalCustomerId) === Number(value) ? prev.loyaltyPointsUsed : '',
+      loyaltyAmountRedeemed: 0
+    }));
+    if (value) {
+      await loadCustomerLoyalty(value);
+    }
+  };
+
   const handleEdit = (row) => {
     setForm({
       invoiceId: row.invoiceId,
@@ -535,14 +655,22 @@ export default function InvoicesLionTv() {
       paymentDate: formatDateInput(row.paymentDate),
       amountPaid: row.amountPaid ?? '',
       amountDiscount: row.amountDiscount ?? '',
+      loyaltyPointsUsed: row.loyaltyPointsUsed ?? '',
+      loyaltyAmountRedeemed: row.loyaltyAmountRedeemed ?? 0,
       status: row.status ? row.status.toUpperCase() : 'PENDING',
       packageId: row.packageId ?? '',
       customerId: row.customerId ?? '',
       paymentMethod: row.paymentMethod ?? '',
       bankId: row.bankId ?? '',
-      notes: row.notes ?? ''
+      notes: row.notes ?? '',
+      originalStatus: row.status ? row.status.toUpperCase() : 'PENDING',
+      originalCustomerId: row.customerId ?? null,
+      originalLoyaltyPointsUsed: Number(row.loyaltyPointsUsed ?? 0)
     });
     setOpenModal(true);
+    if (row.customerId) {
+      loadCustomerLoyalty(row.customerId);
+    }
   };
 
   const handleDelete = (row) => {
@@ -589,11 +717,33 @@ export default function InvoicesLionTv() {
       return;
     }
 
+    if (loyaltyProgramInactive && loyaltyPointsRequested > 0) {
+      enqueueSnackbar(t('invoices.messages.loyaltyInactive', 'El programa de puntos está inactivo para esta cuenta.'), {
+        variant: 'warning'
+      });
+      return;
+    }
+
+    if (loyaltyPointsExceeded) {
+      enqueueSnackbar(t('invoices.messages.loyaltyExceeded', 'El cliente no tiene suficientes puntos disponibles.'), {
+        variant: 'warning'
+      });
+      return;
+    }
+
+    if (loyaltyAmountExceeded) {
+      enqueueSnackbar(t('invoices.messages.loyaltyAmountExceeded', 'Los puntos exceden el monto neto de la factura.'), {
+        variant: 'warning'
+      });
+      return;
+    }
+
     const payload = {
       serviceId: Number(form.serviceId),
       paymentDate: formatDateTimePayload(form.paymentDate),
       amountPaid: form.amountPaid ? Number(form.amountPaid) : 0,
       amountDiscount: form.amountDiscount ? Number(form.amountDiscount) : 0,
+      loyaltyPointsUsed: loyaltyPointsRequested,
       status: form.status || 'Pending',
       packageId: Number(form.packageId),
       customerId: Number(form.customerId),
@@ -674,7 +824,10 @@ export default function InvoicesLionTv() {
             <Button
               variant="contained"
               startIcon={<AddCircleOutlineIcon />}
-              onClick={() => setOpenModal(true)}
+              onClick={() => {
+                resetForm();
+                setOpenModal(true);
+              }}
               sx={{
                 borderRadius: 2,
                 textTransform: 'none',
@@ -810,7 +963,17 @@ export default function InvoicesLionTv() {
                         size="small"
                         variant="outlined"
                         label={`L ${Number(row.amountPaid || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-                      />
+                      />,
+                      Number(row.loyaltyPointsUsed || 0) > 0 ? (
+                        <Chip
+                          key="loyalty"
+                          size="small"
+                          color="warning"
+                          variant="outlined"
+                          icon={<AutoAwesomeIcon fontSize="small" />}
+                          label={`${Number(row.loyaltyPointsUsed || 0)} pts`}
+                        />
+                      ) : null
                     ]}
                     actions={
                       <ResponsiveActionBar>
@@ -835,6 +998,15 @@ export default function InvoicesLionTv() {
                           label: t('invoices.headers.discount'),
                           value: `L ${Number(row.amountDiscount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
                         },
+                        {
+                          label: t('invoices.headers.loyalty', 'Loyalty'),
+                          value:
+                            Number(row.loyaltyPointsUsed || 0) > 0
+                              ? `${Number(row.loyaltyPointsUsed || 0)} pts · L ${Number(row.loyaltyAmountRedeemed || 0).toLocaleString(undefined, {
+                                  minimumFractionDigits: 2
+                                })}`
+                              : '-'
+                        },
                         { label: t('invoices.headers.paymentDate'), value: formatDate(row.paymentDate) }
                       ]}
                     />
@@ -851,7 +1023,15 @@ export default function InvoicesLionTv() {
                   <Typography variant="body2" color="text.secondary">
                     {t('invoices.table.emptyText')}
                   </Typography>
-                  <Button variant="contained" onClick={() => setOpenModal(true)} size="small" fullWidth>
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      resetForm();
+                      setOpenModal(true);
+                    }}
+                    size="small"
+                    fullWidth
+                  >
                     {t('actions.newInvoice')}
                   </Button>
                 </Stack>
@@ -886,6 +1066,7 @@ export default function InvoicesLionTv() {
                     <TableCell>{t('invoices.headers.status')}</TableCell>
                     <TableCell>{t('invoices.headers.payment')}</TableCell>
                     <TableCell>{t('invoices.headers.discount')}</TableCell>
+                    <TableCell>{t('invoices.headers.loyalty', 'Loyalty')}</TableCell>
                     <TableCell>{t('invoices.headers.paymentDate')}</TableCell>
                     <TableCell>{t('invoices.headers.actions')}</TableCell>
                   </TableRow>
@@ -990,6 +1171,26 @@ export default function InvoicesLionTv() {
                           }}
                         />
                       </TableCell>
+                      <TableCell>
+                        {Number(row.loyaltyPointsUsed || 0) > 0 ? (
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            icon={<AutoAwesomeIcon fontSize="small" color="warning" />}
+                            label={`${Number(row.loyaltyPointsUsed || 0)} pts · L ${Number(row.loyaltyAmountRedeemed || 0).toLocaleString(undefined, {
+                              minimumFractionDigits: 2
+                            })}`}
+                            sx={{
+                              fontWeight: 600,
+                              borderColor: 'divider',
+                              bgcolor: 'background.paper',
+                              color: 'text.primary'
+                            }}
+                          />
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
                       <TableCell>{formatDate(row.paymentDate)}</TableCell>
                       <TableCell align="right">
                         <RowActions
@@ -1004,7 +1205,7 @@ export default function InvoicesLionTv() {
                   ))}
                   {!loading && filteredRows.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
+                      <TableCell colSpan={12} align="center" sx={{ py: 6 }}>
                         <Stack spacing={1} alignItems="center">
                           <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
                             <ReceiptLongIcon />
@@ -1013,7 +1214,14 @@ export default function InvoicesLionTv() {
                           <Typography variant="body2" color="text.secondary">
                             {t('invoices.table.emptyText')}
                           </Typography>
-                          <Button variant="contained" onClick={() => setOpenModal(true)} size="small">
+                          <Button
+                            variant="contained"
+                            onClick={() => {
+                              resetForm();
+                              setOpenModal(true);
+                            }}
+                            size="small"
+                          >
                             {t('actions.newInvoice')}
                           </Button>
                         </Stack>
@@ -1022,7 +1230,7 @@ export default function InvoicesLionTv() {
                   )}
                   {loading && (
                     <TableRow>
-                      <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
+                      <TableCell colSpan={12} align="center" sx={{ py: 4 }}>
                         <Stack spacing={1} alignItems="center">
                           <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
                             <RefreshIcon />
@@ -1054,7 +1262,10 @@ export default function InvoicesLionTv() {
 
       <Dialog
         open={openModal}
-        onClose={() => setOpenModal(false)}
+        onClose={() => {
+          setOpenModal(false);
+          resetForm();
+        }}
         fullWidth
         maxWidth="md"
         fullScreen={isMobile}
@@ -1072,7 +1283,10 @@ export default function InvoicesLionTv() {
         }}
       >
         <DialogTitleWithClose
-          onClose={() => setOpenModal(false)}
+          onClose={() => {
+            setOpenModal(false);
+            resetForm();
+          }}
           sx={(theme) => ({
             position: 'relative',
             pb: 1,
@@ -1172,7 +1386,7 @@ export default function InvoicesLionTv() {
                     <Select
                       value={form.customerId}
                       label={t('invoices.form.customer')}
-                      onChange={handleFormChange('customerId')}
+                      onChange={handleCustomerChange}
                       startAdornment={
                         <InputAdornment position="start">
                           <PersonAddAlt1Icon fontSize="small" color="secondary" />
@@ -1340,6 +1554,124 @@ export default function InvoicesLionTv() {
                       )
                     }}
                   />
+                </Grid>
+              </Grid>
+            </FormSection>
+
+            <FormSection title={t('invoices.form.sections.loyalty', 'Loyalty')} helper={t('invoices.form.sections.loyaltyHelper', 'Consulta el saldo y aplica puntos en la misma factura.')}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <Box
+                    sx={(theme) => ({
+                      ...sectionSx,
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      gap: 0.75,
+                      bgcolor: theme.palette.warning.lighter,
+                      borderColor: theme.palette.warning.light
+                    })}
+                  >
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <AutoAwesomeIcon color="warning" fontSize="small" />
+                      <Typography variant="subtitle2">{t('invoices.form.loyalty.availablePoints', 'Available points')}</Typography>
+                    </Stack>
+                    <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                      {form.customerId ? Number(selectedCustomerAvailablePoints || 0).toLocaleString() : '--'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {loyaltyConfig?.active
+                        ? t('invoices.form.loyalty.conversion', '{{points}} punto(s) = L {{amount}}', {
+                            points: Number(loyaltyConfig?.pointsPerUnit || 1),
+                            amount: Number(loyaltyConfig?.amountUnit || 10).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                          })
+                        : t('invoices.form.loyalty.inactive', 'Loyalty disabled')}
+                    </Typography>
+                    {loyaltyCustomerLoading ? (
+                      <Typography variant="caption" color="text.secondary">
+                        {t('invoices.form.helperLoading')}
+                      </Typography>
+                    ) : null}
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    label={t('invoices.form.loyalty.pointsToUse', 'Points to use')}
+                    type="number"
+                    value={form.loyaltyPointsUsed}
+                    onChange={handleFormChange('loyaltyPointsUsed')}
+                    fullWidth
+                    sx={fieldSx}
+                    disabled={!form.customerId || loyaltyConfigLoading || !loyaltyConfig?.active}
+                    inputProps={{ min: 0, step: 1 }}
+                    error={loyaltyPointsExceeded}
+                    helperText={
+                      !form.customerId
+                        ? t('invoices.form.loyalty.selectCustomerFirst', 'Select a customer first.')
+                        : loyaltyPointsExceeded
+                          ? t('invoices.form.loyalty.exceeded', 'Requested points exceed the available balance.')
+                          : t('invoices.form.loyalty.maxAvailable', 'Available for this invoice: {{count}} pts', {
+                              count: Number(effectiveAvailablePoints || 0).toLocaleString()
+                            })
+                    }
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <AutoAwesomeIcon fontSize="small" color="warning" />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    label={t('invoices.form.loyalty.redeemedAmount', 'Redeemed amount')}
+                    value={loyaltyPreviewAmount}
+                    fullWidth
+                    sx={fieldSx}
+                    disabled
+                    helperText={
+                      loyaltyAmountExceeded
+                        ? t('invoices.form.loyalty.amountExceeded', 'Points exceed the net amount available.')
+                        : t('invoices.form.loyalty.netAfter', 'Net after discount and points: L {{amount}}', {
+                            amount: invoiceNetAfterLoyalty.toLocaleString(undefined, { minimumFractionDigits: 2 })
+                          })
+                    }
+                    error={loyaltyAmountExceeded}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Typography variant="subtitle2" color="warning.main" sx={{ fontWeight: 700 }}>
+                            L
+                          </Typography>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Box
+                    sx={(theme) => ({
+                      p: 1.25,
+                      borderRadius: 2,
+                      border: '1px dashed',
+                      borderColor: loyaltyPointsExceeded || loyaltyAmountExceeded ? theme.palette.error.main : theme.palette.divider,
+                      bgcolor:
+                        loyaltyProgramInactive && loyaltyPointsRequested > 0
+                          ? theme.palette.error.lighter
+                          : theme.palette.background.paper
+                    })}
+                  >
+                    <Typography variant="caption" color={loyaltyPointsExceeded || loyaltyAmountExceeded ? 'error.main' : 'text.secondary'}>
+                      {loyaltyProgramInactive
+                        ? t('invoices.form.loyalty.inactiveHelp', 'The loyalty program is inactive. Activate it before charging with points.')
+                        : t(
+                            'invoices.form.loyalty.helper',
+                            'The redeemed points are deducted only when the invoice is saved and remains consistent with the loyalty ledger.'
+                          )}
+                    </Typography>
+                  </Box>
                 </Grid>
               </Grid>
             </FormSection>

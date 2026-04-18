@@ -37,6 +37,14 @@ export async function listLoyaltyCustomers(params = {}) {
   return unwrap(response);
 }
 
+export async function getLoyaltyCustomerBalance(customerId) {
+  const response = await lionTvApi.get('/loyalty/v1/customers', {
+    params: { customerIds: customerId, index: 0, size: 1 }
+  });
+  const payload = unwrap(response);
+  return payload?.data?.[0] || null;
+}
+
 export async function getLoyaltyConfig() {
   const response = await lionTvApi.get('/loyalty/v1/config');
   return unwrap(response);

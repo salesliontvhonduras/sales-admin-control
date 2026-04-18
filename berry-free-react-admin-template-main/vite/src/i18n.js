@@ -176,6 +176,7 @@ const resources = {
           status: 'Status',
           payment: 'Payment',
           discount: 'Discount',
+          loyalty: 'Loyalty',
           paymentDate: 'Payment date',
           actions: 'Actions'
         },
@@ -187,6 +188,8 @@ const resources = {
             assignmentHelper: 'Customer, service, package and bank (if needed).',
             payment: 'Payment',
             paymentHelper: 'Amounts and payment date.',
+            loyalty: 'Loyalty',
+            loyaltyHelper: 'Check available points and apply them directly on the invoice.',
             method: 'Method & status',
             methodHelper: 'Payment method, status and notes.'
           },
@@ -206,6 +209,22 @@ const resources = {
           helperPackage: 'Package assigned',
           helperBank: 'Bank used for transfer',
           helperLoading: 'Loading...',
+          loyalty: {
+            availablePoints: 'Available points',
+            pointsToUse: 'Points to use',
+            redeemedAmount: 'Redeemed amount',
+            selectCustomerFirst: 'Select a customer first.',
+            exceeded: 'Requested points exceed the available balance.',
+            maxAvailable: 'Available for this invoice: {{count}} pts',
+            conversion: '{{points}} point(s) = L {{amount}}',
+            inactive: 'Loyalty disabled',
+            inactiveHelp: 'The loyalty program is inactive. Activate it before charging with points.',
+            helper: 'Redeemed points are deducted in the loyalty ledger when the invoice is saved.',
+            netAfter: 'Net after discount and points: L {{amount}}',
+            amountExceeded: 'Points exceed the net amount available.',
+            configError: 'Could not load the loyalty configuration.',
+            balanceError: 'Could not load the customer point balance.'
+          },
           buttons: {
             clear: 'Clear',
             create: 'Create',
@@ -226,12 +245,16 @@ const resources = {
             paypal: 'Paypal',
             ecommerce: 'Ecommerce',
             link: 'Payment link',
-            debit: 'Automatic debit'
+            debit: 'Automatic debit',
+            loyalty: 'Loyalty points'
           }
         },
         messages: {
           required: 'Please complete required fields.',
           needBank: 'Select a bank for Bank Transfer payments.',
+          loyaltyInactive: 'The loyalty program is inactive for this account.',
+          loyaltyExceeded: 'The customer does not have enough available points.',
+          loyaltyAmountExceeded: 'The points exceed the invoice net amount.',
           created: 'Invoice created successfully.',
           updated: 'Invoice updated successfully.',
           deleted: 'Invoice deleted successfully.'
@@ -3161,6 +3184,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           status: 'Estado',
           payment: 'Pago',
           discount: 'Descuento',
+          loyalty: 'Lealtad',
           paymentDate: 'Fecha pago',
           actions: 'Acciones'
         },
@@ -3172,6 +3196,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             assignmentHelper: 'Cliente, servicio, paquete y banco (si aplica).',
             payment: 'Pago',
             paymentHelper: 'Montos y fecha de pago.',
+            loyalty: 'Lealtad',
+            loyaltyHelper: 'Consulta los puntos disponibles y aplícalos directamente en la factura.',
             method: 'Método y estado',
             methodHelper: 'Forma de pago, estado y notas.'
           },
@@ -3191,6 +3217,22 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           helperPackage: 'Paquete asignado',
           helperBank: 'Banco usado en la transferencia',
           helperLoading: 'Cargando...',
+          loyalty: {
+            availablePoints: 'Puntos disponibles',
+            pointsToUse: 'Puntos a usar',
+            redeemedAmount: 'Monto canjeado',
+            selectCustomerFirst: 'Selecciona primero un cliente.',
+            exceeded: 'Los puntos solicitados superan el saldo disponible.',
+            maxAvailable: 'Disponible para esta factura: {{count}} pts',
+            conversion: '{{points}} punto(s) = L {{amount}}',
+            inactive: 'Lealtad inactiva',
+            inactiveHelp: 'El programa de lealtad está inactivo. Actívalo antes de cobrar con puntos.',
+            helper: 'Los puntos canjeados se descuentan en el ledger de lealtad cuando se guarda la factura.',
+            netAfter: 'Neto después de descuento y puntos: L {{amount}}',
+            amountExceeded: 'Los puntos superan el monto neto disponible.',
+            configError: 'No se pudo cargar la configuración de lealtad.',
+            balanceError: 'No se pudo cargar el saldo de puntos del cliente.'
+          },
           buttons: {
             clear: 'Limpiar',
             create: 'Crear',
@@ -3211,12 +3253,16 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             paypal: 'Paypal',
             ecommerce: 'Ecommerce',
             link: 'Link de pago',
-            debit: 'Débito automático'
+            debit: 'Débito automático',
+            loyalty: 'Puntos de lealtad'
           }
         },
         messages: {
           required: 'Completa los campos requeridos.',
           needBank: 'Selecciona un banco para pagos por transferencia.',
+          loyaltyInactive: 'El programa de puntos está inactivo para esta cuenta.',
+          loyaltyExceeded: 'El cliente no tiene suficientes puntos disponibles.',
+          loyaltyAmountExceeded: 'Los puntos exceden el monto neto de la factura.',
           created: 'Factura creada correctamente.',
           updated: 'Factura actualizada correctamente.',
           deleted: 'Factura eliminada correctamente.'
