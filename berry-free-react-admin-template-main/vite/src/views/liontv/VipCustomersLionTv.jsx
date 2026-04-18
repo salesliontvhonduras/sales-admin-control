@@ -25,6 +25,7 @@ import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import { useTranslation } from 'react-i18next';
 
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -92,6 +93,7 @@ function emptyConfig() {
 
 export default function VipCustomersLionTv() {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
 
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
@@ -104,14 +106,28 @@ export default function VipCustomersLionTv() {
   const [configOpen, setConfigOpen] = useState(false);
   const [overrideDialog, setOverrideDialog] = useState({ open: false, row: null, tierCode: '', reason: '' });
 
+  const customerStatusLabel = useCallback((value) => {
+    if (!value) return '-';
+    return t(`customers.status.${value}`, { defaultValue: value });
+  }, [t]);
+
+  const channelLabel = useCallback((value) => {
+    const normalized = String(value ?? '').trim().toLowerCase();
+    if (normalized === 'red social') return t('customers.channels.social');
+    if (normalized === 'google') return t('customers.channels.google');
+    if (normalized === 'familiares') return t('customers.channels.family');
+    if (normalized === 'amigos') return t('customers.channels.friends');
+    return value || '-';
+  }, [t]);
+
   const loadConfig = useCallback(async () => {
     try {
       const response = await getVipConfig();
       setConfig(response || emptyConfig());
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo cargar la configuración VIP.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('vipCustomers.messages.loadConfigError'), { variant: 'error' });
     }
-  }, [enqueueSnackbar]);
+  }, [enqueueSnackbar, t]);
 
   const loadRows = useCallback(async () => {
     setLoading(true);
@@ -127,11 +143,11 @@ export default function VipCustomersLionTv() {
       setRows(response?.data || []);
       setTotal(response?.total || 0);
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo cargar el ranking VIP.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('vipCustomers.messages.loadRankingError'), { variant: 'error' });
     } finally {
       setLoading(false);
     }
-  }, [enqueueSnackbar, filters.overrideOnly, filters.search, filters.status, filters.tierCode, page, rowsPerPage]);
+  }, [enqueueSnackbar, filters.overrideOnly, filters.search, filters.status, filters.tierCode, page, rowsPerPage, t]);
 
   useEffect(() => {
     loadConfig();
@@ -159,11 +175,11 @@ export default function VipCustomersLionTv() {
     setSaving(true);
     try {
       await updateVipConfig(config);
-      enqueueSnackbar('Configuración VIP actualizada.', { variant: 'success' });
+      enqueueSnackbar(t('vipCustomers.messages.configUpdated'), { variant: 'success' });
       setConfigOpen(false);
       await Promise.all([loadConfig(), loadRows()]);
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo guardar la configuración VIP.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('vipCustomers.messages.saveConfigError'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -173,10 +189,10 @@ export default function VipCustomersLionTv() {
     setSaving(true);
     try {
       await recomputeVipCustomers();
-      enqueueSnackbar('Ranking VIP recalculado.', { variant: 'success' });
+      enqueueSnackbar(t('vipCustomers.messages.rankingRecomputed'), { variant: 'success' });
       await loadRows();
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo recalcular VIP.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('vipCustomers.messages.recomputeError'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -186,10 +202,12 @@ export default function VipCustomersLionTv() {
     setSaving(true);
     try {
       await recomputeVipCustomer(customerId);
-      enqueueSnackbar('Cliente VIP recalculado.', { variant: 'success' });
+      enqueueSnackbar(t('vipCustomers.messages.customerRecomputed'), { variant: 'success' });
       await loadRows();
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo recalcular el cliente.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('vipCustomers.messages.recomputeCustomerError'), {
+        variant: 'error'
+      });
     } finally {
       setSaving(false);
     }
@@ -203,11 +221,11 @@ export default function VipCustomersLionTv() {
         tierCode: overrideDialog.tierCode,
         reason: overrideDialog.reason
       });
-      enqueueSnackbar('Override VIP aplicado.', { variant: 'success' });
+      enqueueSnackbar(t('vipCustomers.messages.overrideApplied'), { variant: 'success' });
       setOverrideDialog({ open: false, row: null, tierCode: '', reason: '' });
       await loadRows();
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo aplicar el override.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('vipCustomers.messages.overrideError'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -216,35 +234,59 @@ export default function VipCustomersLionTv() {
   return (
     <Box sx={{ width: '100%', maxWidth: 1500, mx: 'auto' }}>
       <MainCard
-        title="Clientes VIP"
+        title={t('vipCustomers.title')}
         secondary={
           <ResponsiveActionBar>
             <Button variant="outlined" startIcon={<RefreshIcon />} onClick={loadRows} disabled={loading || saving}>
-              Recargar
+              {t('actions.refresh')}
             </Button>
             <Button variant="outlined" startIcon={<AutoAwesomeIcon />} onClick={() => setConfigOpen(true)} disabled={saving}>
-              Configuración
+              {t('vipCustomers.actions.config')}
             </Button>
             <Button variant="contained" startIcon={<WorkspacePremiumRoundedIcon />} onClick={handleRecomputeAll} disabled={saving}>
-              Recalcular
+              {t('vipCustomers.actions.recompute')}
             </Button>
           </ResponsiveActionBar>
         }
       >
         <Stack spacing={2.5}>
-          <Alert severity="info">El score VIP combina antigüedad, facturación pagada e historial de suscripciones por usuario.</Alert>
+          <Alert severity="info">{t('vipCustomers.alerts.scoreInfo')}</Alert>
 
           <ResponsiveMetricGrid columns={{ xs: 1, sm: 2, lg: 4 }}>
-            <LionMetricCard title="Perfiles cargados" value={total} helper="Snapshots VIP activos" color="primary" icon={<WorkspacePremiumRoundedIcon />} />
-            <LionMetricCard title="Overrides visibles" value={metrics.overrides} helper="Clientes con tier manual" color="warning" icon={<StarRoundedIcon />} />
-            <LionMetricCard title="Score promedio" value={formatScore(metrics.averageScore)} helper="Media de la página actual" color="secondary" icon={<AutoAwesomeIcon />} />
-            <LionMetricCard title="Tier líder" value={metrics.topTier} helper="Primer registro del ranking actual" color="success" icon={<WorkspacePremiumRoundedIcon />} />
+            <LionMetricCard
+              title={t('vipCustomers.metrics.profilesLoaded')}
+              value={total}
+              helper={t('vipCustomers.metrics.profilesLoadedHelper')}
+              color="primary"
+              icon={<WorkspacePremiumRoundedIcon />}
+            />
+            <LionMetricCard
+              title={t('vipCustomers.metrics.overridesVisible')}
+              value={metrics.overrides}
+              helper={t('vipCustomers.metrics.overridesVisibleHelper')}
+              color="warning"
+              icon={<StarRoundedIcon />}
+            />
+            <LionMetricCard
+              title={t('vipCustomers.metrics.averageScore')}
+              value={formatScore(metrics.averageScore)}
+              helper={t('vipCustomers.metrics.averageScoreHelper')}
+              color="secondary"
+              icon={<AutoAwesomeIcon />}
+            />
+            <LionMetricCard
+              title={t('vipCustomers.metrics.topTier')}
+              value={metrics.topTier}
+              helper={t('vipCustomers.metrics.topTierHelper')}
+              color="success"
+              icon={<WorkspacePremiumRoundedIcon />}
+            />
           </ResponsiveMetricGrid>
 
           <Paper sx={{ p: 2.5, borderRadius: 3 }}>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
               <TextField
-                label="Buscar"
+                label={t('vipCustomers.filters.search')}
                 value={filters.search}
                 onChange={(event) => {
                   setPage(0);
@@ -254,32 +296,32 @@ export default function VipCustomersLionTv() {
                 sx={fieldSx}
               />
               <FormControl sx={{ minWidth: 160 }}>
-                <InputLabel>Estado</InputLabel>
+                <InputLabel>{t('vipCustomers.filters.status')}</InputLabel>
                 <Select
-                  label="Estado"
+                  label={t('vipCustomers.filters.status')}
                   value={filters.status}
                   onChange={(event) => {
                     setPage(0);
                     setFilters((prev) => ({ ...prev, status: event.target.value }));
                   }}
                 >
-                  <MenuItem value="">Todos</MenuItem>
-                  <MenuItem value="ACTIVE">ACTIVE</MenuItem>
-                  <MenuItem value="INACTIVE">INACTIVE</MenuItem>
-                  <MenuItem value="SUSPENDED">SUSPENDED</MenuItem>
+                  <MenuItem value="">{t('vipCustomers.filters.all')}</MenuItem>
+                  <MenuItem value="ACTIVE">{customerStatusLabel('ACTIVE')}</MenuItem>
+                  <MenuItem value="INACTIVE">{customerStatusLabel('INACTIVE')}</MenuItem>
+                  <MenuItem value="SUSPENDED">{customerStatusLabel('SUSPENDED')}</MenuItem>
                 </Select>
               </FormControl>
               <FormControl sx={{ minWidth: 160 }}>
-                <InputLabel>Tier final</InputLabel>
+                <InputLabel>{t('vipCustomers.filters.finalTier')}</InputLabel>
                 <Select
-                  label="Tier final"
+                  label={t('vipCustomers.filters.finalTier')}
                   value={filters.tierCode}
                   onChange={(event) => {
                     setPage(0);
                     setFilters((prev) => ({ ...prev, tierCode: event.target.value }));
                   }}
                 >
-                  <MenuItem value="">Todos</MenuItem>
+                  <MenuItem value="">{t('vipCustomers.filters.all')}</MenuItem>
                   {config.tiers?.map((tier) => (
                     <MenuItem key={tier.code} value={tier.code}>
                       {tier.displayName}
@@ -297,7 +339,7 @@ export default function VipCustomersLionTv() {
                     }}
                   />
                 }
-                label="Solo overrides"
+                label={t('vipCustomers.filters.overrideOnly')}
               />
             </Stack>
           </Paper>
@@ -306,16 +348,16 @@ export default function VipCustomersLionTv() {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Cliente</TableCell>
-                  <TableCell>Estado</TableCell>
-                  <TableCell>Canal</TableCell>
-                  <TableCell>Antigüedad</TableCell>
-                  <TableCell>Facturación</TableCell>
-                  <TableCell>Suscripciones</TableCell>
-                  <TableCell>Score</TableCell>
-                  <TableCell>Tier calculado</TableCell>
-                  <TableCell>Tier final</TableCell>
-                  <TableCell align="right">Acciones</TableCell>
+                  <TableCell>{t('vipCustomers.table.customer')}</TableCell>
+                  <TableCell>{t('vipCustomers.table.status')}</TableCell>
+                  <TableCell>{t('vipCustomers.table.channel')}</TableCell>
+                  <TableCell>{t('vipCustomers.table.seniority')}</TableCell>
+                  <TableCell>{t('vipCustomers.table.billing')}</TableCell>
+                  <TableCell>{t('vipCustomers.table.subscriptions')}</TableCell>
+                  <TableCell>{t('vipCustomers.table.score')}</TableCell>
+                  <TableCell>{t('vipCustomers.table.computedTier')}</TableCell>
+                  <TableCell>{t('vipCustomers.table.finalTier')}</TableCell>
+                  <TableCell align="right">{t('vipCustomers.table.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -329,19 +371,22 @@ export default function VipCustomersLionTv() {
                         </Typography>
                       </Stack>
                     </TableCell>
-                    <TableCell>{row.customerStatus || '-'}</TableCell>
-                    <TableCell>{row.channel || '-'}</TableCell>
-                    <TableCell>{row.seniorityDays || 0} días</TableCell>
+                    <TableCell>{customerStatusLabel(row.customerStatus)}</TableCell>
+                    <TableCell>{channelLabel(row.channel)}</TableCell>
+                    <TableCell>{t('vipCustomers.units.days', { count: row.seniorityDays || 0 })}</TableCell>
                     <TableCell>
                       <Stack spacing={0.25}>
                         <Typography variant="body2">{formatCurrency(row.totalPaidAmount)}</Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Facturas pagadas: {row.paidInvoiceCount || 0}
+                          {t('vipCustomers.table.paidInvoices', { count: row.paidInvoiceCount || 0 })}
                         </Typography>
                       </Stack>
                     </TableCell>
                     <TableCell>
-                      {row.activeSubscriptions || 0} activas / {row.totalSubscriptions || 0} históricas
+                      {t('vipCustomers.table.subscriptionsSplit', {
+                        active: row.activeSubscriptions || 0,
+                        total: row.totalSubscriptions || 0
+                      })}
                     </TableCell>
                     <TableCell>{formatScore(row.computedScore)}</TableCell>
                     <TableCell>
@@ -350,13 +395,13 @@ export default function VipCustomersLionTv() {
                     <TableCell>
                       <Stack direction="row" spacing={0.75} alignItems="center">
                         <TierChip tierCode={row.finalTierCode} tiers={config.tiers || []} />
-                        {row.overrideApplied ? <Chip size="small" color="warning" label="Manual" /> : null}
+                        {row.overrideApplied ? <Chip size="small" color="warning" label={t('vipCustomers.table.manual')} /> : null}
                       </Stack>
                     </TableCell>
                     <TableCell align="right">
                       <Stack direction="row" spacing={1} justifyContent="flex-end">
                         <Button size="small" variant="outlined" onClick={() => handleRecomputeCustomer(row.customerId)} disabled={saving}>
-                          Recalcular
+                          {t('vipCustomers.actions.recomputeCustomer')}
                         </Button>
                         <Button
                           size="small"
@@ -370,7 +415,7 @@ export default function VipCustomersLionTv() {
                             })
                           }
                         >
-                          Override
+                          {t('vipCustomers.actions.override')}
                         </Button>
                       </Stack>
                     </TableCell>
@@ -379,7 +424,7 @@ export default function VipCustomersLionTv() {
                 {!loading && rows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
-                      No hay perfiles VIP para mostrar.
+                      {t('vipCustomers.table.empty')}
                     </TableCell>
                   </TableRow>
                 ) : null}
@@ -402,17 +447,17 @@ export default function VipCustomersLionTv() {
       </MainCard>
 
       <Dialog open={configOpen} onClose={() => setConfigOpen(false)} fullWidth maxWidth="md">
-        <DialogTitleWithClose onClose={() => setConfigOpen(false)}>Configuración VIP</DialogTitleWithClose>
+        <DialogTitleWithClose onClose={() => setConfigOpen(false)}>{t('vipCustomers.dialogs.configTitle')}</DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2.5} sx={{ pt: 0.5 }}>
             <FormControlLabel
               control={<Switch checked={Boolean(config.active)} onChange={(event) => setConfig((prev) => ({ ...prev, active: event.target.checked }))} />}
-              label="Configuración activa"
+              label={t('vipCustomers.dialogs.activeConfig')}
             />
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
               <TextField
                 type="number"
-                label="Peso antigüedad"
+                label={t('vipCustomers.dialogs.seniorityWeight')}
                 value={config.seniorityWeight ?? 0}
                 onChange={(event) => setConfig((prev) => ({ ...prev, seniorityWeight: Number(event.target.value) }))}
                 fullWidth
@@ -420,7 +465,7 @@ export default function VipCustomersLionTv() {
               />
               <TextField
                 type="number"
-                label="Peso facturación"
+                label={t('vipCustomers.dialogs.billingWeight')}
                 value={config.billingWeight ?? 0}
                 onChange={(event) => setConfig((prev) => ({ ...prev, billingWeight: Number(event.target.value) }))}
                 fullWidth
@@ -428,7 +473,7 @@ export default function VipCustomersLionTv() {
               />
               <TextField
                 type="number"
-                label="Peso suscripciones"
+                label={t('vipCustomers.dialogs.subscriptionsWeight')}
                 value={config.subscriptionsWeight ?? 0}
                 onChange={(event) => setConfig((prev) => ({ ...prev, subscriptionsWeight: Number(event.target.value) }))}
                 fullWidth
@@ -438,7 +483,7 @@ export default function VipCustomersLionTv() {
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
               <TextField
                 type="number"
-                label="Días para score máximo"
+                label={t('vipCustomers.dialogs.fullScoreDays')}
                 value={config.seniorityFullScoreDays ?? 365}
                 onChange={(event) => setConfig((prev) => ({ ...prev, seniorityFullScoreDays: Number(event.target.value) }))}
                 fullWidth
@@ -446,7 +491,7 @@ export default function VipCustomersLionTv() {
               />
               <TextField
                 type="number"
-                label="Facturación para score máximo"
+                label={t('vipCustomers.dialogs.fullScoreAmount')}
                 value={config.billingFullScoreAmount ?? 10000}
                 onChange={(event) => setConfig((prev) => ({ ...prev, billingFullScoreAmount: Number(event.target.value) }))}
                 fullWidth
@@ -454,7 +499,7 @@ export default function VipCustomersLionTv() {
               />
               <TextField
                 type="number"
-                label="Suscripciones para score máximo"
+                label={t('vipCustomers.dialogs.fullScoreSubscriptions')}
                 value={config.subscriptionsFullScoreCount ?? 6}
                 onChange={(event) => setConfig((prev) => ({ ...prev, subscriptionsFullScoreCount: Number(event.target.value) }))}
                 fullWidth
@@ -462,7 +507,7 @@ export default function VipCustomersLionTv() {
               />
             </Stack>
             <TextField
-              label="Notas"
+              label={t('vipCustomers.dialogs.notes')}
               value={config.notes || ''}
               onChange={(event) => setConfig((prev) => ({ ...prev, notes: event.target.value }))}
               fullWidth
@@ -470,33 +515,33 @@ export default function VipCustomersLionTv() {
               minRows={2}
             />
             <Stack spacing={1.25}>
-              <Typography variant="subtitle2">Tiers</Typography>
+              <Typography variant="subtitle2">{t('vipCustomers.dialogs.tiers')}</Typography>
               {config.tiers?.map((tier, index) => (
                 <Paper key={tier.code || index} sx={{ p: 1.5, borderRadius: 2 }}>
                   <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ md: 'center' }}>
-                    <TextField label="Código" value={tier.code || ''} disabled sx={{ ...fieldSx, minWidth: 120 }} />
+                    <TextField label={t('vipCustomers.dialogs.code')} value={tier.code || ''} disabled sx={{ ...fieldSx, minWidth: 120 }} />
                     <TextField
-                      label="Nombre"
+                      label={t('vipCustomers.dialogs.name')}
                       value={tier.displayName || ''}
                       onChange={(event) => handleTierChange(index, 'displayName', event.target.value)}
                       sx={{ ...fieldSx, minWidth: 160 }}
                     />
                     <TextField
                       type="number"
-                      label="Score mínimo"
+                      label={t('vipCustomers.dialogs.minScore')}
                       value={tier.minScore ?? 0}
                       onChange={(event) => handleTierChange(index, 'minScore', Number(event.target.value))}
                       sx={{ ...fieldSx, minWidth: 140 }}
                     />
                     <TextField
                       type="number"
-                      label="Orden"
+                      label={t('vipCustomers.dialogs.order')}
                       value={tier.rankOrder ?? 0}
                       onChange={(event) => handleTierChange(index, 'rankOrder', Number(event.target.value))}
                       sx={{ ...fieldSx, minWidth: 120 }}
                     />
                     <TextField
-                      label="Color"
+                      label={t('vipCustomers.dialogs.color')}
                       value={tier.colorHex || ''}
                       onChange={(event) => handleTierChange(index, 'colorHex', event.target.value)}
                       sx={{ ...fieldSx, minWidth: 140 }}
@@ -508,7 +553,7 @@ export default function VipCustomersLionTv() {
                           onChange={(event) => handleTierChange(index, 'active', event.target.checked)}
                         />
                       }
-                      label="Activo"
+                      label={t('vipCustomers.dialogs.active')}
                     />
                   </Stack>
                 </Paper>
@@ -517,16 +562,16 @@ export default function VipCustomersLionTv() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfigOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setConfigOpen(false)}>{t('actions.cancel')}</Button>
           <Button variant="contained" startIcon={<SaveOutlinedIcon />} onClick={handleSaveConfig} disabled={saving}>
-            Guardar
+            {t('actions.save')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={overrideDialog.open} onClose={() => setOverrideDialog({ open: false, row: null, tierCode: '', reason: '' })} fullWidth maxWidth="sm">
         <DialogTitleWithClose onClose={() => setOverrideDialog({ open: false, row: null, tierCode: '', reason: '' })}>
-          Override VIP
+          {t('vipCustomers.dialogs.overrideTitle')}
         </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2} sx={{ pt: 0.5 }}>
@@ -534,13 +579,13 @@ export default function VipCustomersLionTv() {
               {overrideDialog.row?.customerFullname || '-'}
             </Typography>
             <FormControl fullWidth>
-              <InputLabel>Tier final</InputLabel>
+              <InputLabel>{t('vipCustomers.dialogs.finalTier')}</InputLabel>
               <Select
-                label="Tier final"
+                label={t('vipCustomers.dialogs.finalTier')}
                 value={overrideDialog.tierCode}
                 onChange={(event) => setOverrideDialog((prev) => ({ ...prev, tierCode: event.target.value }))}
               >
-                <MenuItem value="">Limpiar override</MenuItem>
+                <MenuItem value="">{t('vipCustomers.dialogs.clearOverride')}</MenuItem>
                 {config.tiers?.map((tier) => (
                   <MenuItem key={tier.code} value={tier.code}>
                     {tier.displayName}
@@ -549,7 +594,7 @@ export default function VipCustomersLionTv() {
               </Select>
             </FormControl>
             <TextField
-              label="Motivo"
+              label={t('vipCustomers.dialogs.reason')}
               value={overrideDialog.reason}
               onChange={(event) => setOverrideDialog((prev) => ({ ...prev, reason: event.target.value }))}
               fullWidth
@@ -559,9 +604,9 @@ export default function VipCustomersLionTv() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOverrideDialog({ open: false, row: null, tierCode: '', reason: '' })}>Cancelar</Button>
+          <Button onClick={() => setOverrideDialog({ open: false, row: null, tierCode: '', reason: '' })}>{t('actions.cancel')}</Button>
           <Button variant="contained" onClick={handleSaveOverride} disabled={saving}>
-            Aplicar
+            {t('vipCustomers.actions.apply')}
           </Button>
         </DialogActions>
       </Dialog>

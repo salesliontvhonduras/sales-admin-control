@@ -116,6 +116,15 @@ function chipLabelValue(value) {
   return normalized || '-';
 }
 
+function channelLabelFromValue(channel, t) {
+  const normalized = String(channel ?? '').trim().toLowerCase();
+  if (normalized === 'red social') return t('customers.channels.social');
+  if (normalized === 'google') return t('customers.channels.google');
+  if (normalized === 'familiares') return t('customers.channels.family');
+  if (normalized === 'amigos') return t('customers.channels.friends');
+  return chipLabelValue(channel);
+}
+
 function formatDate(value) {
   if (!value) return '-';
   const date = new Date(value);
@@ -254,8 +263,16 @@ function VipTierChip({ tierCode }) {
 }
 
 function LoyaltyPointsChip({ points }) {
+  const { t } = useTranslation();
   const safePoints = Number(points || 0);
-  return <Chip size="small" color={safePoints > 0 ? 'warning' : 'default'} label={`${safePoints} pts`} sx={{ fontWeight: 700 }} />;
+  return (
+    <Chip
+      size="small"
+      color={safePoints > 0 ? 'warning' : 'default'}
+      label={t('customers.pointsChip', { count: safePoints })}
+      sx={{ fontWeight: 700 }}
+    />
+  );
 }
 
 function ReferredChip({ isReferred, refererBy, t }) {
@@ -281,7 +298,8 @@ function ReferredChip({ isReferred, refererBy, t }) {
 }
 
 function ChannelChip({ channel }) {
-  const label = chipLabelValue(channel);
+  const { t } = useTranslation();
+  const label = channelLabelFromValue(channel, t);
   const hasValue = label !== '-';
 
   return (
@@ -558,13 +576,13 @@ export default function CustomersLionTv() {
         );
       } catch (err) {
         if (!handleUnauthorized(err)) {
-          enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo cargar el resumen VIP/lealtad.', {
+          enqueueSnackbar(err?.response?.data?.message || err.message || t('customers.messages.engagementSummaryError'), {
             variant: 'warning'
           });
         }
       }
     },
-    [enqueueSnackbar]
+    [enqueueSnackbar, t]
   );
 
   useEffect(() => {
@@ -856,7 +874,7 @@ export default function CustomersLionTv() {
             {
               title: t('customers.headers.referred'),
               value: summary.referred,
-              helper: t('customers.form.fields.referredBy', 'Referral tracking'),
+              helper: t('customers.form.referredBy'),
               color: 'secondary',
               icon: <ShareIcon fontSize="small" />
             }
@@ -993,10 +1011,10 @@ export default function CustomersLionTv() {
                       fields={[
                         { label: t('customers.headers.phone'), value: row.phone || '-' },
                         { label: t('customers.headers.referred'), value: row.refererBy || (row.isReferred ? t('common.yes') : t('common.no')) },
-                        { label: t('customers.headers.channel'), value: row.channel || '-' },
+                        { label: t('customers.headers.channel'), value: channelLabelFromValue(row.channel, t) },
                         { label: t('customers.headers.gender'), value: row.gender || '-' },
-                        { label: 'VIP', value: vipSummaryByCustomerId[row.id || row.customerId]?.finalTierCode || '-' },
-                        { label: 'Puntos', value: loyaltySummaryByCustomerId[row.id || row.customerId]?.availablePoints || 0 }
+                        { label: t('customers.headers.vip'), value: vipSummaryByCustomerId[row.id || row.customerId]?.finalTierCode || '-' },
+                        { label: t('customers.headers.points'), value: loyaltySummaryByCustomerId[row.id || row.customerId]?.availablePoints || 0 }
                       ]}
                     />
                   </MobileSummaryCard>
@@ -1043,8 +1061,8 @@ export default function CustomersLionTv() {
                     <TableCell>{t('customers.headers.phone')}</TableCell>
                     <TableCell>{t('customers.headers.gender')}</TableCell>
                     <TableCell>{t('customers.headers.status')}</TableCell>
-                    <TableCell>VIP</TableCell>
-                    <TableCell>Puntos</TableCell>
+                    <TableCell>{t('customers.headers.vip')}</TableCell>
+                    <TableCell>{t('customers.headers.points')}</TableCell>
                     <TableCell>{t('customers.headers.referred')}</TableCell>
                     <TableCell>{t('customers.headers.channel')}</TableCell>
                     <TableCell>{t('invoices.headers.actions')}</TableCell>

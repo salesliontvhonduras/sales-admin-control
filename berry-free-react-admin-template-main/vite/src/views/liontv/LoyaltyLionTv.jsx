@@ -24,6 +24,7 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import { useTranslation } from 'react-i18next';
 
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import LoyaltyRoundedIcon from '@mui/icons-material/LoyaltyRounded';
@@ -68,6 +69,7 @@ function formatDateTime(value) {
 
 export default function LoyaltyLionTv() {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
 
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
@@ -81,6 +83,20 @@ export default function LoyaltyLionTv() {
   const [ledgerDialog, setLedgerDialog] = useState({ open: false, row: null, data: [], total: 0 });
   const [adjustDialog, setAdjustDialog] = useState({ open: false, row: null, pointsDelta: '', reason: '' });
 
+  const customerStatusLabel = useCallback((value) => {
+    if (!value) return '-';
+    return t(`customers.status.${value}`, { defaultValue: value });
+  }, [t]);
+
+  const channelLabel = useCallback((value) => {
+    const normalized = String(value ?? '').trim().toLowerCase();
+    if (normalized === 'red social') return t('customers.channels.social');
+    if (normalized === 'google') return t('customers.channels.google');
+    if (normalized === 'familiares') return t('customers.channels.family');
+    if (normalized === 'amigos') return t('customers.channels.friends');
+    return value || '-';
+  }, [t]);
+
   const loadConfig = useCallback(async () => {
     try {
       const response = await getLoyaltyConfig();
@@ -89,11 +105,11 @@ export default function LoyaltyLionTv() {
         effectiveFrom: response?.effectiveFrom ? String(response.effectiveFrom).slice(0, 16) : ''
       });
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo cargar la configuración de lealtad.', {
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('loyalty.messages.loadConfigError'), {
         variant: 'error'
       });
     }
-  }, [enqueueSnackbar]);
+  }, [enqueueSnackbar, t]);
 
   const loadRows = useCallback(async () => {
     setLoading(true);
@@ -108,13 +124,13 @@ export default function LoyaltyLionTv() {
       setRows(response?.data || []);
       setTotal(response?.total || 0);
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo cargar el módulo de lealtad.', {
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('loyalty.messages.loadModuleError'), {
         variant: 'error'
       });
     } finally {
       setLoading(false);
     }
-  }, [enqueueSnackbar, filters.minimumPoints, filters.search, filters.status, page, rowsPerPage]);
+  }, [enqueueSnackbar, filters.minimumPoints, filters.search, filters.status, page, rowsPerPage, t]);
 
   useEffect(() => {
     loadConfig();
@@ -135,7 +151,7 @@ export default function LoyaltyLionTv() {
       const response = await listLoyaltyLedger(row.customerId, { index: 0, size: 20 });
       setLedgerDialog({ open: true, row, data: response?.data || [], total: response?.total || 0 });
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo cargar el ledger del cliente.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('loyalty.messages.loadLedgerError'), { variant: 'error' });
     }
   };
 
@@ -146,11 +162,11 @@ export default function LoyaltyLionTv() {
         ...config,
         effectiveFrom: config.effectiveFrom ? new Date(config.effectiveFrom).toISOString() : null
       });
-      enqueueSnackbar('Configuración de lealtad actualizada.', { variant: 'success' });
+      enqueueSnackbar(t('loyalty.messages.configUpdated'), { variant: 'success' });
       setConfigOpen(false);
       await Promise.all([loadConfig(), loadRows()]);
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo guardar la configuración.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('loyalty.messages.saveConfigError'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -164,11 +180,11 @@ export default function LoyaltyLionTv() {
         pointsDelta: Number(adjustDialog.pointsDelta),
         reason: adjustDialog.reason
       });
-      enqueueSnackbar('Ajuste de puntos aplicado.', { variant: 'success' });
+      enqueueSnackbar(t('loyalty.messages.adjustmentApplied'), { variant: 'success' });
       setAdjustDialog({ open: false, row: null, pointsDelta: '', reason: '' });
       await loadRows();
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo aplicar el ajuste.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('loyalty.messages.adjustmentError'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -177,14 +193,14 @@ export default function LoyaltyLionTv() {
   return (
     <Box sx={{ width: '100%', maxWidth: 1500, mx: 'auto' }}>
       <MainCard
-        title="Lealtad"
+        title={t('loyalty.title')}
         secondary={
           <ResponsiveActionBar>
             <Button variant="outlined" startIcon={<RefreshIcon />} onClick={loadRows} disabled={loading || saving}>
-              Recargar
+              {t('actions.refresh')}
             </Button>
             <Button variant="contained" startIcon={<TuneRoundedIcon />} onClick={() => setConfigOpen(true)} disabled={saving}>
-              Configuración
+              {t('loyalty.actions.config')}
             </Button>
           </ResponsiveActionBar>
         }
@@ -192,24 +208,41 @@ export default function LoyaltyLionTv() {
         <Stack spacing={2.5}>
           <Alert severity={config.active ? 'success' : 'warning'}>
             {config.active
-              ? `Programa activo desde ${config.effectiveFrom ? formatDateTime(config.effectiveFrom) : 'sin fecha definida'}.`
-              : 'El programa está inactivo. No se acreditarán puntos nuevos hasta activarlo.'}
+              ? t('loyalty.alerts.active', {
+                  date: config.effectiveFrom ? formatDateTime(config.effectiveFrom) : t('loyalty.alerts.noDate')
+                })
+              : t('loyalty.alerts.inactive')}
           </Alert>
 
           <ResponsiveMetricGrid columns={{ xs: 1, sm: 2, lg: 4 }}>
-            <LionMetricCard title="Clientes listados" value={total} helper="Balances visibles" color="primary" icon={<LoyaltyRoundedIcon />} />
             <LionMetricCard
-              title="Clientes con puntos"
+              title={t('loyalty.metrics.listedCustomers')}
+              value={total}
+              helper={t('loyalty.metrics.listedCustomersHelper')}
+              color="primary"
+              icon={<LoyaltyRoundedIcon />}
+            />
+            <LionMetricCard
+              title={t('loyalty.metrics.customersWithPoints')}
               value={metrics.customersWithPoints}
-              helper="Con saldo disponible mayor a cero"
+              helper={t('loyalty.metrics.customersWithPointsHelper')}
               color="success"
               icon={<CardGiftcardRoundedIcon />}
             />
-            <LionMetricCard title="Puntos visibles" value={metrics.totalPoints} helper="Total de la página actual" color="warning" icon={<SavingsRoundedIcon />} />
             <LionMetricCard
-              title="Regla base"
-              value={`${config.pointsPerUnit || 1} / L${config.amountUnit || 10}`}
-              helper={`Rounding: ${config.roundingMode || 'FLOOR'}`}
+              title={t('loyalty.metrics.visiblePoints')}
+              value={metrics.totalPoints}
+              helper={t('loyalty.metrics.visiblePointsHelper')}
+              color="warning"
+              icon={<SavingsRoundedIcon />}
+            />
+            <LionMetricCard
+              title={t('loyalty.metrics.baseRule')}
+              value={t('loyalty.metrics.baseRuleValue', {
+                points: config.pointsPerUnit || 1,
+                amount: config.amountUnit || 10
+              })}
+              helper={t('loyalty.metrics.baseRuleHelper', { mode: config.roundingMode || 'FLOOR' })}
               color="secondary"
               icon={<TuneRoundedIcon />}
             />
@@ -218,7 +251,7 @@ export default function LoyaltyLionTv() {
           <Paper sx={{ p: 2.5, borderRadius: 3 }}>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
               <TextField
-                label="Buscar"
+                label={t('loyalty.filters.search')}
                 value={filters.search}
                 onChange={(event) => {
                   setPage(0);
@@ -228,24 +261,24 @@ export default function LoyaltyLionTv() {
                 sx={fieldSx}
               />
               <FormControl sx={{ minWidth: 160 }}>
-                <InputLabel>Estado</InputLabel>
+                <InputLabel>{t('loyalty.filters.status')}</InputLabel>
                 <Select
-                  label="Estado"
+                  label={t('loyalty.filters.status')}
                   value={filters.status}
                   onChange={(event) => {
                     setPage(0);
                     setFilters((prev) => ({ ...prev, status: event.target.value }));
                   }}
                 >
-                  <MenuItem value="">Todos</MenuItem>
-                  <MenuItem value="ACTIVE">ACTIVE</MenuItem>
-                  <MenuItem value="INACTIVE">INACTIVE</MenuItem>
-                  <MenuItem value="SUSPENDED">SUSPENDED</MenuItem>
+                  <MenuItem value="">{t('loyalty.filters.all')}</MenuItem>
+                  <MenuItem value="ACTIVE">{customerStatusLabel('ACTIVE')}</MenuItem>
+                  <MenuItem value="INACTIVE">{customerStatusLabel('INACTIVE')}</MenuItem>
+                  <MenuItem value="SUSPENDED">{customerStatusLabel('SUSPENDED')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField
                 type="number"
-                label="Puntos mínimos"
+                label={t('loyalty.filters.minimumPoints')}
                 value={filters.minimumPoints}
                 onChange={(event) => {
                   setPage(0);
@@ -260,14 +293,14 @@ export default function LoyaltyLionTv() {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Cliente</TableCell>
-                  <TableCell>Estado</TableCell>
-                  <TableCell>Canal</TableCell>
-                  <TableCell>Puntos disponibles</TableCell>
-                  <TableCell>Lifetime earned</TableCell>
-                  <TableCell>Lifetime adjusted</TableCell>
-                  <TableCell>Último movimiento</TableCell>
-                  <TableCell align="right">Acciones</TableCell>
+                  <TableCell>{t('loyalty.table.customer')}</TableCell>
+                  <TableCell>{t('loyalty.table.status')}</TableCell>
+                  <TableCell>{t('loyalty.table.channel')}</TableCell>
+                  <TableCell>{t('loyalty.table.availablePoints')}</TableCell>
+                  <TableCell>{t('loyalty.table.lifetimeEarned')}</TableCell>
+                  <TableCell>{t('loyalty.table.lifetimeAdjusted')}</TableCell>
+                  <TableCell>{t('loyalty.table.lastMovement')}</TableCell>
+                  <TableCell align="right">{t('loyalty.table.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -281,8 +314,8 @@ export default function LoyaltyLionTv() {
                         </Typography>
                       </Stack>
                     </TableCell>
-                    <TableCell>{row.customerStatus || '-'}</TableCell>
-                    <TableCell>{row.channel || '-'}</TableCell>
+                    <TableCell>{customerStatusLabel(row.customerStatus)}</TableCell>
+                    <TableCell>{channelLabel(row.channel)}</TableCell>
                     <TableCell>{row.availablePoints || 0}</TableCell>
                     <TableCell>{row.lifetimeEarned || 0}</TableCell>
                     <TableCell>{row.lifetimeAdjusted || 0}</TableCell>
@@ -290,14 +323,14 @@ export default function LoyaltyLionTv() {
                     <TableCell align="right">
                       <Stack direction="row" spacing={1} justifyContent="flex-end">
                         <Button size="small" variant="outlined" onClick={() => handleOpenLedger(row)}>
-                          Ledger
+                          {t('loyalty.actions.ledger')}
                         </Button>
                         <Button
                           size="small"
                           variant="contained"
                           onClick={() => setAdjustDialog({ open: true, row, pointsDelta: '', reason: '' })}
                         >
-                          Ajustar
+                          {t('loyalty.actions.adjust')}
                         </Button>
                       </Stack>
                     </TableCell>
@@ -306,7 +339,7 @@ export default function LoyaltyLionTv() {
                 {!loading && rows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
-                      No hay balances de lealtad para mostrar.
+                      {t('loyalty.table.empty')}
                     </TableCell>
                   </TableRow>
                 ) : null}
@@ -329,17 +362,17 @@ export default function LoyaltyLionTv() {
       </MainCard>
 
       <Dialog open={configOpen} onClose={() => setConfigOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitleWithClose onClose={() => setConfigOpen(false)}>Configuración de lealtad</DialogTitleWithClose>
+        <DialogTitleWithClose onClose={() => setConfigOpen(false)}>{t('loyalty.dialogs.configTitle')}</DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2.5} sx={{ pt: 0.5 }}>
             <FormControlLabel
               control={<Switch checked={Boolean(config.active)} onChange={(event) => setConfig((prev) => ({ ...prev, active: event.target.checked }))} />}
-              label="Programa activo"
+              label={t('loyalty.dialogs.programActive')}
             />
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
               <TextField
                 type="number"
-                label="Puntos por unidad"
+                label={t('loyalty.dialogs.pointsPerUnit')}
                 value={config.pointsPerUnit ?? 1}
                 onChange={(event) => setConfig((prev) => ({ ...prev, pointsPerUnit: Number(event.target.value) }))}
                 fullWidth
@@ -347,7 +380,7 @@ export default function LoyaltyLionTv() {
               />
               <TextField
                 type="number"
-                label="Monto por unidad"
+                label={t('loyalty.dialogs.amountPerUnit')}
                 value={config.amountUnit ?? 10}
                 onChange={(event) => setConfig((prev) => ({ ...prev, amountUnit: Number(event.target.value) }))}
                 fullWidth
@@ -355,9 +388,9 @@ export default function LoyaltyLionTv() {
               />
             </Stack>
             <FormControl fullWidth>
-              <InputLabel>Rounding</InputLabel>
+              <InputLabel>{t('loyalty.dialogs.rounding')}</InputLabel>
               <Select
-                label="Rounding"
+                label={t('loyalty.dialogs.rounding')}
                 value={config.roundingMode || 'FLOOR'}
                 onChange={(event) => setConfig((prev) => ({ ...prev, roundingMode: event.target.value }))}
               >
@@ -368,7 +401,7 @@ export default function LoyaltyLionTv() {
             </FormControl>
             <TextField
               type="datetime-local"
-              label="Vigente desde"
+              label={t('loyalty.dialogs.effectiveFrom')}
               value={config.effectiveFrom || ''}
               onChange={(event) => setConfig((prev) => ({ ...prev, effectiveFrom: event.target.value }))}
               InputLabelProps={{ shrink: true }}
@@ -376,7 +409,7 @@ export default function LoyaltyLionTv() {
               sx={fieldSx}
             />
             <TextField
-              label="Notas"
+              label={t('loyalty.dialogs.notes')}
               value={config.notes || ''}
               onChange={(event) => setConfig((prev) => ({ ...prev, notes: event.target.value }))}
               fullWidth
@@ -386,32 +419,35 @@ export default function LoyaltyLionTv() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfigOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setConfigOpen(false)}>{t('actions.cancel')}</Button>
           <Button variant="contained" startIcon={<SaveOutlinedIcon />} onClick={handleSaveConfig} disabled={saving}>
-            Guardar
+            {t('actions.save')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={ledgerDialog.open} onClose={() => setLedgerDialog({ open: false, row: null, data: [], total: 0 })} fullWidth maxWidth="md">
         <DialogTitleWithClose onClose={() => setLedgerDialog({ open: false, row: null, data: [], total: 0 })}>
-          Ledger de puntos
+          {t('loyalty.dialogs.ledgerTitle')}
         </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2}>
             <Typography variant="body2" color="text.secondary">
-              {ledgerDialog.row?.customerFullname || '-'} · registros mostrados: {ledgerDialog.total || 0}
+              {t('loyalty.dialogs.ledgerShown', {
+                name: ledgerDialog.row?.customerFullname || '-',
+                count: ledgerDialog.total || 0
+              })}
             </Typography>
             <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Fecha</TableCell>
-                    <TableCell>Tipo</TableCell>
-                    <TableCell>Origen</TableCell>
-                    <TableCell>Puntos</TableCell>
-                    <TableCell>Balance</TableCell>
-                    <TableCell>Motivo</TableCell>
+                    <TableCell>{t('loyalty.dialogs.date')}</TableCell>
+                    <TableCell>{t('loyalty.dialogs.type')}</TableCell>
+                    <TableCell>{t('loyalty.dialogs.source')}</TableCell>
+                    <TableCell>{t('loyalty.dialogs.points')}</TableCell>
+                    <TableCell>{t('loyalty.dialogs.balance')}</TableCell>
+                    <TableCell>{t('loyalty.dialogs.reason')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -431,7 +467,7 @@ export default function LoyaltyLionTv() {
                   {!ledgerDialog.data.length ? (
                     <TableRow>
                       <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                        No hay movimientos todavía.
+                        {t('loyalty.dialogs.ledgerEmpty')}
                       </TableCell>
                     </TableRow>
                   ) : null}
@@ -444,7 +480,7 @@ export default function LoyaltyLionTv() {
 
       <Dialog open={adjustDialog.open} onClose={() => setAdjustDialog({ open: false, row: null, pointsDelta: '', reason: '' })} fullWidth maxWidth="sm">
         <DialogTitleWithClose onClose={() => setAdjustDialog({ open: false, row: null, pointsDelta: '', reason: '' })}>
-          Ajustar puntos
+          {t('loyalty.dialogs.adjustTitle')}
         </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2} sx={{ pt: 0.5 }}>
@@ -453,15 +489,15 @@ export default function LoyaltyLionTv() {
             </Typography>
             <TextField
               type="number"
-              label="Puntos"
+              label={t('loyalty.dialogs.adjustPoints')}
               value={adjustDialog.pointsDelta}
               onChange={(event) => setAdjustDialog((prev) => ({ ...prev, pointsDelta: event.target.value }))}
               fullWidth
               sx={fieldSx}
-              helperText="Usa positivos para sumar y negativos para restar."
+              helperText={t('loyalty.dialogs.adjustHelper')}
             />
             <TextField
-              label="Motivo"
+              label={t('loyalty.dialogs.adjustReason')}
               value={adjustDialog.reason}
               onChange={(event) => setAdjustDialog((prev) => ({ ...prev, reason: event.target.value }))}
               fullWidth
@@ -471,9 +507,9 @@ export default function LoyaltyLionTv() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAdjustDialog({ open: false, row: null, pointsDelta: '', reason: '' })}>Cancelar</Button>
+          <Button onClick={() => setAdjustDialog({ open: false, row: null, pointsDelta: '', reason: '' })}>{t('actions.cancel')}</Button>
           <Button variant="contained" onClick={handleAdjustPoints} disabled={saving}>
-            Aplicar
+            {t('loyalty.actions.apply')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -977,8 +977,11 @@ const resources = {
           opening: 'Opening',
           closing: 'Closing',
           referred: 'Referred',
-          channel: 'Channel'
+          channel: 'Channel',
+          vip: 'VIP',
+          points: 'Points'
         },
+        pointsChip: '{{count}} pts',
         channels: {
           social: 'Social media',
           google: 'Google',
@@ -1058,7 +1061,11 @@ const resources = {
           required: 'Please complete the required fields.',
           created: 'Customer created successfully.',
           updated: 'Customer updated successfully.',
-          deleted: 'Customer deleted successfully.'
+          deleted: 'Customer deleted successfully.',
+          engagementSummaryError: 'Could not load the VIP/loyalty summary.',
+          missingEmail: 'The customer has no registered email.',
+          welcomeSent: 'Welcome email sent.',
+          welcomeError: 'Could not send the welcome email.'
         }
       },
       referrals: {
@@ -1124,7 +1131,11 @@ const resources = {
       },
       crm: {
         title: 'Customer CRM',
-        search: { label: 'Search customer', placeholder: 'Name, email or user' },
+        search: {
+          label: 'Search customer',
+          placeholder: 'Name, email or user',
+          helper: 'Search a customer and get a 360 view with subscriptions, licenses, managed accounts, commercial timeline and billing.'
+        },
         actions: { retry: 'Retry', selectFirstCustomer: 'Select first customer' },
         empty: {
           title: 'Pick a customer to see their 360° view',
@@ -1153,9 +1164,24 @@ const resources = {
           lastInvoice: 'Last invoice date',
           referredBy: 'Referred by',
           noRef: 'No reference',
-          opening: 'Opening: {{date}}'
+          opening: 'Opening: {{date}}',
+          openingLabel: 'Opening date'
         },
-        contact: { call: 'Call', email: 'Email' },
+        contact: { call: 'Call', email: 'Email', phone: 'Phone' },
+        summary: {
+          title: 'Customer summary'
+        },
+        engagement: {
+          title: 'VIP + Loyalty',
+          updating: 'Updating...',
+          vip: 'VIP: {{value}}',
+          score: 'Score: {{value}}',
+          points: 'Points: {{value}}',
+          latestLedger: 'Latest ledger movements',
+          movement: '{{sign}}{{value}} pts',
+          balance: 'Balance: {{value}}',
+          empty: 'No loyalty movements yet.'
+        },
         tables: {
           subscriptions: { title: 'All subscriptions', desc: 'Full view of lines, packages, billing and dates for the customer.' },
           licenses: { title: 'All licenses', desc: 'License detail: app, type, validity and status.' },
@@ -1315,9 +1341,273 @@ const resources = {
           load: 'Could not load information.',
           banks: 'Could not load banks.',
           services: 'Could not load services.',
-          partialData: 'Some data sources failed. Retry to complete the 360 view.'
+          partialData: 'Some data sources failed. Retry to complete the 360 view.',
+          engagementLoad: 'Could not load the VIP/loyalty summary.'
         },
         table: { detail: 'Detail', empty: 'No data', emptyHelp: 'No records were found for this customer in this module.' }
+      },
+      vipCustomers: {
+        title: 'VIP Customers',
+        actions: {
+          config: 'Configuration',
+          recompute: 'Recompute',
+          recomputeCustomer: 'Recompute',
+          override: 'Override',
+          apply: 'Apply'
+        },
+        alerts: {
+          scoreInfo: 'The VIP score combines seniority, paid billing and subscription history per user.'
+        },
+        metrics: {
+          profilesLoaded: 'Loaded profiles',
+          profilesLoadedHelper: 'Active VIP snapshots',
+          overridesVisible: 'Visible overrides',
+          overridesVisibleHelper: 'Customers with manual tier',
+          averageScore: 'Average score',
+          averageScoreHelper: 'Average on the current page',
+          topTier: 'Leading tier',
+          topTierHelper: 'First record in the current ranking'
+        },
+        filters: {
+          search: 'Search',
+          status: 'Status',
+          finalTier: 'Final tier',
+          all: 'All',
+          overrideOnly: 'Only overrides'
+        },
+        table: {
+          customer: 'Customer',
+          status: 'Status',
+          channel: 'Channel',
+          seniority: 'Seniority',
+          billing: 'Billing',
+          subscriptions: 'Subscriptions',
+          score: 'Score',
+          computedTier: 'Computed tier',
+          finalTier: 'Final tier',
+          actions: 'Actions',
+          paidInvoices: 'Paid invoices: {{count}}',
+          subscriptionsSplit: '{{active}} active / {{total}} historical',
+          manual: 'Manual',
+          empty: 'No VIP profiles to display.'
+        },
+        dialogs: {
+          configTitle: 'VIP configuration',
+          activeConfig: 'Active configuration',
+          seniorityWeight: 'Seniority weight',
+          billingWeight: 'Billing weight',
+          subscriptionsWeight: 'Subscriptions weight',
+          fullScoreDays: 'Days for max score',
+          fullScoreAmount: 'Billing for max score',
+          fullScoreSubscriptions: 'Subscriptions for max score',
+          notes: 'Notes',
+          tiers: 'Tiers',
+          code: 'Code',
+          name: 'Name',
+          minScore: 'Minimum score',
+          order: 'Order',
+          color: 'Color',
+          active: 'Active',
+          overrideTitle: 'VIP override',
+          clearOverride: 'Clear override',
+          finalTier: 'Final tier',
+          reason: 'Reason'
+        },
+        units: {
+          days: '{{count}} days'
+        },
+        messages: {
+          loadConfigError: 'Could not load VIP configuration.',
+          loadRankingError: 'Could not load the VIP ranking.',
+          configUpdated: 'VIP configuration updated.',
+          saveConfigError: 'Could not save VIP configuration.',
+          rankingRecomputed: 'VIP ranking recomputed.',
+          recomputeError: 'Could not recompute VIP.',
+          customerRecomputed: 'VIP customer recomputed.',
+          recomputeCustomerError: 'Could not recompute the customer.',
+          overrideApplied: 'VIP override applied.',
+          overrideError: 'Could not apply the override.'
+        }
+      },
+      loyalty: {
+        title: 'Loyalty',
+        actions: {
+          config: 'Configuration',
+          ledger: 'Ledger',
+          adjust: 'Adjust',
+          apply: 'Apply'
+        },
+        alerts: {
+          active: 'Program active since {{date}}.',
+          noDate: 'no defined date',
+          inactive: 'The program is inactive. No new points will be credited until it is activated.'
+        },
+        metrics: {
+          listedCustomers: 'Listed customers',
+          listedCustomersHelper: 'Visible balances',
+          customersWithPoints: 'Customers with points',
+          customersWithPointsHelper: 'With available balance above zero',
+          visiblePoints: 'Visible points',
+          visiblePointsHelper: 'Current page total',
+          baseRule: 'Base rule',
+          baseRuleValue: '{{points}} / L{{amount}}',
+          baseRuleHelper: 'Rounding: {{mode}}'
+        },
+        filters: {
+          search: 'Search',
+          status: 'Status',
+          all: 'All',
+          minimumPoints: 'Minimum points'
+        },
+        table: {
+          customer: 'Customer',
+          status: 'Status',
+          channel: 'Channel',
+          availablePoints: 'Available points',
+          lifetimeEarned: 'Lifetime earned',
+          lifetimeAdjusted: 'Lifetime adjusted',
+          lastMovement: 'Last movement',
+          actions: 'Actions',
+          empty: 'No loyalty balances to display.'
+        },
+        dialogs: {
+          configTitle: 'Loyalty configuration',
+          programActive: 'Program active',
+          pointsPerUnit: 'Points per unit',
+          amountPerUnit: 'Amount per unit',
+          rounding: 'Rounding',
+          effectiveFrom: 'Effective from',
+          notes: 'Notes',
+          ledgerTitle: 'Points ledger',
+          ledgerShown: '{{name}} · displayed records: {{count}}',
+          date: 'Date',
+          type: 'Type',
+          source: 'Source',
+          points: 'Points',
+          balance: 'Balance',
+          reason: 'Reason',
+          ledgerEmpty: 'No movements yet.',
+          adjustTitle: 'Adjust points',
+          adjustPoints: 'Points',
+          adjustHelper: 'Use positive values to add and negative values to subtract.',
+          adjustReason: 'Reason'
+        },
+        messages: {
+          loadConfigError: 'Could not load the loyalty configuration.',
+          loadModuleError: 'Could not load the loyalty module.',
+          loadLedgerError: 'Could not load the customer ledger.',
+          configUpdated: 'Loyalty configuration updated.',
+          saveConfigError: 'Could not save the configuration.',
+          adjustmentApplied: 'Points adjustment applied.',
+          adjustmentError: 'Could not apply the adjustment.'
+        }
+      },
+      raffles: {
+        title: 'Raffles',
+        actions: {
+          newTemplate: 'New template',
+          newRaffle: 'New raffle',
+          preview: 'Preview',
+          freeze: 'Freeze',
+          draw: 'Draw',
+          entries: 'Entries',
+          winners: 'Winners'
+        },
+        alerts: {
+          info: 'The raffle works on a frozen audience. You can filter by criteria, mix manual IDs and run a reproducible draw.'
+        },
+        metrics: {
+          templates: 'Templates',
+          templatesHelper: 'Reusable criteria',
+          raffles: 'Raffles',
+          rafflesHelper: 'Visible records',
+          frozen: 'Frozen',
+          frozenHelper: 'Ready to run',
+          drawn: 'Drawn',
+          drawnHelper: 'With winners defined'
+        },
+        tabs: {
+          templates: 'Templates',
+          raffles: 'Raffles'
+        },
+        filters: {
+          status: 'Status',
+          all: 'All'
+        },
+        status: {
+          DRAFT: 'Draft',
+          FROZEN: 'Frozen',
+          DRAWN: 'Drawn'
+        },
+        modes: {
+          FILTERED: 'Filtered',
+          MANUAL: 'Manual',
+          MIXED: 'Mixed'
+        },
+        table: {
+          name: 'Name',
+          description: 'Description',
+          active: 'Active',
+          seed: 'Seed',
+          prize: 'Prize',
+          mode: 'Mode',
+          winners: 'Winners',
+          status: 'Status',
+          actions: 'Actions',
+          empty: 'No raffles to display.',
+          yes: 'Yes',
+          no: 'No'
+        },
+        dialogs: {
+          templateTitle: 'Raffle template',
+          raffleTitle: 'Raffle',
+          entriesTitle: 'Frozen entries',
+          winnersTitle: 'Winners',
+          activeTemplate: 'Active template',
+          customerStatus: 'Customer status',
+          channel: 'Channel',
+          minSeniority: 'Minimum seniority (days)',
+          minPaidBilling: 'Minimum paid billing',
+          minPaidInvoices: 'Minimum paid invoices',
+          minActiveSubscriptions: 'Minimum active subscriptions',
+          minTotalSubscriptions: 'Minimum historical subscriptions',
+          referredOnly: 'Referred only',
+          name: 'Name',
+          description: 'Description',
+          prize: 'Prize',
+          mode: 'Mode',
+          template: 'Template',
+          noTemplate: 'No template',
+          winnerCount: 'Winner count',
+          manualCustomerIds: 'Manual customer IDs',
+          manualCustomerIdsHelper: 'You can separate IDs by comma, space or line break.',
+          previewTitle: 'Audience preview',
+          previewHelper: 'Calculate the audience before saving or freezing the raffle.',
+          previewAlert: 'Eligible: {{eligible}} · filtered: {{filtered}} · manual: {{manual}}',
+          id: 'ID',
+          customer: 'Customer',
+          billing: 'Billing',
+          subscriptions: 'Subscriptions',
+          source: 'Source',
+          contact: 'Contact',
+          rank: 'Rank'
+        },
+        messages: {
+          loadTemplatesError: 'Could not load templates.',
+          loadRafflesError: 'Could not load raffles.',
+          templateSaved: 'Template saved.',
+          templateSaveError: 'Could not save the template.',
+          previewError: 'Could not preview the audience.',
+          raffleSaved: 'Raffle saved.',
+          raffleSaveError: 'Could not save the raffle.',
+          freezeSuccess: 'Audience frozen with {{count}} participants.',
+          freezeError: 'Could not freeze the audience.',
+          drawSuccess: 'Raffle executed. Winners: {{count}}.',
+          drawError: 'Could not execute the raffle.',
+          loadEntriesError: 'Could not load entries.',
+          loadWinnersError: 'Could not load winners.',
+          winnersEmpty: 'No winners to display.'
+        }
       },
       userAccess: {
         title: 'User Administration & Access',
@@ -3986,8 +4276,11 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           opening: 'Apertura',
           closing: 'Cierre',
           referred: 'Referido',
-          channel: 'Canal'
+          channel: 'Canal',
+          vip: 'VIP',
+          points: 'Puntos'
         },
+        pointsChip: '{{count}} pts',
         channels: {
           social: 'Red social',
           google: 'Google',
@@ -4067,7 +4360,11 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           required: 'Completa los campos requeridos.',
           created: 'Cliente creado correctamente.',
           updated: 'Cliente actualizado correctamente.',
-          deleted: 'Cliente eliminado correctamente.'
+          deleted: 'Cliente eliminado correctamente.',
+          engagementSummaryError: 'No se pudo cargar el resumen VIP/lealtad.',
+          missingEmail: 'El cliente no tiene correo registrado.',
+          welcomeSent: 'Correo de bienvenida enviado.',
+          welcomeError: 'No se pudo enviar la bienvenida.'
         }
       },
       referrals: {
@@ -4133,7 +4430,11 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
       },
       crm: {
         title: 'CRM Clientes',
-        search: { label: 'Buscar cliente', placeholder: 'Nombre, correo o usuario' },
+        search: {
+          label: 'Buscar cliente',
+          placeholder: 'Nombre, correo o usuario',
+          helper: 'Busca un cliente y obtén una vista 360 con suscripciones, licencias, managed accounts, timeline comercial y facturación.'
+        },
         actions: { retry: 'Reintentar', selectFirstCustomer: 'Seleccionar primer cliente' },
         empty: {
           title: 'Selecciona un cliente para ver su panorama 360°',
@@ -4162,9 +4463,24 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           lastInvoice: 'Fecha de la última factura',
           referredBy: 'Referido por',
           noRef: 'Sin referencia',
-          opening: 'Alta: {{date}}'
+          opening: 'Alta: {{date}}',
+          openingLabel: 'Fecha de alta'
         },
-        contact: { call: 'Llamar', email: 'Email' },
+        contact: { call: 'Llamar', email: 'Email', phone: 'Teléfono' },
+        summary: {
+          title: 'Resumen del cliente'
+        },
+        engagement: {
+          title: 'VIP + Lealtad',
+          updating: 'Actualizando...',
+          vip: 'VIP: {{value}}',
+          score: 'Score: {{value}}',
+          points: 'Puntos: {{value}}',
+          latestLedger: 'Últimos movimientos de puntos',
+          movement: '{{sign}}{{value}} pts',
+          balance: 'Balance: {{value}}',
+          empty: 'No hay movimientos de lealtad todavía.'
+        },
         tables: {
           subscriptions: { title: 'Todas las suscripciones', desc: 'Vista completa de líneas, paquetes, billing y fechas del cliente.' },
           licenses: { title: 'Todas las licencias', desc: 'Detalle de licencias: app, tipo, vigencia y estado actual.' },
@@ -4324,9 +4640,273 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           load: 'No se pudo cargar la información.',
           banks: 'No se pudieron cargar los bancos.',
           services: 'No se pudieron cargar los servicios.',
-          partialData: 'Algunas fuentes fallaron. Puedes reintentar para completar la vista 360.'
+          partialData: 'Algunas fuentes fallaron. Puedes reintentar para completar la vista 360.',
+          engagementLoad: 'No se pudo cargar el resumen VIP/lealtad.'
         },
         table: { detail: 'Detalle', empty: 'No hay datos', emptyHelp: 'No hay registros para este cliente en este módulo.' }
+      },
+      vipCustomers: {
+        title: 'Clientes VIP',
+        actions: {
+          config: 'Configuración',
+          recompute: 'Recalcular',
+          recomputeCustomer: 'Recalcular',
+          override: 'Ajustar tier',
+          apply: 'Aplicar'
+        },
+        alerts: {
+          scoreInfo: 'El score VIP combina antigüedad, facturación pagada e historial de suscripciones por usuario.'
+        },
+        metrics: {
+          profilesLoaded: 'Perfiles cargados',
+          profilesLoadedHelper: 'Perfiles VIP activos',
+          overridesVisible: 'Ajustes manuales visibles',
+          overridesVisibleHelper: 'Clientes con tier manual',
+          averageScore: 'Score promedio',
+          averageScoreHelper: 'Media de la página actual',
+          topTier: 'Tier líder',
+          topTierHelper: 'Primer registro del ranking actual'
+        },
+        filters: {
+          search: 'Buscar',
+          status: 'Estado',
+          finalTier: 'Tier final',
+          all: 'Todos',
+          overrideOnly: 'Solo overrides'
+        },
+        table: {
+          customer: 'Cliente',
+          status: 'Estado',
+          channel: 'Canal',
+          seniority: 'Antigüedad',
+          billing: 'Facturación',
+          subscriptions: 'Suscripciones',
+          score: 'Score',
+          computedTier: 'Tier calculado',
+          finalTier: 'Tier final',
+          actions: 'Acciones',
+          paidInvoices: 'Facturas pagadas: {{count}}',
+          subscriptionsSplit: '{{active}} activas / {{total}} históricas',
+          manual: 'Manual',
+          empty: 'No hay perfiles VIP para mostrar.'
+        },
+        dialogs: {
+          configTitle: 'Configuración VIP',
+          activeConfig: 'Configuración activa',
+          seniorityWeight: 'Peso antigüedad',
+          billingWeight: 'Peso facturación',
+          subscriptionsWeight: 'Peso suscripciones',
+          fullScoreDays: 'Días para score máximo',
+          fullScoreAmount: 'Facturación para score máximo',
+          fullScoreSubscriptions: 'Suscripciones para score máximo',
+          notes: 'Notas',
+          tiers: 'Tiers',
+          code: 'Código',
+          name: 'Nombre',
+          minScore: 'Score mínimo',
+          order: 'Orden',
+          color: 'Color',
+          active: 'Activo',
+          overrideTitle: 'Ajuste VIP',
+          clearOverride: 'Limpiar ajuste',
+          finalTier: 'Tier final',
+          reason: 'Motivo'
+        },
+        units: {
+          days: '{{count}} días'
+        },
+        messages: {
+          loadConfigError: 'No se pudo cargar la configuración VIP.',
+          loadRankingError: 'No se pudo cargar el ranking VIP.',
+          configUpdated: 'Configuración VIP actualizada.',
+          saveConfigError: 'No se pudo guardar la configuración VIP.',
+          rankingRecomputed: 'Ranking VIP recalculado.',
+          recomputeError: 'No se pudo recalcular VIP.',
+          customerRecomputed: 'Cliente VIP recalculado.',
+          recomputeCustomerError: 'No se pudo recalcular el cliente.',
+          overrideApplied: 'Ajuste VIP aplicado.',
+          overrideError: 'No se pudo aplicar el ajuste.'
+        }
+      },
+      loyalty: {
+        title: 'Lealtad',
+        actions: {
+          config: 'Configuración',
+          ledger: 'Historial',
+          adjust: 'Ajustar',
+          apply: 'Aplicar'
+        },
+        alerts: {
+          active: 'Programa activo desde {{date}}.',
+          noDate: 'sin fecha definida',
+          inactive: 'El programa está inactivo. No se acreditarán puntos nuevos hasta activarlo.'
+        },
+        metrics: {
+          listedCustomers: 'Clientes listados',
+          listedCustomersHelper: 'Balances visibles',
+          customersWithPoints: 'Clientes con puntos',
+          customersWithPointsHelper: 'Con saldo disponible mayor a cero',
+          visiblePoints: 'Puntos visibles',
+          visiblePointsHelper: 'Total de la página actual',
+          baseRule: 'Regla base',
+          baseRuleValue: '{{points}} / L{{amount}}',
+          baseRuleHelper: 'Redondeo: {{mode}}'
+        },
+        filters: {
+          search: 'Buscar',
+          status: 'Estado',
+          all: 'Todos',
+          minimumPoints: 'Puntos mínimos'
+        },
+        table: {
+          customer: 'Cliente',
+          status: 'Estado',
+          channel: 'Canal',
+          availablePoints: 'Puntos disponibles',
+          lifetimeEarned: 'Puntos acumulados',
+          lifetimeAdjusted: 'Ajustes acumulados',
+          lastMovement: 'Último movimiento',
+          actions: 'Acciones',
+          empty: 'No hay balances de lealtad para mostrar.'
+        },
+        dialogs: {
+          configTitle: 'Configuración de lealtad',
+          programActive: 'Programa activo',
+          pointsPerUnit: 'Puntos por unidad',
+          amountPerUnit: 'Monto por unidad',
+          rounding: 'Redondeo',
+          effectiveFrom: 'Vigente desde',
+          notes: 'Notas',
+          ledgerTitle: 'Historial de puntos',
+          ledgerShown: '{{name}} · registros mostrados: {{count}}',
+          date: 'Fecha',
+          type: 'Tipo',
+          source: 'Origen',
+          points: 'Puntos',
+          balance: 'Balance',
+          reason: 'Motivo',
+          ledgerEmpty: 'No hay movimientos todavía.',
+          adjustTitle: 'Ajustar puntos',
+          adjustPoints: 'Puntos',
+          adjustHelper: 'Usa positivos para sumar y negativos para restar.',
+          adjustReason: 'Motivo'
+        },
+        messages: {
+          loadConfigError: 'No se pudo cargar la configuración de lealtad.',
+          loadModuleError: 'No se pudo cargar el módulo de lealtad.',
+          loadLedgerError: 'No se pudo cargar el historial del cliente.',
+          configUpdated: 'Configuración de lealtad actualizada.',
+          saveConfigError: 'No se pudo guardar la configuración.',
+          adjustmentApplied: 'Ajuste de puntos aplicado.',
+          adjustmentError: 'No se pudo aplicar el ajuste.'
+        }
+      },
+      raffles: {
+        title: 'Sorteos',
+        actions: {
+          newTemplate: 'Nueva plantilla',
+          newRaffle: 'Nuevo sorteo',
+          preview: 'Previsualizar',
+          freeze: 'Congelar',
+          draw: 'Sortear',
+          entries: 'Entradas',
+          winners: 'Ganadores'
+        },
+        alerts: {
+          info: 'El sorteo trabaja sobre audiencia congelada. Puedes filtrar por criterios, mezclar IDs manuales y ejecutar una corrida reproducible.'
+        },
+        metrics: {
+          templates: 'Plantillas',
+          templatesHelper: 'Criterios reutilizables',
+          raffles: 'Sorteos',
+          rafflesHelper: 'Registros visibles',
+          frozen: 'Congelados',
+          frozenHelper: 'Listos para corrida',
+          drawn: 'Sorteados',
+          drawnHelper: 'Con ganadores definidos'
+        },
+        tabs: {
+          templates: 'Plantillas',
+          raffles: 'Sorteos'
+        },
+        filters: {
+          status: 'Estado',
+          all: 'Todos'
+        },
+        status: {
+          DRAFT: 'Borrador',
+          FROZEN: 'Congelado',
+          DRAWN: 'Sorteado'
+        },
+        modes: {
+          FILTERED: 'Filtrado',
+          MANUAL: 'Manual',
+          MIXED: 'Mixto'
+        },
+        table: {
+          name: 'Nombre',
+          description: 'Descripción',
+          active: 'Activa',
+          seed: 'Semilla',
+          prize: 'Premio',
+          mode: 'Modo',
+          winners: 'Ganadores',
+          status: 'Estado',
+          actions: 'Acciones',
+          empty: 'No hay sorteos para mostrar.',
+          yes: 'Sí',
+          no: 'No'
+        },
+        dialogs: {
+          templateTitle: 'Plantilla de sorteo',
+          raffleTitle: 'Sorteo',
+          entriesTitle: 'Participantes congelados',
+          winnersTitle: 'Ganadores',
+          activeTemplate: 'Plantilla activa',
+          customerStatus: 'Estado cliente',
+          channel: 'Canal',
+          minSeniority: 'Antigüedad mínima (días)',
+          minPaidBilling: 'Facturación mínima pagada',
+          minPaidInvoices: 'Facturas pagadas mínimas',
+          minActiveSubscriptions: 'Subs activas mínimas',
+          minTotalSubscriptions: 'Subs históricas mínimas',
+          referredOnly: 'Solo referidos',
+          name: 'Nombre',
+          description: 'Descripción',
+          prize: 'Premio',
+          mode: 'Modo',
+          template: 'Plantilla',
+          noTemplate: 'Sin plantilla',
+          winnerCount: 'Cantidad de ganadores',
+          manualCustomerIds: 'Customer IDs manuales',
+          manualCustomerIdsHelper: 'Puedes separar IDs por coma, espacio o salto de línea.',
+          previewTitle: 'Previsualización de audiencia',
+          previewHelper: 'Calcula la audiencia antes de guardar o congelar el sorteo.',
+          previewAlert: 'Elegibles: {{eligible}} · filtrados: {{filtered}} · manuales: {{manual}}',
+          id: 'ID',
+          customer: 'Cliente',
+          billing: 'Facturación',
+          subscriptions: 'Subs',
+          source: 'Origen',
+          contact: 'Contacto',
+          rank: 'Posición'
+        },
+        messages: {
+          loadTemplatesError: 'No se pudieron cargar las plantillas.',
+          loadRafflesError: 'No se pudieron cargar los sorteos.',
+          templateSaved: 'Plantilla guardada.',
+          templateSaveError: 'No se pudo guardar la plantilla.',
+          previewError: 'No se pudo previsualizar la audiencia.',
+          raffleSaved: 'Sorteo guardado.',
+          raffleSaveError: 'No se pudo guardar el sorteo.',
+          freezeSuccess: 'Audiencia congelada con {{count}} participantes.',
+          freezeError: 'No se pudo congelar la audiencia.',
+          drawSuccess: 'Sorteo ejecutado. Ganadores: {{count}}.',
+          drawError: 'No se pudo ejecutar el sorteo.',
+          loadEntriesError: 'No se pudieron cargar las entradas.',
+          loadWinnersError: 'No se pudieron cargar los ganadores.',
+          winnersEmpty: 'No hay ganadores para mostrar.'
+        }
       },
       userAccess: {
         title: 'Administración de Usuarios y Accesos',

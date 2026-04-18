@@ -26,6 +26,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import { useTranslation } from 'react-i18next';
 
 import CardGiftcardRoundedIcon from '@mui/icons-material/CardGiftcardRounded';
 import GroupAddRoundedIcon from '@mui/icons-material/GroupAddRounded';
@@ -109,6 +110,7 @@ function cleanFilters(filters = {}) {
 
 export default function RafflesLionTv() {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
 
   const [tab, setTab] = useState(0);
   const [templates, setTemplates] = useState([]);
@@ -124,14 +126,38 @@ export default function RafflesLionTv() {
   const [entriesDialog, setEntriesDialog] = useState({ open: false, title: '', rows: [] });
   const [winnersDialog, setWinnersDialog] = useState({ open: false, rows: [] });
 
+  const raffleStatusLabel = useCallback((value) => {
+    if (!value) return '-';
+    return t(`raffles.status.${value}`, { defaultValue: value });
+  }, [t]);
+
+  const raffleModeLabel = useCallback((value) => {
+    if (!value) return '-';
+    return t(`raffles.modes.${value}`, { defaultValue: value });
+  }, [t]);
+
+  const customerStatusLabel = useCallback((value) => {
+    if (!value) return '-';
+    return t(`customers.status.${value}`, { defaultValue: value });
+  }, [t]);
+
+  const channelLabel = useCallback((value) => {
+    const normalized = String(value ?? '').trim().toLowerCase();
+    if (normalized === 'red social') return t('customers.channels.social');
+    if (normalized === 'google') return t('customers.channels.google');
+    if (normalized === 'familiares') return t('customers.channels.family');
+    if (normalized === 'amigos') return t('customers.channels.friends');
+    return value || '-';
+  }, [t]);
+
   const loadTemplates = useCallback(async () => {
     try {
       const response = await listRaffleTemplates();
       setTemplates(response || []);
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudieron cargar las plantillas.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('raffles.messages.loadTemplatesError'), { variant: 'error' });
     }
-  }, [enqueueSnackbar]);
+  }, [enqueueSnackbar, t]);
 
   const loadRaffles = useCallback(async () => {
     setLoading(true);
@@ -144,11 +170,11 @@ export default function RafflesLionTv() {
       setRaffles(response?.data || []);
       setTotalRaffles(response?.total || 0);
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudieron cargar los sorteos.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('raffles.messages.loadRafflesError'), { variant: 'error' });
     } finally {
       setLoading(false);
     }
-  }, [enqueueSnackbar, page, rowsPerPage, statusFilter]);
+  }, [enqueueSnackbar, page, rowsPerPage, statusFilter, t]);
 
   useEffect(() => {
     loadTemplates();
@@ -178,11 +204,11 @@ export default function RafflesLionTv() {
       } else {
         await createRaffleTemplate(payload);
       }
-      enqueueSnackbar('Plantilla guardada.', { variant: 'success' });
+      enqueueSnackbar(t('raffles.messages.templateSaved'), { variant: 'success' });
       setTemplateDialog({ open: false, form: { ...emptyTemplate } });
       await loadTemplates();
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo guardar la plantilla.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('raffles.messages.templateSaveError'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -204,7 +230,7 @@ export default function RafflesLionTv() {
       const preview = await previewRaffleAudience(payload);
       setRaffleDialog((prev) => ({ ...prev, preview }));
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo previsualizar la audiencia.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('raffles.messages.previewError'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -228,11 +254,11 @@ export default function RafflesLionTv() {
       } else {
         await createRaffle(payload);
       }
-      enqueueSnackbar('Sorteo guardado.', { variant: 'success' });
+      enqueueSnackbar(t('raffles.messages.raffleSaved'), { variant: 'success' });
       setRaffleDialog({ open: false, form: { ...emptyRaffle }, preview: null });
       await loadRaffles();
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo guardar el sorteo.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('raffles.messages.raffleSaveError'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -260,10 +286,10 @@ export default function RafflesLionTv() {
     setSaving(true);
     try {
       const response = await freezeRaffleAudience(raffleId);
-      enqueueSnackbar(`Audiencia congelada con ${response?.totalEligible || 0} participantes.`, { variant: 'success' });
+      enqueueSnackbar(t('raffles.messages.freezeSuccess', { count: response?.totalEligible || 0 }), { variant: 'success' });
       await loadRaffles();
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo congelar la audiencia.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('raffles.messages.freezeError'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -273,11 +299,11 @@ export default function RafflesLionTv() {
     setSaving(true);
     try {
       const winners = await drawRaffle(raffleId);
-      enqueueSnackbar(`Sorteo ejecutado. Ganadores: ${winners?.length || 0}.`, { variant: 'success' });
+      enqueueSnackbar(t('raffles.messages.drawSuccess', { count: winners?.length || 0 }), { variant: 'success' });
       setWinnersDialog({ open: true, rows: winners || [] });
       await loadRaffles();
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo ejecutar el sorteo.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('raffles.messages.drawError'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -286,9 +312,9 @@ export default function RafflesLionTv() {
   const handleViewEntries = async (raffleId) => {
     try {
       const rows = await listRaffleEntries(raffleId);
-      setEntriesDialog({ open: true, title: 'Participantes congelados', rows: rows || [] });
+      setEntriesDialog({ open: true, title: t('raffles.dialogs.entriesTitle'), rows: rows || [] });
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudieron cargar las entradas.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('raffles.messages.loadEntriesError'), { variant: 'error' });
     }
   };
 
@@ -297,44 +323,66 @@ export default function RafflesLionTv() {
       const rows = await listRaffleWinners(raffleId);
       setWinnersDialog({ open: true, rows: rows || [] });
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudieron cargar los ganadores.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || error.message || t('raffles.messages.loadWinnersError'), { variant: 'error' });
     }
   };
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1500, mx: 'auto' }}>
       <MainCard
-        title="Sorteos"
+        title={t('raffles.title')}
         secondary={
           <ResponsiveActionBar>
             <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => Promise.all([loadTemplates(), loadRaffles()])}>
-              Recargar
+              {t('actions.refresh')}
             </Button>
             <Button variant="outlined" startIcon={<GroupAddRoundedIcon />} onClick={() => setTemplateDialog({ open: true, form: { ...emptyTemplate } })}>
-              Nueva plantilla
+              {t('raffles.actions.newTemplate')}
             </Button>
             <Button variant="contained" startIcon={<CardGiftcardRoundedIcon />} onClick={() => setRaffleDialog({ open: true, form: { ...emptyRaffle }, preview: null })}>
-              Nuevo sorteo
+              {t('raffles.actions.newRaffle')}
             </Button>
           </ResponsiveActionBar>
         }
       >
         <Stack spacing={2.5}>
-          <Alert severity="info">
-            El sorteo trabaja sobre audiencia congelada. Puedes filtrar por criterios, mezclar IDs manuales y ejecutar una corrida reproducible.
-          </Alert>
+          <Alert severity="info">{t('raffles.alerts.info')}</Alert>
 
           <ResponsiveMetricGrid columns={{ xs: 1, sm: 2, lg: 4 }}>
-            <LionMetricCard title="Plantillas" value={templates.length} helper="Criterios reutilizables" color="secondary" icon={<GroupAddRoundedIcon />} />
-            <LionMetricCard title="Sorteos" value={totalRaffles} helper="Registros visibles" color="primary" icon={<CardGiftcardRoundedIcon />} />
-            <LionMetricCard title="Congelados" value={metrics.frozen} helper="Listos para corrida" color="warning" icon={<VisibilityRoundedIcon />} />
-            <LionMetricCard title="Sorteados" value={metrics.drawn} helper="Con ganadores definidos" color="success" icon={<ShuffleRoundedIcon />} />
+            <LionMetricCard
+              title={t('raffles.metrics.templates')}
+              value={templates.length}
+              helper={t('raffles.metrics.templatesHelper')}
+              color="secondary"
+              icon={<GroupAddRoundedIcon />}
+            />
+            <LionMetricCard
+              title={t('raffles.metrics.raffles')}
+              value={totalRaffles}
+              helper={t('raffles.metrics.rafflesHelper')}
+              color="primary"
+              icon={<CardGiftcardRoundedIcon />}
+            />
+            <LionMetricCard
+              title={t('raffles.metrics.frozen')}
+              value={metrics.frozen}
+              helper={t('raffles.metrics.frozenHelper')}
+              color="warning"
+              icon={<VisibilityRoundedIcon />}
+            />
+            <LionMetricCard
+              title={t('raffles.metrics.drawn')}
+              value={metrics.drawn}
+              helper={t('raffles.metrics.drawnHelper')}
+              color="success"
+              icon={<ShuffleRoundedIcon />}
+            />
           </ResponsiveMetricGrid>
 
           <Paper sx={{ p: 1, borderRadius: 3 }}>
             <Tabs value={tab} onChange={(_, value) => setTab(value)}>
-              <Tab label="Plantillas" />
-              <Tab label="Sorteos" />
+              <Tab label={t('raffles.tabs.templates')} />
+              <Tab label={t('raffles.tabs.raffles')} />
             </Tabs>
           </Paper>
 
@@ -343,11 +391,11 @@ export default function RafflesLionTv() {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Nombre</TableCell>
-                    <TableCell>Descripción</TableCell>
-                    <TableCell>Activa</TableCell>
-                    <TableCell>Seed</TableCell>
-                    <TableCell align="right">Acciones</TableCell>
+                    <TableCell>{t('raffles.table.name')}</TableCell>
+                    <TableCell>{t('raffles.table.description')}</TableCell>
+                    <TableCell>{t('raffles.table.active')}</TableCell>
+                    <TableCell>{t('raffles.table.seed')}</TableCell>
+                    <TableCell align="right">{t('raffles.table.actions')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -355,11 +403,11 @@ export default function RafflesLionTv() {
                     <TableRow key={template.id} hover>
                       <TableCell>{template.name}</TableCell>
                       <TableCell>{template.description || '-'}</TableCell>
-                      <TableCell>{template.active ? 'Sí' : 'No'}</TableCell>
-                      <TableCell>{template.seed ? 'Sí' : 'No'}</TableCell>
+                      <TableCell>{template.active ? t('raffles.table.yes') : t('raffles.table.no')}</TableCell>
+                      <TableCell>{template.seed ? t('raffles.table.yes') : t('raffles.table.no')}</TableCell>
                       <TableCell align="right">
                         <Button size="small" variant="outlined" onClick={() => setTemplateDialog({ open: true, form: { ...emptyTemplate, ...template, filters: { ...emptyTemplate.filters, ...(template.filters || {}) } } })}>
-                          Editar
+                          {t('actions.edit')}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -372,12 +420,12 @@ export default function RafflesLionTv() {
               <Paper sx={{ p: 2.5, borderRadius: 3 }}>
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
                   <FormControl sx={{ minWidth: 200 }}>
-                    <InputLabel>Estado</InputLabel>
-                    <Select label="Estado" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-                      <MenuItem value="">Todos</MenuItem>
-                      <MenuItem value="DRAFT">DRAFT</MenuItem>
-                      <MenuItem value="FROZEN">FROZEN</MenuItem>
-                      <MenuItem value="DRAWN">DRAWN</MenuItem>
+                    <InputLabel>{t('raffles.filters.status')}</InputLabel>
+                    <Select label={t('raffles.filters.status')} value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                      <MenuItem value="">{t('raffles.filters.all')}</MenuItem>
+                      <MenuItem value="DRAFT">{raffleStatusLabel('DRAFT')}</MenuItem>
+                      <MenuItem value="FROZEN">{raffleStatusLabel('FROZEN')}</MenuItem>
+                      <MenuItem value="DRAWN">{raffleStatusLabel('DRAWN')}</MenuItem>
                     </Select>
                   </FormControl>
                 </Stack>
@@ -387,13 +435,13 @@ export default function RafflesLionTv() {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Nombre</TableCell>
-                      <TableCell>Premio</TableCell>
-                      <TableCell>Modo</TableCell>
-                      <TableCell>Ganadores</TableCell>
-                      <TableCell>Estado</TableCell>
-                      <TableCell>Seed</TableCell>
-                      <TableCell align="right">Acciones</TableCell>
+                      <TableCell>{t('raffles.table.name')}</TableCell>
+                      <TableCell>{t('raffles.table.prize')}</TableCell>
+                      <TableCell>{t('raffles.table.mode')}</TableCell>
+                      <TableCell>{t('raffles.table.winners')}</TableCell>
+                      <TableCell>{t('raffles.table.status')}</TableCell>
+                      <TableCell>{t('raffles.table.seed')}</TableCell>
+                      <TableCell align="right">{t('raffles.table.actions')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -408,26 +456,26 @@ export default function RafflesLionTv() {
                           </Stack>
                         </TableCell>
                         <TableCell>{raffle.prizeName || '-'}</TableCell>
-                        <TableCell>{raffle.mode || '-'}</TableCell>
+                        <TableCell>{raffleModeLabel(raffle.mode)}</TableCell>
                         <TableCell>{raffle.winnerCount || 1}</TableCell>
-                        <TableCell>{raffle.raffleStatus || '-'}</TableCell>
+                        <TableCell>{raffleStatusLabel(raffle.raffleStatus)}</TableCell>
                         <TableCell>{raffle.drawSeed || '-'}</TableCell>
                         <TableCell align="right">
                           <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
                             <Button size="small" variant="outlined" onClick={() => openEditRaffle(raffle)}>
-                              Editar
+                              {t('actions.edit')}
                             </Button>
                             <Button size="small" variant="outlined" onClick={() => handleFreezeAudience(raffle.id)}>
-                              Congelar
+                              {t('raffles.actions.freeze')}
                             </Button>
                             <Button size="small" variant="contained" onClick={() => handleDraw(raffle.id)}>
-                              Sortear
+                              {t('raffles.actions.draw')}
                             </Button>
                             <Button size="small" variant="outlined" onClick={() => handleViewEntries(raffle.id)}>
-                              Entradas
+                              {t('raffles.actions.entries')}
                             </Button>
                             <Button size="small" variant="outlined" onClick={() => handleViewWinners(raffle.id)}>
-                              Ganadores
+                              {t('raffles.actions.winners')}
                             </Button>
                           </Stack>
                         </TableCell>
@@ -436,7 +484,7 @@ export default function RafflesLionTv() {
                     {!loading && raffles.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
-                          No hay sorteos para mostrar.
+                          {t('raffles.table.empty')}
                         </TableCell>
                       </TableRow>
                     ) : null}
@@ -461,18 +509,20 @@ export default function RafflesLionTv() {
       </MainCard>
 
       <Dialog open={templateDialog.open} onClose={() => setTemplateDialog({ open: false, form: { ...emptyTemplate } })} fullWidth maxWidth="md">
-        <DialogTitleWithClose onClose={() => setTemplateDialog({ open: false, form: { ...emptyTemplate } })}>Plantilla de sorteo</DialogTitleWithClose>
+        <DialogTitleWithClose onClose={() => setTemplateDialog({ open: false, form: { ...emptyTemplate } })}>
+          {t('raffles.dialogs.templateTitle')}
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2} sx={{ pt: 0.5 }}>
             <TextField
-              label="Nombre"
+              label={t('raffles.dialogs.name')}
               value={templateDialog.form.name}
               onChange={(event) => setTemplateDialog((prev) => ({ ...prev, form: { ...prev.form, name: event.target.value } }))}
               fullWidth
               sx={fieldSx}
             />
             <TextField
-              label="Descripción"
+              label={t('raffles.dialogs.description')}
               value={templateDialog.form.description}
               onChange={(event) => setTemplateDialog((prev) => ({ ...prev, form: { ...prev.form, description: event.target.value } }))}
               fullWidth
@@ -488,26 +538,26 @@ export default function RafflesLionTv() {
                   }
                 />
               }
-              label="Plantilla activa"
+              label={t('raffles.dialogs.activeTemplate')}
             />
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
               <FormControl fullWidth>
-                <InputLabel>Estado cliente</InputLabel>
+                <InputLabel>{t('raffles.dialogs.customerStatus')}</InputLabel>
                 <Select
-                  label="Estado cliente"
+                  label={t('raffles.dialogs.customerStatus')}
                   value={templateDialog.form.filters.status || ''}
                   onChange={(event) =>
                     setTemplateDialog((prev) => ({ ...prev, form: { ...prev.form, filters: { ...prev.form.filters, status: event.target.value } } }))
                   }
                 >
-                  <MenuItem value="">Todos</MenuItem>
-                  <MenuItem value="ACTIVE">ACTIVE</MenuItem>
-                  <MenuItem value="INACTIVE">INACTIVE</MenuItem>
-                  <MenuItem value="SUSPENDED">SUSPENDED</MenuItem>
+                  <MenuItem value="">{t('raffles.filters.all')}</MenuItem>
+                  <MenuItem value="ACTIVE">{customerStatusLabel('ACTIVE')}</MenuItem>
+                  <MenuItem value="INACTIVE">{customerStatusLabel('INACTIVE')}</MenuItem>
+                  <MenuItem value="SUSPENDED">{customerStatusLabel('SUSPENDED')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label="Canal"
+                label={t('raffles.dialogs.channel')}
                 value={templateDialog.form.filters.channel || ''}
                 onChange={(event) =>
                   setTemplateDialog((prev) => ({ ...prev, form: { ...prev.form, filters: { ...prev.form.filters, channel: event.target.value } } }))
@@ -519,7 +569,7 @@ export default function RafflesLionTv() {
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
               <TextField
                 type="number"
-                label="Antigüedad mínima (días)"
+                label={t('raffles.dialogs.minSeniority')}
                 value={templateDialog.form.filters.minimumSeniorityDays || ''}
                 onChange={(event) =>
                   setTemplateDialog((prev) => ({ ...prev, form: { ...prev.form, filters: { ...prev.form.filters, minimumSeniorityDays: event.target.value } } }))
@@ -529,7 +579,7 @@ export default function RafflesLionTv() {
               />
               <TextField
                 type="number"
-                label="Facturación mínima pagada"
+                label={t('raffles.dialogs.minPaidBilling')}
                 value={templateDialog.form.filters.minimumPaidBilling || ''}
                 onChange={(event) =>
                   setTemplateDialog((prev) => ({ ...prev, form: { ...prev.form, filters: { ...prev.form.filters, minimumPaidBilling: event.target.value } } }))
@@ -541,7 +591,7 @@ export default function RafflesLionTv() {
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
               <TextField
                 type="number"
-                label="Facturas pagadas mínimas"
+                label={t('raffles.dialogs.minPaidInvoices')}
                 value={templateDialog.form.filters.minimumPaidInvoices || ''}
                 onChange={(event) =>
                   setTemplateDialog((prev) => ({ ...prev, form: { ...prev.form, filters: { ...prev.form.filters, minimumPaidInvoices: event.target.value } } }))
@@ -551,7 +601,7 @@ export default function RafflesLionTv() {
               />
               <TextField
                 type="number"
-                label="Subs activas mínimas"
+                label={t('raffles.dialogs.minActiveSubscriptions')}
                 value={templateDialog.form.filters.minimumActiveSubscriptions || ''}
                 onChange={(event) =>
                   setTemplateDialog((prev) => ({ ...prev, form: { ...prev.form, filters: { ...prev.form.filters, minimumActiveSubscriptions: event.target.value } } }))
@@ -561,7 +611,7 @@ export default function RafflesLionTv() {
               />
               <TextField
                 type="number"
-                label="Subs históricas mínimas"
+                label={t('raffles.dialogs.minTotalSubscriptions')}
                 value={templateDialog.form.filters.minimumTotalSubscriptions || ''}
                 onChange={(event) =>
                   setTemplateDialog((prev) => ({ ...prev, form: { ...prev.form, filters: { ...prev.form.filters, minimumTotalSubscriptions: event.target.value } } }))
@@ -579,32 +629,34 @@ export default function RafflesLionTv() {
                   }
                 />
               }
-              label="Solo referidos"
+              label={t('raffles.dialogs.referredOnly')}
             />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setTemplateDialog({ open: false, form: { ...emptyTemplate } })}>Cancelar</Button>
+          <Button onClick={() => setTemplateDialog({ open: false, form: { ...emptyTemplate } })}>{t('actions.cancel')}</Button>
           <Button variant="contained" startIcon={<SaveOutlinedIcon />} onClick={handleSaveTemplate} disabled={saving}>
-            Guardar
+            {t('actions.save')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={raffleDialog.open} onClose={() => setRaffleDialog({ open: false, form: { ...emptyRaffle }, preview: null })} fullWidth maxWidth="lg">
-        <DialogTitleWithClose onClose={() => setRaffleDialog({ open: false, form: { ...emptyRaffle }, preview: null })}>Sorteo</DialogTitleWithClose>
+        <DialogTitleWithClose onClose={() => setRaffleDialog({ open: false, form: { ...emptyRaffle }, preview: null })}>
+          {t('raffles.dialogs.raffleTitle')}
+        </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2} sx={{ pt: 0.5 }}>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
               <TextField
-                label="Nombre"
+                label={t('raffles.dialogs.name')}
                 value={raffleDialog.form.name}
                 onChange={(event) => setRaffleDialog((prev) => ({ ...prev, form: { ...prev.form, name: event.target.value } }))}
                 fullWidth
                 sx={fieldSx}
               />
               <TextField
-                label="Premio"
+                label={t('raffles.dialogs.prize')}
                 value={raffleDialog.form.prizeName}
                 onChange={(event) => setRaffleDialog((prev) => ({ ...prev, form: { ...prev.form, prizeName: event.target.value } }))}
                 fullWidth
@@ -612,7 +664,7 @@ export default function RafflesLionTv() {
               />
             </Stack>
             <TextField
-              label="Descripción"
+              label={t('raffles.dialogs.description')}
               value={raffleDialog.form.description}
               onChange={(event) => setRaffleDialog((prev) => ({ ...prev, form: { ...prev.form, description: event.target.value } }))}
               fullWidth
@@ -621,25 +673,25 @@ export default function RafflesLionTv() {
             />
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
               <FormControl fullWidth>
-                <InputLabel>Modo</InputLabel>
+                <InputLabel>{t('raffles.dialogs.mode')}</InputLabel>
                 <Select
-                  label="Modo"
+                  label={t('raffles.dialogs.mode')}
                   value={raffleDialog.form.mode}
                   onChange={(event) => setRaffleDialog((prev) => ({ ...prev, form: { ...prev.form, mode: event.target.value } }))}
                 >
-                  <MenuItem value="FILTERED">FILTERED</MenuItem>
-                  <MenuItem value="MANUAL">MANUAL</MenuItem>
-                  <MenuItem value="MIXED">MIXED</MenuItem>
+                  <MenuItem value="FILTERED">{raffleModeLabel('FILTERED')}</MenuItem>
+                  <MenuItem value="MANUAL">{raffleModeLabel('MANUAL')}</MenuItem>
+                  <MenuItem value="MIXED">{raffleModeLabel('MIXED')}</MenuItem>
                 </Select>
               </FormControl>
               <FormControl fullWidth>
-                <InputLabel>Plantilla</InputLabel>
+                <InputLabel>{t('raffles.dialogs.template')}</InputLabel>
                 <Select
-                  label="Plantilla"
+                  label={t('raffles.dialogs.template')}
                   value={raffleDialog.form.templateId || ''}
                   onChange={(event) => setRaffleDialog((prev) => ({ ...prev, form: { ...prev.form, templateId: event.target.value } }))}
                 >
-                  <MenuItem value="">Sin plantilla</MenuItem>
+                  <MenuItem value="">{t('raffles.dialogs.noTemplate')}</MenuItem>
                   {templates.map((template) => (
                     <MenuItem key={template.id} value={template.id}>
                       {template.name}
@@ -649,7 +701,7 @@ export default function RafflesLionTv() {
               </FormControl>
               <TextField
                 type="number"
-                label="Cantidad de ganadores"
+                label={t('raffles.dialogs.winnerCount')}
                 value={raffleDialog.form.winnerCount}
                 onChange={(event) => setRaffleDialog((prev) => ({ ...prev, form: { ...prev.form, winnerCount: event.target.value } }))}
                 sx={{ ...fieldSx, minWidth: 220 }}
@@ -657,22 +709,22 @@ export default function RafflesLionTv() {
             </Stack>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
               <FormControl fullWidth>
-                <InputLabel>Estado cliente</InputLabel>
+                <InputLabel>{t('raffles.dialogs.customerStatus')}</InputLabel>
                 <Select
-                  label="Estado cliente"
+                  label={t('raffles.dialogs.customerStatus')}
                   value={raffleDialog.form.filters.status || ''}
                   onChange={(event) =>
                     setRaffleDialog((prev) => ({ ...prev, form: { ...prev.form, filters: { ...prev.form.filters, status: event.target.value } } }))
                   }
                 >
-                  <MenuItem value="">Todos</MenuItem>
-                  <MenuItem value="ACTIVE">ACTIVE</MenuItem>
-                  <MenuItem value="INACTIVE">INACTIVE</MenuItem>
-                  <MenuItem value="SUSPENDED">SUSPENDED</MenuItem>
+                  <MenuItem value="">{t('raffles.filters.all')}</MenuItem>
+                  <MenuItem value="ACTIVE">{customerStatusLabel('ACTIVE')}</MenuItem>
+                  <MenuItem value="INACTIVE">{customerStatusLabel('INACTIVE')}</MenuItem>
+                  <MenuItem value="SUSPENDED">{customerStatusLabel('SUSPENDED')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label="Canal"
+                label={t('raffles.dialogs.channel')}
                 value={raffleDialog.form.filters.channel || ''}
                 onChange={(event) =>
                   setRaffleDialog((prev) => ({ ...prev, form: { ...prev.form, filters: { ...prev.form.filters, channel: event.target.value } } }))
@@ -684,7 +736,7 @@ export default function RafflesLionTv() {
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
               <TextField
                 type="number"
-                label="Antigüedad mínima (días)"
+                label={t('raffles.dialogs.minSeniority')}
                 value={raffleDialog.form.filters.minimumSeniorityDays || ''}
                 onChange={(event) =>
                   setRaffleDialog((prev) => ({ ...prev, form: { ...prev.form, filters: { ...prev.form.filters, minimumSeniorityDays: event.target.value } } }))
@@ -694,7 +746,7 @@ export default function RafflesLionTv() {
               />
               <TextField
                 type="number"
-                label="Facturación mínima"
+                label={t('raffles.dialogs.minPaidBilling')}
                 value={raffleDialog.form.filters.minimumPaidBilling || ''}
                 onChange={(event) =>
                   setRaffleDialog((prev) => ({ ...prev, form: { ...prev.form, filters: { ...prev.form.filters, minimumPaidBilling: event.target.value } } }))
@@ -704,7 +756,7 @@ export default function RafflesLionTv() {
               />
               <TextField
                 type="number"
-                label="Facturas pagadas mínimas"
+                label={t('raffles.dialogs.minPaidInvoices')}
                 value={raffleDialog.form.filters.minimumPaidInvoices || ''}
                 onChange={(event) =>
                   setRaffleDialog((prev) => ({ ...prev, form: { ...prev.form, filters: { ...prev.form.filters, minimumPaidInvoices: event.target.value } } }))
@@ -716,7 +768,7 @@ export default function RafflesLionTv() {
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
               <TextField
                 type="number"
-                label="Subs activas mínimas"
+                label={t('raffles.dialogs.minActiveSubscriptions')}
                 value={raffleDialog.form.filters.minimumActiveSubscriptions || ''}
                 onChange={(event) =>
                   setRaffleDialog((prev) => ({ ...prev, form: { ...prev.form, filters: { ...prev.form.filters, minimumActiveSubscriptions: event.target.value } } }))
@@ -726,7 +778,7 @@ export default function RafflesLionTv() {
               />
               <TextField
                 type="number"
-                label="Subs históricas mínimas"
+                label={t('raffles.dialogs.minTotalSubscriptions')}
                 value={raffleDialog.form.filters.minimumTotalSubscriptions || ''}
                 onChange={(event) =>
                   setRaffleDialog((prev) => ({ ...prev, form: { ...prev.form, filters: { ...prev.form.filters, minimumTotalSubscriptions: event.target.value } } }))
@@ -744,46 +796,49 @@ export default function RafflesLionTv() {
                   }
                 />
               }
-              label="Solo referidos"
+              label={t('raffles.dialogs.referredOnly')}
             />
             <TextField
-              label="Customer IDs manuales"
+              label={t('raffles.dialogs.manualCustomerIds')}
               value={raffleDialog.form.manualCustomerIdsText}
               onChange={(event) => setRaffleDialog((prev) => ({ ...prev, form: { ...prev.form, manualCustomerIdsText: event.target.value } }))}
               fullWidth
               multiline
               minRows={3}
-              helperText="Puedes separar IDs por coma, espacio o salto de línea."
+              helperText={t('raffles.dialogs.manualCustomerIdsHelper')}
             />
 
             <Paper sx={{ p: 2, borderRadius: 3 }}>
               <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ md: 'center' }} justifyContent="space-between">
                 <Stack spacing={0.25}>
-                  <Typography variant="subtitle2">Previsualización de audiencia</Typography>
+                  <Typography variant="subtitle2">{t('raffles.dialogs.previewTitle')}</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Calcula la audiencia antes de guardar o congelar el sorteo.
+                    {t('raffles.dialogs.previewHelper')}
                   </Typography>
                 </Stack>
                 <Button variant="outlined" onClick={handlePreviewRaffle} disabled={saving}>
-                  Previsualizar
+                  {t('raffles.actions.preview')}
                 </Button>
               </Stack>
               {raffleDialog.preview ? (
                 <Stack spacing={1.5} sx={{ mt: 2 }}>
                   <Alert severity="success">
-                    Elegibles: {raffleDialog.preview.totalEligible || 0} · filtrados: {raffleDialog.preview.filteredCount || 0} · manuales:{' '}
-                    {raffleDialog.preview.manualCount || 0}
+                    {t('raffles.dialogs.previewAlert', {
+                      eligible: raffleDialog.preview.totalEligible || 0,
+                      filtered: raffleDialog.preview.filteredCount || 0,
+                      manual: raffleDialog.preview.manualCount || 0
+                    })}
                   </Alert>
                   <TableContainer component={Paper} variant="outlined">
                     <Table size="small">
                       <TableHead>
                         <TableRow>
-                          <TableCell>ID</TableCell>
-                          <TableCell>Cliente</TableCell>
-                          <TableCell>Canal</TableCell>
-                          <TableCell>Facturación</TableCell>
-                          <TableCell>Subs</TableCell>
-                          <TableCell>Origen</TableCell>
+                          <TableCell>{t('raffles.dialogs.id')}</TableCell>
+                          <TableCell>{t('raffles.dialogs.customer')}</TableCell>
+                          <TableCell>{t('raffles.dialogs.channel')}</TableCell>
+                          <TableCell>{t('raffles.dialogs.billing')}</TableCell>
+                          <TableCell>{t('raffles.dialogs.subscriptions')}</TableCell>
+                          <TableCell>{t('raffles.dialogs.source')}</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -791,12 +846,12 @@ export default function RafflesLionTv() {
                           <TableRow key={row.customerId}>
                             <TableCell>{row.customerId}</TableCell>
                             <TableCell>{row.customerFullname || '-'}</TableCell>
-                            <TableCell>{row.channel || '-'}</TableCell>
+                            <TableCell>{channelLabel(row.channel)}</TableCell>
                             <TableCell>{row.totalPaidAmount || 0}</TableCell>
                             <TableCell>
                               {row.activeSubscriptions || 0} / {row.totalSubscriptions || 0}
                             </TableCell>
-                            <TableCell>{row.entrySource || '-'}</TableCell>
+                            <TableCell>{raffleModeLabel(row.entrySource)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -808,9 +863,9 @@ export default function RafflesLionTv() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setRaffleDialog({ open: false, form: { ...emptyRaffle }, preview: null })}>Cancelar</Button>
+          <Button onClick={() => setRaffleDialog({ open: false, form: { ...emptyRaffle }, preview: null })}>{t('actions.cancel')}</Button>
           <Button variant="contained" startIcon={<SaveOutlinedIcon />} onClick={handleSaveRaffle} disabled={saving}>
-            Guardar
+            {t('actions.save')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -819,25 +874,25 @@ export default function RafflesLionTv() {
         <DialogTitleWithClose onClose={() => setEntriesDialog({ open: false, title: '', rows: [] })}>{entriesDialog.title}</DialogTitleWithClose>
         <DialogContent dividers>
           <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Cliente</TableCell>
-                  <TableCell>Estado</TableCell>
-                  <TableCell>Canal</TableCell>
-                  <TableCell>Origen</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {entriesDialog.rows.map((row) => (
-                  <TableRow key={row.entryId}>
-                    <TableCell>{row.customerId}</TableCell>
-                    <TableCell>{row.customerFullname || '-'}</TableCell>
-                    <TableCell>{row.customerStatus || '-'}</TableCell>
-                    <TableCell>{row.channel || '-'}</TableCell>
-                    <TableCell>{row.entrySource || '-'}</TableCell>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>{t('raffles.dialogs.id')}</TableCell>
+                    <TableCell>{t('raffles.dialogs.customer')}</TableCell>
+                    <TableCell>{t('raffles.table.status')}</TableCell>
+                    <TableCell>{t('raffles.dialogs.channel')}</TableCell>
+                    <TableCell>{t('raffles.dialogs.source')}</TableCell>
                   </TableRow>
+                </TableHead>
+                <TableBody>
+                  {entriesDialog.rows.map((row) => (
+                    <TableRow key={row.entryId}>
+                      <TableCell>{row.customerId}</TableCell>
+                      <TableCell>{row.customerFullname || '-'}</TableCell>
+                      <TableCell>{customerStatusLabel(row.customerStatus)}</TableCell>
+                      <TableCell>{channelLabel(row.channel)}</TableCell>
+                      <TableCell>{raffleModeLabel(row.entrySource)}</TableCell>
+                    </TableRow>
                 ))}
               </TableBody>
             </Table>
@@ -846,16 +901,16 @@ export default function RafflesLionTv() {
       </Dialog>
 
       <Dialog open={winnersDialog.open} onClose={() => setWinnersDialog({ open: false, rows: [] })} fullWidth maxWidth="sm">
-        <DialogTitleWithClose onClose={() => setWinnersDialog({ open: false, rows: [] })}>Ganadores</DialogTitleWithClose>
+        <DialogTitleWithClose onClose={() => setWinnersDialog({ open: false, rows: [] })}>{t('raffles.dialogs.winnersTitle')}</DialogTitleWithClose>
         <DialogContent dividers>
           <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Rank</TableCell>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Cliente</TableCell>
-                  <TableCell>Contacto</TableCell>
+                  <TableCell>{t('raffles.dialogs.rank')}</TableCell>
+                  <TableCell>{t('raffles.dialogs.id')}</TableCell>
+                  <TableCell>{t('raffles.dialogs.customer')}</TableCell>
+                  <TableCell>{t('raffles.dialogs.contact')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -870,7 +925,7 @@ export default function RafflesLionTv() {
                 {!winnersDialog.rows.length ? (
                   <TableRow>
                     <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                      No hay ganadores para mostrar.
+                      {t('raffles.messages.winnersEmpty')}
                     </TableCell>
                   </TableRow>
                 ) : null}

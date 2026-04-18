@@ -149,6 +149,15 @@ function csvCell(value) {
   return `"${escaped}"`;
 }
 
+function channelLabelFromValue(channel, t) {
+  const normalized = String(channel ?? '').trim().toLowerCase();
+  if (normalized === 'red social') return t('customers.channels.social');
+  if (normalized === 'google') return t('customers.channels.google');
+  if (normalized === 'familiares') return t('customers.channels.family');
+  if (normalized === 'amigos') return t('customers.channels.friends');
+  return channel || '-';
+}
+
 function ContactActions({ phone, mail }) {
   const { t } = useTranslation();
   if (!phone && !mail) return null;
@@ -751,7 +760,7 @@ export default function CustomerCrmLionTv() {
       })
       .catch((error) => {
         if (cancelled || handleUnauthorized(error)) return;
-        enqueueSnackbar(error?.response?.data?.message || 'No se pudo cargar el resumen VIP/lealtad.', { variant: 'warning' });
+        enqueueSnackbar(error?.response?.data?.message || t('crm.errors.engagementLoad'), { variant: 'warning' });
       })
       .finally(() => {
         if (!cancelled) setEngagementLoading(false);
@@ -760,7 +769,7 @@ export default function CustomerCrmLionTv() {
     return () => {
       cancelled = true;
     };
-  }, [enqueueSnackbar, selectedCustomer]);
+  }, [enqueueSnackbar, selectedCustomer, t]);
 
   const retryAll = useCallback(() => {
     setRefreshKey((value) => value + 1);
@@ -1277,7 +1286,11 @@ export default function CustomerCrmLionTv() {
                             <StatusChip status={selectedCustomer.status} />
                             {selectedCustomer.gender ? <StatusChip status={selectedCustomer.gender} /> : null}
                             {selectedCustomer.channel ? (
-                              <LabelWithIcon icon={<LoyaltyIcon fontSize="small" />} label={selectedCustomer.channel} color="secondary" />
+                              <LabelWithIcon
+                                icon={<LoyaltyIcon fontSize="small" />}
+                                label={channelLabelFromValue(selectedCustomer.channel, t)}
+                                color="secondary"
+                              />
                             ) : null}
                           </Stack>
                         </Box>
@@ -1331,23 +1344,23 @@ export default function CustomerCrmLionTv() {
                       <Stack spacing={1.5}>
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }} justifyContent="space-between">
                           <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                            VIP + Lealtad
+                            {t('crm.engagement.title')}
                           </Typography>
-                          {engagementLoading ? <Chip size="small" label="Actualizando..." /> : null}
+                          {engagementLoading ? <Chip size="small" label={t('crm.engagement.updating')} /> : null}
                         </Stack>
                         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                           <Chip
                             size="small"
                             color="warning"
                             icon={<WorkspacePremiumRoundedIcon fontSize="small" />}
-                            label={`VIP: ${vipSummary?.finalTierCode || '-'}`}
+                            label={t('crm.engagement.vip', { value: vipSummary?.finalTierCode || '-' })}
                           />
-                          <Chip size="small" color="secondary" label={`Score: ${Number(vipSummary?.computedScore || 0).toFixed(2)}`} />
-                          <Chip size="small" color="success" label={`Puntos: ${Number(loyaltySummary?.availablePoints || 0)}`} />
+                          <Chip size="small" color="secondary" label={t('crm.engagement.score', { value: Number(vipSummary?.computedScore || 0).toFixed(2) })} />
+                          <Chip size="small" color="success" label={t('crm.engagement.points', { value: Number(loyaltySummary?.availablePoints || 0) })} />
                         </Stack>
                         <Stack spacing={0.75}>
                           <Typography variant="caption" color="text.secondary">
-                            Últimos movimientos del ledger
+                            {t('crm.engagement.latestLedger')}
                           </Typography>
                           {loyaltyLedger.length ? (
                             loyaltyLedger.map((entry) => (
@@ -1363,11 +1376,14 @@ export default function CustomerCrmLionTv() {
                               >
                                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between">
                                   <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                                    {entry.movementType || '-'} · {entry.pointsDelta > 0 ? '+' : ''}
-                                    {entry.pointsDelta || 0} pts
+                                    {entry.movementType || '-'} ·{' '}
+                                    {t('crm.engagement.movement', {
+                                      sign: entry.pointsDelta > 0 ? '+' : '',
+                                      value: entry.pointsDelta || 0
+                                    })}
                                   </Typography>
                                   <Typography variant="caption" color="text.secondary">
-                                    Balance: {entry.balanceAfter || 0}
+                                    {t('crm.engagement.balance', { value: entry.balanceAfter || 0 })}
                                   </Typography>
                                 </Stack>
                                 <Typography variant="caption" color="text.secondary">
@@ -1377,7 +1393,7 @@ export default function CustomerCrmLionTv() {
                             ))
                           ) : (
                             <Typography variant="body2" color="text.secondary">
-                              No hay movimientos de lealtad todavía.
+                              {t('crm.engagement.empty')}
                             </Typography>
                           )}
                         </Stack>
