@@ -63,6 +63,7 @@ import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
+import { withAlpha } from 'utils/colorUtils';
 import SpeedIcon from '@mui/icons-material/Speed';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
@@ -959,8 +960,11 @@ export default function LinesLionTv() {
                               textTransform: 'uppercase',
                               borderRadius: 1.5,
                               borderColor: theme.palette.info.main,
-                              color: theme.palette.info.main,
-                              background: theme.palette.mode === 'light' ? theme.palette.info.light + '1f' : theme.palette.background.paper,
+                              color:
+                                theme.palette.mode === 'dark'
+                                  ? theme.vars?.palette?.text?.primary || theme.palette.text.primary
+                                  : theme.palette.info.main,
+                              background: theme.palette.mode === 'light' ? theme.palette.info.light + '1f' : withAlpha(theme.palette.info.main, 0.18),
                               height: 22,
                               px: 0.9
                             })}

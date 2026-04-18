@@ -25,8 +25,21 @@ export default function Chip(theme) {
     return {
       main: paletteColor.main,
       light: paletteColor.light || paletteColor.lighter || withAlpha(paletteColor.main, 0.14),
-      dark: paletteColor.dark || paletteColor.darker || paletteColor.main
+      dark: paletteColor.dark || paletteColor.darker || paletteColor.main,
+      contrastText: paletteColor.contrastText || theme.vars.palette.text.primary
     };
+  };
+
+  const resolveLightVariantTextColor = (ownerState, paletteColor) => {
+    if (theme.palette.mode !== 'dark') {
+      return paletteColor.main;
+    }
+
+    if (ownerState.color === 'info') {
+      return paletteColor.contrastText;
+    }
+
+    return paletteColor.light || paletteColor.main;
   };
 
   return {
@@ -48,7 +61,7 @@ export default function Chip(theme) {
                 const paletteColor = resolveChipColor(ownerState.color);
 
                 return {
-                  color: theme.palette.mode === 'dark' ? paletteColor.light || paletteColor.main : paletteColor.main,
+                  color: resolveLightVariantTextColor(ownerState, paletteColor),
                   backgroundColor: theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.24) : paletteColor.light,
                   borderColor: theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.4) : withAlpha(paletteColor.main, 0.14),
                   borderStyle: 'solid',
@@ -56,7 +69,8 @@ export default function Chip(theme) {
                   '&.MuiChip-clickable': {
                     '&:hover': {
                       color: theme.palette.mode === 'dark' ? paletteColor.contrastText || paletteColor.main : paletteColor.dark,
-                      backgroundColor: theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.34) : withAlpha(paletteColor.main, 0.18)
+                      backgroundColor:
+                        theme.palette.mode === 'dark' ? withAlpha(paletteColor.main, 0.34) : withAlpha(paletteColor.main, 0.18)
                     }
                   }
                 };

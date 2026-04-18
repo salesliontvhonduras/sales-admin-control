@@ -1299,7 +1299,10 @@ export default function BusinessPurchasesLionTv() {
               alignItems: 'center',
               gap: 1,
               bgcolor: withAlpha(muiTheme.vars?.palette?.info?.main || muiTheme.palette.info.main, muiTheme.palette.mode === 'dark' ? 0.18 : 0.1),
-              color: muiTheme.vars?.palette?.info?.main || muiTheme.palette.info.main,
+              color:
+                muiTheme.palette.mode === 'dark'
+                  ? muiTheme.vars?.palette?.text?.primary || muiTheme.palette.text.primary
+                  : muiTheme.vars?.palette?.info?.main || muiTheme.palette.info.main,
               border: '1px dashed',
               borderColor: withAlpha(muiTheme.vars?.palette?.info?.main || muiTheme.palette.info.main, 0.8)
             })}
