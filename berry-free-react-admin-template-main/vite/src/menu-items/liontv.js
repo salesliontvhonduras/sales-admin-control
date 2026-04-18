@@ -1,5 +1,7 @@
 import {
   IconDeviceTv,
+  IconCrown,
+  IconGift,
   IconUsers,
   IconReceipt2,
   IconFileInvoice,
@@ -11,7 +13,9 @@ import {
 } from '@tabler/icons-react';
 
 const icons = {
+  IconCrown,
   IconDeviceTv,
+  IconGift,
   IconUsers,
   IconReceipt2,
   IconFileInvoice,
@@ -85,6 +89,30 @@ const liontv = {
           url: '/liontv/crm',
           breadcrumbs: true,
           permission: { any: ['LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+        },
+        {
+          id: 'liontv-vip-customers',
+          title: 'menu.vipCustomers',
+          type: 'item',
+          url: '/liontv/vip-customers',
+          breadcrumbs: true,
+          permission: { any: ['LIONTV_VIP_VIEW', 'LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+        },
+        {
+          id: 'liontv-loyalty',
+          title: 'menu.loyalty',
+          type: 'item',
+          url: '/liontv/loyalty',
+          breadcrumbs: true,
+          permission: { any: ['LIONTV_LOYALTY_VIEW', 'LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+        },
+        {
+          id: 'liontv-raffles',
+          title: 'menu.raffles',
+          type: 'item',
+          url: '/liontv/raffles',
+          breadcrumbs: true,
+          permission: { any: ['LIONTV_RAFFLES_VIEW', 'LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         },
         {
           id: 'liontv-subscriptions',

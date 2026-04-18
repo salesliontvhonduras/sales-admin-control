@@ -70,6 +70,7 @@ import TimelineIcon from '@mui/icons-material/Timeline';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
 import { useTranslation } from 'react-i18next';
 
 import MainCard from 'ui-component/cards/MainCard';
@@ -80,6 +81,7 @@ import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi, catalogsApi } from 'utils/api';
+import { listLoyaltyCustomers, listLoyaltyLedger, listVipCustomers } from 'api/liontv-engagement';
 
 const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
@@ -514,6 +516,10 @@ export default function CustomerCrmLionTv() {
   const [tablePage, setTablePage] = useState(0);
   const [tableRpp, setTableRpp] = useState(10);
   const [tableSelectedKeys, setTableSelectedKeys] = useState([]);
+  const [vipSummary, setVipSummary] = useState(null);
+  const [loyaltySummary, setLoyaltySummary] = useState(null);
+  const [loyaltyLedger, setLoyaltyLedger] = useState([]);
+  const [engagementLoading, setEngagementLoading] = useState(false);
 
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
@@ -719,6 +725,42 @@ export default function CustomerCrmLionTv() {
       customerSubscriptions.length > 0 || customerInvoices.length > 0 || customerLicenses.length > 0 || customerManagedAccounts.length > 0,
     [customerSubscriptions.length, customerInvoices.length, customerLicenses.length, customerManagedAccounts.length]
   );
+
+  useEffect(() => {
+    const activeCustomerId = selectedCustomer?.id ?? selectedCustomer?.customerId ?? null;
+    if (!activeCustomerId) {
+      setVipSummary(null);
+      setLoyaltySummary(null);
+      setLoyaltyLedger([]);
+      return;
+    }
+
+    let cancelled = false;
+    setEngagementLoading(true);
+
+    Promise.all([
+      listVipCustomers({ customerIds: String(activeCustomerId), index: 0, size: 1 }),
+      listLoyaltyCustomers({ customerIds: String(activeCustomerId), index: 0, size: 1 }),
+      listLoyaltyLedger(activeCustomerId, { index: 0, size: 5 })
+    ])
+      .then(([vipResponse, loyaltyResponse, ledgerResponse]) => {
+        if (cancelled) return;
+        setVipSummary(vipResponse?.data?.[0] || null);
+        setLoyaltySummary(loyaltyResponse?.data?.[0] || null);
+        setLoyaltyLedger(ledgerResponse?.data || []);
+      })
+      .catch((error) => {
+        if (cancelled || handleUnauthorized(error)) return;
+        enqueueSnackbar(error?.response?.data?.message || 'No se pudo cargar el resumen VIP/lealtad.', { variant: 'warning' });
+      })
+      .finally(() => {
+        if (!cancelled) setEngagementLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enqueueSnackbar, selectedCustomer]);
 
   const retryAll = useCallback(() => {
     setRefreshKey((value) => value + 1);
@@ -1276,6 +1318,71 @@ export default function CustomerCrmLionTv() {
                     </Box>
 
                     <ContactActions phone={selectedCustomer.phone} mail={selectedCustomer.mail} />
+
+                    <Paper
+                      sx={{
+                        p: 1.75,
+                        borderRadius: 2.5,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        bgcolor: 'background.paper'
+                      }}
+                    >
+                      <Stack spacing={1.5}>
+                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }} justifyContent="space-between">
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                            VIP + Lealtad
+                          </Typography>
+                          {engagementLoading ? <Chip size="small" label="Actualizando..." /> : null}
+                        </Stack>
+                        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                          <Chip
+                            size="small"
+                            color="warning"
+                            icon={<WorkspacePremiumRoundedIcon fontSize="small" />}
+                            label={`VIP: ${vipSummary?.finalTierCode || '-'}`}
+                          />
+                          <Chip size="small" color="secondary" label={`Score: ${Number(vipSummary?.computedScore || 0).toFixed(2)}`} />
+                          <Chip size="small" color="success" label={`Puntos: ${Number(loyaltySummary?.availablePoints || 0)}`} />
+                        </Stack>
+                        <Stack spacing={0.75}>
+                          <Typography variant="caption" color="text.secondary">
+                            Últimos movimientos del ledger
+                          </Typography>
+                          {loyaltyLedger.length ? (
+                            loyaltyLedger.map((entry) => (
+                              <Box
+                                key={entry.id}
+                                sx={{
+                                  p: 1,
+                                  borderRadius: 2,
+                                  border: '1px solid',
+                                  borderColor: 'divider',
+                                  bgcolor: 'background.default'
+                                }}
+                              >
+                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between">
+                                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                    {entry.movementType || '-'} · {entry.pointsDelta > 0 ? '+' : ''}
+                                    {entry.pointsDelta || 0} pts
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    Balance: {entry.balanceAfter || 0}
+                                  </Typography>
+                                </Stack>
+                                <Typography variant="caption" color="text.secondary">
+                                  {entry.reason || '-'} · {formatDateTime(entry.createdAt)}
+                                </Typography>
+                              </Box>
+                            ))
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">
+                              No hay movimientos de lealtad todavía.
+                            </Typography>
+                          )}
+                        </Stack>
+                      </Stack>
+                    </Paper>
                   </Stack>
                 </Box>
 

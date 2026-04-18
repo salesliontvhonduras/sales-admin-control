@@ -76,6 +76,7 @@ import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
+import { listLoyaltyCustomers, listVipCustomers } from 'api/liontv-engagement';
 
 const buildChannelOptions = (t) => [
   { value: 'red social', label: t('customers.channels.social') },
@@ -213,6 +214,43 @@ function flagFromPhone(phone = '') {
   if (clean.startsWith('+57') || clean.startsWith('57')) return '🇨🇴';
   if (clean.startsWith('+48') || clean.startsWith('48')) return '🇵🇱';
   return null;
+}
+
+function vipColor(code) {
+  switch (String(code || '').toUpperCase()) {
+    case 'BLACK':
+      return { bg: '#11182722', color: '#111827', border: '#11182755' };
+    case 'GOLD':
+      return { bg: '#f59e0b22', color: '#b45309', border: '#f59e0b55' };
+    case 'SILVER':
+      return { bg: '#94a3b822', color: '#64748b', border: '#94a3b855' };
+    case 'BRONZE':
+      return { bg: '#9c6b3f22', color: '#9c6b3f', border: '#9c6b3f55' };
+    default:
+      return { bg: 'rgba(148,163,184,0.15)', color: '#64748b', border: 'rgba(148,163,184,0.35)' };
+  }
+}
+
+function VipTierChip({ tierCode }) {
+  const palette = vipColor(tierCode);
+  return (
+    <Chip
+      size="small"
+      label={tierCode || '-'}
+      sx={{
+        bgcolor: palette.bg,
+        color: palette.color,
+        border: '1px solid',
+        borderColor: palette.border,
+        fontWeight: 700
+      }}
+    />
+  );
+}
+
+function LoyaltyPointsChip({ points }) {
+  const safePoints = Number(points || 0);
+  return <Chip size="small" color={safePoints > 0 ? 'warning' : 'default'} label={`${safePoints} pts`} sx={{ fontWeight: 700 }} />;
 }
 
 function RowActions({ row, onEdit, onDelete, onWelcome, welcomeLoading }) {
@@ -353,6 +391,8 @@ export default function CustomersLionTv() {
   const [referers, setReferers] = useState([]);
   const [referersLoading, setReferersLoading] = useState(false);
   const [referersFetched, setReferersFetched] = useState(false);
+  const [vipSummaryByCustomerId, setVipSummaryByCustomerId] = useState({});
+  const [loyaltySummaryByCustomerId, setLoyaltySummaryByCustomerId] = useState({});
   const channelOptions = useMemo(() => buildChannelOptions(t), [t]);
 
   const handleUnauthorized = (err) => {
@@ -445,6 +485,42 @@ export default function CustomersLionTv() {
     const start = page * rowsPerPage;
     return filteredRows.slice(start, start + rowsPerPage);
   }, [filteredRows, page, rowsPerPage]);
+
+  const loadEngagementSummaries = useCallback(
+    async (customerIds) => {
+      if (!customerIds.length) {
+        setVipSummaryByCustomerId({});
+        setLoyaltySummaryByCustomerId({});
+        return;
+      }
+
+      try {
+        const [vipResponse, loyaltyResponse] = await Promise.all([
+          listVipCustomers({ customerIds: customerIds.join(','), index: 0, size: customerIds.length }),
+          listLoyaltyCustomers({ customerIds: customerIds.join(','), index: 0, size: customerIds.length })
+        ]);
+
+        setVipSummaryByCustomerId(
+          Object.fromEntries((vipResponse?.data || []).map((row) => [row.customerId, row]))
+        );
+        setLoyaltySummaryByCustomerId(
+          Object.fromEntries((loyaltyResponse?.data || []).map((row) => [row.customerId, row]))
+        );
+      } catch (err) {
+        if (!handleUnauthorized(err)) {
+          enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo cargar el resumen VIP/lealtad.', {
+            variant: 'warning'
+          });
+        }
+      }
+    },
+    [enqueueSnackbar]
+  );
+
+  useEffect(() => {
+    const customerIds = paginatedRows.map((row) => row.id || row.customerId).filter(Boolean);
+    loadEngagementSummaries(customerIds);
+  }, [loadEngagementSummaries, paginatedRows]);
 
   const customerStatusLabel = useCallback(
     (val) => {
@@ -841,7 +917,12 @@ export default function CustomersLionTv() {
                         label={row.gender || '-'}
                         icon={row.gender === 'F' ? <FemaleIcon fontSize="small" /> : row.gender === 'M' ? <MaleIcon fontSize="small" /> : null}
                       />,
-                      <Chip key="channel" size="small" variant="outlined" label={row.channel || '-'} />
+                      <Chip key="channel" size="small" variant="outlined" label={row.channel || '-'} />,
+                      <VipTierChip key="vip" tierCode={vipSummaryByCustomerId[row.id || row.customerId]?.finalTierCode} />,
+                      <LoyaltyPointsChip
+                        key="loyalty"
+                        points={loyaltySummaryByCustomerId[row.id || row.customerId]?.availablePoints}
+                      />
                     ]}
                     actions={
                       <ResponsiveActionBar>
@@ -863,7 +944,9 @@ export default function CustomersLionTv() {
                         { label: t('customers.headers.phone'), value: row.phone || '-' },
                         { label: t('customers.headers.referred'), value: row.refererBy || (row.isReferred ? t('common.yes') : t('common.no')) },
                         { label: t('customers.headers.channel'), value: row.channel || '-' },
-                        { label: t('customers.headers.gender'), value: row.gender || '-' }
+                        { label: t('customers.headers.gender'), value: row.gender || '-' },
+                        { label: 'VIP', value: vipSummaryByCustomerId[row.id || row.customerId]?.finalTierCode || '-' },
+                        { label: 'Puntos', value: loyaltySummaryByCustomerId[row.id || row.customerId]?.availablePoints || 0 }
                       ]}
                     />
                   </MobileSummaryCard>
@@ -910,6 +993,8 @@ export default function CustomersLionTv() {
                     <TableCell>{t('customers.headers.phone')}</TableCell>
                     <TableCell>{t('customers.headers.gender')}</TableCell>
                     <TableCell>{t('customers.headers.status')}</TableCell>
+                    <TableCell>VIP</TableCell>
+                    <TableCell>Puntos</TableCell>
                     <TableCell>{t('customers.headers.referred')}</TableCell>
                     <TableCell>{t('customers.headers.channel')}</TableCell>
                     <TableCell>{t('invoices.headers.actions')}</TableCell>
@@ -1007,6 +1092,12 @@ export default function CustomersLionTv() {
                         <StatusChip status={row.status} />
                       </TableCell>
                       <TableCell>
+                        <VipTierChip tierCode={vipSummaryByCustomerId[row.id || row.customerId]?.finalTierCode} />
+                      </TableCell>
+                      <TableCell>
+                        <LoyaltyPointsChip points={loyaltySummaryByCustomerId[row.id || row.customerId]?.availablePoints} />
+                      </TableCell>
+                      <TableCell>
                         <Chip
                           size="small"
                           label={
@@ -1099,7 +1190,7 @@ export default function CustomersLionTv() {
                   ))}
                   {!loading && filteredRows.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+                      <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
                         <Stack spacing={1} alignItems="center">
                           <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
                             <PeopleAltIcon />
@@ -1117,7 +1208,7 @@ export default function CustomersLionTv() {
                   )}
                   {loading && (
                     <TableRow>
-                      <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                      <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                         <Stack spacing={1} alignItems="center">
                           <Skeleton variant="circular" width={40} height={40} />
                           <Typography variant="body2" color="text.secondary">
