@@ -31,15 +31,11 @@ export default function Chip(theme) {
   };
 
   const resolveLightVariantTextColor = (ownerState, paletteColor) => {
-    if (theme.palette.mode !== 'dark') {
-      return paletteColor.main;
+    if (theme.palette.mode === 'dark') {
+      return paletteColor.contrastText || paletteColor.light || paletteColor.main;
     }
 
-    if (ownerState.color === 'info') {
-      return paletteColor.contrastText;
-    }
-
-    return paletteColor.light || paletteColor.main;
+    return paletteColor.contrastText || paletteColor.dark || paletteColor.main;
   };
 
   return {

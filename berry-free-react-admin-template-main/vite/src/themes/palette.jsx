@@ -21,6 +21,7 @@ export function buildPalette(presetColor) {
       main: '#3b82f6',
       dark: '#2563eb',
       darker: '#1d4ed8',
+      contrastText: '#1e3a8a',
       200: colors.primary200,
       800: colors.primary800
     },
@@ -30,6 +31,7 @@ export function buildPalette(presetColor) {
       main: '#8b5cf6',
       dark: '#7c3aed',
       darker: '#6d28d9',
+      contrastText: '#5b21b6',
       200: colors.secondary200,
       800: colors.secondary800
     },
@@ -38,7 +40,16 @@ export function buildPalette(presetColor) {
       light: '#fecaca',
       main: '#ef4444',
       dark: '#dc2626',
-      darker: '#b91c1c'
+      darker: '#b91c1c',
+      contrastText: '#991b1b'
+    },
+    info: {
+      lighter: '#e0f2fe',
+      light: '#bae6fd',
+      main: '#0ea5e9',
+      dark: '#0284c7',
+      darker: '#0369a1',
+      contrastText: '#0c4a6e'
     },
     orange: {
       light: colors.orangeLight,
@@ -59,7 +70,8 @@ export function buildPalette(presetColor) {
       200: colors.success200,
       main: '#22c55e',
       dark: '#16a34a',
-      darker: '#15803d'
+      darker: '#15803d',
+      contrastText: '#166534'
     },
     grey: {
       50: '#f8fafc',
@@ -114,6 +126,7 @@ export function buildPalette(presetColor) {
       main: '#60a5fa',
       dark: '#3b82f6',
       darker: '#2563eb',
+      contrastText: '#dbeafe',
       200: colors.darkPrimary200,
       800: colors.darkPrimary800
     },
@@ -123,6 +136,7 @@ export function buildPalette(presetColor) {
       main: '#a78bfa',
       dark: '#8b5cf6',
       darker: '#7c3aed',
+      contrastText: '#ede9fe',
       200: colors.darkSecondary200,
       800: colors.darkSecondary800
     },
@@ -131,7 +145,16 @@ export function buildPalette(presetColor) {
       light: '#7f1d1d',
       main: '#f87171',
       dark: '#ef4444',
-      darker: '#dc2626'
+      darker: '#dc2626',
+      contrastText: '#fee2e2'
+    },
+    info: {
+      lighter: '#163b4d',
+      light: '#1f5268',
+      main: '#38bdf8',
+      dark: '#0ea5e9',
+      darker: '#0284c7',
+      contrastText: '#e0f2fe'
     },
     orange: {
       light: colors.orangeLight,
@@ -152,7 +175,8 @@ export function buildPalette(presetColor) {
       200: colors.success200,
       main: '#4ade80',
       dark: '#22c55e',
-      darker: '#16a34a'
+      darker: '#16a34a',
+      contrastText: '#dcfce7'
     },
     grey: {
       50: '#0f172a',

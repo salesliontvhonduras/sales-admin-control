@@ -111,6 +111,11 @@ const sectionSx = {
   bgcolor: 'background.paper'
 };
 
+function chipLabelValue(value) {
+  const normalized = String(value ?? '').trim();
+  return normalized || '-';
+}
+
 function formatDate(value) {
   if (!value) return '-';
   const date = new Date(value);
@@ -251,6 +256,51 @@ function VipTierChip({ tierCode }) {
 function LoyaltyPointsChip({ points }) {
   const safePoints = Number(points || 0);
   return <Chip size="small" color={safePoints > 0 ? 'warning' : 'default'} label={`${safePoints} pts`} sx={{ fontWeight: 700 }} />;
+}
+
+function ReferredChip({ isReferred, refererBy, t }) {
+  const referred = Boolean(isReferred || refererBy);
+
+  return (
+    <Chip
+      size="small"
+      color={referred ? 'info' : 'default'}
+      variant={referred ? 'light' : 'outlined'}
+      icon={<PeopleAltIcon fontSize="small" />}
+      label={referred ? t('common.yes') : t('common.no')}
+      sx={(theme) => ({
+        fontWeight: 700,
+        ...(referred
+          ? {}
+          : {
+              bgcolor: theme.palette.surface?.muted || theme.palette.background.paper
+            })
+      })}
+    />
+  );
+}
+
+function ChannelChip({ channel }) {
+  const label = chipLabelValue(channel);
+  const hasValue = label !== '-';
+
+  return (
+    <Chip
+      size="small"
+      color={hasValue ? 'info' : 'default'}
+      variant={hasValue ? 'light' : 'outlined'}
+      icon={<ShareIcon fontSize="small" />}
+      label={label}
+      sx={(theme) => ({
+        fontWeight: 700,
+        ...(hasValue
+          ? {}
+          : {
+              bgcolor: theme.palette.surface?.muted || theme.palette.background.paper
+            })
+      })}
+    />
+  );
 }
 
 function RowActions({ row, onEdit, onDelete, onWelcome, welcomeLoading }) {
@@ -917,7 +967,7 @@ export default function CustomersLionTv() {
                         label={row.gender || '-'}
                         icon={row.gender === 'F' ? <FemaleIcon fontSize="small" /> : row.gender === 'M' ? <MaleIcon fontSize="small" /> : null}
                       />,
-                      <Chip key="channel" size="small" variant="outlined" label={row.channel || '-'} />,
+                      <ChannelChip key="channel" channel={row.channel} />,
                       <VipTierChip key="vip" tierCode={vipSummaryByCustomerId[row.id || row.customerId]?.finalTierCode} />,
                       <LoyaltyPointsChip
                         key="loyalty"
@@ -1098,84 +1148,10 @@ export default function CustomersLionTv() {
                         <LoyaltyPointsChip points={loyaltySummaryByCustomerId[row.id || row.customerId]?.availablePoints} />
                       </TableCell>
                       <TableCell>
-                        <Chip
-                          size="small"
-                          label={
-                            <Box
-                              component="span"
-                              sx={{
-                                color: row.isReferred || row.refererBy ? '#0B1F3A !important' : isDarkMode ? '#F8FAFC !important' : 'inherit',
-                                fontWeight: 700
-                              }}
-                            >
-                              {row.isReferred || row.refererBy ? t('common.yes') : t('common.no')}
-                            </Box>
-                          }
-                          sx={(theme) => {
-                            const referred = row.isReferred || row.refererBy;
-                            const darkMode = theme.palette.mode === 'dark';
-                            const chipColor = referred ? '#0B1F3A' : darkMode ? '#F8FAFC' : theme.palette.text.secondary;
-
-                            return {
-                              bgcolor: referred ? (darkMode ? '#7DD3FC' : theme.palette.info.lighter) : theme.palette.surface?.muted || theme.palette.background.paper,
-                              color: `${chipColor} !important`,
-                              fontWeight: 700,
-                              border: '1px solid',
-                              borderColor: referred ? (darkMode ? '#38BDF8' : theme.palette.info.light) : theme.palette.divider,
-                              '& .MuiChip-label': { color: `${chipColor} !important`, fontWeight: 700 },
-                              '& .MuiChip-icon': { color: `${chipColor} !important` },
-                              '& .MuiSvgIcon-root': { color: `${chipColor} !important` }
-                            };
-                          }}
-                          icon={
-                            <PeopleAltIcon
-                              fontSize="small"
-                              sx={{
-                                color:
-                                  row.isReferred || row.refererBy ? '#0B1F3A !important' : isDarkMode ? '#F8FAFC !important' : `${theme.palette.info.dark} !important`
-                              }}
-                            />
-                          }
-                        />
+                        <ReferredChip isReferred={row.isReferred} refererBy={row.refererBy} t={t} />
                       </TableCell>
                       <TableCell>
-                        <Chip
-                          size="small"
-                          icon={
-                            <ShareIcon
-                              fontSize="small"
-                              sx={{
-                                color: isDarkMode ? '#FFFFFF !important' : `${theme.palette.info.darker} !important`
-                              }}
-                            />
-                          }
-                          label={
-                            <Box component="span" sx={{ color: isDarkMode ? '#FFFFFF !important' : 'inherit', fontWeight: 700 }}>
-                              {row.channel || '-'}
-                            </Box>
-                          }
-                          sx={(theme) => {
-                            const darkMode = theme.palette.mode === 'dark';
-                            const channelColor = darkMode ? '#FFFFFF' : theme.palette.info.darker;
-                            return {
-                              bgcolor: darkMode ? 'rgba(2, 136, 209, 0.42)' : theme.palette.info.lighter,
-                              color: `${channelColor} !important`,
-                              border: '1px solid',
-                              borderColor: darkMode ? 'rgba(125, 211, 252, 0.45)' : theme.palette.info.light,
-                              fontWeight: 700,
-                              '& .MuiChip-label': {
-                                color: `${channelColor} !important`,
-                                fontWeight: 700
-                              },
-                              '& .MuiChip-icon': {
-                                color: `${channelColor} !important`
-                              },
-                              '& .MuiSvgIcon-root': {
-                                color: `${channelColor} !important`
-                              }
-                            };
-                          }}
-                        />
+                        <ChannelChip channel={row.channel} />
                       </TableCell>
                       <TableCell align="right">
                         <RowActions

@@ -98,7 +98,7 @@ const paymentMethodColors = {
   Ecommerce: 'secondary.main',
   'Link pago': 'info.main',
   'Debito Automatico': 'warning.main',
-  'Loyalty Points': 'warning.main'
+  'Loyalty Points': 'secondary.main'
 };
 
 const fieldSx = {
@@ -1567,32 +1567,73 @@ export default function InvoicesLionTv() {
                       height: '100%',
                       display: 'flex',
                       flexDirection: 'column',
-                      justifyContent: 'center',
-                      gap: 0.75,
-                      bgcolor: theme.palette.warning.lighter,
-                      borderColor: theme.palette.warning.light
+                      justifyContent: 'space-between',
+                      gap: 1,
+                      borderColor: theme.palette.mode === 'dark' ? 'rgba(129, 140, 248, 0.32)' : 'rgba(99, 102, 241, 0.18)',
+                      background:
+                        theme.palette.mode === 'dark'
+                          ? 'linear-gradient(145deg, rgba(99, 102, 241, 0.18) 0%, rgba(30, 41, 59, 0.92) 55%, rgba(15, 23, 42, 0.98) 100%)'
+                          : 'linear-gradient(145deg, rgba(99, 102, 241, 0.10) 0%, rgba(59, 130, 246, 0.06) 40%, rgba(255,255,255,0.98) 100%)',
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? '0 18px 36px rgba(2, 6, 23, 0.34)'
+                          : '0 14px 28px rgba(15, 23, 42, 0.08)'
                     })}
                   >
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <AutoAwesomeIcon color="warning" fontSize="small" />
-                      <Typography variant="subtitle2">{t('invoices.form.loyalty.availablePoints', 'Available points')}</Typography>
+                    <Stack spacing={1.25}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Avatar
+                          variant="rounded"
+                          sx={(theme) => ({
+                            width: 34,
+                            height: 34,
+                            bgcolor: theme.palette.mode === 'dark' ? 'rgba(129, 140, 248, 0.18)' : 'rgba(99, 102, 241, 0.14)',
+                            color: theme.palette.secondary.main
+                          })}
+                        >
+                          <AutoAwesomeIcon fontSize="small" />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="overline" color="text.secondary" sx={{ lineHeight: 1.1, fontWeight: 700, letterSpacing: 0.7 }}>
+                            {t('invoices.form.sections.loyalty', 'Loyalty')}
+                          </Typography>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                            {t('invoices.form.loyalty.availablePoints', 'Available points')}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                      <Box>
+                        <Typography variant="h3" sx={{ fontWeight: 800, letterSpacing: -0.4 }}>
+                          {form.customerId ? Number(selectedCustomerAvailablePoints || 0).toLocaleString() : '--'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {loyaltyConfig?.active
+                            ? t('invoices.form.loyalty.conversion', '{{points}} punto(s) = L {{amount}}', {
+                                points: Number(loyaltyConfig?.pointsPerUnit || 1),
+                                amount: Number(loyaltyConfig?.amountUnit || 10).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                              })
+                            : t('invoices.form.loyalty.inactive', 'Loyalty disabled')}
+                        </Typography>
+                      </Box>
                     </Stack>
-                    <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                      {form.customerId ? Number(selectedCustomerAvailablePoints || 0).toLocaleString() : '--'}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {loyaltyConfig?.active
-                        ? t('invoices.form.loyalty.conversion', '{{points}} punto(s) = L {{amount}}', {
-                            points: Number(loyaltyConfig?.pointsPerUnit || 1),
-                            amount: Number(loyaltyConfig?.amountUnit || 10).toLocaleString(undefined, { minimumFractionDigits: 2 })
-                          })
-                        : t('invoices.form.loyalty.inactive', 'Loyalty disabled')}
-                    </Typography>
-                    {loyaltyCustomerLoading ? (
-                      <Typography variant="caption" color="text.secondary">
-                        {t('invoices.form.helperLoading')}
-                      </Typography>
-                    ) : null}
+                    <Stack spacing={0.75}>
+                      <Chip
+                        size="small"
+                        color={loyaltyConfig?.active ? 'secondary' : 'default'}
+                        variant={loyaltyConfig?.active ? 'light' : 'outlined'}
+                        label={
+                          loyaltyConfig?.active
+                            ? t('invoices.form.loyalty.ready', 'Ready to apply')
+                            : t('invoices.form.loyalty.inactive', 'Loyalty disabled')
+                        }
+                        sx={{ alignSelf: 'flex-start', fontWeight: 700 }}
+                      />
+                      {loyaltyCustomerLoading ? (
+                        <Typography variant="caption" color="text.secondary">
+                          {t('invoices.form.helperLoading')}
+                        </Typography>
+                      ) : null}
+                    </Stack>
                   </Box>
                 </Grid>
                 <Grid item xs={12} md={4}>
@@ -1618,7 +1659,7 @@ export default function InvoicesLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <AutoAwesomeIcon fontSize="small" color="warning" />
+                          <AutoAwesomeIcon fontSize="small" sx={{ color: 'secondary.main' }} />
                         </InputAdornment>
                       )
                     }}
@@ -1642,7 +1683,7 @@ export default function InvoicesLionTv() {
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <Typography variant="subtitle2" color="warning.main" sx={{ fontWeight: 700 }}>
+                          <Typography variant="subtitle2" color="secondary.main" sx={{ fontWeight: 700 }}>
                             L
                           </Typography>
                         </InputAdornment>
@@ -1653,24 +1694,40 @@ export default function InvoicesLionTv() {
                 <Grid item xs={12}>
                   <Box
                     sx={(theme) => ({
-                      p: 1.25,
-                      borderRadius: 2,
-                      border: '1px dashed',
-                      borderColor: loyaltyPointsExceeded || loyaltyAmountExceeded ? theme.palette.error.main : theme.palette.divider,
+                      p: 1.4,
+                      borderRadius: 2.5,
+                      border: '1px solid',
+                      borderColor:
+                        loyaltyPointsExceeded || loyaltyAmountExceeded
+                          ? theme.palette.error.main
+                          : theme.palette.mode === 'dark'
+                            ? 'rgba(148, 163, 184, 0.22)'
+                            : 'rgba(148, 163, 184, 0.32)',
                       bgcolor:
                         loyaltyProgramInactive && loyaltyPointsRequested > 0
                           ? theme.palette.error.lighter
-                          : theme.palette.background.paper
+                          : theme.palette.mode === 'dark'
+                            ? 'rgba(15, 23, 42, 0.54)'
+                            : 'rgba(248, 250, 252, 0.92)'
                     })}
                   >
-                    <Typography variant="caption" color={loyaltyPointsExceeded || loyaltyAmountExceeded ? 'error.main' : 'text.secondary'}>
-                      {loyaltyProgramInactive
-                        ? t('invoices.form.loyalty.inactiveHelp', 'The loyalty program is inactive. Activate it before charging with points.')
-                        : t(
-                            'invoices.form.loyalty.helper',
-                            'The redeemed points are deducted only when the invoice is saved and remains consistent with the loyalty ledger.'
-                          )}
-                    </Typography>
+                    <Stack direction="row" spacing={1} alignItems="flex-start">
+                      <InfoOutlinedIcon
+                        fontSize="small"
+                        sx={(theme) => ({
+                          mt: '2px',
+                          color: loyaltyPointsExceeded || loyaltyAmountExceeded ? theme.palette.error.main : theme.palette.primary.main
+                        })}
+                      />
+                      <Typography variant="caption" color={loyaltyPointsExceeded || loyaltyAmountExceeded ? 'error.main' : 'text.secondary'}>
+                        {loyaltyProgramInactive
+                          ? t('invoices.form.loyalty.inactiveHelp', 'The loyalty program is inactive. Activate it before charging with points.')
+                          : t(
+                              'invoices.form.loyalty.helper',
+                              'The redeemed points are deducted only when the invoice is saved and remains consistent with the loyalty ledger.'
+                            )}
+                      </Typography>
+                    </Stack>
                   </Box>
                 </Grid>
               </Grid>
