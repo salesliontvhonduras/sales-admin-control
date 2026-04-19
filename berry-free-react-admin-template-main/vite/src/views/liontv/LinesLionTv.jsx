@@ -159,13 +159,13 @@ const lineProviderOptions = [
 ];
 
 const m3uProviderConfigMap = {
-  TITAN: { label: 'Titan', baseUrl: 'http://supremeplay.fun:80/get.php' },
-  NEXOLAT: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php' },
-  NEXOLATV: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php' },
-  FLOWZY: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php' },
-  LIONTV: { label: 'Lion Tv', baseUrl: 'http://liontv.es:8080/get.php' },
-  LIONTVPLUS: { label: 'Lion Tv', baseUrl: 'http://liontv.es:8080/get.php' },
-  LIONPLUS: { label: 'Lion Tv', baseUrl: 'http://liontv.es:8080/get.php' }
+  TITAN: { label: 'Titan', baseUrl: 'http://supremeplay.fun:80/get.php', playlistType: 'm3u_plus', outputFormat: 'ts' },
+  NEXOLAT: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php', playlistType: 'm3u', outputFormat: 'mpegts' },
+  NEXOLATV: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php', playlistType: 'm3u', outputFormat: 'mpegts' },
+  FLOWZY: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php', playlistType: 'm3u', outputFormat: 'mpegts' },
+  LIONTV: { label: 'Lion Tv', baseUrl: 'http://liontv.es:8080/get.php', playlistType: 'm3u_plus', outputFormat: 'ts' },
+  LIONTVPLUS: { label: 'Lion Tv', baseUrl: 'http://liontv.es:8080/get.php', playlistType: 'm3u_plus', outputFormat: 'ts' },
+  LIONPLUS: { label: 'Lion Tv', baseUrl: 'http://liontv.es:8080/get.php', playlistType: 'm3u_plus', outputFormat: 'ts' }
 };
 
 function localizedRegionName(code, locale) {
@@ -321,11 +321,10 @@ function isSpainLineCountry(country = '') {
 function resolveM3uProviderConfig(provider = '', lineCountry = '') {
   const normalized = normalizeM3uProvider(provider);
   if ((normalized === 'LIONTV' || normalized === 'LIONTVPLUS' || normalized === 'LIONPLUS') && isSpainLineCountry(lineCountry)) {
-    return { label: 'Lion Tv', baseUrl: 'http://107.152.41.152:8080/get.php', playlistType: 'm3u' };
+    return { label: 'Lion Tv', baseUrl: 'http://107.152.41.152:8080/get.php', playlistType: 'm3u', outputFormat: 'ts' };
   }
 
-  const baseConfig = m3uProviderConfigMap[normalized];
-  return baseConfig ? { ...baseConfig, playlistType: 'm3u_plus' } : null;
+  return m3uProviderConfigMap[normalized] || null;
 }
 
 function buildM3uCopyText(row) {
@@ -336,7 +335,7 @@ function buildM3uCopyText(row) {
   const password = String(row?.passwordEncode || '').trim();
   if (!username || !password) return null;
 
-  const m3uUrl = `${providerConfig.baseUrl}?username=${username}&password=${password}&type=${providerConfig.playlistType}&output=ts`;
+  const m3uUrl = `${providerConfig.baseUrl}?username=${username}&password=${password}&type=${providerConfig.playlistType}&output=${providerConfig.outputFormat}`;
   return {
     providerLabel: providerConfig.label,
     m3uUrl,
