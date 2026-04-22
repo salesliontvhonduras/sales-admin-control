@@ -42,6 +42,7 @@ import MainCard from 'ui-component/cards/MainCard';
 import { PageEmptyState, PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
 import { gridSpacing } from 'store/constant';
 import { useLionTvOverview } from 'api/liontv-overview';
+import { useSubscriptionExpirationOverview } from 'api/liontv-subscription-expiration';
 
 const ROUTES = {
   licenses: '/liontv/licenses',
@@ -458,6 +459,11 @@ export default function LionTvDashboard() {
     enabled: Boolean(accessToken),
     scope: 'core'
   });
+  const { data: expirationOverview } = useSubscriptionExpirationOverview({ enabled: Boolean(accessToken), refreshInterval: 60000 });
+
+  const expirationAttentionCount =
+    Number(expirationOverview?.statusCounts?.failed || 0) + Number(expirationOverview?.statusCounts?.manualPending || 0);
+  const expirationStale = Boolean(expirationOverview?.detectorStale || expirationOverview?.workerStale);
 
   const customerNameMap = useMemo(() => {
     const map = {};
@@ -700,6 +706,28 @@ export default function LionTvDashboard() {
             'Módulo de seguimiento para no olvidar nada: vencimientos, pendientes, riesgos y próximos eventos del negocio.'
           )}
         </Alert>
+
+        {expirationAttentionCount > 0 || expirationStale ? (
+          <Alert
+            severity={expirationStale ? 'error' : 'warning'}
+            variant="outlined"
+            action={
+              <Button color="inherit" size="small" onClick={() => navigate('/liontv/subscription-expiration')} startIcon={<LaunchIcon />}>
+                {t('liontvDashboard.expirationAlert.open', 'Abrir expiraciones')}
+              </Button>
+            }
+          >
+            {expirationStale
+              ? t(
+                  'liontvDashboard.expirationAlert.stale',
+                  'El scheduler de expiración está stale. Revisa el detector/worker porque este proceso es crítico.'
+                )
+              : t('liontvDashboard.expirationAlert.jobs', {
+                  count: expirationAttentionCount,
+                  defaultValue: `Hay ${expirationAttentionCount} jobs críticos de expiración para revisar.`
+                })}
+          </Alert>
+        ) : null}
 
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', md: 'center' }}>
           <Typography variant="subtitle2" color="text.secondary">

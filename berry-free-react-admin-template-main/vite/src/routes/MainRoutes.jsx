@@ -34,6 +34,7 @@ const RafflesLionTv = Loadable(lazy(() => import('views/liontv/RafflesLionTv')))
 const BusinessPurchasesLionTv = Loadable(lazy(() => import('views/liontv/BusinessPurchasesLionTv')));
 const LicensesLionTv = Loadable(lazy(() => import('views/liontv/LicensesLionTv')));
 const LinesLionTv = Loadable(lazy(() => import('views/liontv/LinesLionTv')));
+const SubscriptionExpirationLionTv = Loadable(lazy(() => import('views/liontv/SubscriptionExpirationLionTv')));
 const PlusLinesExplorer = Loadable(lazy(() => import('views/liontv/PlusLinesExplorer')));
 const UserAccessAdmin = Loadable(lazy(() => import('views/security/UserAccessAdmin')));
 const PanelAuthMultiAppAdmin = Loadable(lazy(() => import('views/security/PanelAuthMultiAppAdmin')));
@@ -147,6 +148,13 @@ const MainRoutes = {
         {
           path: '/liontv/managed-accounts',
           element: protectPage({ any: ['LIONTV_MANAGED_ACCOUNTS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <ManagedAccountsLionTv />)
+        },
+        {
+          path: '/liontv/subscription-expiration',
+          element: protectPage(
+            { any: ['LIONTV_SUBSCRIPTION_EXPIRATION_VIEW', 'LIONTV_TECH_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+            <SubscriptionExpirationLionTv />
+          )
         },
         {
           path: '/liontv/crm',

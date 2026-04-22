@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -176,7 +177,19 @@ function normalizeSubscription(item = {}) {
   };
 }
 
-function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengage, onNotifyRenewed, onCopyWhatsapp, onCopyM3u, onCopyLinePlusM3u, busy }) {
+function RowActions({
+  row,
+  onEdit,
+  onDelete,
+  onNotifyExpiration,
+  onNotifyReengage,
+  onNotifyRenewed,
+  onCopyWhatsapp,
+  onCopyM3u,
+  onCopyLinePlusM3u,
+  onOpenExpirationDiagnostics,
+  busy
+}) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const { t } = useTranslation();
@@ -273,6 +286,15 @@ function RowActions({ row, onEdit, onDelete, onNotifyExpiration, onNotifyReengag
         <MenuItem
           onClick={() => {
             setAnchorEl(null);
+            onOpenExpirationDiagnostics?.(row);
+          }}
+        >
+          <ReportProblemOutlinedIcon fontSize="small" sx={{ mr: 1, color: 'warning.main' }} />
+          {t('subscriptions.actions.expirationDiagnostics', 'Diagnóstico expiración')}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setAnchorEl(null);
             onDelete?.(row);
           }}
         >
@@ -361,6 +383,7 @@ export default function SubscriptionsLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -946,6 +969,11 @@ export default function SubscriptionsLionTv() {
     }
   };
 
+  const handleOpenExpirationDiagnostics = (row) => {
+    if (!row?.subscriptionId) return;
+    navigate(`/liontv/subscription-expiration?subscriptionId=${row.subscriptionId}`);
+  };
+
   const handleSave = async () => {
     if (!form.customerId || !form.lineId || !form.packageId || !form.status || !form.startDate) {
       enqueueSnackbar(t('subscriptions.messages.required'), { variant: 'warning' });
@@ -1337,6 +1365,7 @@ export default function SubscriptionsLionTv() {
                             onCopyWhatsapp={handleCopyWhatsapp}
                             onCopyM3u={handleCopyM3u}
                             onCopyLinePlusM3u={handleCopyLinePlusM3u}
+                            onOpenExpirationDiagnostics={handleOpenExpirationDiagnostics}
                             busy={notifLoadingId === row.subscriptionId}
                           />
                         </ResponsiveActionBar>
@@ -1549,6 +1578,7 @@ export default function SubscriptionsLionTv() {
                             onCopyWhatsapp={handleCopyWhatsapp}
                             onCopyM3u={handleCopyM3u}
                             onCopyLinePlusM3u={handleCopyLinePlusM3u}
+                            onOpenExpirationDiagnostics={handleOpenExpirationDiagnostics}
                             busy={notifLoadingId === row.subscriptionId}
                           />
                         </TableCell>

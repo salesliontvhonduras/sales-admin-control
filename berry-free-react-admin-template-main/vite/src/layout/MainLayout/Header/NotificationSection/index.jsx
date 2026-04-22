@@ -25,6 +25,7 @@ import useAuth from 'hooks/useAuth';
 import MainCard from 'ui-component/cards/MainCard';
 import Transitions from 'ui-component/extended/Transitions';
 import { useLionTvOverview } from 'api/liontv-overview';
+import { useSubscriptionExpirationOverview } from 'api/liontv-subscription-expiration';
 import NotificationList from './NotificationList';
 
 // assets
@@ -37,7 +38,8 @@ const ROUTES = {
   lines: '/liontv/lines',
   managedAccounts: '/liontv/managed-accounts',
   invoices: '/liontv/invoices',
-  commitments: '/liontv/payment-commitments'
+  commitments: '/liontv/payment-commitments',
+  subscriptionExpiration: '/liontv/subscription-expiration'
 };
 
 const IGNORED_STATUSES = new Set(['CANCELLED', 'REMOVED']);
@@ -278,21 +280,54 @@ export default function NotificationSection() {
     scope: 'core',
     refreshInterval: REFRESH_INTERVAL_MS
   });
+  const { data: expirationOverview } = useSubscriptionExpirationOverview({
+    enabled: Boolean(accessToken),
+    refreshInterval: 60000
+  });
 
-  const alerts = useMemo(
-    () =>
-      buildTodayAlerts({
-        t,
-        customers: overviewData?.customers || [],
-        subscriptions: overviewData?.subscriptions || [],
-        licenses: overviewData?.licenses || [],
-        lines: overviewData?.lines || [],
-        managedAccounts: overviewData?.managedAccounts || [],
-        invoices: overviewData?.invoices || [],
-        commitments: overviewData?.commitments || []
-      }),
-    [overviewData, t]
-  );
+  const alerts = useMemo(() => {
+    const queue = buildTodayAlerts({
+      t,
+      customers: overviewData?.customers || [],
+      subscriptions: overviewData?.subscriptions || [],
+      licenses: overviewData?.licenses || [],
+      lines: overviewData?.lines || [],
+      managedAccounts: overviewData?.managedAccounts || [],
+      invoices: overviewData?.invoices || [],
+      commitments: overviewData?.commitments || []
+    });
+    const failed = Number(expirationOverview?.statusCounts?.failed || 0);
+    const manualPending = Number(expirationOverview?.statusCounts?.manualPending || 0);
+    const retry = Number(expirationOverview?.statusCounts?.retry || 0);
+    const stale = Boolean(expirationOverview?.detectorStale || expirationOverview?.workerStale);
+
+    if (stale || failed > 0 || manualPending > 0 || retry > 0) {
+      queue.unshift({
+        key: `subscription-expiration-${failed}-${manualPending}-${retry}-${stale}`,
+        type: t('headerNotifications.types.subscriptionExpiration', 'Expiraciones'),
+        route: ROUTES.subscriptionExpiration,
+        entityId: 'subscription-expiration',
+        reference: stale
+          ? t('headerNotifications.reference.subscriptionExpirationStale', 'Scheduler stale')
+          : t('headerNotifications.reference.subscriptionExpirationJobs', 'Jobs críticos de expiración'),
+        customerName: '-',
+        status: stale ? 'STALE' : 'CRITICAL',
+        detail: stale
+          ? t('headerNotifications.alertDetail.subscriptionExpirationStale', 'Detector o worker sin ciclo reciente.')
+          : t('headerNotifications.alertDetail.subscriptionExpirationJobs', {
+              failed,
+              manualPending,
+              retry,
+              defaultValue: `Failed ${failed} · Manual ${manualPending} · Retry ${retry}`
+            }),
+        targetDate: null,
+        days: 0,
+        severity: stale ? 'CRITICAL' : failed > 0 ? 'HIGH' : 'MEDIUM'
+      });
+    }
+
+    return queue;
+  }, [expirationOverview, overviewData, t]);
 
   const lastSyncAt = useMemo(() => {
     const fetchedAt = overviewData?.meta?.fetchedAt;

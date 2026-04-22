@@ -321,7 +321,7 @@ function isSpainLineCountry(country = '') {
 function resolveM3uProviderConfig(provider = '', lineCountry = '') {
   const normalized = normalizeM3uProvider(provider);
   if ((normalized === 'LIONTV' || normalized === 'LIONTVPLUS' || normalized === 'LIONPLUS') && isSpainLineCountry(lineCountry)) {
-    return { label: 'Lion Tv', baseUrl: 'http://107.152.41.152:8080/get.php', playlistType: 'm3u', outputFormat: 'ts' };
+    return { label: 'Lion Tv', baseUrl: 'http://213.111.149.81:8080/get.php', playlistType: 'm3u', outputFormat: 'ts' };
   }
 
   return m3uProviderConfigMap[normalized] || null;

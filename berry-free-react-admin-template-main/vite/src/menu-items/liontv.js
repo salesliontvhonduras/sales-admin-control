@@ -9,7 +9,8 @@ import {
   IconMailCog,
   IconDashboard,
   IconUserSearch,
-  IconKey
+  IconKey,
+  IconAlertTriangle
 } from '@tabler/icons-react';
 
 const icons = {
@@ -23,7 +24,8 @@ const icons = {
   IconKey,
   IconUserSearch,
   IconMailCog,
-  IconDashboard
+  IconDashboard,
+  IconAlertTriangle
 };
 
 const liontv = {
@@ -229,6 +231,16 @@ const liontv = {
           url: '/liontv/managed-accounts',
           breadcrumbs: true,
           permission: { any: ['LIONTV_MANAGED_ACCOUNTS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+        },
+        {
+          id: 'liontv-subscription-expiration',
+          title: 'menu.subscriptionExpiration',
+          caption: 'menu.subscriptionExpirationCaption',
+          type: 'item',
+          url: '/liontv/subscription-expiration',
+          breadcrumbs: true,
+          icon: icons.IconAlertTriangle,
+          permission: { any: ['LIONTV_SUBSCRIPTION_EXPIRATION_VIEW', 'LIONTV_TECH_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         }
       ]
     },
