@@ -726,12 +726,19 @@ const resources = {
           sharedClusters: 'Shared clusters (host + beneficiaries)',
           noSharedClusters: 'No shared clusters found with current filters.',
           eligibleNotShared: 'Eligible and not shared',
-          noEligible: 'No eligible subscriptions pending share.'
+          noEligible: 'No eligible subscriptions pending share.',
+          notEligible: 'Not eligible right now',
+          noNotEligible: 'No non-eligible subscriptions matched current filters.'
         },
         role: {
           host: 'HOST',
           shared: 'SHARED',
           none: 'NONE'
+        },
+        reason: {
+          inactive: 'Inactive',
+          minimumTerm: 'Minimum {{count}} months',
+          noCapacity: 'No available capacity'
         },
         card: {
           hostSubscription: 'Host subscription',
@@ -747,8 +754,37 @@ const resources = {
           beneficiaries: 'Beneficiaries',
           noBeneficiaries: 'No SHARED subscriptions linked to this host.'
         },
+        actions: {
+          viewDiagnostics: 'View diagnostics'
+        },
+        diagnostics: {
+          title: 'Subscription diagnostics',
+          subtitle: 'Subscription #{{subscriptionId}}',
+          subtitleFallback: 'Live eligibility snapshot',
+          empty: 'No diagnostics available for this subscription.',
+          sharingActive: 'Active for sharing',
+          sharingInactive: 'Inactive for sharing',
+          sharedCluster: 'Shared cluster · {{count}}',
+          standalone: 'Standalone subscription',
+          customer: 'Customer',
+          line: 'Line',
+          linePlus: 'Plus: {{value}}',
+          provider: 'Provider',
+          status: 'Status: {{value}}',
+          billing: 'Billing',
+          startDate: 'Start date',
+          renewalDate: 'Renewal date',
+          termMonths: 'Calculated months',
+          minimumEligibleMonths: 'Minimum: {{count}}',
+          activatedScreens: 'Activated screens',
+          estimatedUsage: 'Estimated usage',
+          availableCapacity: 'Available capacity',
+          summaryTitle: 'Sharing summary',
+          hostSubscription: 'Host #{{id}}'
+        },
         errors: {
-          loadError: 'Could not load shared overview.'
+          loadError: 'Could not load shared overview.',
+          loadDiagnostics: 'Could not load subscription diagnostics.'
         }
       },
       licenses: {
@@ -4027,12 +4063,19 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           sharedClusters: 'Clústeres compartidos (host + beneficiarios)',
           noSharedClusters: 'No se encontraron clústeres compartidos con los filtros actuales.',
           eligibleNotShared: 'Elegibles sin compartir',
-          noEligible: 'No hay suscripciones elegibles pendientes de compartir.'
+          noEligible: 'No hay suscripciones elegibles pendientes de compartir.',
+          notEligible: 'No elegibles en este momento',
+          noNotEligible: 'No hay suscripciones no elegibles con los filtros actuales.'
         },
         role: {
           host: 'HOST',
           shared: 'SHARED',
           none: 'NONE'
+        },
+        reason: {
+          inactive: 'Inactiva',
+          minimumTerm: 'Mínimo {{count}} meses',
+          noCapacity: 'Sin capacidad disponible'
         },
         card: {
           hostSubscription: 'Suscripción host',
@@ -4048,8 +4091,37 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           beneficiaries: 'Beneficiarios',
           noBeneficiaries: 'No hay suscripciones SHARED vinculadas a este host.'
         },
+        actions: {
+          viewDiagnostics: 'Ver diagnóstico'
+        },
+        diagnostics: {
+          title: 'Diagnóstico de suscripción',
+          subtitle: 'Suscripción #{{subscriptionId}}',
+          subtitleFallback: 'Snapshot de elegibilidad en vivo',
+          empty: 'No hay diagnóstico disponible para esta suscripción.',
+          sharingActive: 'Activa para sharing',
+          sharingInactive: 'Inactiva para sharing',
+          sharedCluster: 'Clúster compartido · {{count}}',
+          standalone: 'Suscripción independiente',
+          customer: 'Cliente',
+          line: 'Línea',
+          linePlus: 'Plus: {{value}}',
+          provider: 'Proveedor',
+          status: 'Estado: {{value}}',
+          billing: 'Billing',
+          startDate: 'Fecha de inicio',
+          renewalDate: 'Fecha de renovación',
+          termMonths: 'Meses calculados',
+          minimumEligibleMonths: 'Mínimo: {{count}}',
+          activatedScreens: 'Pantallas activadas',
+          estimatedUsage: 'Uso estimado',
+          availableCapacity: 'Capacidad disponible',
+          summaryTitle: 'Resumen de sharing',
+          hostSubscription: 'Host #{{id}}'
+        },
         errors: {
-          loadError: 'No se pudo cargar el overview de suscripciones compartidas.'
+          loadError: 'No se pudo cargar el overview de suscripciones compartidas.',
+          loadDiagnostics: 'No se pudo cargar el diagnóstico de la suscripción.'
         }
       },
       licenses: {
