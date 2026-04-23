@@ -429,6 +429,13 @@ export default function SubscriptionSharingLionTv() {
     bgcolor: 'background.paper',
     p: { xs: 1.5, sm: 2 }
   };
+  const diagnosticsSurfaceSx = {
+    borderRadius: 3,
+    border: '1px solid',
+    borderColor: 'divider',
+    bgcolor: 'background.paper',
+    p: { xs: 1.5, sm: 2 }
+  };
 
   return (
     <Box sx={{ width: '100%', maxWidth: { xs: '100%', xl: 1450 }, mx: 'auto' }}>
@@ -965,14 +972,18 @@ export default function SubscriptionSharingLionTv() {
                     <Button
                       size="small"
                       variant="contained"
-                      color="inherit"
                       onClick={() => loadDiagnostics(row.subscriptionId)}
                       sx={{
                         textTransform: 'none',
                         fontWeight: 700,
                         borderRadius: 2,
                         alignSelf: { xs: 'stretch', lg: 'flex-start' },
-                        color: 'text.primary'
+                        color: 'common.white',
+                        backgroundImage: `linear-gradient(135deg, ${withAlpha(theme.palette.error.main, 0.92)} 0%, ${withAlpha(theme.palette.warning.dark, 0.92)} 100%)`,
+                        boxShadow: `0 10px 24px ${withAlpha(theme.palette.error.main, 0.24)}`,
+                        '&:hover': {
+                          backgroundImage: `linear-gradient(135deg, ${theme.palette.error.dark} 0%, ${theme.palette.warning.main} 100%)`
+                        }
                       }}
                     >
                       {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
@@ -1022,8 +1033,31 @@ export default function SubscriptionSharingLionTv() {
         fullWidth
         maxWidth="md"
         fullScreen={isMobile}
+        PaperProps={{
+          sx: {
+            borderRadius: { xs: 0, sm: 4 },
+            overflow: 'hidden',
+            border: '1px solid',
+            borderColor: 'divider',
+            backgroundImage: (muiTheme) =>
+              muiTheme.palette.mode === 'dark'
+                ? `linear-gradient(180deg, ${withAlpha(muiTheme.palette.primary.main, 0.12)} 0%, ${withAlpha(
+                    muiTheme.palette.background.paper,
+                    0.98
+                  )} 18%, ${muiTheme.palette.background.paper} 100%)`
+                : `linear-gradient(180deg, ${withAlpha(muiTheme.palette.primary.main, 0.08)} 0%, ${muiTheme.palette.background.paper} 18%, ${muiTheme.palette.background.paper} 100%)`
+          }
+        }}
       >
         <DialogTitleWithClose
+          sx={{
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            backgroundColor: (muiTheme) => withAlpha(muiTheme.palette.background.default, muiTheme.palette.mode === 'dark' ? 0.72 : 0.82)
+          }}
+          closeButtonSx={{
+            bgcolor: (muiTheme) => withAlpha(muiTheme.palette.background.paper, muiTheme.palette.mode === 'dark' ? 0.96 : 0.92)
+          }}
           onClose={() => {
             setDiagnosticsOpen(false);
             setDiagnosticsData(null);
@@ -1042,7 +1076,14 @@ export default function SubscriptionSharingLionTv() {
           </Stack>
         </DialogTitleWithClose>
 
-        <DialogContent dividers sx={{ px: { xs: 1.5, sm: 3 }, py: { xs: 1.5, sm: 2 } }}>
+        <DialogContent
+          dividers
+          sx={{
+            px: { xs: 1.5, sm: 3 },
+            py: { xs: 1.5, sm: 2 },
+            backgroundColor: (muiTheme) => withAlpha(muiTheme.palette.background.default, muiTheme.palette.mode === 'dark' ? 0.26 : 0.4)
+          }}
+        >
           {diagnosticsLoading ? (
             <Stack spacing={1.25}>
               {Array.from({ length: 6 }).map((_, idx) => (
@@ -1053,42 +1094,94 @@ export default function SubscriptionSharingLionTv() {
             <Alert severity="warning">{t('subscriptionSharing.diagnostics.empty', 'No diagnostics available for this subscription.')}</Alert>
           ) : (
             <Stack spacing={2}>
+              <Box
+                sx={(muiTheme) => ({
+                  p: { xs: 1.6, sm: 2 },
+                  borderRadius: 3,
+                  border: '1px solid',
+                  borderColor: withAlpha(muiTheme.palette.primary.main, muiTheme.palette.mode === 'dark' ? 0.4 : 0.18),
+                  backgroundImage:
+                    muiTheme.palette.mode === 'dark'
+                      ? `linear-gradient(135deg, ${withAlpha(muiTheme.palette.primary.main, 0.18)} 0%, ${withAlpha(
+                          muiTheme.palette.info.main,
+                          0.12
+                        )} 56%, ${withAlpha(muiTheme.palette.background.paper, 0.96)} 100%)`
+                      : `linear-gradient(135deg, ${withAlpha(muiTheme.palette.primary.main, 0.1)} 0%, ${withAlpha(
+                          muiTheme.palette.info.main,
+                          0.06
+                        )} 56%, ${muiTheme.palette.background.paper} 100%)`
+                })}
+              >
+                <Stack spacing={1.2}>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
+                    <Box>
+                      <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 1.1 }}>
+                        {t('subscriptionSharing.diagnostics.summaryTitle', 'Sharing summary')}
+                      </Typography>
+                      <Typography variant="h4" sx={{ lineHeight: 1.15 }}>
+                        #{diagnosticsData.subscriptionId} · {diagnosticsData.customerName || '-'}
+                      </Typography>
+                    </Box>
+                    <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
+                      <RoleChip role={diagnosticsData.sharingRole} t={t} />
+                      <EligibilityChips
+                        eligible={diagnosticsData.eligible}
+                        eligibilityReason={diagnosticsData.eligibilityReason}
+                        minimumEligibleMonths={diagnosticsData.minimumEligibleMonths}
+                        t={t}
+                      />
+                    </Stack>
+                  </Stack>
+                  <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      color={diagnosticsData.sharingActive ? 'success' : 'default'}
+                      label={
+                        diagnosticsData.sharingActive
+                          ? t('subscriptionSharing.diagnostics.sharingActive', 'Active for sharing')
+                          : t('subscriptionSharing.diagnostics.sharingInactive', 'Inactive for sharing')
+                      }
+                      sx={{ fontWeight: 700 }}
+                    />
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      color={diagnosticsData.sharedCluster ? 'info' : 'default'}
+                      label={
+                        diagnosticsData.sharedCluster
+                          ? t('subscriptionSharing.diagnostics.sharedCluster', {
+                              count: diagnosticsData.sharedClusterSize || 0,
+                              defaultValue: 'Shared cluster · {{count}}'
+                            })
+                          : t('subscriptionSharing.diagnostics.standalone', 'Standalone subscription')
+                      }
+                      sx={{ fontWeight: 700 }}
+                    />
+                    <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${diagnosticsData.provider || '-'}`} />
+                    <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.line', 'Line')}: ${diagnosticsData.lineId || '-'}`} />
+                  </Stack>
+                </Stack>
+              </Box>
+
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} useFlexGap flexWrap="wrap">
-                <RoleChip role={diagnosticsData.sharingRole} t={t} />
-                <EligibilityChips
-                  eligible={diagnosticsData.eligible}
-                  eligibilityReason={diagnosticsData.eligibilityReason}
-                  minimumEligibleMonths={diagnosticsData.minimumEligibleMonths}
-                  t={t}
-                />
-                <Chip
-                  size="small"
-                  variant="outlined"
-                  color={diagnosticsData.sharingActive ? 'success' : 'default'}
-                  label={
-                    diagnosticsData.sharingActive
-                      ? t('subscriptionSharing.diagnostics.sharingActive', 'Active for sharing')
-                      : t('subscriptionSharing.diagnostics.sharingInactive', 'Inactive for sharing')
-                  }
-                />
-                <Chip
-                  size="small"
-                  variant="outlined"
-                  color={diagnosticsData.sharedCluster ? 'info' : 'default'}
-                  label={
-                    diagnosticsData.sharedCluster
-                      ? t('subscriptionSharing.diagnostics.sharedCluster', {
-                          count: diagnosticsData.sharedClusterSize || 0,
-                          defaultValue: 'Shared cluster · {{count}}'
-                        })
-                      : t('subscriptionSharing.diagnostics.standalone', 'Standalone subscription')
-                  }
-                />
+                <Chip size="small" variant="outlined" label={`Sub #${diagnosticsData.subscriptionId || '-'}`} />
+                <Chip size="small" variant="outlined" label={`Cust #${diagnosticsData.customerId || '-'}`} />
+                {diagnosticsData.sharedHostSubscriptionId ? (
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={t('subscriptionSharing.diagnostics.hostSubscription', {
+                      id: diagnosticsData.sharedHostSubscriptionId,
+                      defaultValue: 'Host #{{id}}'
+                    })}
+                  />
+                ) : null}
               </Stack>
 
               <Grid container spacing={1.25}>
                 <Grid item xs={12} sm={6} md={4}>
-                  <Card sx={sectionCardSx}>
+                  <Card sx={diagnosticsSurfaceSx}>
                     <Typography variant="caption" color="text.secondary">
                       {t('subscriptionSharing.diagnostics.customer', 'Customer')}
                     </Typography>
@@ -1101,7 +1194,7 @@ export default function SubscriptionSharingLionTv() {
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
-                  <Card sx={sectionCardSx}>
+                  <Card sx={diagnosticsSurfaceSx}>
                     <Typography variant="caption" color="text.secondary">
                       {t('subscriptionSharing.diagnostics.line', 'Line')}
                     </Typography>
@@ -1114,7 +1207,7 @@ export default function SubscriptionSharingLionTv() {
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
-                  <Card sx={sectionCardSx}>
+                  <Card sx={diagnosticsSurfaceSx}>
                     <Typography variant="caption" color="text.secondary">
                       {t('subscriptionSharing.diagnostics.provider', 'Provider')}
                     </Typography>
@@ -1130,7 +1223,7 @@ export default function SubscriptionSharingLionTv() {
 
               <Grid container spacing={1.25}>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={sectionCardSx}>
+                  <Card sx={diagnosticsSurfaceSx}>
                     <Typography variant="caption" color="text.secondary">
                       {t('subscriptionSharing.diagnostics.billing', 'Billing')}
                     </Typography>
@@ -1140,7 +1233,7 @@ export default function SubscriptionSharingLionTv() {
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={sectionCardSx}>
+                  <Card sx={diagnosticsSurfaceSx}>
                     <Typography variant="caption" color="text.secondary">
                       {t('subscriptionSharing.diagnostics.startDate', 'Start date')}
                     </Typography>
@@ -1150,7 +1243,7 @@ export default function SubscriptionSharingLionTv() {
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={sectionCardSx}>
+                  <Card sx={diagnosticsSurfaceSx}>
                     <Typography variant="caption" color="text.secondary">
                       {t('subscriptionSharing.diagnostics.renewalDate', 'Renewal date')}
                     </Typography>
@@ -1160,7 +1253,7 @@ export default function SubscriptionSharingLionTv() {
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
-                  <Card sx={sectionCardSx}>
+                  <Card sx={diagnosticsSurfaceSx}>
                     <Typography variant="caption" color="text.secondary">
                       {t('subscriptionSharing.diagnostics.termMonths', 'Calculated months')}
                     </Typography>
@@ -1179,7 +1272,7 @@ export default function SubscriptionSharingLionTv() {
 
               <Grid container spacing={1.25}>
                 <Grid item xs={12} sm={4}>
-                  <Card sx={sectionCardSx}>
+                  <Card sx={diagnosticsSurfaceSx}>
                     <Typography variant="caption" color="text.secondary">
                       {t('subscriptionSharing.diagnostics.activatedScreens', 'Activated screens')}
                     </Typography>
@@ -1187,7 +1280,7 @@ export default function SubscriptionSharingLionTv() {
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <Card sx={sectionCardSx}>
+                  <Card sx={diagnosticsSurfaceSx}>
                     <Typography variant="caption" color="text.secondary">
                       {t('subscriptionSharing.diagnostics.estimatedUsage', 'Estimated usage')}
                     </Typography>
@@ -1195,7 +1288,7 @@ export default function SubscriptionSharingLionTv() {
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={4}>
-                  <Card sx={sectionCardSx}>
+                  <Card sx={diagnosticsSurfaceSx}>
                     <Typography variant="caption" color="text.secondary">
                       {t('subscriptionSharing.diagnostics.availableCapacity', 'Available capacity')}
                     </Typography>
@@ -1204,46 +1297,55 @@ export default function SubscriptionSharingLionTv() {
                 </Grid>
               </Grid>
 
-              <Stack spacing={1}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-                  {t('subscriptionSharing.diagnostics.summaryTitle', 'Sharing summary')}
-                </Typography>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} useFlexGap flexWrap="wrap">
-                  <Chip
-                    size="small"
-                    variant="outlined"
-                    label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${diagnosticsData.provider || '-'}`}
-                  />
-                  <Chip
-                    size="small"
-                    variant="outlined"
-                    label={`${t('subscriptionSharing.card.line', 'Line')}: ${diagnosticsData.lineId || '-'}`}
-                  />
-                  {diagnosticsData.sharedHostSubscriptionId ? (
-                    <Chip
-                      size="small"
-                      variant="outlined"
-                      label={t('subscriptionSharing.diagnostics.hostSubscription', {
-                        id: diagnosticsData.sharedHostSubscriptionId,
-                        defaultValue: 'Host #{{id}}'
-                      })}
-                    />
-                  ) : null}
+              <Card
+                sx={(muiTheme) => ({
+                  ...diagnosticsSurfaceSx,
+                  backgroundColor: muiTheme.vars?.palette?.surface?.sunken || muiTheme.palette.background.default
+                })}
+              >
+                <Stack spacing={0.75}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                    {t('subscriptionSharing.diagnostics.readingTitle', 'How to read this result')}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {diagnosticsData.eligible
+                      ? t(
+                          'subscriptionSharing.diagnostics.readingEligible',
+                          'This subscription is active, meets the minimum term and still has available capacity to be considered for sharing.'
+                        )
+                      : t(
+                          'subscriptionSharing.diagnostics.readingBlocked',
+                          'This subscription is blocked by the main reason shown above. Review term, status and available capacity before trying to share it.'
+                        )}
+                  </Typography>
                 </Stack>
-              </Stack>
+              </Card>
             </Stack>
           )}
         </DialogContent>
-        <DialogActions sx={{ px: { xs: 1.5, sm: 3 }, py: 1.5 }}>
+        <DialogActions
+          sx={{
+            px: { xs: 1.5, sm: 3 },
+            py: 1.5,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            backgroundColor: (muiTheme) => withAlpha(muiTheme.palette.background.default, muiTheme.palette.mode === 'dark' ? 0.72 : 0.82)
+          }}
+        >
           <Button
             onClick={() => {
               setDiagnosticsOpen(false);
               setDiagnosticsData(null);
             }}
-            variant="outlined"
-            sx={{ textTransform: 'none', fontWeight: 700 }}
+            variant="contained"
+            sx={{
+              textTransform: 'none',
+              fontWeight: 700,
+              borderRadius: 2,
+              backgroundImage: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.info.main} 100%)`
+            }}
           >
-            {t('actions.cancel', 'Cancel')}
+            {t('subscriptionSharing.actions.closeDiagnostics', 'Close diagnostics')}
           </Button>
         </DialogActions>
       </Dialog>
