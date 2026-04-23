@@ -707,9 +707,19 @@ const resources = {
           eligibleSubscriptions: 'Eligible'
         },
         filters: {
+          title: 'Filters and quick reading',
+          subtitle: 'Use the current filters to isolate hosts, beneficiaries or blocked subscriptions and open diagnostics from the same screen.',
           searchPlaceholder: 'Search by subscription, customer, line, provider, status',
           status: 'Sharing role',
           eligible: 'Eligible',
+          visible: 'Visible: {{count}}',
+          hostsVisible: 'Hosts: {{count}}',
+          sharedVisible: 'Shared: {{count}}',
+          eligibleVisible: 'Standalone eligible: {{count}}',
+          blockedVisible: 'Blocked: {{count}}',
+          reset: 'Reset filters',
+          blockedHint:
+            'There are blocked subscriptions in this view. Open diagnostics to confirm if the cause is inactive status, minimum term or no available capacity.',
           options: {
             all: 'All',
             host: 'Host',
@@ -724,10 +734,14 @@ const resources = {
         },
         sections: {
           sharedClusters: 'Shared clusters (host + beneficiaries)',
+          sharedClustersHint: 'Each host card shows the reusable line, current pressure on capacity and every beneficiary linked to that cluster.',
           noSharedClusters: 'No shared clusters found with current filters.',
           eligibleNotShared: 'Eligible and not shared',
+          eligibleHint: 'These subscriptions already satisfy the sharing rule and still are not part of any shared cluster.',
           noEligible: 'No eligible subscriptions pending share.',
           notEligible: 'Not eligible right now',
+          notEligibleHint:
+            'This list surfaces subscriptions that stay outside sharing and explains whether the block is status, term or available capacity.',
           noNotEligible: 'No non-eligible subscriptions matched current filters.'
         },
         role: {
@@ -745,13 +759,24 @@ const resources = {
           eligible: 'Eligible',
           notEligible: 'Not eligible',
           clusterSize: 'Cluster: {{count}}',
+          customer: 'Customer',
           line: 'Line',
+          linePlus: 'Line plus',
           provider: 'Provider',
           renewal: 'Renewal',
           capacity: 'Capacity {{activated}} · Usage {{used}} · Available {{available}}',
           term: 'Term {{months}} months',
+          termLabel: 'Term',
+          termValue: '{{months}} months',
+          minimumHint: 'Minimum {{count}} months',
+          usageLabel: 'Usage pressure',
+          capacityShort: 'Available {{available}}',
+          customerId: 'Customer ID',
+          clusterMembers: 'Beneficiaries',
+          sharedClusterSize: 'Cluster size {{count}}',
           status: 'Status',
           beneficiaries: 'Beneficiaries',
+          beneficiariesHint: 'These subscriptions reuse the same line and push against the same shared capacity.',
           noBeneficiaries: 'No SHARED subscriptions linked to this host.'
         },
         actions: {
@@ -4044,9 +4069,19 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           eligibleSubscriptions: 'Elegibles'
         },
         filters: {
+          title: 'Filtros y lectura rápida',
+          subtitle: 'Usa los filtros actuales para aislar hosts, beneficiarios o suscripciones bloqueadas y abrir el diagnóstico desde la misma pantalla.',
           searchPlaceholder: 'Buscar por suscripción, cliente, línea, proveedor o estado',
           status: 'Rol de compartición',
           eligible: 'Elegible',
+          visible: 'Visibles: {{count}}',
+          hostsVisible: 'Hosts: {{count}}',
+          sharedVisible: 'Shared: {{count}}',
+          eligibleVisible: 'Elegibles libres: {{count}}',
+          blockedVisible: 'Bloqueadas: {{count}}',
+          reset: 'Resetear filtros',
+          blockedHint:
+            'Hay suscripciones bloqueadas en esta vista. Abre el diagnóstico para confirmar si la causa es estado inactivo, duración mínima o falta de capacidad.',
           options: {
             all: 'Todas',
             host: 'Host',
@@ -4061,10 +4096,14 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         },
         sections: {
           sharedClusters: 'Clústeres compartidos (host + beneficiarios)',
+          sharedClustersHint: 'Cada host muestra la línea reutilizable, la presión real sobre capacidad y todos los beneficiarios vinculados al clúster.',
           noSharedClusters: 'No se encontraron clústeres compartidos con los filtros actuales.',
           eligibleNotShared: 'Elegibles sin compartir',
+          eligibleHint: 'Estas suscripciones ya cumplen la regla de sharing y todavía no forman parte de ningún clúster compartido.',
           noEligible: 'No hay suscripciones elegibles pendientes de compartir.',
           notEligible: 'No elegibles en este momento',
+          notEligibleHint:
+            'Esta lista muestra las suscripciones que siguen fuera del sharing y explica si el bloqueo es por estado, duración o capacidad disponible.',
           noNotEligible: 'No hay suscripciones no elegibles con los filtros actuales.'
         },
         role: {
@@ -4082,13 +4121,24 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           eligible: 'Elegible',
           notEligible: 'No elegible',
           clusterSize: 'Clúster: {{count}}',
+          customer: 'Cliente',
           line: 'Línea',
+          linePlus: 'Línea plus',
           provider: 'Proveedor',
           renewal: 'Renovación',
           capacity: 'Capacidad {{activated}} · Uso {{used}} · Disponible {{available}}',
           term: 'Duración {{months}} meses',
+          termLabel: 'Duración',
+          termValue: '{{months}} meses',
+          minimumHint: 'Mínimo {{count}} meses',
+          usageLabel: 'Presión de uso',
+          capacityShort: 'Disponible {{available}}',
+          customerId: 'Customer ID',
+          clusterMembers: 'Beneficiarios',
+          sharedClusterSize: 'Tamaño clúster {{count}}',
           status: 'Estado',
           beneficiaries: 'Beneficiarios',
+          beneficiariesHint: 'Estas suscripciones reutilizan la misma línea y empujan contra la misma capacidad compartida.',
           noBeneficiaries: 'No hay suscripciones SHARED vinculadas a este host.'
         },
         actions: {
