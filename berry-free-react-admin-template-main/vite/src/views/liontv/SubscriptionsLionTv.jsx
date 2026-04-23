@@ -396,6 +396,8 @@ export default function SubscriptionsLionTv() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [customerFilter, setCustomerFilter] = useState('');
+  const [lineFilter, setLineFilter] = useState('');
+  const [linePlusFilter, setLinePlusFilter] = useState('');
   const [providerFilter, setProviderFilter] = useState('');
   const [customerCountryFilter, setCustomerCountryFilter] = useState('');
   const [renewalFilter, setRenewalFilter] = useState(''); // '', 'yesterday', 'today', 'tomorrow'
@@ -516,6 +518,38 @@ export default function SubscriptionsLionTv() {
   const providerOptions = useMemo(() => {
     return [...new Set(rows.map((row) => String(row.provider || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   }, [rows]);
+
+  const lineFilterOptions = useMemo(() => {
+    const map = new Map();
+    rows.forEach((row) => {
+      const value = row.lineId;
+      if (value === null || value === undefined || value === '') return;
+      const key = String(value);
+      const label = lineNameMap[key] || row.username_line || key;
+      if (!map.has(key)) {
+        map.set(key, label);
+      }
+    });
+    return [...map.entries()]
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' }));
+  }, [rows, lineNameMap]);
+
+  const linePlusFilterOptions = useMemo(() => {
+    const map = new Map();
+    rows.forEach((row) => {
+      const value = row.linePlusId;
+      if (value === null || value === undefined || value === '') return;
+      const key = String(value);
+      const label = lineNameMap[key] || key;
+      if (!map.has(key)) {
+        map.set(key, label);
+      }
+    });
+    return [...map.entries()]
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' }));
+  }, [rows, lineNameMap]);
 
   const customerCountryOptions = useMemo(() => {
     return [...new Set(rows.map((row) => customerCountryMap[row.customerId] || '').filter(Boolean))].sort((a, b) => a.localeCompare(b));
@@ -717,9 +751,15 @@ export default function SubscriptionsLionTv() {
     const filtered = rows.filter((row) => {
       const rowProvider = String(row.provider || '').trim();
       const rowCustomerCountry = customerCountryMap[row.customerId] || '';
+      const rowLineId = String(row.lineId ?? '');
+      const rowLinePlusId = String(row.linePlusId ?? '');
+      const rowLineLabel = lineNameMap[rowLineId] || row.username_line || rowLineId;
+      const rowLinePlusLabel = lineNameMap[rowLinePlusId] || rowLinePlusId;
 
       if (statusFilter && (row.status || '').toLowerCase() !== statusFilter.toLowerCase()) return false;
       if (customerFilter && String(row.customerId || '') !== String(customerFilter)) return false;
+      if (lineFilter && rowLineId !== String(lineFilter)) return false;
+      if (linePlusFilter && rowLinePlusId !== String(linePlusFilter)) return false;
       if (providerFilter && rowProvider.toLowerCase() !== providerFilter.toLowerCase()) return false;
       if (customerCountryFilter === '__UNKNOWN__' && rowCustomerCountry) return false;
       if (customerCountryFilter && customerCountryFilter !== '__UNKNOWN__' && rowCustomerCountry.toLowerCase() !== customerCountryFilter.toLowerCase()) return false;
@@ -728,7 +768,10 @@ export default function SubscriptionsLionTv() {
         !term ||
         String(row.customerId || '').toLowerCase().includes(term) ||
         (row.customerName || row.customer_name || '').toLowerCase().includes(term) ||
-        (row.lineId || '').toLowerCase().includes(term) ||
+        rowLineId.toLowerCase().includes(term) ||
+        rowLineLabel.toLowerCase().includes(term) ||
+        rowLinePlusId.toLowerCase().includes(term) ||
+        rowLinePlusLabel.toLowerCase().includes(term) ||
         (row.billing || '').toLowerCase().includes(term) ||
         (row.status || '').toLowerCase().includes(term) ||
         String(row.packageId || '').toLowerCase().includes(term) ||
@@ -754,7 +797,22 @@ export default function SubscriptionsLionTv() {
     });
 
     return sorted;
-  }, [rows, search, statusFilter, customerFilter, providerFilter, customerCountryFilter, renewalFilter, renewalSort, lineHealthFilter, lineMetaById, customerCountryMap]);
+  }, [
+    rows,
+    search,
+    statusFilter,
+    customerFilter,
+    lineFilter,
+    linePlusFilter,
+    providerFilter,
+    customerCountryFilter,
+    renewalFilter,
+    renewalSort,
+    lineHealthFilter,
+    lineMetaById,
+    customerCountryMap,
+    lineNameMap
+  ]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -1210,6 +1268,64 @@ export default function SubscriptionsLionTv() {
                     </MenuItem>
                   );
                 })}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 220 }, '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}>
+              <InputLabel>{t('subscriptions.form.line', 'Line')}</InputLabel>
+              <Select
+                value={lineFilter}
+                label={t('subscriptions.form.line', 'Line')}
+                onChange={(e) => setLineFilter(e.target.value)}
+                renderValue={(value) => {
+                  const option = lineFilterOptions.find((item) => item.value === value);
+                  const label = option?.label || t('subscriptions.filters.all', 'All');
+                  return (
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <WifiTetheringIcon fontSize="small" color="action" />
+                      <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'}>
+                        {label}
+                      </Typography>
+                    </Stack>
+                  );
+                }}
+              >
+                <MenuItem value="">
+                  <em>{t('subscriptions.filters.all', 'All')}</em>
+                </MenuItem>
+                {lineFilterOptions.map((line) => (
+                  <MenuItem key={line.value} value={line.value}>
+                    {line.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 220 }, '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}>
+              <InputLabel>{t('subscriptions.form.linePlus', 'Line plus')}</InputLabel>
+              <Select
+                value={linePlusFilter}
+                label={t('subscriptions.form.linePlus', 'Line plus')}
+                onChange={(e) => setLinePlusFilter(e.target.value)}
+                renderValue={(value) => {
+                  const option = linePlusFilterOptions.find((item) => item.value === value);
+                  const label = option?.label || t('subscriptions.filters.all', 'All');
+                  return (
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <WifiTetheringIcon fontSize="small" color="action" />
+                      <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'}>
+                        {label}
+                      </Typography>
+                    </Stack>
+                  );
+                }}
+              >
+                <MenuItem value="">
+                  <em>{t('subscriptions.filters.all', 'All')}</em>
+                </MenuItem>
+                {linePlusFilterOptions.map((line) => (
+                  <MenuItem key={line.value} value={line.value}>
+                    {line.label}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
             <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 220 }, '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}>
