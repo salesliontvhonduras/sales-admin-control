@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
@@ -37,6 +38,8 @@ import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import BlockIcon from '@mui/icons-material/Block';
 import TuneIcon from '@mui/icons-material/Tune';
 import ViewTimelineIcon from '@mui/icons-material/ViewTimeline';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
@@ -68,7 +71,12 @@ function normalizeRow(item = {}) {
     rolePreference: String(item.rolePreference || 'AUTO').toUpperCase(),
     sharedCluster: Boolean(item.sharedCluster),
     sharedHostSubscriptionId: item.sharedHostSubscriptionId ?? null,
-    sharedClusterSize: Number(item.sharedClusterSize || 0)
+    sharedClusterSize: Number(item.sharedClusterSize || 0),
+    hostRenewalDate: item.hostRenewalDate ?? item.renewalDate ?? null,
+    hostRenewalDayOfMonth: item.hostRenewalDayOfMonth != null ? Number(item.hostRenewalDayOfMonth) : null,
+    hostDaysToRenewal: item.hostDaysToRenewal != null ? Number(item.hostDaysToRenewal) : null,
+    hostRiskBucket: String(item.hostRiskBucket || 'UNKNOWN').toUpperCase(),
+    hostAtRisk: Boolean(item.hostAtRisk)
   };
 }
 
@@ -97,7 +105,12 @@ function normalizeDiagnostics(item = {}) {
     rolePreference: String(item.rolePreference || 'AUTO').toUpperCase(),
     sharedCluster: Boolean(item.sharedCluster),
     sharedHostSubscriptionId: item.sharedHostSubscriptionId ?? null,
-    sharedClusterSize: Number(item.sharedClusterSize || 0)
+    sharedClusterSize: Number(item.sharedClusterSize || 0),
+    hostRenewalDate: item.hostRenewalDate ?? item.renewalDate ?? null,
+    hostRenewalDayOfMonth: item.hostRenewalDayOfMonth != null ? Number(item.hostRenewalDayOfMonth) : null,
+    hostDaysToRenewal: item.hostDaysToRenewal != null ? Number(item.hostDaysToRenewal) : null,
+    hostRiskBucket: String(item.hostRiskBucket || 'UNKNOWN').toUpperCase(),
+    hostAtRisk: Boolean(item.hostAtRisk)
   };
 }
 
@@ -114,10 +127,68 @@ function formatLineDisplay(lineName, lineId) {
   return `${safeLineName} · ${safeLineId}`;
 }
 
+function normalizeFilterValue(value, allowedValues, fallback = 'ALL') {
+  const normalized = String(value || '')
+    .trim()
+    .toUpperCase();
+  return allowedValues.includes(normalized) ? normalized : fallback;
+}
+
+function parseRenewalDayFilter(value) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 1 && parsed <= 31 ? String(parsed) : 'ALL';
+}
+
 function roleColor(role) {
   if (role === 'HOST') return 'warning';
   if (role === 'SHARED') return 'info';
   return 'default';
+}
+
+function riskBucketMeta(bucket, t) {
+  switch (String(bucket || '').toUpperCase()) {
+    case 'OVERDUE':
+      return {
+        label: t('subscriptionSharing.risk.overdue', 'Overdue'),
+        color: 'error'
+      };
+    case '0_7':
+      return {
+        label: t('subscriptionSharing.risk.zeroToSeven', '0-7 days'),
+        color: 'warning'
+      };
+    case '8_15':
+      return {
+        label: t('subscriptionSharing.risk.eightToFifteen', '8-15 days'),
+        color: 'info'
+      };
+    case '16_30':
+      return {
+        label: t('subscriptionSharing.risk.sixteenToThirty', '16-30 days'),
+        color: 'primary'
+      };
+    case '31_PLUS':
+      return {
+        label: t('subscriptionSharing.risk.thirtyOnePlus', '31+ days'),
+        color: 'success'
+      };
+    default:
+      return {
+        label: t('subscriptionSharing.risk.unknown', 'No renewal date'),
+        color: 'default'
+      };
+  }
+}
+
+function formatHostRenewalDay(day, t) {
+  return day ? t('subscriptionSharing.risk.dayOfMonth', { day, defaultValue: 'Day {{day}}' }) : t('subscriptionSharing.risk.dayUnknown', 'Without date');
+}
+
+function formatHostDays(days, t) {
+  if (days == null) return t('subscriptionSharing.risk.unknownDays', 'Missing date');
+  if (days < 0) return t('subscriptionSharing.risk.overdueDays', { days: Math.abs(days), defaultValue: 'Overdue {{days}}d' });
+  if (days === 0) return t('subscriptionSharing.risk.today', 'Due today');
+  return t('subscriptionSharing.risk.inDays', { days, defaultValue: 'In {{days}}d' });
 }
 
 function subscriptionStatusColor(status) {
@@ -205,6 +276,11 @@ function EligibilityChips({ eligible, eligibilityReason, minimumEligibleMonths, 
       {!eligible ? <Chip size="small" color={reason.color} variant="outlined" label={reason.label} sx={{ fontWeight: 700 }} /> : null}
     </Stack>
   );
+}
+
+function RiskChip({ bucket, t }) {
+  const meta = riskBucketMeta(bucket, t);
+  return <Chip size="small" color={meta.color} variant="outlined" label={meta.label} sx={{ fontWeight: 700 }} />;
 }
 
 function RolePreferenceSelector({ value, loading, onChange, t }) {
@@ -305,14 +381,25 @@ export default function SubscriptionSharingLionTv() {
   const { accessToken } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [searchParams] = useSearchParams();
 
   const headers = useMemo(() => ({ Authorization: `Bearer ${accessToken}` }), [accessToken]);
 
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
-  const [eligibleFilter, setEligibleFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState(() => normalizeFilterValue(searchParams.get('status'), ['ALL', 'HOST', 'SHARED', 'NONE']));
+  const [eligibleFilter, setEligibleFilter] = useState(() => normalizeFilterValue(searchParams.get('eligible'), ['ALL', 'YES', 'NO']));
+  const [riskBucketFilter, setRiskBucketFilter] = useState(() =>
+    normalizeFilterValue(searchParams.get('riskBucket'), ['ALL', 'OVERDUE', '0_7', '8_15', '16_30', '31_PLUS', 'UNKNOWN'])
+  );
+  const [atRiskFilter, setAtRiskFilter] = useState(() =>
+    normalizeFilterValue(
+      searchParams.get('hostAtRisk') === 'true' ? 'YES' : searchParams.get('hostAtRisk') === 'false' ? 'NO' : searchParams.get('hostAtRisk'),
+      ['ALL', 'YES', 'NO']
+    )
+  );
+  const [renewalDayFilter, setRenewalDayFilter] = useState(() => parseRenewalDayFilter(searchParams.get('hostRenewalDay')));
   const [rows, setRows] = useState([]);
   const [kpi, setKpi] = useState({
     totalSubscriptions: 0,
@@ -320,7 +407,10 @@ export default function SubscriptionSharingLionTv() {
     sharedClusters: 0,
     hostSubscriptions: 0,
     sharedSubscriptions: 0,
-    eligibleSubscriptions: 0
+    eligibleSubscriptions: 0,
+    overdueClusters: 0,
+    criticalClusters: 0,
+    atRiskSubscriptions: 0
   });
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [diagnosticsLoading, setDiagnosticsLoading] = useState(false);
@@ -343,6 +433,17 @@ export default function SubscriptionSharingLionTv() {
       } else if (eligibleFilter === 'NO') {
         params.eligible = false;
       }
+      if (riskBucketFilter && riskBucketFilter !== 'ALL') {
+        params.riskBucket = riskBucketFilter;
+      }
+      if (atRiskFilter === 'YES') {
+        params.hostAtRisk = true;
+      } else if (atRiskFilter === 'NO') {
+        params.hostAtRisk = false;
+      }
+      if (renewalDayFilter && renewalDayFilter !== 'ALL') {
+        params.hostRenewalDay = Number(renewalDayFilter);
+      }
 
       const res = await lionTvApi.get('/subscription-sharing/v1/overview', {
         headers,
@@ -361,7 +462,10 @@ export default function SubscriptionSharingLionTv() {
         sharedClusters: Number(payload?.kpi?.sharedClusters || 0),
         hostSubscriptions: Number(payload?.kpi?.hostSubscriptions || 0),
         sharedSubscriptions: Number(payload?.kpi?.sharedSubscriptions || 0),
-        eligibleSubscriptions: Number(payload?.kpi?.eligibleSubscriptions || 0)
+        eligibleSubscriptions: Number(payload?.kpi?.eligibleSubscriptions || 0),
+        overdueClusters: Number(payload?.kpi?.overdueClusters || 0),
+        criticalClusters: Number(payload?.kpi?.criticalClusters || 0),
+        atRiskSubscriptions: Number(payload?.kpi?.atRiskSubscriptions || 0)
       });
     } catch (err) {
       enqueueSnackbar(err?.response?.data?.message || t('subscriptionSharing.errors.loadError', 'Could not load shared overview.'), {
@@ -370,7 +474,7 @@ export default function SubscriptionSharingLionTv() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, eligibleFilter, headers, statusFilter, t, enqueueSnackbar]);
+  }, [accessToken, atRiskFilter, eligibleFilter, headers, renewalDayFilter, riskBucketFilter, statusFilter, t, enqueueSnackbar]);
 
   useEffect(() => {
     loadOverview();
@@ -453,7 +557,9 @@ export default function SubscriptionSharingLionTv() {
         String(row.provider || '').toLowerCase().includes(term) ||
         String(row.billing || '').toLowerCase().includes(term) ||
         String(row.subscriptionStatus || '').toLowerCase().includes(term) ||
-        String(row.eligibilityReason || '').toLowerCase().includes(term)
+        String(row.eligibilityReason || '').toLowerCase().includes(term) ||
+        String(row.hostRiskBucket || '').toLowerCase().includes(term) ||
+        String(row.hostRenewalDayOfMonth || '').toLowerCase().includes(term)
       );
     });
   }, [rows, search]);
@@ -473,9 +579,11 @@ export default function SubscriptionSharingLionTv() {
       hosts: hostRows.length,
       beneficiaries: filteredRows.filter((row) => row.sharingRole === 'SHARED').length,
       eligibleStandalone: eligibleNotSharedRows.length,
-      blockedStandalone: notEligibleRows.length
+      blockedStandalone: notEligibleRows.length,
+      criticalHosts: hostRows.filter((row) => row.hostRiskBucket === 'OVERDUE' || row.hostRiskBucket === '0_7').length,
+      overdueHosts: hostRows.filter((row) => row.hostRiskBucket === 'OVERDUE').length
     }),
-    [eligibleNotSharedRows.length, filteredRows, hostRows.length, notEligibleRows.length]
+    [eligibleNotSharedRows.length, filteredRows, hostRows, notEligibleRows.length]
   );
 
   const beneficiariesByHost = useMemo(() => {
@@ -489,6 +597,43 @@ export default function SubscriptionSharingLionTv() {
     });
     return map;
   }, [filteredRows]);
+
+  const hostDayBuckets = useMemo(() => {
+    const groups = new Map();
+
+    hostRows.forEach((host) => {
+      const key = host.hostRenewalDayOfMonth != null ? String(host.hostRenewalDayOfMonth) : 'UNKNOWN';
+      const beneficiaries = beneficiariesByHost[host.subscriptionId] || [];
+      const current = groups.get(key) || {
+        key,
+        day: host.hostRenewalDayOfMonth,
+        hosts: [],
+        hostCount: 0,
+        sharedCount: 0,
+        nearestDate: null,
+        hasCritical: false,
+        hasOverdue: false
+      };
+
+      current.hosts.push(host);
+      current.hostCount += 1;
+      current.sharedCount += beneficiaries.length;
+      current.hasCritical = current.hasCritical || Boolean(host.hostAtRisk);
+      current.hasOverdue = current.hasOverdue || host.hostRiskBucket === 'OVERDUE';
+      if (host.hostRenewalDate && (!current.nearestDate || new Date(host.hostRenewalDate) < new Date(current.nearestDate))) {
+        current.nearestDate = host.hostRenewalDate;
+      }
+
+      groups.set(key, current);
+    });
+
+    return Array.from(groups.values()).sort((a, b) => {
+      if (a.day == null && b.day == null) return 0;
+      if (a.day == null) return 1;
+      if (b.day == null) return -1;
+      return a.day - b.day;
+    });
+  }, [beneficiariesByHost, hostRows]);
 
   const sectionCardSx = {
     borderRadius: 3,
@@ -529,42 +674,60 @@ export default function SubscriptionSharingLionTv() {
         </Typography>
 
         <ResponsiveMetricGrid columns={{ xs: 1, md: 2, lg: 3, xl: 6 }}>
-            <KpiCard
-              icon={<RuleIcon />}
-              label={t('subscriptionSharing.kpi.totalSubscriptions', 'Total subscriptions')}
-              value={kpi.totalSubscriptions}
-              color={theme.vars?.palette?.primary?.main || theme.palette.primary.main}
-            />
-            <KpiCard
-              icon={<CheckCircleOutlineIcon />}
-              label={t('subscriptionSharing.kpi.activeSubscriptions', 'Active')}
-              value={kpi.activeSubscriptions}
-              color={theme.vars?.palette?.success?.main || theme.palette.success.main}
-            />
-            <KpiCard
-              icon={<HubIcon />}
-              label={t('subscriptionSharing.kpi.sharedClusters', 'Shared clusters')}
-              value={kpi.sharedClusters}
-              color={theme.vars?.palette?.warning?.main || theme.palette.warning.main}
-            />
-            <KpiCard
-              icon={<GroupWorkIcon />}
-              label={t('subscriptionSharing.kpi.hosts', 'Hosts')}
-              value={kpi.hostSubscriptions}
-              color={theme.vars?.palette?.secondary?.main || theme.palette.secondary.main}
-            />
-            <KpiCard
-              icon={<LinkIcon />}
-              label={t('subscriptionSharing.kpi.sharedSubscriptions', 'Shared subscriptions')}
-              value={kpi.sharedSubscriptions}
-              color={theme.vars?.palette?.info?.main || theme.palette.info.main}
-            />
-            <KpiCard
-              icon={<SignalCellularAltIcon />}
-              label={t('subscriptionSharing.kpi.eligibleSubscriptions', 'Eligible')}
-              value={kpi.eligibleSubscriptions}
-              color={theme.vars?.palette?.success?.main || theme.palette.success.main}
-            />
+          <KpiCard
+            icon={<RuleIcon />}
+            label={t('subscriptionSharing.kpi.totalSubscriptions', 'Total subscriptions')}
+            value={kpi.totalSubscriptions}
+            color={theme.vars?.palette?.primary?.main || theme.palette.primary.main}
+          />
+          <KpiCard
+            icon={<CheckCircleOutlineIcon />}
+            label={t('subscriptionSharing.kpi.activeSubscriptions', 'Active')}
+            value={kpi.activeSubscriptions}
+            color={theme.vars?.palette?.success?.main || theme.palette.success.main}
+          />
+          <KpiCard
+            icon={<HubIcon />}
+            label={t('subscriptionSharing.kpi.sharedClusters', 'Shared clusters')}
+            value={kpi.sharedClusters}
+            color={theme.vars?.palette?.warning?.main || theme.palette.warning.main}
+          />
+          <KpiCard
+            icon={<GroupWorkIcon />}
+            label={t('subscriptionSharing.kpi.hosts', 'Hosts')}
+            value={kpi.hostSubscriptions}
+            color={theme.vars?.palette?.secondary?.main || theme.palette.secondary.main}
+          />
+          <KpiCard
+            icon={<LinkIcon />}
+            label={t('subscriptionSharing.kpi.sharedSubscriptions', 'Shared subscriptions')}
+            value={kpi.sharedSubscriptions}
+            color={theme.vars?.palette?.info?.main || theme.palette.info.main}
+          />
+          <KpiCard
+            icon={<SignalCellularAltIcon />}
+            label={t('subscriptionSharing.kpi.eligibleSubscriptions', 'Eligible')}
+            value={kpi.eligibleSubscriptions}
+            color={theme.vars?.palette?.success?.main || theme.palette.success.main}
+          />
+          <KpiCard
+            icon={<BlockIcon />}
+            label={t('subscriptionSharing.kpi.overdueClusters', 'Overdue hosts')}
+            value={kpi.overdueClusters}
+            color={theme.vars?.palette?.error?.main || theme.palette.error.main}
+          />
+          <KpiCard
+            icon={<WarningAmberIcon />}
+            label={t('subscriptionSharing.kpi.criticalClusters', 'Critical hosts')}
+            value={kpi.criticalClusters}
+            color={theme.vars?.palette?.warning?.main || theme.palette.warning.main}
+          />
+          <KpiCard
+            icon={<CalendarMonthIcon />}
+            label={t('subscriptionSharing.kpi.atRiskSubscriptions', 'Subscriptions affected')}
+            value={kpi.atRiskSubscriptions}
+            color={theme.vars?.palette?.error?.main || theme.palette.error.main}
+          />
         </ResponsiveMetricGrid>
       </MainCard>
 
@@ -625,6 +788,45 @@ export default function SubscriptionSharingLionTv() {
                 <MenuItem value="NO">{t('subscriptionSharing.filters.eligibleOptions.no', 'No')}</MenuItem>
               </Select>
             </FormControl>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 210 } }}>
+              <InputLabel>{t('subscriptionSharing.filters.riskBucket', 'Risk bucket')}</InputLabel>
+              <Select
+                value={riskBucketFilter}
+                label={t('subscriptionSharing.filters.riskBucket', 'Risk bucket')}
+                onChange={(e) => setRiskBucketFilter(e.target.value)}
+              >
+                <MenuItem value="ALL">{t('subscriptionSharing.filters.riskOptions.all', 'All')}</MenuItem>
+                <MenuItem value="OVERDUE">{t('subscriptionSharing.risk.overdue', 'Overdue')}</MenuItem>
+                <MenuItem value="0_7">{t('subscriptionSharing.risk.zeroToSeven', '0-7 days')}</MenuItem>
+                <MenuItem value="8_15">{t('subscriptionSharing.risk.eightToFifteen', '8-15 days')}</MenuItem>
+                <MenuItem value="16_30">{t('subscriptionSharing.risk.sixteenToThirty', '16-30 days')}</MenuItem>
+                <MenuItem value="31_PLUS">{t('subscriptionSharing.risk.thirtyOnePlus', '31+ days')}</MenuItem>
+                <MenuItem value="UNKNOWN">{t('subscriptionSharing.risk.unknown', 'No renewal date')}</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 190 } }}>
+              <InputLabel>{t('subscriptionSharing.filters.atRiskOnly', 'At risk')}</InputLabel>
+              <Select value={atRiskFilter} label={t('subscriptionSharing.filters.atRiskOnly', 'At risk')} onChange={(e) => setAtRiskFilter(e.target.value)}>
+                <MenuItem value="ALL">{t('subscriptionSharing.filters.atRiskOptions.all', 'All')}</MenuItem>
+                <MenuItem value="YES">{t('subscriptionSharing.filters.atRiskOptions.yes', 'Yes')}</MenuItem>
+                <MenuItem value="NO">{t('subscriptionSharing.filters.atRiskOptions.no', 'No')}</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 170 } }}>
+              <InputLabel>{t('subscriptionSharing.filters.renewalDay', 'Renewal day')}</InputLabel>
+              <Select
+                value={renewalDayFilter}
+                label={t('subscriptionSharing.filters.renewalDay', 'Renewal day')}
+                onChange={(e) => setRenewalDayFilter(e.target.value)}
+              >
+                <MenuItem value="ALL">{t('subscriptionSharing.filters.renewalDayAll', 'All days')}</MenuItem>
+                {Array.from({ length: 31 }, (_, idx) => idx + 1).map((day) => (
+                  <MenuItem key={`renewal-day-${day}`} value={String(day)}>
+                    {formatHostRenewalDay(day, t)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Stack>
 
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'stretch', md: 'center' }} sx={{ mt: 1.5 }}>
@@ -658,6 +860,26 @@ export default function SubscriptionSharingLionTv() {
                   defaultValue: 'Blocked: {{count}}'
                 })}
               />
+              <Chip
+                size="small"
+                color={filteredSummary.criticalHosts > 0 ? 'warning' : 'default'}
+                variant="outlined"
+                icon={<WarningAmberIcon />}
+                label={t('subscriptionSharing.filters.criticalVisible', {
+                  count: filteredSummary.criticalHosts,
+                  defaultValue: 'Critical hosts: {{count}}'
+                })}
+              />
+              <Chip
+                size="small"
+                color={filteredSummary.overdueHosts > 0 ? 'error' : 'default'}
+                variant="outlined"
+                icon={<BlockIcon />}
+                label={t('subscriptionSharing.filters.overdueVisible', {
+                  count: filteredSummary.overdueHosts,
+                  defaultValue: 'Overdue hosts: {{count}}'
+                })}
+              />
             </Stack>
             <Box sx={{ flexGrow: 1 }} />
             <Button
@@ -667,6 +889,9 @@ export default function SubscriptionSharingLionTv() {
                 setSearch('');
                 setStatusFilter('ALL');
                 setEligibleFilter('ALL');
+                setRiskBucketFilter('ALL');
+                setAtRiskFilter('ALL');
+                setRenewalDayFilter('ALL');
               }}
               sx={{ textTransform: 'none', fontWeight: 700, alignSelf: { xs: 'flex-start', md: 'center' } }}
             >
@@ -688,11 +913,11 @@ export default function SubscriptionSharingLionTv() {
       <MainCard
         title={
           <SectionTitle
-            title={t('subscriptionSharing.sections.sharedClusters', 'Shared clusters (host + beneficiaries)')}
-            count={hostRows.length}
+            title={t('subscriptionSharing.sections.sharedClusters', 'Shared clusters grouped by host renewal day')}
+            count={hostDayBuckets.length}
             subtitle={t(
               'subscriptionSharing.sections.sharedClustersHint',
-              'Each host card shows the reusable line, current pressure on capacity and every beneficiary linked to that cluster.'
+              'Hosts are grouped by their renewal day of month so you can see in advance which shared clusters are affected when a host gets close to expiration.'
             )}
           />
         }
@@ -703,204 +928,298 @@ export default function SubscriptionSharingLionTv() {
               <Skeleton key={`shared-skel-${idx}`} variant="rounded" height={120} />
             ))}
           </Stack>
-        ) : hostRows.length === 0 ? (
+        ) : hostDayBuckets.length === 0 ? (
           <Alert severity="info">{t('subscriptionSharing.sections.noSharedClusters', 'No shared clusters found with current filters.')}</Alert>
         ) : (
           <Stack spacing={1.5}>
-            {hostRows.map((host) => {
-              const beneficiaries = beneficiariesByHost[host.subscriptionId] || [];
-              return (
-                <Card
-                  key={`host-${host.subscriptionId}`}
-                  sx={(muiTheme) => ({
-                    ...sectionCardSx,
-                    backgroundImage:
-                      muiTheme.palette.mode === 'dark'
-                        ? `linear-gradient(160deg, ${withAlpha(muiTheme.palette.warning.main, 0.12)} 0%, ${withAlpha(muiTheme.palette.background.paper, 0.96)} 48%)`
-                        : `linear-gradient(160deg, ${withAlpha(muiTheme.palette.warning.main, 0.08)} 0%, ${muiTheme.palette.background.paper} 48%)`
-                  })}
-                >
-                  <Stack spacing={1.5}>
-                    <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.25} justifyContent="space-between">
-                      <Stack spacing={1}>
-                        <Stack direction="row" spacing={0.75} alignItems="center" useFlexGap flexWrap="wrap">
-                          <Avatar sx={{ width: 34, height: 34, bgcolor: 'warning.main', color: 'warning.contrastText' }}>
-                            <HubIcon fontSize="small" />
-                          </Avatar>
-                          <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                            {t('subscriptionSharing.card.hostSubscription', 'Host subscription')} #{host.subscriptionId}
-                          </Typography>
-                          <RoleChip role={host.sharingRole} t={t} />
-                          <EligibilityChips
-                            eligible={host.eligible}
-                            eligibilityReason={host.eligibilityReason}
-                            minimumEligibleMonths={host.minimumEligibleMonths}
-                            t={t}
-                          />
-                          <Chip
-                            size="small"
-                            color="info"
-                            variant="outlined"
-                            label={t('subscriptionSharing.card.clusterSize', { count: host.sharedClusterSize || 0, defaultValue: 'Cluster: {{count}}' })}
-                          />
-                          <StatusChip status={host.subscriptionStatus} t={t} />
-                        </Stack>
-                        <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
-                          <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.customer', 'Customer')}: ${host.customerName || '-'}`} />
-                          <Chip
-                            size="small"
-                            variant="outlined"
-                            label={`${t('subscriptionSharing.card.line', 'Line')}: ${formatLineDisplay(host.lineName, host.lineId)}`}
-                          />
-                          {host.linePlusId && host.linePlusId !== '-' ? (
-                            <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.linePlus', 'Line plus')}: ${host.linePlusId}`} />
-                          ) : null}
-                          <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${host.provider || '-'}`} />
-                        </Stack>
-                      </Stack>
-                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', lg: 'flex-start' }}>
-                        <RolePreferenceSelector
-                          value={host.rolePreference}
-                          loading={Boolean(roleSavingBySubscriptionId[host.subscriptionId])}
-                          onChange={(value) => handleRolePreferenceChange(host.subscriptionId, value)}
-                          t={t}
-                        />
-                        <Button
+            {hostDayBuckets.map((bucket) => (
+              <Card
+                key={`host-day-${bucket.key}`}
+                sx={(muiTheme) => ({
+                  ...sectionCardSx,
+                  backgroundImage:
+                    bucket.hasOverdue
+                      ? `linear-gradient(160deg, ${withAlpha(muiTheme.palette.error.main, muiTheme.palette.mode === 'dark' ? 0.16 : 0.08)} 0%, ${withAlpha(
+                          muiTheme.palette.background.paper,
+                          0.98
+                        )} 54%)`
+                      : bucket.hasCritical
+                        ? `linear-gradient(160deg, ${withAlpha(muiTheme.palette.warning.main, muiTheme.palette.mode === 'dark' ? 0.16 : 0.08)} 0%, ${withAlpha(
+                            muiTheme.palette.background.paper,
+                            0.98
+                          )} 54%)`
+                        : 'none'
+                })}
+              >
+                <Stack spacing={1.5}>
+                  <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.1} justifyContent="space-between">
+                    <Stack spacing={0.6}>
+                      <Stack direction="row" spacing={0.75} alignItems="center" useFlexGap flexWrap="wrap">
+                        <Avatar sx={{ width: 34, height: 34, bgcolor: bucket.hasCritical ? 'warning.main' : 'primary.main', color: 'common.white' }}>
+                          <CalendarMonthIcon fontSize="small" />
+                        </Avatar>
+                        <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                          {formatHostRenewalDay(bucket.day, t)}
+                        </Typography>
+                        <Chip
                           size="small"
-                          variant="contained"
-                          onClick={() => loadDiagnostics(host.subscriptionId)}
-                          sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, alignSelf: { xs: 'stretch', lg: 'flex-start' } }}
-                        >
-                          {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
-                        </Button>
+                          variant="outlined"
+                          label={t('subscriptionSharing.bucket.hostCount', { count: bucket.hostCount, defaultValue: 'Hosts: {{count}}' })}
+                        />
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          color="info"
+                          label={t('subscriptionSharing.bucket.sharedCount', { count: bucket.sharedCount, defaultValue: 'Shared: {{count}}' })}
+                        />
+                        {bucket.hasOverdue ? <RiskChip bucket="OVERDUE" t={t} /> : bucket.hasCritical ? <RiskChip bucket="0_7" t={t} /> : null}
                       </Stack>
-                    </Stack>
-
-                    <Grid container spacing={1.25}>
-                      <Grid item xs={6} md={3}>
-                        <MetricTile label={t('subscriptionSharing.card.renewal', 'Renewal')} value={formatDate(host.renewalDate)} color={theme.palette.primary.main} />
-                      </Grid>
-                      <Grid item xs={6} md={3}>
-                        <MetricTile
-                          label={t('subscriptionSharing.card.termLabel', 'Term')}
-                          value={t('subscriptionSharing.card.termValue', { months: host.termMonths || 0, defaultValue: '{{months}} months' })}
-                          helper={t('subscriptionSharing.card.minimumHint', {
-                            count: host.minimumEligibleMonths || 3,
-                            defaultValue: 'Minimum {{count}} months'
-                          })}
-                          color={theme.palette.warning.main}
-                        />
-                      </Grid>
-                      <Grid item xs={6} md={3}>
-                        <MetricTile
-                          label={t('subscriptionSharing.card.usageLabel', 'Usage pressure')}
-                          value={`${host.estimatedCustomerUsage || 0} / ${host.activatedScreens || 0}`}
-                          helper={t('subscriptionSharing.card.capacityShort', {
-                            available: host.availableCapacity || 0,
-                            defaultValue: 'Available {{available}}'
-                          })}
-                          color={host.availableCapacity > 0 ? theme.palette.success.main : theme.palette.error.main}
-                        />
-                      </Grid>
-                      <Grid item xs={6} md={3}>
-                        <MetricTile
-                          label={t('subscriptionSharing.card.clusterMembers', 'Beneficiaries')}
-                          value={String(beneficiaries.length)}
-                          helper={t('subscriptionSharing.card.sharedClusterSize', {
-                            count: host.sharedClusterSize || 0,
-                            defaultValue: 'Cluster size {{count}}'
-                          })}
-                          color={theme.palette.info.main}
-                        />
-                      </Grid>
-                    </Grid>
-
-                    <Divider />
-                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-                        {t('subscriptionSharing.card.beneficiaries', 'Beneficiaries')}
-                      </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {t(
-                          'subscriptionSharing.card.beneficiariesHint',
-                          'These subscriptions reuse the same line and push against the same shared capacity.'
-                        )}
+                        {bucket.nearestDate
+                          ? t('subscriptionSharing.bucket.nearestDate', {
+                              date: formatDate(bucket.nearestDate),
+                              defaultValue: 'Nearest host renewal: {{date}}'
+                            })
+                          : t('subscriptionSharing.bucket.nearestDateUnknown', 'Hosts without renewal date in this bucket.')}
                       </Typography>
                     </Stack>
+                    {bucket.hasCritical ? (
+                      <Alert severity={bucket.hasOverdue ? 'error' : 'warning'} sx={{ py: 0 }}>
+                        {bucket.hasOverdue
+                          ? t('subscriptionSharing.bucket.overdueAlert', 'This renewal bucket already has overdue hosts affecting shared subscriptions.')
+                          : t('subscriptionSharing.bucket.criticalAlert', 'This renewal bucket includes hosts that will affect shared subscriptions within 7 days.')}
+                      </Alert>
+                    ) : null}
+                  </Stack>
 
-                    {beneficiaries.length === 0 ? (
-                      <Alert severity="warning">{t('subscriptionSharing.card.noBeneficiaries', 'No SHARED subscriptions linked to this host.')}</Alert>
-                    ) : (
-                      <Grid container spacing={1.1}>
-                        {beneficiaries.map((item) => (
-                          <Grid item xs={12} lg={6} key={`beneficiary-${item.subscriptionId}`}>
-                            <Box
-                              sx={(muiTheme) => ({
-                                p: 1.25,
-                                borderRadius: 2.25,
-                                border: '1px solid',
-                                borderColor: 'divider',
-                                minHeight: '100%',
-                                bgcolor: muiTheme.vars?.palette?.surface?.sunken || muiTheme.palette.background.default
-                              })}
-                            >
+                  <Stack spacing={1.25}>
+                    {bucket.hosts.map((host) => {
+                      const beneficiaries = beneficiariesByHost[host.subscriptionId] || [];
+                      return (
+                        <Card
+                          key={`host-${host.subscriptionId}`}
+                          sx={(muiTheme) => ({
+                            ...sectionCardSx,
+                            backgroundImage:
+                              muiTheme.palette.mode === 'dark'
+                                ? `linear-gradient(160deg, ${withAlpha(muiTheme.palette.warning.main, 0.12)} 0%, ${withAlpha(muiTheme.palette.background.paper, 0.96)} 48%)`
+                                : `linear-gradient(160deg, ${withAlpha(muiTheme.palette.warning.main, 0.08)} 0%, ${muiTheme.palette.background.paper} 48%)`
+                          })}
+                        >
+                          <Stack spacing={1.5}>
+                            <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.25} justifyContent="space-between">
                               <Stack spacing={1}>
-                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.9} alignItems={{ xs: 'flex-start', sm: 'center' }} useFlexGap flexWrap="wrap">
-                                  <Stack direction="row" spacing={0.75} alignItems="center">
-                                    <Avatar sx={{ width: 24, height: 24, bgcolor: 'info.main', color: 'info.contrastText' }}>
-                                      <LinkIcon fontSize="inherit" />
-                                    </Avatar>
-                                    <Typography variant="body2" sx={{ fontWeight: 800 }}>
-                                      #{item.subscriptionId} · {item.customerName || '-'}
-                                    </Typography>
-                                  </Stack>
-                                  <RoleChip role={item.sharingRole} t={t} />
+                                <Stack direction="row" spacing={0.75} alignItems="center" useFlexGap flexWrap="wrap">
+                                  <Avatar sx={{ width: 34, height: 34, bgcolor: 'warning.main', color: 'warning.contrastText' }}>
+                                    <HubIcon fontSize="small" />
+                                  </Avatar>
+                                  <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                                    {t('subscriptionSharing.card.hostSubscription', 'Host subscription')} #{host.subscriptionId}
+                                  </Typography>
+                                  <RoleChip role={host.sharingRole} t={t} />
                                   <EligibilityChips
-                                    eligible={item.eligible}
-                                    eligibilityReason={item.eligibilityReason}
-                                    minimumEligibleMonths={item.minimumEligibleMonths}
+                                    eligible={host.eligible}
+                                    eligibilityReason={host.eligibilityReason}
+                                    minimumEligibleMonths={host.minimumEligibleMonths}
                                     t={t}
                                   />
-                                  <StatusChip status={item.subscriptionStatus} t={t} />
+                                  <RiskChip bucket={host.hostRiskBucket} t={t} />
+                                  <Chip
+                                    size="small"
+                                    color={host.hostAtRisk ? 'warning' : 'default'}
+                                    variant="outlined"
+                                    label={t('subscriptionSharing.card.affectsShared', {
+                                      count: beneficiaries.length,
+                                      defaultValue: 'Affects {{count}} shared'
+                                    })}
+                                  />
+                                  <StatusChip status={host.subscriptionStatus} t={t} />
                                 </Stack>
                                 <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
-                                  <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${item.provider || '-'}`} />
-                                  <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.renewal', 'Renewal')}: ${formatDate(item.renewalDate)}`} />
+                                  <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.customer', 'Customer')}: ${host.customerName || '-'}`} />
                                   <Chip
                                     size="small"
                                     variant="outlined"
-                                    label={`${t('subscriptionSharing.card.line', 'Line')}: ${formatLineDisplay(item.lineName, item.lineId)}`}
+                                    label={`${t('subscriptionSharing.card.line', 'Line')}: ${formatLineDisplay(host.lineName, host.lineId)}`}
                                   />
-                                  {item.linePlusId && item.linePlusId !== '-' ? (
-                                    <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.linePlus', 'Line plus')}: ${item.linePlusId}`} />
+                                  {host.linePlusId && host.linePlusId !== '-' ? (
+                                    <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.linePlus', 'Line plus')}: ${host.linePlusId}`} />
                                   ) : null}
-                                </Stack>
-                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
-                                  <RolePreferenceSelector
-                                    value={item.rolePreference}
-                                    loading={Boolean(roleSavingBySubscriptionId[item.subscriptionId])}
-                                    onChange={(value) => handleRolePreferenceChange(item.subscriptionId, value)}
-                                    t={t}
-                                  />
-                                  <Button
-                                    size="small"
-                                    variant="text"
-                                    onClick={() => loadDiagnostics(item.subscriptionId)}
-                                    sx={{ textTransform: 'none', fontWeight: 700, alignSelf: 'flex-start' }}
-                                  >
-                                    {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
-                                  </Button>
+                                  <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${host.provider || '-'}`} />
                                 </Stack>
                               </Stack>
-                            </Box>
-                          </Grid>
-                        ))}
-                      </Grid>
-                    )}
+                              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', lg: 'flex-start' }}>
+                                <RolePreferenceSelector
+                                  value={host.rolePreference}
+                                  loading={Boolean(roleSavingBySubscriptionId[host.subscriptionId])}
+                                  onChange={(value) => handleRolePreferenceChange(host.subscriptionId, value)}
+                                  t={t}
+                                />
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  onClick={() => loadDiagnostics(host.subscriptionId)}
+                                  sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, alignSelf: { xs: 'stretch', lg: 'flex-start' } }}
+                                >
+                                  {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
+                                </Button>
+                              </Stack>
+                            </Stack>
+
+                            <Grid container spacing={1.25}>
+                              <Grid item xs={6} md={2}>
+                                <MetricTile
+                                  label={t('subscriptionSharing.card.hostRenewal', 'Host renewal')}
+                                  value={formatDate(host.hostRenewalDate)}
+                                  color={theme.palette.primary.main}
+                                />
+                              </Grid>
+                              <Grid item xs={6} md={2}>
+                                <MetricTile
+                                  label={t('subscriptionSharing.card.renewalDay', 'Renewal day')}
+                                  value={formatHostRenewalDay(host.hostRenewalDayOfMonth, t)}
+                                  color={theme.palette.info.main}
+                                />
+                              </Grid>
+                              <Grid item xs={6} md={2}>
+                                <MetricTile
+                                  label={t('subscriptionSharing.card.daysLeft', 'Days left')}
+                                  value={formatHostDays(host.hostDaysToRenewal, t)}
+                                  color={host.hostAtRisk ? theme.palette.warning.main : theme.palette.success.main}
+                                />
+                              </Grid>
+                              <Grid item xs={6} md={2}>
+                                <MetricTile
+                                  label={t('subscriptionSharing.card.termLabel', 'Term')}
+                                  value={t('subscriptionSharing.card.termValue', { months: host.termMonths || 0, defaultValue: '{{months}} months' })}
+                                  helper={t('subscriptionSharing.card.minimumHint', {
+                                    count: host.minimumEligibleMonths || 3,
+                                    defaultValue: 'Minimum {{count}} months'
+                                  })}
+                                  color={theme.palette.warning.main}
+                                />
+                              </Grid>
+                              <Grid item xs={6} md={2}>
+                                <MetricTile
+                                  label={t('subscriptionSharing.card.usageLabel', 'Usage pressure')}
+                                  value={`${host.estimatedCustomerUsage || 0} / ${host.activatedScreens || 0}`}
+                                  helper={t('subscriptionSharing.card.capacityShort', {
+                                    available: host.availableCapacity || 0,
+                                    defaultValue: 'Available {{available}}'
+                                  })}
+                                  color={host.availableCapacity > 0 ? theme.palette.success.main : theme.palette.error.main}
+                                />
+                              </Grid>
+                              <Grid item xs={6} md={2}>
+                                <MetricTile
+                                  label={t('subscriptionSharing.card.clusterMembers', 'Beneficiaries')}
+                                  value={String(beneficiaries.length)}
+                                  helper={t('subscriptionSharing.card.sharedClusterSize', {
+                                    count: host.sharedClusterSize || 0,
+                                    defaultValue: 'Cluster size {{count}}'
+                                  })}
+                                  color={theme.palette.info.main}
+                                />
+                              </Grid>
+                            </Grid>
+
+                            <Divider />
+                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
+                              <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                                {t('subscriptionSharing.card.beneficiaries', 'Beneficiaries')}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {t(
+                                  'subscriptionSharing.card.beneficiariesHint',
+                                  'These subscriptions inherit the operational risk from the host and reuse the same shared capacity.'
+                                )}
+                              </Typography>
+                            </Stack>
+
+                            {beneficiaries.length === 0 ? (
+                              <Alert severity="warning">{t('subscriptionSharing.card.noBeneficiaries', 'No SHARED subscriptions linked to this host.')}</Alert>
+                            ) : (
+                              <Grid container spacing={1.1}>
+                                {beneficiaries.map((item) => (
+                                  <Grid item xs={12} lg={6} key={`beneficiary-${item.subscriptionId}`}>
+                                    <Box
+                                      sx={(muiTheme) => ({
+                                        p: 1.25,
+                                        borderRadius: 2.25,
+                                        border: '1px solid',
+                                        borderColor: 'divider',
+                                        minHeight: '100%',
+                                        bgcolor: muiTheme.vars?.palette?.surface?.sunken || muiTheme.palette.background.default
+                                      })}
+                                    >
+                                      <Stack spacing={1}>
+                                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.9} alignItems={{ xs: 'flex-start', sm: 'center' }} useFlexGap flexWrap="wrap">
+                                          <Stack direction="row" spacing={0.75} alignItems="center">
+                                            <Avatar sx={{ width: 24, height: 24, bgcolor: 'info.main', color: 'info.contrastText' }}>
+                                              <LinkIcon fontSize="inherit" />
+                                            </Avatar>
+                                            <Typography variant="body2" sx={{ fontWeight: 800 }}>
+                                              #{item.subscriptionId} · {item.customerName || '-'}
+                                            </Typography>
+                                          </Stack>
+                                          <RoleChip role={item.sharingRole} t={t} />
+                                          <EligibilityChips
+                                            eligible={item.eligible}
+                                            eligibilityReason={item.eligibilityReason}
+                                            minimumEligibleMonths={item.minimumEligibleMonths}
+                                            t={t}
+                                          />
+                                          <RiskChip bucket={item.hostRiskBucket} t={t} />
+                                          <StatusChip status={item.subscriptionStatus} t={t} />
+                                        </Stack>
+                                        <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
+                                          <Chip
+                                            size="small"
+                                            color="warning"
+                                            variant="outlined"
+                                            label={t('subscriptionSharing.card.inheritedRisk', {
+                                              hostId: item.sharedHostSubscriptionId || '-',
+                                              defaultValue: 'Inherited risk from host #{{hostId}}'
+                                            })}
+                                          />
+                                          <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.hostRenewal', 'Host renewal')}: ${formatDate(item.hostRenewalDate)}`} />
+                                          <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.daysLeft', 'Days left')}: ${formatHostDays(item.hostDaysToRenewal, t)}`} />
+                                          <Chip
+                                            size="small"
+                                            variant="outlined"
+                                            label={`${t('subscriptionSharing.card.line', 'Line')}: ${formatLineDisplay(item.lineName, item.lineId)}`}
+                                          />
+                                        </Stack>
+                                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
+                                          <RolePreferenceSelector
+                                            value={item.rolePreference}
+                                            loading={Boolean(roleSavingBySubscriptionId[item.subscriptionId])}
+                                            onChange={(value) => handleRolePreferenceChange(item.subscriptionId, value)}
+                                            t={t}
+                                          />
+                                          <Button
+                                            size="small"
+                                            variant="text"
+                                            onClick={() => loadDiagnostics(item.subscriptionId)}
+                                            sx={{ textTransform: 'none', fontWeight: 700, alignSelf: 'flex-start' }}
+                                          >
+                                            {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
+                                          </Button>
+                                        </Stack>
+                                      </Stack>
+                                    </Box>
+                                  </Grid>
+                                ))}
+                              </Grid>
+                            )}
+                          </Stack>
+                        </Card>
+                      );
+                    })}
                   </Stack>
-                </Card>
-              );
-            })}
+                </Stack>
+              </Card>
+            ))}
           </Stack>
         )}
       </MainCard>
@@ -952,6 +1271,7 @@ export default function SubscriptionSharingLionTv() {
                           minimumEligibleMonths={row.minimumEligibleMonths}
                           t={t}
                         />
+                        <RiskChip bucket={row.hostRiskBucket} t={t} />
                         <StatusChip status={row.subscriptionStatus} t={t} />
                       </Stack>
                       <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
@@ -984,9 +1304,17 @@ export default function SubscriptionSharingLionTv() {
                     </Stack>
                   </Stack>
 
-                  <Grid container spacing={1.25}>
+                    <Grid container spacing={1.25}>
                     <Grid item xs={6} md={3}>
-                      <MetricTile label={t('subscriptionSharing.card.renewal', 'Renewal')} value={formatDate(row.renewalDate)} color={theme.palette.primary.main} />
+                      <MetricTile label={t('subscriptionSharing.card.hostRenewal', 'Host renewal')} value={formatDate(row.hostRenewalDate)} color={theme.palette.primary.main} />
+                    </Grid>
+                    <Grid item xs={6} md={3}>
+                      <MetricTile
+                        label={t('subscriptionSharing.card.renewalDay', 'Renewal day')}
+                        value={formatHostRenewalDay(row.hostRenewalDayOfMonth, t)}
+                        helper={formatHostDays(row.hostDaysToRenewal, t)}
+                        color={row.hostAtRisk ? theme.palette.warning.main : theme.palette.info.main}
+                      />
                     </Grid>
                     <Grid item xs={6} md={3}>
                       <MetricTile
@@ -1006,13 +1334,10 @@ export default function SubscriptionSharingLionTv() {
                         color={theme.palette.success.main}
                       />
                     </Grid>
-                    <Grid item xs={6} md={3}>
-                      <MetricTile label={t('subscriptionSharing.card.customerId', 'Customer ID')} value={`#${row.customerId || '-'}`} color={theme.palette.info.main} />
-                    </Grid>
                   </Grid>
                 </Stack>
-              </Card>
-            ))}
+                </Card>
+              ))}
           </Stack>
         )}
       </MainCard>
@@ -1064,6 +1389,7 @@ export default function SubscriptionSharingLionTv() {
                           minimumEligibleMonths={row.minimumEligibleMonths}
                           t={t}
                         />
+                        <RiskChip bucket={row.hostRiskBucket} t={t} />
                         <StatusChip status={row.subscriptionStatus} t={t} />
                       </Stack>
                       <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
@@ -1107,9 +1433,17 @@ export default function SubscriptionSharingLionTv() {
                     </Stack>
                   </Stack>
 
-                  <Grid container spacing={1.25}>
+                    <Grid container spacing={1.25}>
                     <Grid item xs={6} md={3}>
-                      <MetricTile label={t('subscriptionSharing.card.renewal', 'Renewal')} value={formatDate(row.renewalDate)} color={theme.palette.primary.main} />
+                      <MetricTile label={t('subscriptionSharing.card.hostRenewal', 'Host renewal')} value={formatDate(row.hostRenewalDate)} color={theme.palette.primary.main} />
+                    </Grid>
+                    <Grid item xs={6} md={3}>
+                      <MetricTile
+                        label={t('subscriptionSharing.card.renewalDay', 'Renewal day')}
+                        value={formatHostRenewalDay(row.hostRenewalDayOfMonth, t)}
+                        helper={formatHostDays(row.hostDaysToRenewal, t)}
+                        color={row.hostAtRisk ? theme.palette.warning.main : theme.palette.info.main}
+                      />
                     </Grid>
                     <Grid item xs={6} md={3}>
                       <MetricTile
@@ -1130,13 +1464,10 @@ export default function SubscriptionSharingLionTv() {
                         color={row.availableCapacity > 0 ? theme.palette.warning.main : theme.palette.error.main}
                       />
                     </Grid>
-                    <Grid item xs={6} md={3}>
-                      <MetricTile label={t('subscriptionSharing.card.customerId', 'Customer ID')} value={`#${row.customerId || '-'}`} color={theme.palette.info.main} />
                     </Grid>
-                  </Grid>
-                </Stack>
-              </Card>
-            ))}
+                  </Stack>
+                </Card>
+              ))}
           </Stack>
         )}
       </MainCard>
@@ -1247,6 +1578,7 @@ export default function SubscriptionSharingLionTv() {
                         minimumEligibleMonths={diagnosticsData.minimumEligibleMonths}
                         t={t}
                       />
+                      <RiskChip bucket={diagnosticsData.hostRiskBucket} t={t} />
                     </Stack>
                   </Stack>
                   <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
@@ -1272,6 +1604,17 @@ export default function SubscriptionSharingLionTv() {
                               defaultValue: 'Shared cluster · {{count}}'
                             })
                           : t('subscriptionSharing.diagnostics.standalone', 'Standalone subscription')
+                      }
+                      sx={{ fontWeight: 700 }}
+                    />
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      color={diagnosticsData.hostAtRisk ? 'warning' : 'default'}
+                      label={
+                        diagnosticsData.hostAtRisk
+                          ? t('subscriptionSharing.diagnostics.hostAtRisk', 'Host risk affects shared subscriptions')
+                          : t('subscriptionSharing.diagnostics.hostStable', 'Host currently stable')
                       }
                       sx={{ fontWeight: 700 }}
                     />
@@ -1383,6 +1726,49 @@ export default function SubscriptionSharingLionTv() {
                 <Grid item xs={12} sm={6} md={3}>
                   <Card sx={diagnosticsSurfaceSx}>
                     <Typography variant="caption" color="text.secondary">
+                      {t('subscriptionSharing.diagnostics.hostRenewalDate', 'Host renewal date')}
+                    </Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                      {formatDate(diagnosticsData.hostRenewalDate)}
+                    </Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={diagnosticsSurfaceSx}>
+                    <Typography variant="caption" color="text.secondary">
+                      {t('subscriptionSharing.diagnostics.hostRenewalDay', 'Renewal day')}
+                    </Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                      {formatHostRenewalDay(diagnosticsData.hostRenewalDayOfMonth, t)}
+                    </Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={diagnosticsSurfaceSx}>
+                    <Typography variant="caption" color="text.secondary">
+                      {t('subscriptionSharing.diagnostics.hostDaysToRenewal', 'Days to host renewal')}
+                    </Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                      {formatHostDays(diagnosticsData.hostDaysToRenewal, t)}
+                    </Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={diagnosticsSurfaceSx}>
+                    <Typography variant="caption" color="text.secondary">
+                      {t('subscriptionSharing.diagnostics.hostRiskBucket', 'Host risk bucket')}
+                    </Typography>
+                    <Box sx={{ mt: 0.8 }}>
+                      <RiskChip bucket={diagnosticsData.hostRiskBucket} t={t} />
+                    </Box>
+                  </Card>
+                </Grid>
+              </Grid>
+
+              <Grid container spacing={1.25}>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Card sx={diagnosticsSurfaceSx}>
+                    <Typography variant="caption" color="text.secondary">
                       {t('subscriptionSharing.diagnostics.billing', 'Billing')}
                     </Typography>
                     <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
@@ -1474,6 +1860,17 @@ export default function SubscriptionSharingLionTv() {
                       : t(
                           'subscriptionSharing.diagnostics.readingBlocked',
                           'This subscription is blocked by the main reason shown above. Review term, status and available capacity before trying to share it.'
+                        )}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {diagnosticsData.sharedCluster
+                      ? t(
+                          'subscriptionSharing.diagnostics.readingHostImpact',
+                          'For shared clusters, the host renewal date controls the operational bucket. If the host expires, all linked shared subscriptions are affected.'
+                        )
+                      : t(
+                          'subscriptionSharing.diagnostics.readingStandalone',
+                          'This subscription is not linked to a shared cluster, so its own renewal date drives the operational bucket.'
                         )}
                   </Typography>
                 </Stack>

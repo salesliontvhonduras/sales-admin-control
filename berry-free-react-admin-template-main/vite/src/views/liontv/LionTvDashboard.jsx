@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +29,7 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import FactCheckIcon from '@mui/icons-material/FactCheck';
+import HubIcon from '@mui/icons-material/Hub';
 import PriceCheckIcon from '@mui/icons-material/PriceCheck';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
@@ -43,6 +44,7 @@ import { PageEmptyState, PageErrorState, PageLoadingState } from 'ui-component/f
 import { gridSpacing } from 'store/constant';
 import { useLionTvOverview } from 'api/liontv-overview';
 import { useSubscriptionExpirationOverview } from 'api/liontv-subscription-expiration';
+import { lionTvApi } from 'utils/api';
 
 const ROUTES = {
   licenses: '/liontv/licenses',
@@ -448,6 +450,11 @@ export default function LionTvDashboard() {
   const [managedAccounts, setManagedAccounts] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [commitments, setCommitments] = useState([]);
+  const [sharedRiskKpi, setSharedRiskKpi] = useState({
+    overdueClusters: 0,
+    criticalClusters: 0,
+    atRiskSubscriptions: 0
+  });
   const lastToastRef = useRef('');
 
   const {
@@ -464,6 +471,53 @@ export default function LionTvDashboard() {
   const expirationAttentionCount =
     Number(expirationOverview?.statusCounts?.failed || 0) + Number(expirationOverview?.statusCounts?.manualPending || 0);
   const expirationStale = Boolean(expirationOverview?.detectorStale || expirationOverview?.workerStale);
+
+  const loadSharedRiskOverview = useCallback(async () => {
+    if (!accessToken) {
+      setSharedRiskKpi({
+        overdueClusters: 0,
+        criticalClusters: 0,
+        atRiskSubscriptions: 0
+      });
+      return;
+    }
+
+    try {
+      const response = await lionTvApi.get('/subscription-sharing/v1/overview', {
+        params: { index: 0, size: 1 },
+        skipAuthRedirect: true
+      });
+      const payload = response?.data?.data ?? response?.data ?? {};
+      setSharedRiskKpi({
+        overdueClusters: Number(payload?.kpi?.overdueClusters || 0),
+        criticalClusters: Number(payload?.kpi?.criticalClusters || 0),
+        atRiskSubscriptions: Number(payload?.kpi?.atRiskSubscriptions || 0)
+      });
+    } catch (error) {
+      setSharedRiskKpi({
+        overdueClusters: 0,
+        criticalClusters: 0,
+        atRiskSubscriptions: 0
+      });
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    let active = true;
+
+    const safeLoad = async () => {
+      if (!active) return;
+      await loadSharedRiskOverview();
+    };
+
+    safeLoad();
+    const intervalId = window.setInterval(safeLoad, 60000);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
+  }, [loadSharedRiskOverview]);
 
   const customerNameMap = useMemo(() => {
     const map = {};
@@ -693,7 +747,16 @@ export default function LionTvDashboard() {
       title={t('menu.liontvDashboard', 'Operational Tracking')}
       secondary={
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" size="small" startIcon={<RefreshIcon fontSize="small" />} onClick={() => refresh()} disabled={loading}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<RefreshIcon fontSize="small" />}
+            onClick={() => {
+              refresh();
+              loadSharedRiskOverview();
+            }}
+            disabled={loading}
+          >
             {t('actions.refresh', 'Recargar')}
           </Button>
         </Stack>
@@ -725,6 +788,43 @@ export default function LionTvDashboard() {
               : t('liontvDashboard.expirationAlert.jobs', {
                   count: expirationAttentionCount,
                   defaultValue: `Hay ${expirationAttentionCount} jobs críticos de expiración para revisar.`
+                })}
+          </Alert>
+        ) : null}
+
+        {sharedRiskKpi.criticalClusters > 0 ? (
+          <Alert
+            severity={sharedRiskKpi.overdueClusters > 0 ? 'error' : 'warning'}
+            variant="outlined"
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() =>
+                  navigate(
+                    `/liontv/subscription-sharing?status=HOST&hostAtRisk=true${
+                      sharedRiskKpi.overdueClusters > 0 ? '&riskBucket=OVERDUE' : ''
+                    }`
+                  )
+                }
+                startIcon={<LaunchIcon />}
+              >
+                {t('liontvDashboard.sharedRisk.open', 'Abrir shared risk')}
+              </Button>
+            }
+          >
+            {sharedRiskKpi.overdueClusters > 0
+              ? t('liontvDashboard.sharedRisk.overdue', {
+                  overdue: sharedRiskKpi.overdueClusters,
+                  critical: sharedRiskKpi.criticalClusters,
+                  defaultValue:
+                    '{{overdue}} hosts compartidos ya vencidos y {{critical}} buckets críticos en shared subscriptions.'
+                })
+              : t('liontvDashboard.sharedRisk.critical', {
+                  critical: sharedRiskKpi.criticalClusters,
+                  affected: sharedRiskKpi.atRiskSubscriptions,
+                  defaultValue:
+                    '{{critical}} hosts vencen en 7 días o menos y ya ponen en riesgo {{affected}} suscripciones dentro de shared subscriptions.'
                 })}
           </Alert>
         ) : null}
@@ -908,6 +1008,18 @@ export default function LionTvDashboard() {
                 })}
                 color="secondary"
                 icon={<FactCheckIcon fontSize="small" />}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 12, md: 6, lg: 4, xl: 2 }}>
+              <MetricCard
+                title={t('liontvDashboard.metrics.sharedRisk.title', 'Shared risk')}
+                value={sharedRiskKpi.criticalClusters}
+                helper={t('liontvDashboard.metrics.sharedRisk.helper', {
+                  overdue: sharedRiskKpi.overdueClusters,
+                  defaultValue: '{{overdue}} overdue hosts'
+                })}
+                color="warning"
+                icon={<HubIcon fontSize="small" />}
               />
             </Grid>
 

@@ -239,7 +239,6 @@ const liontv = {
           type: 'item',
           url: '/liontv/subscription-expiration',
           breadcrumbs: true,
-          icon: icons.IconAlertTriangle,
           permission: { any: ['LIONTV_SUBSCRIPTION_EXPIRATION_VIEW', 'LIONTV_TECH_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         }
       ]

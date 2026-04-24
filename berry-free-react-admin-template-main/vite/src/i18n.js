@@ -704,7 +704,10 @@ const resources = {
           sharedClusters: 'Shared clusters',
           hosts: 'Hosts',
           sharedSubscriptions: 'Shared subscriptions',
-          eligibleSubscriptions: 'Eligible'
+          eligibleSubscriptions: 'Eligible',
+          overdueClusters: 'Overdue hosts',
+          criticalClusters: 'Critical hosts',
+          atRiskSubscriptions: 'Subscriptions affected'
         },
         filters: {
           title: 'Filters and quick reading',
@@ -712,11 +715,17 @@ const resources = {
           searchPlaceholder: 'Search by subscription, customer, line, provider, status',
           status: 'Sharing role',
           eligible: 'Eligible',
+          riskBucket: 'Risk bucket',
+          atRiskOnly: 'At risk',
+          renewalDay: 'Renewal day',
+          renewalDayAll: 'All days',
           visible: 'Visible: {{count}}',
           hostsVisible: 'Hosts: {{count}}',
           sharedVisible: 'Shared: {{count}}',
           eligibleVisible: 'Standalone eligible: {{count}}',
           blockedVisible: 'Blocked: {{count}}',
+          criticalVisible: 'Critical hosts: {{count}}',
+          overdueVisible: 'Overdue hosts: {{count}}',
           reset: 'Reset filters',
           blockedHint:
             'There are blocked subscriptions in this view. Open diagnostics to confirm if the cause is inactive status, minimum term or no available capacity.',
@@ -730,11 +739,19 @@ const resources = {
             all: 'All',
             yes: 'Yes',
             no: 'No'
+          },
+          riskOptions: {
+            all: 'All'
+          },
+          atRiskOptions: {
+            all: 'All',
+            yes: 'Yes',
+            no: 'No'
           }
         },
         sections: {
-          sharedClusters: 'Shared clusters (host + beneficiaries)',
-          sharedClustersHint: 'Each host card shows the reusable line, current pressure on capacity and every beneficiary linked to that cluster.',
+          sharedClusters: 'Shared clusters grouped by host renewal day',
+          sharedClustersHint: 'Hosts are grouped by their renewal day of month so you can see in advance which shared clusters are affected when a host gets close to expiration.',
           noSharedClusters: 'No shared clusters found with current filters.',
           eligibleNotShared: 'Eligible and not shared',
           eligibleHint: 'These subscriptions already satisfy the sharing rule and still are not part of any shared cluster.',
@@ -754,6 +771,28 @@ const resources = {
           minimumTerm: 'Minimum {{count}} months',
           noCapacity: 'No available capacity'
         },
+        risk: {
+          overdue: 'Overdue',
+          zeroToSeven: '0-7 days',
+          eightToFifteen: '8-15 days',
+          sixteenToThirty: '16-30 days',
+          thirtyOnePlus: '31+ days',
+          unknown: 'No renewal date',
+          dayOfMonth: 'Day {{day}}',
+          dayUnknown: 'Without date',
+          unknownDays: 'Missing date',
+          overdueDays: 'Overdue {{days}}d',
+          today: 'Due today',
+          inDays: 'In {{days}}d'
+        },
+        bucket: {
+          hostCount: 'Hosts: {{count}}',
+          sharedCount: 'Shared: {{count}}',
+          nearestDate: 'Nearest host renewal: {{date}}',
+          nearestDateUnknown: 'Hosts without renewal date in this bucket.',
+          overdueAlert: 'This renewal bucket already has overdue hosts affecting shared subscriptions.',
+          criticalAlert: 'This renewal bucket includes hosts that will affect shared subscriptions within 7 days.'
+        },
         card: {
           hostSubscription: 'Host subscription',
           eligible: 'Eligible',
@@ -764,6 +803,9 @@ const resources = {
           linePlus: 'Line plus',
           provider: 'Provider',
           renewal: 'Renewal',
+          hostRenewal: 'Host renewal',
+          renewalDay: 'Renewal day',
+          daysLeft: 'Days left',
           capacity: 'Capacity {{activated}} · Usage {{used}} · Available {{available}}',
           term: 'Term {{months}} months',
           termLabel: 'Term',
@@ -776,8 +818,10 @@ const resources = {
           sharedClusterSize: 'Cluster size {{count}}',
           status: 'Status',
           beneficiaries: 'Beneficiaries',
-          beneficiariesHint: 'These subscriptions reuse the same line and push against the same shared capacity.',
-          noBeneficiaries: 'No SHARED subscriptions linked to this host.'
+          beneficiariesHint: 'These subscriptions inherit the operational risk from the host and reuse the same shared capacity.',
+          noBeneficiaries: 'No SHARED subscriptions linked to this host.',
+          affectsShared: 'Affects {{count}} shared',
+          inheritedRisk: 'Inherited risk from host #{{hostId}}'
         },
         actions: {
           viewDiagnostics: 'View diagnostics',
@@ -797,6 +841,8 @@ const resources = {
           sharingInactive: 'Inactive for sharing',
           sharedCluster: 'Shared cluster · {{count}}',
           standalone: 'Standalone subscription',
+          hostAtRisk: 'Host risk affects shared subscriptions',
+          hostStable: 'Host currently stable',
           customer: 'Customer',
           line: 'Line',
           linePlus: 'Plus: {{value}}',
@@ -805,13 +851,19 @@ const resources = {
           billing: 'Billing',
           startDate: 'Start date',
           renewalDate: 'Renewal date',
+          hostRenewalDate: 'Host renewal date',
+          hostRenewalDay: 'Renewal day',
+          hostDaysToRenewal: 'Days to host renewal',
+          hostRiskBucket: 'Host risk bucket',
           termMonths: 'Calculated months',
           minimumEligibleMonths: 'Minimum: {{count}}',
           activatedScreens: 'Activated screens',
           estimatedUsage: 'Estimated usage',
           availableCapacity: 'Available capacity',
           summaryTitle: 'Sharing summary',
-          hostSubscription: 'Host #{{id}}'
+          hostSubscription: 'Host #{{id}}',
+          readingHostImpact: 'For shared clusters, the host renewal date controls the operational bucket. If the host expires, all linked shared subscriptions are affected.',
+          readingStandalone: 'This subscription is not linked to a shared cluster, so its own renewal date drives the operational bucket.'
         },
         errors: {
           loadError: 'Could not load shared overview.',
@@ -1886,6 +1938,11 @@ const resources = {
           openInvoices: 'Open invoices',
           openCommitments: 'Open commitments'
         },
+        sharedRisk: {
+          open: 'Open shared risk',
+          overdue: '{{overdue}} shared hosts already overdue and {{critical}} critical buckets in shared subscriptions.',
+          critical: '{{critical}} hosts expire in 7 days or less and already put {{affected}} subscriptions at risk inside shared subscriptions.'
+        },
         sections: {
           trackingByDate: 'Tracking by date',
           detailByDate: 'Details by date',
@@ -1903,7 +1960,8 @@ const resources = {
           horizonAlerts: { title: 'Next {{days}} days', helper: '{{count}} within 7 days' },
           pendingInvoices: { title: 'Pending invoices' },
           pendingCommitments: { title: 'Pending commitments' },
-          lostCustomers: { title: 'Lost customers', helper: 'overdue > {{days}} days' }
+          lostCustomers: { title: 'Lost customers', helper: 'overdue > {{days}} days' },
+          sharedRisk: { title: 'Shared risk', helper: '{{overdue}} overdue hosts' }
         },
         buckets: {
           today: { title: 'Today details', helper: 'Cases due today' },
@@ -4082,7 +4140,10 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           sharedClusters: 'Clústeres compartidos',
           hosts: 'Hosts',
           sharedSubscriptions: 'Suscripciones SHARED',
-          eligibleSubscriptions: 'Elegibles'
+          eligibleSubscriptions: 'Elegibles',
+          overdueClusters: 'Hosts vencidos',
+          criticalClusters: 'Hosts críticos',
+          atRiskSubscriptions: 'Suscripciones afectadas'
         },
         filters: {
           title: 'Filtros y lectura rápida',
@@ -4090,11 +4151,17 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           searchPlaceholder: 'Buscar por suscripción, cliente, línea, proveedor o estado',
           status: 'Rol de compartición',
           eligible: 'Elegible',
+          riskBucket: 'Bucket de riesgo',
+          atRiskOnly: 'En riesgo',
+          renewalDay: 'Día de renovación',
+          renewalDayAll: 'Todos los días',
           visible: 'Visibles: {{count}}',
           hostsVisible: 'Hosts: {{count}}',
           sharedVisible: 'Shared: {{count}}',
           eligibleVisible: 'Elegibles libres: {{count}}',
           blockedVisible: 'Bloqueadas: {{count}}',
+          criticalVisible: 'Hosts críticos: {{count}}',
+          overdueVisible: 'Hosts vencidos: {{count}}',
           reset: 'Resetear filtros',
           blockedHint:
             'Hay suscripciones bloqueadas en esta vista. Abre el diagnóstico para confirmar si la causa es estado inactivo, duración mínima o falta de capacidad.',
@@ -4108,11 +4175,20 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             all: 'Todas',
             yes: 'Sí',
             no: 'No'
+          },
+          riskOptions: {
+            all: 'Todos'
+          },
+          atRiskOptions: {
+            all: 'Todos',
+            yes: 'Sí',
+            no: 'No'
           }
         },
         sections: {
-          sharedClusters: 'Clústeres compartidos (host + beneficiarios)',
-          sharedClustersHint: 'Cada host muestra la línea reutilizable, la presión real sobre capacidad y todos los beneficiarios vinculados al clúster.',
+          sharedClusters: 'Clústeres compartidos agrupados por día de renovación del host',
+          sharedClustersHint:
+            'Los hosts se agrupan por su día de renovación para que puedas ver con anticipación qué clústeres compartidos se afectan cuando un host se acerca al vencimiento.',
           noSharedClusters: 'No se encontraron clústeres compartidos con los filtros actuales.',
           eligibleNotShared: 'Elegibles sin compartir',
           eligibleHint: 'Estas suscripciones ya cumplen la regla de sharing y todavía no forman parte de ningún clúster compartido.',
@@ -4132,6 +4208,28 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           minimumTerm: 'Mínimo {{count}} meses',
           noCapacity: 'Sin capacidad disponible'
         },
+        risk: {
+          overdue: 'Vencido',
+          zeroToSeven: '0-7 días',
+          eightToFifteen: '8-15 días',
+          sixteenToThirty: '16-30 días',
+          thirtyOnePlus: '31+ días',
+          unknown: 'Sin fecha de renovación',
+          dayOfMonth: 'Día {{day}}',
+          dayUnknown: 'Sin fecha',
+          unknownDays: 'Fecha faltante',
+          overdueDays: 'Vencido {{days}}d',
+          today: 'Vence hoy',
+          inDays: 'En {{days}}d'
+        },
+        bucket: {
+          hostCount: 'Hosts: {{count}}',
+          sharedCount: 'Shared: {{count}}',
+          nearestDate: 'Renovación host más próxima: {{date}}',
+          nearestDateUnknown: 'Hosts sin fecha de renovación en este bucket.',
+          overdueAlert: 'Este bucket de renovación ya tiene hosts vencidos que afectan suscripciones shared.',
+          criticalAlert: 'Este bucket de renovación incluye hosts que afectarán suscripciones shared en 7 días o menos.'
+        },
         card: {
           hostSubscription: 'Suscripción host',
           eligible: 'Elegible',
@@ -4142,6 +4240,9 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           linePlus: 'Línea plus',
           provider: 'Proveedor',
           renewal: 'Renovación',
+          hostRenewal: 'Renovación host',
+          renewalDay: 'Día de renovación',
+          daysLeft: 'Días restantes',
           capacity: 'Capacidad {{activated}} · Uso {{used}} · Disponible {{available}}',
           term: 'Duración {{months}} meses',
           termLabel: 'Duración',
@@ -4154,8 +4255,10 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           sharedClusterSize: 'Tamaño clúster {{count}}',
           status: 'Estado',
           beneficiaries: 'Beneficiarios',
-          beneficiariesHint: 'Estas suscripciones reutilizan la misma línea y empujan contra la misma capacidad compartida.',
-          noBeneficiaries: 'No hay suscripciones SHARED vinculadas a este host.'
+          beneficiariesHint: 'Estas suscripciones heredan el riesgo operativo del host y reutilizan la misma capacidad compartida.',
+          noBeneficiaries: 'No hay suscripciones SHARED vinculadas a este host.',
+          affectsShared: 'Afecta {{count}} shared',
+          inheritedRisk: 'Riesgo heredado del host #{{hostId}}'
         },
         actions: {
           viewDiagnostics: 'Ver diagnóstico',
@@ -4175,6 +4278,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           sharingInactive: 'Inactiva para sharing',
           sharedCluster: 'Clúster compartido · {{count}}',
           standalone: 'Suscripción independiente',
+          hostAtRisk: 'El riesgo del host afecta suscripciones shared',
+          hostStable: 'Host estable por ahora',
           customer: 'Cliente',
           line: 'Línea',
           linePlus: 'Plus: {{value}}',
@@ -4183,13 +4288,21 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           billing: 'Billing',
           startDate: 'Fecha de inicio',
           renewalDate: 'Fecha de renovación',
+          hostRenewalDate: 'Fecha de renovación del host',
+          hostRenewalDay: 'Día de renovación',
+          hostDaysToRenewal: 'Días al vencimiento del host',
+          hostRiskBucket: 'Bucket de riesgo del host',
           termMonths: 'Meses calculados',
           minimumEligibleMonths: 'Mínimo: {{count}}',
           activatedScreens: 'Pantallas activadas',
           estimatedUsage: 'Uso estimado',
           availableCapacity: 'Capacidad disponible',
           summaryTitle: 'Resumen de sharing',
-          hostSubscription: 'Host #{{id}}'
+          hostSubscription: 'Host #{{id}}',
+          readingHostImpact:
+            'Para clústeres shared, la fecha del host controla el bucket operativo. Si el host vence, todas las suscripciones shared vinculadas se ven afectadas.',
+          readingStandalone:
+            'Esta suscripción no pertenece a un clúster shared, así que su propia fecha de renovación controla el bucket operativo.'
         },
         errors: {
           loadError: 'No se pudo cargar el overview de suscripciones compartidas.',
@@ -5264,6 +5377,11 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           openInvoices: 'Abrir facturas',
           openCommitments: 'Abrir compromisos'
         },
+        sharedRisk: {
+          open: 'Abrir riesgo shared',
+          overdue: '{{overdue}} hosts shared ya vencidos y {{critical}} buckets críticos en shared subscriptions.',
+          critical: '{{critical}} hosts vencen en 7 días o menos y ya ponen en riesgo {{affected}} suscripciones dentro de shared subscriptions.'
+        },
         sections: {
           trackingByDate: 'Seguimiento por fecha',
           detailByDate: 'Detalle por fecha',
@@ -5281,7 +5399,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           horizonAlerts: { title: 'Próximos {{days}} días', helper: '{{count}} en 7 días' },
           pendingInvoices: { title: 'Facturas pendientes' },
           pendingCommitments: { title: 'Compromisos pendientes' },
-          lostCustomers: { title: 'Clientes perdidos', helper: 'vencidos > {{days}} días' }
+          lostCustomers: { title: 'Clientes perdidos', helper: 'vencidos > {{days}} días' },
+          sharedRisk: { title: 'Riesgo shared', helper: '{{overdue}} hosts vencidos' }
         },
         buckets: {
           today: { title: 'Detalle de hoy', helper: 'Casos que vencen hoy' },
