@@ -780,7 +780,13 @@ const resources = {
           noBeneficiaries: 'No SHARED subscriptions linked to this host.'
         },
         actions: {
-          viewDiagnostics: 'View diagnostics'
+          viewDiagnostics: 'View diagnostics',
+          rolePreference: 'Role',
+          roleAuto: 'Auto',
+          roleHost: 'Host',
+          roleShared: 'Shared',
+          roleCurrent: 'Role mode: {{role}}',
+          roleHelp: 'Choose who should behave as host inside this shared line. Auto keeps the system decision.'
         },
         diagnostics: {
           title: 'Subscription diagnostics',
@@ -809,7 +815,11 @@ const resources = {
         },
         errors: {
           loadError: 'Could not load shared overview.',
-          loadDiagnostics: 'Could not load subscription diagnostics.'
+          loadDiagnostics: 'Could not load subscription diagnostics.',
+          updateRole: 'Could not update sharing role preference.'
+        },
+        messages: {
+          roleUpdated: 'Sharing role preference updated.'
         }
       },
       licenses: {
@@ -4148,7 +4158,13 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           noBeneficiaries: 'No hay suscripciones SHARED vinculadas a este host.'
         },
         actions: {
-          viewDiagnostics: 'Ver diagnóstico'
+          viewDiagnostics: 'Ver diagnóstico',
+          rolePreference: 'Rol',
+          roleAuto: 'Auto',
+          roleHost: 'Host',
+          roleShared: 'Shared',
+          roleCurrent: 'Modo de rol: {{role}}',
+          roleHelp: 'Elige qué suscripción debe comportarse como host dentro de esta línea compartida. Auto mantiene la decisión del sistema.'
         },
         diagnostics: {
           title: 'Diagnóstico de suscripción',
@@ -4177,7 +4193,11 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         },
         errors: {
           loadError: 'No se pudo cargar el overview de suscripciones compartidas.',
-          loadDiagnostics: 'No se pudo cargar el diagnóstico de la suscripción.'
+          loadDiagnostics: 'No se pudo cargar el diagnóstico de la suscripción.',
+          updateRole: 'No se pudo actualizar la preferencia de rol.'
+        },
+        messages: {
+          roleUpdated: 'Preferencia de rol actualizada.'
         }
       },
       licenses: {

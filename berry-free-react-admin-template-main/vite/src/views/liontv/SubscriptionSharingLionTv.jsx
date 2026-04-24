@@ -50,6 +50,7 @@ function normalizeRow(item = {}) {
     customerId: item.customerId ?? null,
     customerName: item.customerName ?? item.customer_name ?? '-',
     lineId: item.lineId ?? '-',
+    lineName: item.lineName ?? item.line_name ?? '',
     linePlusId: item.linePlusId ?? '-',
     provider: item.provider ?? '-',
     subscriptionStatus: String(item.subscriptionStatus || item.status || '').toUpperCase(),
@@ -64,6 +65,7 @@ function normalizeRow(item = {}) {
     eligibilityReason: String(item.eligibilityReason || 'ELIGIBLE').toUpperCase(),
     minimumEligibleMonths: Number(item.minimumEligibleMonths || 3),
     sharingRole: String(item.sharingRole || 'NONE').toUpperCase(),
+    rolePreference: String(item.rolePreference || 'AUTO').toUpperCase(),
     sharedCluster: Boolean(item.sharedCluster),
     sharedHostSubscriptionId: item.sharedHostSubscriptionId ?? null,
     sharedClusterSize: Number(item.sharedClusterSize || 0)
@@ -76,6 +78,7 @@ function normalizeDiagnostics(item = {}) {
     customerId: item.customerId ?? null,
     customerName: item.customerName ?? item.customer_name ?? '-',
     lineId: item.lineId ?? '-',
+    lineName: item.lineName ?? item.line_name ?? '',
     linePlusId: item.linePlusId ?? '-',
     provider: item.provider ?? '-',
     subscriptionStatus: String(item.subscriptionStatus || item.status || '').toUpperCase(),
@@ -91,6 +94,7 @@ function normalizeDiagnostics(item = {}) {
     eligible: Boolean(item.eligible),
     eligibilityReason: String(item.eligibilityReason || 'ELIGIBLE').toUpperCase(),
     sharingRole: String(item.sharingRole || 'NONE').toUpperCase(),
+    rolePreference: String(item.rolePreference || 'AUTO').toUpperCase(),
     sharedCluster: Boolean(item.sharedCluster),
     sharedHostSubscriptionId: item.sharedHostSubscriptionId ?? null,
     sharedClusterSize: Number(item.sharedClusterSize || 0)
@@ -101,6 +105,13 @@ function formatDate(value) {
   if (!value) return '-';
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleDateString();
+}
+
+function formatLineDisplay(lineName, lineId) {
+  const safeLineId = String(lineId || '').trim();
+  const safeLineName = String(lineName || '').trim();
+  if (!safeLineName || safeLineName === safeLineId) return safeLineId || '-';
+  return `${safeLineName} · ${safeLineId}`;
 }
 
 function roleColor(role) {
@@ -193,6 +204,25 @@ function EligibilityChips({ eligible, eligibilityReason, minimumEligibleMonths, 
       />
       {!eligible ? <Chip size="small" color={reason.color} variant="outlined" label={reason.label} sx={{ fontWeight: 700 }} /> : null}
     </Stack>
+  );
+}
+
+function RolePreferenceSelector({ value, loading, onChange, t }) {
+  return (
+    <FormControl size="small" sx={{ minWidth: 140 }}>
+      <InputLabel>{t('subscriptionSharing.actions.rolePreference', 'Role')}</InputLabel>
+      <Select
+        value={value || 'AUTO'}
+        label={t('subscriptionSharing.actions.rolePreference', 'Role')}
+        onChange={(event) => onChange?.(event.target.value)}
+        disabled={loading}
+        sx={{ borderRadius: 2 }}
+      >
+        <MenuItem value="AUTO">{t('subscriptionSharing.actions.roleAuto', 'Auto')}</MenuItem>
+        <MenuItem value="HOST">{t('subscriptionSharing.actions.roleHost', 'Host')}</MenuItem>
+        <MenuItem value="SHARED">{t('subscriptionSharing.actions.roleShared', 'Shared')}</MenuItem>
+      </Select>
+    </FormControl>
   );
 }
 
@@ -295,6 +325,7 @@ export default function SubscriptionSharingLionTv() {
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [diagnosticsLoading, setDiagnosticsLoading] = useState(false);
   const [diagnosticsData, setDiagnosticsData] = useState(null);
+  const [roleSavingBySubscriptionId, setRoleSavingBySubscriptionId] = useState({});
 
   const loadOverview = useCallback(async () => {
     if (!accessToken) return;
@@ -373,6 +404,42 @@ export default function SubscriptionSharingLionTv() {
     [accessToken, enqueueSnackbar, headers, t]
   );
 
+  const handleRolePreferenceChange = useCallback(
+    async (subscriptionId, sharingRole) => {
+      if (!subscriptionId || !accessToken) return;
+
+      setRoleSavingBySubscriptionId((prev) => ({ ...prev, [subscriptionId]: true }));
+      try {
+        await lionTvApi.patch(
+          `/subscription-sharing/v1/subscriptions/${subscriptionId}/role`,
+          { sharingRole },
+          { headers, skipAuthRedirect: true }
+        );
+
+        enqueueSnackbar(t('subscriptionSharing.messages.roleUpdated', 'Sharing role preference updated.'), {
+          variant: 'success'
+        });
+
+        await loadOverview();
+        if (diagnosticsOpen && diagnosticsData?.subscriptionId === subscriptionId) {
+          await loadDiagnostics(subscriptionId);
+        }
+      } catch (err) {
+        enqueueSnackbar(
+          err?.response?.data?.message || t('subscriptionSharing.errors.updateRole', 'Could not update sharing role preference.'),
+          { variant: 'error' }
+        );
+      } finally {
+        setRoleSavingBySubscriptionId((prev) => {
+          const next = { ...prev };
+          delete next[subscriptionId];
+          return next;
+        });
+      }
+    },
+    [accessToken, diagnosticsData?.subscriptionId, diagnosticsOpen, enqueueSnackbar, headers, loadDiagnostics, loadOverview, t]
+  );
+
   const filteredRows = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return rows;
@@ -381,6 +448,7 @@ export default function SubscriptionSharingLionTv() {
         String(row.subscriptionId || '').toLowerCase().includes(term) ||
         String(row.customerName || '').toLowerCase().includes(term) ||
         String(row.lineId || '').toLowerCase().includes(term) ||
+        String(row.lineName || '').toLowerCase().includes(term) ||
         String(row.linePlusId || '').toLowerCase().includes(term) ||
         String(row.provider || '').toLowerCase().includes(term) ||
         String(row.billing || '').toLowerCase().includes(term) ||
@@ -679,21 +747,33 @@ export default function SubscriptionSharingLionTv() {
                         </Stack>
                         <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
                           <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.customer', 'Customer')}: ${host.customerName || '-'}`} />
-                          <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.line', 'Line')}: ${host.lineId || '-'}`} />
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={`${t('subscriptionSharing.card.line', 'Line')}: ${formatLineDisplay(host.lineName, host.lineId)}`}
+                          />
                           {host.linePlusId && host.linePlusId !== '-' ? (
                             <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.linePlus', 'Line plus')}: ${host.linePlusId}`} />
                           ) : null}
                           <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${host.provider || '-'}`} />
                         </Stack>
                       </Stack>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        onClick={() => loadDiagnostics(host.subscriptionId)}
-                        sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, alignSelf: { xs: 'stretch', lg: 'flex-start' } }}
-                      >
-                        {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
-                      </Button>
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', lg: 'flex-start' }}>
+                        <RolePreferenceSelector
+                          value={host.rolePreference}
+                          loading={Boolean(roleSavingBySubscriptionId[host.subscriptionId])}
+                          onChange={(value) => handleRolePreferenceChange(host.subscriptionId, value)}
+                          t={t}
+                        />
+                        <Button
+                          size="small"
+                          variant="contained"
+                          onClick={() => loadDiagnostics(host.subscriptionId)}
+                          sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, alignSelf: { xs: 'stretch', lg: 'flex-start' } }}
+                        >
+                          {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
+                        </Button>
+                      </Stack>
                     </Stack>
 
                     <Grid container spacing={1.25}>
@@ -786,18 +866,31 @@ export default function SubscriptionSharingLionTv() {
                                 <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
                                   <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${item.provider || '-'}`} />
                                   <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.renewal', 'Renewal')}: ${formatDate(item.renewalDate)}`} />
+                                  <Chip
+                                    size="small"
+                                    variant="outlined"
+                                    label={`${t('subscriptionSharing.card.line', 'Line')}: ${formatLineDisplay(item.lineName, item.lineId)}`}
+                                  />
                                   {item.linePlusId && item.linePlusId !== '-' ? (
                                     <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.linePlus', 'Line plus')}: ${item.linePlusId}`} />
                                   ) : null}
                                 </Stack>
-                                <Button
-                                  size="small"
-                                  variant="text"
-                                  onClick={() => loadDiagnostics(item.subscriptionId)}
-                                  sx={{ textTransform: 'none', fontWeight: 700, alignSelf: 'flex-start' }}
-                                >
-                                  {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
-                                </Button>
+                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
+                                  <RolePreferenceSelector
+                                    value={item.rolePreference}
+                                    loading={Boolean(roleSavingBySubscriptionId[item.subscriptionId])}
+                                    onChange={(value) => handleRolePreferenceChange(item.subscriptionId, value)}
+                                    t={t}
+                                  />
+                                  <Button
+                                    size="small"
+                                    variant="text"
+                                    onClick={() => loadDiagnostics(item.subscriptionId)}
+                                    sx={{ textTransform: 'none', fontWeight: 700, alignSelf: 'flex-start' }}
+                                  >
+                                    {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
+                                  </Button>
+                                </Stack>
                               </Stack>
                             </Box>
                           </Grid>
@@ -862,21 +955,33 @@ export default function SubscriptionSharingLionTv() {
                         <StatusChip status={row.subscriptionStatus} t={t} />
                       </Stack>
                       <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
-                        <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.line', 'Line')}: ${row.lineId || '-'}`} />
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={`${t('subscriptionSharing.card.line', 'Line')}: ${formatLineDisplay(row.lineName, row.lineId)}`}
+                        />
                         {row.linePlusId && row.linePlusId !== '-' ? (
                           <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.linePlus', 'Line plus')}: ${row.linePlusId}`} />
                         ) : null}
                         <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${row.provider || '-'}`} />
                       </Stack>
                     </Stack>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      onClick={() => loadDiagnostics(row.subscriptionId)}
-                      sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, alignSelf: { xs: 'stretch', lg: 'flex-start' } }}
-                    >
-                      {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
-                    </Button>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', lg: 'flex-start' }}>
+                      <RolePreferenceSelector
+                        value={row.rolePreference}
+                        loading={Boolean(roleSavingBySubscriptionId[row.subscriptionId])}
+                        onChange={(value) => handleRolePreferenceChange(row.subscriptionId, value)}
+                        t={t}
+                      />
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={() => loadDiagnostics(row.subscriptionId)}
+                        sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, alignSelf: { xs: 'stretch', lg: 'flex-start' } }}
+                      >
+                        {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
+                      </Button>
+                    </Stack>
                   </Stack>
 
                   <Grid container spacing={1.25}>
@@ -962,32 +1067,44 @@ export default function SubscriptionSharingLionTv() {
                         <StatusChip status={row.subscriptionStatus} t={t} />
                       </Stack>
                       <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
-                        <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.line', 'Line')}: ${row.lineId || '-'}`} />
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={`${t('subscriptionSharing.card.line', 'Line')}: ${formatLineDisplay(row.lineName, row.lineId)}`}
+                        />
                         {row.linePlusId && row.linePlusId !== '-' ? (
                           <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.linePlus', 'Line plus')}: ${row.linePlusId}`} />
                         ) : null}
                         <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${row.provider || '-'}`} />
                       </Stack>
                     </Stack>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      onClick={() => loadDiagnostics(row.subscriptionId)}
-                      sx={{
-                        textTransform: 'none',
-                        fontWeight: 700,
-                        borderRadius: 2,
-                        alignSelf: { xs: 'stretch', lg: 'flex-start' },
-                        color: 'common.white',
-                        backgroundImage: `linear-gradient(135deg, ${withAlpha(theme.palette.error.main, 0.92)} 0%, ${withAlpha(theme.palette.warning.dark, 0.92)} 100%)`,
-                        boxShadow: `0 10px 24px ${withAlpha(theme.palette.error.main, 0.24)}`,
-                        '&:hover': {
-                          backgroundImage: `linear-gradient(135deg, ${theme.palette.error.dark} 0%, ${theme.palette.warning.main} 100%)`
-                        }
-                      }}
-                    >
-                      {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
-                    </Button>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', lg: 'flex-start' }}>
+                      <RolePreferenceSelector
+                        value={row.rolePreference}
+                        loading={Boolean(roleSavingBySubscriptionId[row.subscriptionId])}
+                        onChange={(value) => handleRolePreferenceChange(row.subscriptionId, value)}
+                        t={t}
+                      />
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={() => loadDiagnostics(row.subscriptionId)}
+                        sx={{
+                          textTransform: 'none',
+                          fontWeight: 700,
+                          borderRadius: 2,
+                          alignSelf: { xs: 'stretch', lg: 'flex-start' },
+                          color: 'common.white',
+                          backgroundImage: `linear-gradient(135deg, ${withAlpha(theme.palette.error.main, 0.92)} 0%, ${withAlpha(theme.palette.warning.dark, 0.92)} 100%)`,
+                          boxShadow: `0 10px 24px ${withAlpha(theme.palette.error.main, 0.24)}`,
+                          '&:hover': {
+                            backgroundImage: `linear-gradient(135deg, ${theme.palette.error.dark} 0%, ${theme.palette.warning.main} 100%)`
+                          }
+                        }}
+                      >
+                        {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
+                      </Button>
+                    </Stack>
                   </Stack>
 
                   <Grid container spacing={1.25}>
@@ -1158,11 +1275,52 @@ export default function SubscriptionSharingLionTv() {
                       }
                       sx={{ fontWeight: 700 }}
                     />
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      color={diagnosticsData.rolePreference === 'AUTO' ? 'default' : 'secondary'}
+                      label={t('subscriptionSharing.actions.roleCurrent', {
+                        role:
+                          diagnosticsData.rolePreference === 'HOST'
+                            ? t('subscriptionSharing.actions.roleHost', 'Host')
+                            : diagnosticsData.rolePreference === 'SHARED'
+                              ? t('subscriptionSharing.actions.roleShared', 'Shared')
+                              : t('subscriptionSharing.actions.roleAuto', 'Auto'),
+                        defaultValue: 'Role mode: {{role}}'
+                      })}
+                      sx={{ fontWeight: 700 }}
+                    />
                     <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${diagnosticsData.provider || '-'}`} />
-                    <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.line', 'Line')}: ${diagnosticsData.lineId || '-'}`} />
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      label={`${t('subscriptionSharing.card.line', 'Line')}: ${formatLineDisplay(diagnosticsData.lineName, diagnosticsData.lineId)}`}
+                    />
                   </Stack>
                 </Stack>
               </Box>
+
+              <Card sx={diagnosticsSurfaceSx}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'center' }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      {t('subscriptionSharing.actions.rolePreference', 'Role')}
+                    </Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                      {t(
+                        'subscriptionSharing.actions.roleHelp',
+                        'Choose who should behave as host inside this shared line. Auto keeps the system decision.'
+                      )}
+                    </Typography>
+                  </Box>
+                  <RolePreferenceSelector
+                    value={diagnosticsData.rolePreference}
+                    loading={Boolean(roleSavingBySubscriptionId[diagnosticsData.subscriptionId])}
+                    onChange={(value) => handleRolePreferenceChange(diagnosticsData.subscriptionId, value)}
+                    t={t}
+                  />
+                </Stack>
+              </Card>
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} useFlexGap flexWrap="wrap">
                 <Chip size="small" variant="outlined" label={`Sub #${diagnosticsData.subscriptionId || '-'}`} />
@@ -1199,7 +1357,7 @@ export default function SubscriptionSharingLionTv() {
                       {t('subscriptionSharing.diagnostics.line', 'Line')}
                     </Typography>
                     <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-                      {diagnosticsData.lineId || '-'}
+                      {formatLineDisplay(diagnosticsData.lineName, diagnosticsData.lineId)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {t('subscriptionSharing.diagnostics.linePlus', { value: diagnosticsData.linePlusId || '-', defaultValue: 'Plus: {{value}}' })}
