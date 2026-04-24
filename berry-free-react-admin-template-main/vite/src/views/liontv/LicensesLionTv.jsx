@@ -32,6 +32,8 @@ import Select from '@mui/material/Select';
 import IconButton from '@mui/material/IconButton';
 import Avatar from '@mui/material/Avatar';
 import FormHelperText from '@mui/material/FormHelperText';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import { useTheme, useMediaQuery } from '@mui/material';
 import Skeleton from '@mui/material/Skeleton';
 
@@ -77,9 +79,16 @@ import { gridSpacing } from 'store/constant';
 import { listLicenseApps } from 'api/catalog-admin';
 import { lionTvApi } from 'utils/api';
 
+const UNKNOWN_RANDOM_APP = 'UNKNOWN_RANDOM';
+
+function isRandomLicenseApp(value) {
+  return String(value || '').trim().toUpperCase() === UNKNOWN_RANDOM_APP;
+}
+
 function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onHistory, onDelete, t }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const supportsRemoteActions = !isRandomLicenseApp(row?.app);
   return (
     <>
       <IconButton
@@ -119,24 +128,28 @@ function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onHi
           <SwapHorizIcon fontSize="small" style={{ marginRight: 8, color: '#6d4c41' }} />
           {t('licenses.actions.transfer', 'Transfer')}
         </MenuItem>
-        <MenuItem
-          onClick={() => {
-            setAnchorEl(null);
-            onServer?.(row);
-          }}
-        >
-          <AppsIcon fontSize="small" style={{ marginRight: 8, color: '#7b1fa2' }} />
-          {t('licenses.actions.server', 'Change server')}
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            setAnchorEl(null);
-            onRemovePlaylists?.(row);
-          }}
-        >
-          <PlaylistRemoveIcon fontSize="small" style={{ marginRight: 8, color: '#fb8c00' }} />
-          {t('licenses.actions.removePlaylists', 'Remove all playlists')}
-        </MenuItem>
+        {supportsRemoteActions ? (
+          <MenuItem
+            onClick={() => {
+              setAnchorEl(null);
+              onServer?.(row);
+            }}
+          >
+            <AppsIcon fontSize="small" style={{ marginRight: 8, color: '#7b1fa2' }} />
+            {t('licenses.actions.server', 'Change server')}
+          </MenuItem>
+        ) : null}
+        {supportsRemoteActions ? (
+          <MenuItem
+            onClick={() => {
+              setAnchorEl(null);
+              onRemovePlaylists?.(row);
+            }}
+          >
+            <PlaylistRemoveIcon fontSize="small" style={{ marginRight: 8, color: '#fb8c00' }} />
+            {t('licenses.actions.removePlaylists', 'Remove all playlists')}
+          </MenuItem>
+        ) : null}
         <MenuItem
           onClick={() => {
             setAnchorEl(null);
@@ -203,7 +216,8 @@ const LEGACY_LICENSE_APP_LABELS = Object.freeze({
   SMART_ONE: 'Smart One',
   IBO_PRO: 'IboPro Player',
   BOB_PLAYER: 'Bob Player',
-  NINEXTREAM: '9xtream4k'
+  NINEXTREAM: '9xtream4k',
+  UNKNOWN_RANDOM: 'Unknown / external app'
 });
 
 function normalizeLicenseApp(item = {}) {
@@ -412,6 +426,7 @@ export default function LicensesLionTv() {
 
   const [form, setForm] = useState({
     licenseId: null,
+    randomLicense: false,
     macAddress: '',
     name: '',
     deviceKey: '',
@@ -664,9 +679,12 @@ export default function LicensesLionTv() {
   const getLicenseAppLabel = useCallback(
     (value) => {
       if (!value) return '-';
+      if (isRandomLicenseApp(value)) {
+        return t('licenses.form.randomAppLabel', 'Unknown / external app');
+      }
       return licenseAppLabelMap.get(value) || LEGACY_LICENSE_APP_LABELS[value] || value;
     },
-    [licenseAppLabelMap]
+    [licenseAppLabelMap, t]
   );
 
   const activeLicenseAppOptions = useMemo(
@@ -680,8 +698,8 @@ export default function LicensesLionTv() {
   const defaultLicenseApp = activeLicenseAppOptions[0]?.value ?? '';
 
   const formHasLegacyApp = useMemo(
-    () => Boolean(form.licenseId && form.app && !activeLicenseAppOptions.some((option) => option.value === form.app)),
-    [activeLicenseAppOptions, form.app, form.licenseId]
+    () => Boolean(form.licenseId && form.app && !form.randomLicense && !activeLicenseAppOptions.some((option) => option.value === form.app)),
+    [activeLicenseAppOptions, form.app, form.licenseId, form.randomLicense]
   );
 
   const formLicenseAppOptions = useMemo(() => {
@@ -745,6 +763,7 @@ export default function LicensesLionTv() {
   const resetForm = useCallback(() =>
     setForm({
       licenseId: null,
+      randomLicense: false,
       macAddress: '',
       name: '',
       deviceKey: '',
@@ -767,7 +786,16 @@ export default function LicensesLionTv() {
   }, [defaultLicenseApp, form.app, form.licenseId, openModal]);
 
   const handleFormChange = (field) => (e) => {
-    const value = e.target.value;
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    if (field === 'randomLicense') {
+      setForm((prev) => ({
+        ...prev,
+        randomLicense: Boolean(value),
+        app: value ? UNKNOWN_RANDOM_APP : isRandomLicenseApp(prev.app) ? defaultLicenseApp : prev.app,
+        macAddress: value ? '' : isRandomLicenseApp(prev.app) ? '' : prev.macAddress
+      }));
+      return;
+    }
     if (field === 'macAddress') {
       setForm((prev) => ({ ...prev, macAddress: maskMacAddressInput(value) }));
       return;
@@ -795,6 +823,7 @@ export default function LicensesLionTv() {
   const handleEdit = (row) => {
     setForm({
       licenseId: row.licenseId,
+      randomLicense: isRandomLicenseApp(row.app),
       macAddress: maskMacAddressInput(row.macAddress),
       name: row.name,
       deviceKey: row.deviceKey || '',
@@ -814,16 +843,16 @@ export default function LicensesLionTv() {
   const handleDelete = (row) => setOpenDelete({ open: true, row });
 
   const handleSave = async () => {
-    if (!form.licenseId && !activeLicenseAppOptions.length) {
+    if (!form.randomLicense && !form.licenseId && !activeLicenseAppOptions.length) {
       enqueueSnackbar(t('licenses.messages.noActiveApps', 'No active apps available in the catalog.'), { variant: 'warning' });
       return;
     }
-    if (!form.macAddress || !form.name || !form.customerId || !form.status || !form.app || !form.licensePeriod || !form.typeLicense) {
+    if (!form.name || !form.customerId || !form.status || !form.licensePeriod || !form.typeLicense || (!form.randomLicense && (!form.macAddress || !form.app))) {
       enqueueSnackbar(t('licenses.messages.required'), { variant: 'warning' });
       return;
     }
     const normalizedMacAddress = maskMacAddressInput(form.macAddress);
-    if (!isValidMacAddress(normalizedMacAddress)) {
+    if (!form.randomLicense && !isValidMacAddress(normalizedMacAddress)) {
       enqueueSnackbar(t('licenses.messages.invalidMac', 'Invalid MAC format. Use aa:bb:cc:dd:ee:ff.'), { variant: 'warning' });
       return;
     }
@@ -835,13 +864,14 @@ export default function LicensesLionTv() {
     };
 
     const payload = {
-      macAddress: normalizedMacAddress,
+      randomLicense: Boolean(form.randomLicense),
+      macAddress: form.randomLicense ? null : normalizedMacAddress,
       name: form.name,
       deviceKey: form.deviceKey?.trim() || null,
       customerId: Number(form.customerId),
       subscriptionId: form.subscriptionId ? Number(form.subscriptionId) : null,
       status: form.status,
-      app: form.app,
+      app: form.randomLicense ? UNKNOWN_RANDOM_APP : form.app,
       price: form.price ? Number(form.price) : 0,
       isPaid: Boolean(form.isPaid),
       expireAt: normalizeExpireAt(form.expireAt),
@@ -1425,8 +1455,8 @@ export default function LicensesLionTv() {
                           icon={<AppsIcon fontSize="small" />}
                           label={getLicenseAppLabel(row.app)}
                           sx={(theme) => ({
-                            bgcolor: theme.palette.info.lighter,
-                            color: theme.palette.info.darker,
+                            bgcolor: isRandomLicenseApp(row.app) ? theme.palette.warning.lighter : theme.palette.info.lighter,
+                            color: isRandomLicenseApp(row.app) ? theme.palette.warning.darker : theme.palette.info.darker,
                             fontWeight: 600
                           })}
                         />
@@ -1593,18 +1623,47 @@ export default function LicensesLionTv() {
 
           <Stack spacing={2} sx={{ position: 'relative', zIndex: 1 }}>
             <SectionCard title={t('licenses.form.identity', 'Identity')} helper={t('licenses.form.identityHelper', 'Mac, name and owner')}>
+              <Box
+                sx={(theme) => ({
+                  mb: 2,
+                  p: 1.5,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: form.randomLicense ? theme.palette.warning.light : theme.palette.divider,
+                  bgcolor: form.randomLicense ? theme.palette.warning.lighter : theme.palette.background.paper
+                })}
+              >
+                <Stack spacing={0.5}>
+                  <FormControlLabel
+                    control={<Switch checked={Boolean(form.randomLicense)} onChange={handleFormChange('randomLicense')} color="warning" />}
+                    label={t('licenses.form.randomLicense', 'Unknown / external app')}
+                    sx={{ m: 0, '& .MuiFormControlLabel-label': { fontWeight: 700 } }}
+                  />
+                  <Typography variant="caption" color="text.secondary">
+                    {t(
+                      'licenses.form.randomLicenseHelper',
+                      'Use this when the customer uses their own app and you only need to keep the license slot occupied.'
+                    )}
+                  </Typography>
+                </Stack>
+              </Box>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={3}>
                   <TextField
-                    required
+                    required={!form.randomLicense}
                     label={t('licenses.form.mac', 'Mac Address')}
                     value={form.macAddress}
                     onChange={handleFormChange('macAddress')}
                     placeholder={t('licenses.form.macPlaceholder', 'aa:bb:cc:dd:ee:ff')}
-                    helperText={t('licenses.form.macHelper', 'Format: aa:bb:cc:dd:ee:ff')}
+                    helperText={
+                      form.randomLicense
+                        ? t('licenses.form.randomMacHelper', 'The system will generate a synthetic MAC to reserve this license.')
+                        : t('licenses.form.macHelper', 'Format: aa:bb:cc:dd:ee:ff')
+                    }
                     fullWidth
                     sx={fieldSx}
                     inputProps={{ maxLength: 17 }}
+                    disabled={form.randomLicense}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -1647,7 +1706,11 @@ export default function LicensesLionTv() {
                         </InputAdornment>
                       )
                     }}
-                    helperText={t('licenses.form.deviceKeyHelper', 'Optional key for this device')}
+                    helperText={
+                      form.randomLicense
+                        ? t('licenses.form.randomDeviceKeyHelper', 'Optional note or external identifier. If empty, the system creates one.')
+                        : t('licenses.form.deviceKeyHelper', 'Optional key for this device')
+                    }
                   />
                 </Grid>
 
@@ -1764,39 +1827,62 @@ export default function LicensesLionTv() {
                 </Grid>
 
                 <Grid item xs={12} sm={3}>
-                  <FormControl fullWidth required sx={fieldSx} disabled={licenseAppsLoading || (!activeLicenseAppOptions.length && !formHasLegacyApp)}>
-                    <InputLabel>{t('licenses.form.app', 'App')}</InputLabel>
-                    <Select
-                      value={form.app}
-                      label={t('licenses.form.app', 'App')}
-                      onChange={handleFormChange('app')}
-                      startAdornment={
-                        <InputAdornment position="start">
-                          <AppsIcon fontSize="small" color="primary" />
-                        </InputAdornment>
-                      }
-                    >
-                      {!formHasLegacyApp ? (
-                        <MenuItem value="">
-                          <em>{t('licenses.form.select', 'Select')}</em>
-                        </MenuItem>
-                      ) : null}
-                      {formLicenseAppOptions.map((option) => (
-                        <MenuItem key={option.value} value={option.value}>
-                          {option.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    <FormHelperText>
-                      {licenseAppsLoading
-                        ? t('licenses.form.loadingApps', 'Loading apps...')
-                        : !activeLicenseAppOptions.length && !formHasLegacyApp
-                          ? t('licenses.form.appEmpty', 'No active apps available. Configure the catalog first.')
-                          : formHasLegacyApp
-                            ? t('licenses.form.appLegacyHelper', 'This license uses an inactive app from the catalog. Choose an active app to replace it.')
-                            : t('licenses.form.appHelper', 'Associated application')}
-                    </FormHelperText>
-                  </FormControl>
+                  {form.randomLicense ? (
+                    <FormControl fullWidth sx={fieldSx}>
+                      <TextField
+                        label={t('licenses.form.app', 'App')}
+                        value={t('licenses.form.randomAppLabel', 'Unknown / external app')}
+                        fullWidth
+                        disabled
+                        sx={fieldSx}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <AppsIcon fontSize="small" color="warning" />
+                            </InputAdornment>
+                          )
+                        }}
+                        helperText={t(
+                          'licenses.form.randomAppHelper',
+                          'Remote playlist actions are disabled because this record only reserves the occupied slot.'
+                        )}
+                      />
+                    </FormControl>
+                  ) : (
+                    <FormControl fullWidth required sx={fieldSx} disabled={licenseAppsLoading || (!activeLicenseAppOptions.length && !formHasLegacyApp)}>
+                      <InputLabel>{t('licenses.form.app', 'App')}</InputLabel>
+                      <Select
+                        value={form.app}
+                        label={t('licenses.form.app', 'App')}
+                        onChange={handleFormChange('app')}
+                        startAdornment={
+                          <InputAdornment position="start">
+                            <AppsIcon fontSize="small" color="primary" />
+                          </InputAdornment>
+                        }
+                      >
+                        {!formHasLegacyApp ? (
+                          <MenuItem value="">
+                            <em>{t('licenses.form.select', 'Select')}</em>
+                          </MenuItem>
+                        ) : null}
+                        {formLicenseAppOptions.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      <FormHelperText>
+                        {licenseAppsLoading
+                          ? t('licenses.form.loadingApps', 'Loading apps...')
+                          : !activeLicenseAppOptions.length && !formHasLegacyApp
+                            ? t('licenses.form.appEmpty', 'No active apps available. Configure the catalog first.')
+                            : formHasLegacyApp
+                              ? t('licenses.form.appLegacyHelper', 'This license uses an inactive app from the catalog. Choose an active app to replace it.')
+                              : t('licenses.form.appHelper', 'Associated application')}
+                      </FormHelperText>
+                    </FormControl>
+                  )}
                 </Grid>
 
                 <Grid item xs={12} sm={3}>
