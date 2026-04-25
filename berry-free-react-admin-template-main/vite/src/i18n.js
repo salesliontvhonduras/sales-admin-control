@@ -719,6 +719,7 @@ const resources = {
           atRiskOnly: 'At risk',
           renewalDay: 'Renewal day',
           renewalDayAll: 'All days',
+          recommendedMoves: 'Recommended moves',
           visible: 'Visible: {{count}}',
           hostsVisible: 'Hosts: {{count}}',
           sharedVisible: 'Shared: {{count}}',
@@ -726,6 +727,7 @@ const resources = {
           blockedVisible: 'Blocked: {{count}}',
           criticalVisible: 'Critical hosts: {{count}}',
           overdueVisible: 'Overdue hosts: {{count}}',
+          recommendedVisible: 'Recommended moves: {{count}}',
           reset: 'Reset filters',
           blockedHint:
             'There are blocked subscriptions in this view. Open diagnostics to confirm if the cause is inactive status, minimum term or no available capacity.',
@@ -747,6 +749,10 @@ const resources = {
             all: 'All',
             yes: 'Yes',
             no: 'No'
+          },
+          recommendationOptions: {
+            all: 'All',
+            yes: 'Recommended only'
           }
         },
         sections: {
@@ -788,6 +794,7 @@ const resources = {
         bucket: {
           hostCount: 'Hosts: {{count}}',
           sharedCount: 'Shared: {{count}}',
+          recommendedCount: 'Recommended: {{count}}',
           nearestDate: 'Nearest host renewal: {{date}}',
           nearestDateUnknown: 'Hosts without renewal date in this bucket.',
           overdueAlert: 'This renewal bucket already has overdue hosts affecting shared subscriptions.',
@@ -830,7 +837,44 @@ const resources = {
           roleHost: 'Host',
           roleShared: 'Shared',
           roleCurrent: 'Role mode: {{role}}',
-          roleHelp: 'Choose who should behave as host inside this shared line. Auto keeps the system decision.'
+          roleHelp: 'Choose who should behave as host inside this shared line. Auto keeps the system decision.',
+          moveToDay: 'Move to day {{day}}',
+          moving: 'Moving...',
+          confirmMove: 'Move beneficiary'
+        },
+        move: {
+          title: 'Move recommendation',
+          priority: {
+            urgent: 'Urgent move',
+            review: 'Review move',
+            none: 'No move'
+          },
+          reason: {
+            recommended: 'Recommended destination ready.',
+            stableHost: 'Current host is stable for now.',
+            noCapacity: 'No compatible destination has enough capacity.',
+            noCompatibleHost: 'No compatible destination was found.',
+            none: 'No move recommendation yet.'
+          },
+          hostAlert: '{{count}} beneficiary(ies) should be moved from this host to a safer renewal day.',
+          recommendedBadge: 'Recommended move',
+          currentDay: 'Current host day',
+          recommendedDay: 'Recommended day',
+          requiredScreens: 'Screens to move',
+          recommendedHost: 'Host #{{id}}',
+          recommendedLine: 'Line: {{line}}',
+          recommendedLinePlus: 'Plus: {{value}}',
+          recommendedCustomer: 'Customer: {{customer}}',
+          confirmTitle: 'Move beneficiary to a safer host',
+          confirmSubtitle: 'Subscription #{{subscriptionId}}',
+          confirmSubtitleFallback: 'Confirm the recommended move',
+          confirmBody: 'This will update the subscription line to the recommended host account and keep the destination pinned as HOST.',
+          currentAssignment: 'Current assignment',
+          currentHost: 'Host #{{id}}',
+          currentLine: 'Line: {{line}}',
+          currentDayValue: 'Day: {{day}}',
+          destinationAssignment: 'Recommended destination',
+          confirmWarning: 'This action changes lineId/linePlusId of the beneficiary subscription and immediately affects how the shared cluster is organized.'
         },
         diagnostics: {
           title: 'Subscription diagnostics',
@@ -868,10 +912,12 @@ const resources = {
         errors: {
           loadError: 'Could not load shared overview.',
           loadDiagnostics: 'Could not load subscription diagnostics.',
-          updateRole: 'Could not update sharing role preference.'
+          updateRole: 'Could not update sharing role preference.',
+          moveSubscription: 'Could not move the shared subscription.'
         },
         messages: {
-          roleUpdated: 'Sharing role preference updated.'
+          roleUpdated: 'Sharing role preference updated.',
+          moveCompleted: 'Subscription #{{sourceId}} moved to host #{{destinationId}}.'
         }
       },
       licenses: {
@@ -4155,6 +4201,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           atRiskOnly: 'En riesgo',
           renewalDay: 'Día de renovación',
           renewalDayAll: 'Todos los días',
+          recommendedMoves: 'Movimientos recomendados',
           visible: 'Visibles: {{count}}',
           hostsVisible: 'Hosts: {{count}}',
           sharedVisible: 'Shared: {{count}}',
@@ -4162,6 +4209,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           blockedVisible: 'Bloqueadas: {{count}}',
           criticalVisible: 'Hosts críticos: {{count}}',
           overdueVisible: 'Hosts vencidos: {{count}}',
+          recommendedVisible: 'Movimientos recomendados: {{count}}',
           reset: 'Resetear filtros',
           blockedHint:
             'Hay suscripciones bloqueadas en esta vista. Abre el diagnóstico para confirmar si la causa es estado inactivo, duración mínima o falta de capacidad.',
@@ -4183,6 +4231,10 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             all: 'Todos',
             yes: 'Sí',
             no: 'No'
+          },
+          recommendationOptions: {
+            all: 'Todos',
+            yes: 'Solo recomendados'
           }
         },
         sections: {
@@ -4225,6 +4277,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         bucket: {
           hostCount: 'Hosts: {{count}}',
           sharedCount: 'Shared: {{count}}',
+          recommendedCount: 'Recomendados: {{count}}',
           nearestDate: 'Renovación host más próxima: {{date}}',
           nearestDateUnknown: 'Hosts sin fecha de renovación en este bucket.',
           overdueAlert: 'Este bucket de renovación ya tiene hosts vencidos que afectan suscripciones shared.',
@@ -4267,7 +4320,44 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           roleHost: 'Host',
           roleShared: 'Shared',
           roleCurrent: 'Modo de rol: {{role}}',
-          roleHelp: 'Elige qué suscripción debe comportarse como host dentro de esta línea compartida. Auto mantiene la decisión del sistema.'
+          roleHelp: 'Elige qué suscripción debe comportarse como host dentro de esta línea compartida. Auto mantiene la decisión del sistema.',
+          moveToDay: 'Mover al día {{day}}',
+          moving: 'Moviendo...',
+          confirmMove: 'Mover beneficiario'
+        },
+        move: {
+          title: 'Recomendación de movimiento',
+          priority: {
+            urgent: 'Movimiento urgente',
+            review: 'Revisar movimiento',
+            none: 'Sin movimiento'
+          },
+          reason: {
+            recommended: 'Ya existe un destino recomendado.',
+            stableHost: 'El host actual está estable por ahora.',
+            noCapacity: 'Ningún destino compatible tiene capacidad suficiente.',
+            noCompatibleHost: 'No se encontró un destino compatible.',
+            none: 'Todavía no hay una recomendación de movimiento.'
+          },
+          hostAlert: '{{count}} beneficiario(s) deberían moverse de este host a un día de renovación más seguro.',
+          recommendedBadge: 'Movimiento recomendado',
+          currentDay: 'Día actual del host',
+          recommendedDay: 'Día recomendado',
+          requiredScreens: 'Pantallas a mover',
+          recommendedHost: 'Host #{{id}}',
+          recommendedLine: 'Línea: {{line}}',
+          recommendedLinePlus: 'Plus: {{value}}',
+          recommendedCustomer: 'Cliente: {{customer}}',
+          confirmTitle: 'Mover beneficiario a un host más seguro',
+          confirmSubtitle: 'Suscripción #{{subscriptionId}}',
+          confirmSubtitleFallback: 'Confirma el movimiento recomendado',
+          confirmBody: 'Esto actualizará la línea de la suscripción al host recomendado y dejará el destino fijado como HOST.',
+          currentAssignment: 'Asignación actual',
+          currentHost: 'Host #{{id}}',
+          currentLine: 'Línea: {{line}}',
+          currentDayValue: 'Día: {{day}}',
+          destinationAssignment: 'Destino recomendado',
+          confirmWarning: 'Esta acción cambia lineId/linePlusId de la suscripción beneficiaria y afecta de inmediato cómo queda organizado el clúster compartido.'
         },
         diagnostics: {
           title: 'Diagnóstico de suscripción',
@@ -4307,10 +4397,12 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         errors: {
           loadError: 'No se pudo cargar el overview de suscripciones compartidas.',
           loadDiagnostics: 'No se pudo cargar el diagnóstico de la suscripción.',
-          updateRole: 'No se pudo actualizar la preferencia de rol.'
+          updateRole: 'No se pudo actualizar la preferencia de rol.',
+          moveSubscription: 'No se pudo mover la suscripción shared.'
         },
         messages: {
-          roleUpdated: 'Preferencia de rol actualizada.'
+          roleUpdated: 'Preferencia de rol actualizada.',
+          moveCompleted: 'La suscripción #{{sourceId}} se movió al host #{{destinationId}}.'
         }
       },
       licenses: {

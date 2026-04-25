@@ -24,6 +24,7 @@ import Skeleton from '@mui/material/Skeleton';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
+import DialogContentText from '@mui/material/DialogContentText';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material';
 
@@ -76,7 +77,23 @@ function normalizeRow(item = {}) {
     hostRenewalDayOfMonth: item.hostRenewalDayOfMonth != null ? Number(item.hostRenewalDayOfMonth) : null,
     hostDaysToRenewal: item.hostDaysToRenewal != null ? Number(item.hostDaysToRenewal) : null,
     hostRiskBucket: String(item.hostRiskBucket || 'UNKNOWN').toUpperCase(),
-    hostAtRisk: Boolean(item.hostAtRisk)
+    hostAtRisk: Boolean(item.hostAtRisk),
+    requiredScreensToMove: item.requiredScreensToMove != null ? Number(item.requiredScreensToMove) : null,
+    moveRecommendationAvailable: Boolean(item.moveRecommendationAvailable),
+    moveRecommendationPriority: String(item.moveRecommendationPriority || 'NONE').toUpperCase(),
+    moveRecommendationReason: String(item.moveRecommendationReason || '').toUpperCase(),
+    recommendedDestinationSubscriptionId: item.recommendedDestinationSubscriptionId ?? null,
+    recommendedDestinationCustomerId: item.recommendedDestinationCustomerId ?? null,
+    recommendedDestinationCustomerName: item.recommendedDestinationCustomerName ?? '-',
+    recommendedDestinationLineId: item.recommendedDestinationLineId ?? null,
+    recommendedDestinationLineName: item.recommendedDestinationLineName ?? '',
+    recommendedDestinationLinePlusId: item.recommendedDestinationLinePlusId ?? null,
+    recommendedDestinationHostRenewalDate: item.recommendedDestinationHostRenewalDate ?? null,
+    recommendedDestinationHostRenewalDayOfMonth:
+      item.recommendedDestinationHostRenewalDayOfMonth != null ? Number(item.recommendedDestinationHostRenewalDayOfMonth) : null,
+    recommendedDestinationHostDaysToRenewal:
+      item.recommendedDestinationHostDaysToRenewal != null ? Number(item.recommendedDestinationHostDaysToRenewal) : null,
+    recommendedDestinationHostRiskBucket: String(item.recommendedDestinationHostRiskBucket || 'UNKNOWN').toUpperCase()
   };
 }
 
@@ -110,7 +127,23 @@ function normalizeDiagnostics(item = {}) {
     hostRenewalDayOfMonth: item.hostRenewalDayOfMonth != null ? Number(item.hostRenewalDayOfMonth) : null,
     hostDaysToRenewal: item.hostDaysToRenewal != null ? Number(item.hostDaysToRenewal) : null,
     hostRiskBucket: String(item.hostRiskBucket || 'UNKNOWN').toUpperCase(),
-    hostAtRisk: Boolean(item.hostAtRisk)
+    hostAtRisk: Boolean(item.hostAtRisk),
+    requiredScreensToMove: item.requiredScreensToMove != null ? Number(item.requiredScreensToMove) : null,
+    moveRecommendationAvailable: Boolean(item.moveRecommendationAvailable),
+    moveRecommendationPriority: String(item.moveRecommendationPriority || 'NONE').toUpperCase(),
+    moveRecommendationReason: String(item.moveRecommendationReason || '').toUpperCase(),
+    recommendedDestinationSubscriptionId: item.recommendedDestinationSubscriptionId ?? null,
+    recommendedDestinationCustomerId: item.recommendedDestinationCustomerId ?? null,
+    recommendedDestinationCustomerName: item.recommendedDestinationCustomerName ?? '-',
+    recommendedDestinationLineId: item.recommendedDestinationLineId ?? null,
+    recommendedDestinationLineName: item.recommendedDestinationLineName ?? '',
+    recommendedDestinationLinePlusId: item.recommendedDestinationLinePlusId ?? null,
+    recommendedDestinationHostRenewalDate: item.recommendedDestinationHostRenewalDate ?? null,
+    recommendedDestinationHostRenewalDayOfMonth:
+      item.recommendedDestinationHostRenewalDayOfMonth != null ? Number(item.recommendedDestinationHostRenewalDayOfMonth) : null,
+    recommendedDestinationHostDaysToRenewal:
+      item.recommendedDestinationHostDaysToRenewal != null ? Number(item.recommendedDestinationHostDaysToRenewal) : null,
+    recommendedDestinationHostRiskBucket: String(item.recommendedDestinationHostRiskBucket || 'UNKNOWN').toUpperCase()
   };
 }
 
@@ -283,6 +316,37 @@ function RiskChip({ bucket, t }) {
   return <Chip size="small" color={meta.color} variant="outlined" label={meta.label} sx={{ fontWeight: 700 }} />;
 }
 
+function movePriorityMeta(priority, t) {
+  switch (String(priority || '').toUpperCase()) {
+    case 'URGENT':
+      return { label: t('subscriptionSharing.move.priority.urgent', 'Urgent move'), color: 'error' };
+    case 'REVIEW':
+      return { label: t('subscriptionSharing.move.priority.review', 'Review move'), color: 'warning' };
+    default:
+      return { label: t('subscriptionSharing.move.priority.none', 'No move'), color: 'default' };
+  }
+}
+
+function moveReasonLabel(reason, t) {
+  switch (String(reason || '').toUpperCase()) {
+    case 'RECOMMENDED':
+      return t('subscriptionSharing.move.reason.recommended', 'Recommended destination ready.');
+    case 'STABLE_HOST':
+      return t('subscriptionSharing.move.reason.stableHost', 'Current host is stable for now.');
+    case 'NO_CAPACITY':
+      return t('subscriptionSharing.move.reason.noCapacity', 'No compatible destination has enough capacity.');
+    case 'NO_COMPATIBLE_HOST':
+      return t('subscriptionSharing.move.reason.noCompatibleHost', 'No compatible destination was found.');
+    default:
+      return t('subscriptionSharing.move.reason.none', 'No move recommendation yet.');
+  }
+}
+
+function MovePriorityChip({ priority, t }) {
+  const meta = movePriorityMeta(priority, t);
+  return <Chip size="small" color={meta.color} variant="outlined" label={meta.label} sx={{ fontWeight: 700 }} />;
+}
+
 function RolePreferenceSelector({ value, loading, onChange, t }) {
   return (
     <FormControl size="small" sx={{ minWidth: 140 }}>
@@ -400,6 +464,7 @@ export default function SubscriptionSharingLionTv() {
     )
   );
   const [renewalDayFilter, setRenewalDayFilter] = useState(() => parseRenewalDayFilter(searchParams.get('hostRenewalDay')));
+  const [recommendationFilter, setRecommendationFilter] = useState('ALL');
   const [rows, setRows] = useState([]);
   const [kpi, setKpi] = useState({
     totalSubscriptions: 0,
@@ -416,6 +481,8 @@ export default function SubscriptionSharingLionTv() {
   const [diagnosticsLoading, setDiagnosticsLoading] = useState(false);
   const [diagnosticsData, setDiagnosticsData] = useState(null);
   const [roleSavingBySubscriptionId, setRoleSavingBySubscriptionId] = useState({});
+  const [moveDialogRow, setMoveDialogRow] = useState(null);
+  const [moveSaving, setMoveSaving] = useState(false);
 
   const loadOverview = useCallback(async () => {
     if (!accessToken) return;
@@ -544,6 +611,41 @@ export default function SubscriptionSharingLionTv() {
     [accessToken, diagnosticsData?.subscriptionId, diagnosticsOpen, enqueueSnackbar, headers, loadDiagnostics, loadOverview, t]
   );
 
+  const handleMoveSubscription = useCallback(async () => {
+    if (!moveDialogRow?.subscriptionId || !moveDialogRow?.recommendedDestinationSubscriptionId || !accessToken) return;
+    setMoveSaving(true);
+    try {
+      const res = await lionTvApi.post(
+        `/subscription-sharing/v1/subscriptions/${moveDialogRow.subscriptionId}/move`,
+        { destinationSubscriptionId: moveDialogRow.recommendedDestinationSubscriptionId },
+        { headers, skipAuthRedirect: true }
+      );
+
+      const payload = res?.data?.data ?? {};
+      enqueueSnackbar(
+        t('subscriptionSharing.messages.moveCompleted', {
+          sourceId: moveDialogRow.subscriptionId,
+          destinationId: payload.destinationSubscriptionId || moveDialogRow.recommendedDestinationSubscriptionId,
+          defaultValue: 'Subscription #{{sourceId}} moved to host #{{destinationId}}.'
+        }),
+        { variant: 'success' }
+      );
+
+      setMoveDialogRow(null);
+      await loadOverview();
+      if (diagnosticsOpen && diagnosticsData?.subscriptionId === moveDialogRow.subscriptionId) {
+        await loadDiagnostics(moveDialogRow.subscriptionId);
+      }
+    } catch (err) {
+      enqueueSnackbar(
+        err?.response?.data?.message || t('subscriptionSharing.errors.moveSubscription', 'Could not move the shared subscription.'),
+        { variant: 'error' }
+      );
+    } finally {
+      setMoveSaving(false);
+    }
+  }, [accessToken, diagnosticsData?.subscriptionId, diagnosticsOpen, enqueueSnackbar, headers, loadDiagnostics, loadOverview, moveDialogRow, t]);
+
   const filteredRows = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return rows;
@@ -565,59 +667,80 @@ export default function SubscriptionSharingLionTv() {
   }, [rows, search]);
 
   const hostRows = useMemo(() => filteredRows.filter((row) => row.sharingRole === 'HOST'), [filteredRows]);
-  const eligibleNotSharedRows = useMemo(
-    () => filteredRows.filter((row) => row.eligible && row.sharingRole === 'NONE'),
-    [filteredRows]
-  );
-  const notEligibleRows = useMemo(
-    () => filteredRows.filter((row) => !row.eligible && row.sharingRole === 'NONE'),
-    [filteredRows]
-  );
+  const eligibleNotSharedRows = useMemo(() => (recommendationFilter === 'YES' ? [] : filteredRows.filter((row) => row.eligible && row.sharingRole === 'NONE')), [filteredRows, recommendationFilter]);
+  const notEligibleRows = useMemo(() => (recommendationFilter === 'YES' ? [] : filteredRows.filter((row) => !row.eligible && row.sharingRole === 'NONE')), [filteredRows, recommendationFilter]);
   const filteredSummary = useMemo(
-    () => ({
-      total: filteredRows.length,
-      hosts: hostRows.length,
-      beneficiaries: filteredRows.filter((row) => row.sharingRole === 'SHARED').length,
-      eligibleStandalone: eligibleNotSharedRows.length,
-      blockedStandalone: notEligibleRows.length,
-      criticalHosts: hostRows.filter((row) => row.hostRiskBucket === 'OVERDUE' || row.hostRiskBucket === '0_7').length,
-      overdueHosts: hostRows.filter((row) => row.hostRiskBucket === 'OVERDUE').length
-    }),
-    [eligibleNotSharedRows.length, filteredRows, hostRows, notEligibleRows.length]
+    () => {
+      const visibleHostCount =
+        recommendationFilter === 'YES'
+          ? hostRows.filter((row) => (beneficiariesByHost[row.subscriptionId] || []).length > 0).length
+          : hostRows.length;
+      const visibleBeneficiaries =
+        recommendationFilter === 'YES'
+          ? Object.values(beneficiariesByHost).reduce((sum, items) => sum + items.length, 0)
+          : filteredRows.filter((row) => row.sharingRole === 'SHARED').length;
+
+      return {
+        total: recommendationFilter === 'YES' ? visibleHostCount + visibleBeneficiaries : filteredRows.length,
+        hosts: visibleHostCount,
+        beneficiaries: visibleBeneficiaries,
+        recommendedMoves: filteredRows.filter((row) => row.sharingRole === 'SHARED' && row.moveRecommendationAvailable).length,
+        eligibleStandalone: eligibleNotSharedRows.length,
+        blockedStandalone: notEligibleRows.length,
+        criticalHosts: recommendationFilter === 'YES'
+          ? hostRows.filter((row) => (beneficiariesByHost[row.subscriptionId] || []).length > 0 && (row.hostRiskBucket === 'OVERDUE' || row.hostRiskBucket === '0_7')).length
+          : hostRows.filter((row) => row.hostRiskBucket === 'OVERDUE' || row.hostRiskBucket === '0_7').length,
+        overdueHosts: recommendationFilter === 'YES'
+          ? hostRows.filter((row) => (beneficiariesByHost[row.subscriptionId] || []).length > 0 && row.hostRiskBucket === 'OVERDUE').length
+          : hostRows.filter((row) => row.hostRiskBucket === 'OVERDUE').length
+      };
+    },
+    [beneficiariesByHost, eligibleNotSharedRows.length, filteredRows, hostRows, notEligibleRows.length, recommendationFilter]
   );
 
   const beneficiariesByHost = useMemo(() => {
     const map = {};
     filteredRows.forEach((row) => {
       if (row.sharingRole !== 'SHARED') return;
+      if (recommendationFilter === 'YES' && !row.moveRecommendationAvailable) return;
       const hostId = row.sharedHostSubscriptionId;
       if (!hostId) return;
       if (!map[hostId]) map[hostId] = [];
       map[hostId].push(row);
     });
     return map;
-  }, [filteredRows]);
+  }, [filteredRows, recommendationFilter]);
 
   const hostDayBuckets = useMemo(() => {
     const groups = new Map();
 
     hostRows.forEach((host) => {
       const key = host.hostRenewalDayOfMonth != null ? String(host.hostRenewalDayOfMonth) : 'UNKNOWN';
-      const beneficiaries = beneficiariesByHost[host.subscriptionId] || [];
+      const beneficiaries = (beneficiariesByHost[host.subscriptionId] || []).slice().sort((left, right) => {
+        const leftPriority = left.moveRecommendationAvailable ? 0 : 1;
+        const rightPriority = right.moveRecommendationAvailable ? 0 : 1;
+        if (leftPriority !== rightPriority) return leftPriority - rightPriority;
+        return String(left.customerName || '').localeCompare(String(right.customerName || ''));
+      });
+      if (recommendationFilter === 'YES' && beneficiaries.length === 0) {
+        return;
+      }
       const current = groups.get(key) || {
         key,
         day: host.hostRenewalDayOfMonth,
         hosts: [],
         hostCount: 0,
         sharedCount: 0,
+        recommendedMoves: 0,
         nearestDate: null,
         hasCritical: false,
         hasOverdue: false
       };
 
-      current.hosts.push(host);
+      current.hosts.push({ ...host, beneficiaries });
       current.hostCount += 1;
       current.sharedCount += beneficiaries.length;
+      current.recommendedMoves += beneficiaries.filter((item) => item.moveRecommendationAvailable).length;
       current.hasCritical = current.hasCritical || Boolean(host.hostAtRisk);
       current.hasOverdue = current.hasOverdue || host.hostRiskBucket === 'OVERDUE';
       if (host.hostRenewalDate && (!current.nearestDate || new Date(host.hostRenewalDate) < new Date(current.nearestDate))) {
@@ -633,7 +756,7 @@ export default function SubscriptionSharingLionTv() {
       if (b.day == null) return -1;
       return a.day - b.day;
     });
-  }, [beneficiariesByHost, hostRows]);
+  }, [beneficiariesByHost, hostRows, recommendationFilter]);
 
   const sectionCardSx = {
     borderRadius: 3,
@@ -827,6 +950,17 @@ export default function SubscriptionSharingLionTv() {
                 ))}
               </Select>
             </FormControl>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 210 } }}>
+              <InputLabel>{t('subscriptionSharing.filters.recommendedMoves', 'Recommended moves')}</InputLabel>
+              <Select
+                value={recommendationFilter}
+                label={t('subscriptionSharing.filters.recommendedMoves', 'Recommended moves')}
+                onChange={(e) => setRecommendationFilter(e.target.value)}
+              >
+                <MenuItem value="ALL">{t('subscriptionSharing.filters.recommendationOptions.all', 'All')}</MenuItem>
+                <MenuItem value="YES">{t('subscriptionSharing.filters.recommendationOptions.yes', 'Recommended only')}</MenuItem>
+              </Select>
+            </FormControl>
           </Stack>
 
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'stretch', md: 'center' }} sx={{ mt: 1.5 }}>
@@ -880,6 +1014,16 @@ export default function SubscriptionSharingLionTv() {
                   defaultValue: 'Overdue hosts: {{count}}'
                 })}
               />
+              <Chip
+                size="small"
+                color={filteredSummary.recommendedMoves > 0 ? 'secondary' : 'default'}
+                variant="outlined"
+                icon={<LinkIcon />}
+                label={t('subscriptionSharing.filters.recommendedVisible', {
+                  count: filteredSummary.recommendedMoves,
+                  defaultValue: 'Recommended moves: {{count}}'
+                })}
+              />
             </Stack>
             <Box sx={{ flexGrow: 1 }} />
             <Button
@@ -892,6 +1036,7 @@ export default function SubscriptionSharingLionTv() {
                 setRiskBucketFilter('ALL');
                 setAtRiskFilter('ALL');
                 setRenewalDayFilter('ALL');
+                setRecommendationFilter('ALL');
               }}
               sx={{ textTransform: 'none', fontWeight: 700, alignSelf: { xs: 'flex-start', md: 'center' } }}
             >
@@ -972,6 +1117,15 @@ export default function SubscriptionSharingLionTv() {
                           color="info"
                           label={t('subscriptionSharing.bucket.sharedCount', { count: bucket.sharedCount, defaultValue: 'Shared: {{count}}' })}
                         />
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          color={bucket.recommendedMoves > 0 ? 'secondary' : 'default'}
+                          label={t('subscriptionSharing.bucket.recommendedCount', {
+                            count: bucket.recommendedMoves,
+                            defaultValue: 'Recommended: {{count}}'
+                          })}
+                        />
                         {bucket.hasOverdue ? <RiskChip bucket="OVERDUE" t={t} /> : bucket.hasCritical ? <RiskChip bucket="0_7" t={t} /> : null}
                       </Stack>
                       <Typography variant="body2" color="text.secondary">
@@ -994,7 +1148,8 @@ export default function SubscriptionSharingLionTv() {
 
                   <Stack spacing={1.25}>
                     {bucket.hosts.map((host) => {
-                      const beneficiaries = beneficiariesByHost[host.subscriptionId] || [];
+                      const beneficiaries = host.beneficiaries || [];
+                      const recommendedBeneficiaries = beneficiaries.filter((item) => item.moveRecommendationAvailable);
                       return (
                         <Card
                           key={`host-${host.subscriptionId}`}
@@ -1136,6 +1291,15 @@ export default function SubscriptionSharingLionTv() {
                               </Typography>
                             </Stack>
 
+                            {recommendedBeneficiaries.length > 0 ? (
+                              <Alert severity={host.hostRiskBucket === 'OVERDUE' ? 'error' : 'warning'}>
+                                {t('subscriptionSharing.move.hostAlert', {
+                                  count: recommendedBeneficiaries.length,
+                                  defaultValue: '{{count}} beneficiary(ies) should be moved from this host to a safer renewal day.'
+                                })}
+                              </Alert>
+                            ) : null}
+
                             {beneficiaries.length === 0 ? (
                               <Alert severity="warning">{t('subscriptionSharing.card.noBeneficiaries', 'No SHARED subscriptions linked to this host.')}</Alert>
                             ) : (
@@ -1170,6 +1334,7 @@ export default function SubscriptionSharingLionTv() {
                                             t={t}
                                           />
                                           <RiskChip bucket={item.hostRiskBucket} t={t} />
+                                          <MovePriorityChip priority={item.moveRecommendationPriority} t={t} />
                                           <StatusChip status={item.subscriptionStatus} t={t} />
                                         </Stack>
                                         <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
@@ -1189,7 +1354,99 @@ export default function SubscriptionSharingLionTv() {
                                             variant="outlined"
                                             label={`${t('subscriptionSharing.card.line', 'Line')}: ${formatLineDisplay(item.lineName, item.lineId)}`}
                                           />
+                                          {item.moveRecommendationAvailable ? (
+                                            <Chip
+                                              size="small"
+                                              color="secondary"
+                                              variant="outlined"
+                                              label={t('subscriptionSharing.move.recommendedBadge', 'Recommended move')}
+                                            />
+                                          ) : null}
                                         </Stack>
+                                        <Card
+                                          variant="outlined"
+                                          sx={(muiTheme) => ({
+                                            p: 1.1,
+                                            borderRadius: 2,
+                                            borderColor: item.moveRecommendationAvailable
+                                              ? withAlpha(muiTheme.palette.secondary.main, muiTheme.palette.mode === 'dark' ? 0.5 : 0.28)
+                                              : 'divider',
+                                            bgcolor: muiTheme.vars?.palette?.surface?.card || muiTheme.palette.background.paper
+                                          })}
+                                        >
+                                          <Stack spacing={0.8}>
+                                            <Stack direction="row" spacing={0.75} alignItems="center" useFlexGap flexWrap="wrap">
+                                              <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                                                {t('subscriptionSharing.move.title', 'Move recommendation')}
+                                              </Typography>
+                                              {item.moveRecommendationAvailable ? <RiskChip bucket={item.recommendedDestinationHostRiskBucket} t={t} /> : null}
+                                            </Stack>
+                                            <Typography variant="body2" color="text.secondary">
+                                              {moveReasonLabel(item.moveRecommendationReason, t)}
+                                            </Typography>
+                                            {item.moveRecommendationAvailable ? (
+                                              <Grid container spacing={1}>
+                                                <Grid item xs={6} md={4}>
+                                                  <MetricTile
+                                                    label={t('subscriptionSharing.move.currentDay', 'Current host day')}
+                                                    value={formatHostRenewalDay(item.hostRenewalDayOfMonth, t)}
+                                                    helper={formatHostDays(item.hostDaysToRenewal, t)}
+                                                    color={theme.palette.warning.main}
+                                                  />
+                                                </Grid>
+                                                <Grid item xs={6} md={4}>
+                                                  <MetricTile
+                                                    label={t('subscriptionSharing.move.recommendedDay', 'Recommended day')}
+                                                    value={formatHostRenewalDay(item.recommendedDestinationHostRenewalDayOfMonth, t)}
+                                                    helper={formatHostDays(item.recommendedDestinationHostDaysToRenewal, t)}
+                                                    color={theme.palette.success.main}
+                                                  />
+                                                </Grid>
+                                                <Grid item xs={12} md={4}>
+                                                  <MetricTile
+                                                    label={t('subscriptionSharing.move.requiredScreens', 'Screens to move')}
+                                                    value={String(item.requiredScreensToMove || 1)}
+                                                    helper={t('subscriptionSharing.move.recommendedHost', {
+                                                      id: item.recommendedDestinationSubscriptionId || '-',
+                                                      defaultValue: 'Host #{{id}}'
+                                                    })}
+                                                    color={theme.palette.secondary.main}
+                                                  />
+                                                </Grid>
+                                              </Grid>
+                                            ) : null}
+                                            {item.moveRecommendationAvailable ? (
+                                              <Stack direction={{ xs: 'column', md: 'row' }} spacing={0.75} useFlexGap flexWrap="wrap">
+                                                <Chip
+                                                  size="small"
+                                                  variant="outlined"
+                                                  label={t('subscriptionSharing.move.recommendedLine', {
+                                                    line: formatLineDisplay(item.recommendedDestinationLineName, item.recommendedDestinationLineId),
+                                                    defaultValue: 'Line: {{line}}'
+                                                  })}
+                                                />
+                                                {item.recommendedDestinationLinePlusId ? (
+                                                  <Chip
+                                                    size="small"
+                                                    variant="outlined"
+                                                    label={t('subscriptionSharing.move.recommendedLinePlus', {
+                                                      value: item.recommendedDestinationLinePlusId,
+                                                      defaultValue: 'Plus: {{value}}'
+                                                    })}
+                                                  />
+                                                ) : null}
+                                                <Chip
+                                                  size="small"
+                                                  variant="outlined"
+                                                  label={t('subscriptionSharing.move.recommendedCustomer', {
+                                                    customer: item.recommendedDestinationCustomerName || '-',
+                                                    defaultValue: 'Customer: {{customer}}'
+                                                  })}
+                                                />
+                                              </Stack>
+                                            ) : null}
+                                          </Stack>
+                                        </Card>
                                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
                                           <RolePreferenceSelector
                                             value={item.rolePreference}
@@ -1197,6 +1454,20 @@ export default function SubscriptionSharingLionTv() {
                                             onChange={(value) => handleRolePreferenceChange(item.subscriptionId, value)}
                                             t={t}
                                           />
+                                          {item.moveRecommendationAvailable ? (
+                                            <Button
+                                              size="small"
+                                              variant="contained"
+                                              color="secondary"
+                                              onClick={() => setMoveDialogRow(item)}
+                                              sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, alignSelf: 'flex-start' }}
+                                            >
+                                              {t('subscriptionSharing.actions.moveToDay', {
+                                                day: item.recommendedDestinationHostRenewalDayOfMonth || '-',
+                                                defaultValue: 'Move to day {{day}}'
+                                              })}
+                                            </Button>
+                                          ) : null}
                                           <Button
                                             size="small"
                                             variant="text"
@@ -1471,6 +1742,128 @@ export default function SubscriptionSharingLionTv() {
           </Stack>
         )}
       </MainCard>
+
+      <Dialog
+        open={Boolean(moveDialogRow)}
+        onClose={() => {
+          if (!moveSaving) {
+            setMoveDialogRow(null);
+          }
+        }}
+        fullWidth
+        maxWidth="sm"
+        fullScreen={isMobile}
+      >
+        <DialogTitleWithClose
+          onClose={() => {
+            if (!moveSaving) {
+              setMoveDialogRow(null);
+            }
+          }}
+        >
+          <Stack spacing={0.35}>
+            <Typography variant="h4">{t('subscriptionSharing.move.confirmTitle', 'Move beneficiary to a safer host')}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {moveDialogRow
+                ? t('subscriptionSharing.move.confirmSubtitle', {
+                    subscriptionId: moveDialogRow.subscriptionId,
+                    defaultValue: 'Subscription #{{subscriptionId}}'
+                  })
+                : t('subscriptionSharing.move.confirmSubtitleFallback', 'Confirm the recommended move')}
+            </Typography>
+          </Stack>
+        </DialogTitleWithClose>
+        <DialogContent dividers>
+          {!moveDialogRow ? null : (
+            <Stack spacing={1.5}>
+              <DialogContentText>
+                {t(
+                  'subscriptionSharing.move.confirmBody',
+                  'This will update the subscription line to the recommended host account and keep the destination pinned as HOST.'
+                )}
+              </DialogContentText>
+              <Grid container spacing={1.2}>
+                <Grid item xs={12} sm={6}>
+                  <Card sx={diagnosticsSurfaceSx}>
+                    <Typography variant="overline" color="text.secondary">
+                      {t('subscriptionSharing.move.currentAssignment', 'Current assignment')}
+                    </Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                      #{moveDialogRow.subscriptionId} · {moveDialogRow.customerName || '-'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('subscriptionSharing.move.currentHost', {
+                        id: moveDialogRow.sharedHostSubscriptionId || '-',
+                        defaultValue: 'Host #{{id}}'
+                      })}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('subscriptionSharing.move.currentLine', {
+                        line: formatLineDisplay(moveDialogRow.lineName, moveDialogRow.lineId),
+                        defaultValue: 'Line: {{line}}'
+                      })}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('subscriptionSharing.move.currentDayValue', {
+                        day: formatHostRenewalDay(moveDialogRow.hostRenewalDayOfMonth, t),
+                        defaultValue: 'Day: {{day}}'
+                      })}
+                    </Typography>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Card sx={diagnosticsSurfaceSx}>
+                    <Typography variant="overline" color="text.secondary">
+                      {t('subscriptionSharing.move.destinationAssignment', 'Recommended destination')}
+                    </Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                      {t('subscriptionSharing.move.recommendedHost', {
+                        id: moveDialogRow.recommendedDestinationSubscriptionId || '-',
+                        defaultValue: 'Host #{{id}}'
+                      })}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {moveDialogRow.recommendedDestinationCustomerName || '-'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('subscriptionSharing.move.recommendedLine', {
+                        line: formatLineDisplay(moveDialogRow.recommendedDestinationLineName, moveDialogRow.recommendedDestinationLineId),
+                        defaultValue: 'Line: {{line}}'
+                      })}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('subscriptionSharing.move.currentDayValue', {
+                        day: formatHostRenewalDay(moveDialogRow.recommendedDestinationHostRenewalDayOfMonth, t),
+                        defaultValue: 'Day: {{day}}'
+                      })}
+                    </Typography>
+                  </Card>
+                </Grid>
+              </Grid>
+              <Alert severity="warning">
+                {t(
+                  'subscriptionSharing.move.confirmWarning',
+                  'This action changes lineId/linePlusId of the beneficiary subscription and immediately affects how the shared cluster is organized.'
+                )}
+              </Alert>
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setMoveDialogRow(null)} disabled={moveSaving} sx={{ textTransform: 'none', fontWeight: 700 }}>
+            {t('actions.cancel', 'Cancel')}
+          </Button>
+          <Button
+            onClick={handleMoveSubscription}
+            disabled={moveSaving || !moveDialogRow?.moveRecommendationAvailable}
+            variant="contained"
+            color="secondary"
+            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}
+          >
+            {moveSaving ? t('subscriptionSharing.actions.moving', 'Moving...') : t('subscriptionSharing.actions.confirmMove', 'Move beneficiary')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={diagnosticsOpen}
@@ -1840,6 +2233,105 @@ export default function SubscriptionSharingLionTv() {
                   </Card>
                 </Grid>
               </Grid>
+
+              {diagnosticsData.sharingRole === 'SHARED' ? (
+                <Card sx={diagnosticsSurfaceSx}>
+                  <Stack spacing={1.15}>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
+                      <Box>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                          {t('subscriptionSharing.move.title', 'Move recommendation')}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {moveReasonLabel(diagnosticsData.moveRecommendationReason, t)}
+                        </Typography>
+                      </Box>
+                      <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
+                        <MovePriorityChip priority={diagnosticsData.moveRecommendationPriority} t={t} />
+                        {diagnosticsData.moveRecommendationAvailable ? (
+                          <RiskChip bucket={diagnosticsData.recommendedDestinationHostRiskBucket} t={t} />
+                        ) : null}
+                      </Stack>
+                    </Stack>
+
+                    <Grid container spacing={1.25}>
+                      <Grid item xs={12} sm={4}>
+                        <Card sx={diagnosticsSurfaceSx}>
+                          <Typography variant="caption" color="text.secondary">
+                            {t('subscriptionSharing.move.requiredScreens', 'Screens to move')}
+                          </Typography>
+                          <Typography variant="h4">{diagnosticsData.requiredScreensToMove || 1}</Typography>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <Card sx={diagnosticsSurfaceSx}>
+                          <Typography variant="caption" color="text.secondary">
+                            {t('subscriptionSharing.move.currentDay', 'Current host day')}
+                          </Typography>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                            {formatHostRenewalDay(diagnosticsData.hostRenewalDayOfMonth, t)}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {formatHostDays(diagnosticsData.hostDaysToRenewal, t)}
+                          </Typography>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <Card sx={diagnosticsSurfaceSx}>
+                          <Typography variant="caption" color="text.secondary">
+                            {t('subscriptionSharing.move.recommendedDay', 'Recommended day')}
+                          </Typography>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                            {formatHostRenewalDay(diagnosticsData.recommendedDestinationHostRenewalDayOfMonth, t)}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {formatHostDays(diagnosticsData.recommendedDestinationHostDaysToRenewal, t)}
+                          </Typography>
+                        </Card>
+                      </Grid>
+                    </Grid>
+
+                    {diagnosticsData.moveRecommendationAvailable ? (
+                      <>
+                        <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={t('subscriptionSharing.move.recommendedHost', {
+                              id: diagnosticsData.recommendedDestinationSubscriptionId || '-',
+                              defaultValue: 'Host #{{id}}'
+                            })}
+                          />
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={t('subscriptionSharing.move.recommendedCustomer', {
+                              customer: diagnosticsData.recommendedDestinationCustomerName || '-',
+                              defaultValue: 'Customer: {{customer}}'
+                            })}
+                          />
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={t('subscriptionSharing.move.recommendedLine', {
+                              line: formatLineDisplay(diagnosticsData.recommendedDestinationLineName, diagnosticsData.recommendedDestinationLineId),
+                              defaultValue: 'Line: {{line}}'
+                            })}
+                          />
+                        </Stack>
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          onClick={() => setMoveDialogRow(normalizeRow(diagnosticsData))}
+                          sx={{ textTransform: 'none', fontWeight: 700, alignSelf: 'flex-start', borderRadius: 2 }}
+                        >
+                          {t('subscriptionSharing.actions.confirmMove', 'Move beneficiary')}
+                        </Button>
+                      </>
+                    ) : null}
+                  </Stack>
+                </Card>
+              ) : null}
 
               <Card
                 sx={(muiTheme) => ({
