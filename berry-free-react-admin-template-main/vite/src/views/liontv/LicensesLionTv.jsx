@@ -240,9 +240,16 @@ function formatSubscriptionLabel(subscription) {
   if (!subscription) return '-';
   const id = subscription.id ?? subscription.subscriptionId ?? '-';
   const lineId = subscription.lineId || '-';
+  const linePlusId = subscription.linePlusId || '';
   const lineUsername = subscription.lineUsername || subscription.usernameLine || subscription.username_line || '';
   const status = subscription.status || '-';
-  return lineUsername ? `#${id} - ${lineUsername} - ${status}` : `#${id} - Line ${lineId} - ${status}`;
+  const provider = subscription.provider || '';
+  const parts = [lineUsername ? `#${id} - ${lineUsername}` : `#${id} - Line ${lineId}`];
+  if (lineId) parts.push(`Main ${lineId}`);
+  if (linePlusId) parts.push(`Plus ${linePlusId}`);
+  if (provider) parts.push(provider);
+  parts.push(status);
+  return parts.join(' · ');
 }
 
 function parseToDay(value) {
@@ -449,7 +456,19 @@ export default function LicensesLionTv() {
   const [historyOpen, setHistoryOpen] = useState({ open: false, row: null });
   const [openServerChange, setOpenServerChange] = useState({ open: false, row: null });
   const [openRemovePlaylists, setOpenRemovePlaylists] = useState({ open: false, row: null });
-  const [serverForm, setServerForm] = useState({ serverKey: '', subscriptionId: '', lineId: '', username: '', password: '', country: '', playlistName: 'Principal' });
+  const [serverForm, setServerForm] = useState({
+    serverKey: '',
+    subscriptionId: '',
+    lineId: '',
+    linePlusId: '',
+    effectiveLineId: '',
+    lineSource: 'MAIN',
+    provider: '',
+    username: '',
+    password: '',
+    country: '',
+    playlistName: 'Principal'
+  });
   const [serverOptions, setServerOptions] = useState([]);
 
   const [sending, setSending] = useState(false);
@@ -487,11 +506,13 @@ export default function LicensesLionTv() {
         id: s.subscriptionId ?? s.id,
         customerId: s.customerId,
         lineId: s.lineId,
+        linePlusId: s.linePlusId ?? s.line_plus_id ?? '',
         lineUsername: s.usernameLine ?? s.username_line ?? s.usernameEncode ?? s.username_encode ?? '',
         packageId: s.packageId,
         renewalDate: s.renewalDate,
         status: s.status,
-        username: s.username
+        username: s.username,
+        provider: s.provider ?? ''
       })));
     } catch (err) {
       if (!handleUnauthorized(err)) {
@@ -515,7 +536,11 @@ export default function LicensesLionTv() {
         id: l.id ?? l.lineId,
         username: l.username,
         password: l.password,
+        usernameEncode: l.username_encode ?? l.usernameEncode ?? '',
+        passwordEncode: l.password_encode ?? l.passwordEncode ?? '',
         packageId: l.package_id ?? l.packageId,
+        provider: l.provider ?? '',
+        lineCountry: l.line_country ?? l.lineCountry ?? '',
         owner: l.owner_name ?? l.owner,
         phone: l.phone ?? '',
         customerId: l.customer_id ?? l.customerId
@@ -662,6 +687,54 @@ export default function LicensesLionTv() {
     });
     return map;
   }, [subscriptions]);
+
+  const lineMap = useMemo(() => {
+    const map = {};
+    lines.forEach((line) => {
+      const id = line?.id ?? line?.lineId;
+      if (id == null || id === '') return;
+      map[String(id)] = line;
+    });
+    return map;
+  }, [lines]);
+
+  const resolveServerLineContext = useCallback(
+    (subscription, lineSource = 'MAIN') => {
+      if (!subscription) {
+        return {
+          source: 'MAIN',
+          lineId: '',
+          linePlusId: '',
+          effectiveLineId: '',
+          line: null,
+          provider: '',
+          username: '',
+          password: '',
+          valid: false
+        };
+      }
+
+      const safeSource = lineSource === 'PLUS' && subscription.linePlusId ? 'PLUS' : 'MAIN';
+      const lineId = subscription.lineId || '';
+      const linePlusId = subscription.linePlusId || '';
+      const effectiveLineId = safeSource === 'PLUS' ? linePlusId : lineId;
+      const line = effectiveLineId ? lineMap[String(effectiveLineId)] ?? null : null;
+      const provider = line?.provider || subscription.provider || '';
+
+      return {
+        source: safeSource,
+        lineId,
+        linePlusId,
+        effectiveLineId,
+        line,
+        provider,
+        username: line?.username || '',
+        password: line?.password || '',
+        valid: Boolean(effectiveLineId && line)
+      };
+    },
+    [lineMap]
+  );
 
   const customerSubscriptions = useMemo(
     () =>
@@ -938,14 +1011,17 @@ export default function LicensesLionTv() {
     const customer = customers.find((c) => (c.customerId || c.id) === row.customerId);
     const country = countryFromPhone(customer?.customerPhone || customer?.customer_phone || '');
     const linkedSubscription = row.subscriptionId ? subscriptionMap[String(row.subscriptionId)] : null;
-    const linkedLineId = linkedSubscription?.lineId || '';
-    const linkedLine = lines.find((line) => idsMatch(line.id || line.lineId, linkedLineId));
+    const linkedContext = resolveServerLineContext(linkedSubscription, 'MAIN');
     setServerForm({
       serverKey: '',
       subscriptionId: linkedSubscription?.id ?? '',
-      lineId: linkedLineId,
-      username: linkedLine?.username || '',
-      password: linkedLine?.password || '',
+      lineId: linkedContext.lineId,
+      linePlusId: linkedContext.linePlusId,
+      effectiveLineId: linkedContext.effectiveLineId,
+      lineSource: linkedContext.source,
+      provider: linkedContext.provider,
+      username: linkedContext.username,
+      password: linkedContext.password,
       country,
       playlistName: 'Lion Tv Premium'
     });
@@ -958,31 +1034,68 @@ export default function LicensesLionTv() {
 
   const handleSubscriptionSelect = (value) => {
     const sub = subscriptions.find((s) => idsMatch(s.id || s.subscriptionId, value));
-    const lineId = sub?.lineId;
-    const line = lines.find((l) => idsMatch(l.id || l.lineId, lineId));
+    const nextSource = serverForm.lineSource === 'PLUS' && sub?.linePlusId ? 'PLUS' : 'MAIN';
+    const context = resolveServerLineContext(sub, nextSource);
     setServerForm((prev) => ({
       ...prev,
       subscriptionId: value,
-      lineId: lineId || '',
-      username: line?.username || '',
-      password: line?.password || ''
+      lineId: context.lineId,
+      linePlusId: context.linePlusId,
+      effectiveLineId: context.effectiveLineId,
+      lineSource: context.source,
+      provider: context.provider,
+      username: context.username,
+      password: context.password
+    }));
+  };
+
+  const handleLineSourceSelect = (value) => {
+    const subscription = serverForm.subscriptionId ? subscriptionMap[String(serverForm.subscriptionId)] : null;
+    const context = resolveServerLineContext(subscription, value);
+    setServerForm((prev) => ({
+      ...prev,
+      lineId: context.lineId,
+      linePlusId: context.linePlusId,
+      effectiveLineId: context.effectiveLineId,
+      lineSource: context.source,
+      provider: context.provider,
+      username: context.username,
+      password: context.password
     }));
   };
 
   const handleServerSubmit = async () => {
-    const { serverKey, macAddress = openServerChange.row?.macAddress, lineId, playlistName, username, password } = {
+    const { serverKey, macAddress = openServerChange.row?.macAddress, subscriptionId, lineId, linePlusId, effectiveLineId, lineSource, provider, playlistName, username, password } = {
       ...serverForm,
       macAddress: openServerChange.row?.macAddress
     };
-    if (!serverKey || !macAddress || !lineId) {
+    if (!serverKey || !macAddress || !subscriptionId || !lineId) {
       enqueueSnackbar(t('licenses.server.required', 'Select server and subscription (line).'), { variant: 'warning' });
+      return;
+    }
+    if (lineSource === 'PLUS' && (!linePlusId || !effectiveLineId || !username || !password || !provider)) {
+      enqueueSnackbar(
+        t('licenses.server.plusMetadataRequired', 'Line plus metadata is incomplete. Check line plus, credentials, and provider before continuing.'),
+        { variant: 'warning' }
+      );
       return;
     }
     setSending(true);
     try {
       const res = await lionTvApi.post(
         '/licenses/v1/change-server',
-        { serverKey, macAddress, lineId, playlistName, username, password },
+        {
+          serverKey,
+          macAddress,
+          subscriptionId: Number(subscriptionId),
+          lineId,
+          linePlusId,
+          lineSource,
+          provider,
+          playlistName,
+          username,
+          password
+        },
         { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
       );
       const msg = res?.data?.data?.message || res?.data?.message || t('licenses.server.updated');
@@ -1101,6 +1214,46 @@ export default function LicensesLionTv() {
       setHistory([]);
     }
   };
+
+  const selectedServerSubscription = useMemo(
+    () => (serverForm.subscriptionId ? subscriptionMap[String(serverForm.subscriptionId)] ?? null : null),
+    [serverForm.subscriptionId, subscriptionMap]
+  );
+
+  const selectedServerContext = useMemo(
+    () => resolveServerLineContext(selectedServerSubscription, serverForm.lineSource),
+    [resolveServerLineContext, selectedServerSubscription, serverForm.lineSource]
+  );
+
+  useEffect(() => {
+    if (!openServerChange.open || !selectedServerSubscription) {
+      return;
+    }
+
+    setServerForm((prev) => {
+      const effectiveLineChanged = prev.effectiveLineId !== selectedServerContext.effectiveLineId;
+      const sourceChanged = prev.lineSource !== selectedServerContext.source;
+      const metadataChanged =
+        prev.lineId !== selectedServerContext.lineId ||
+        prev.linePlusId !== selectedServerContext.linePlusId ||
+        prev.provider !== selectedServerContext.provider;
+
+      if (!effectiveLineChanged && !sourceChanged && !metadataChanged) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        lineId: selectedServerContext.lineId,
+        linePlusId: selectedServerContext.linePlusId,
+        effectiveLineId: selectedServerContext.effectiveLineId,
+        lineSource: selectedServerContext.source,
+        provider: selectedServerContext.provider,
+        username: selectedServerContext.username || prev.username,
+        password: selectedServerContext.password || prev.password
+      };
+    });
+  }, [openServerChange.open, selectedServerContext, selectedServerSubscription]);
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
@@ -2016,6 +2169,32 @@ export default function LicensesLionTv() {
               {t('licenses.server.country', 'Country (phone)')}: <strong>{serverForm.country}</strong>
             </Typography>
 
+            <Box
+              sx={(theme) => ({
+                p: 1.75,
+                borderRadius: 2.5,
+                border: '1px solid',
+                borderColor: 'divider',
+                bgcolor: theme.palette.mode === 'dark' ? 'background.default' : 'grey.50'
+              })}
+            >
+              <Stack spacing={0.75}>
+                <Typography variant="subtitle2">{t('licenses.server.summaryTitle', 'Selected line context')}</Typography>
+                <Typography variant="body2">
+                  {t('licenses.server.subscription', 'Subscription')}: <strong>{selectedServerSubscription ? formatSubscriptionLabel(selectedServerSubscription) : '-'}</strong>
+                </Typography>
+                <Typography variant="body2">
+                  {t('licenses.server.lineSource', 'Line source')}: <strong>{selectedServerContext.source === 'PLUS' ? t('licenses.server.lineSourcePlus', 'Line plus') : t('licenses.server.lineSourceMain', 'Main line')}</strong>
+                </Typography>
+                <Typography variant="body2">
+                  {t('licenses.server.effectiveLine', 'Effective line')}: <strong>{selectedServerContext.effectiveLineId || '-'}</strong>
+                </Typography>
+                <Typography variant="body2">
+                  {t('licenses.server.provider', 'Provider')}: <strong>{selectedServerContext.provider || t('licenses.server.noProvider', 'Not available')}</strong>
+                </Typography>
+              </Stack>
+            </Box>
+
             <FormControl fullWidth sx={fieldSx}>
               <InputLabel>{t('licenses.server.server', 'Server')}</InputLabel>
               <Select
@@ -2063,6 +2242,27 @@ export default function LicensesLionTv() {
               <FormHelperText>{t('licenses.server.subscriptionHelper', 'Filter by customer subscriptions')}</FormHelperText>
             </FormControl>
 
+            {selectedServerSubscription ? (
+              <FormControl fullWidth sx={fieldSx}>
+                <InputLabel>{t('licenses.server.lineSource', 'Line source')}</InputLabel>
+                <Select
+                  value={serverForm.lineSource}
+                  label={t('licenses.server.lineSource', 'Line source')}
+                  onChange={(e) => handleLineSourceSelect(e.target.value)}
+                >
+                  <MenuItem value="MAIN">{t('licenses.server.lineSourceMain', 'Main line')}</MenuItem>
+                  {selectedServerSubscription.linePlusId ? (
+                    <MenuItem value="PLUS">{t('licenses.server.lineSourcePlus', 'Line plus')}</MenuItem>
+                  ) : null}
+                </Select>
+                <FormHelperText>
+                  {selectedServerSubscription.linePlusId
+                    ? t('licenses.server.lineSourceHelper', 'Choose whether the change applies to the main line or the line plus.')
+                    : t('licenses.server.lineSourceMainOnly', 'This subscription only has main line available.')}
+                </FormHelperText>
+              </FormControl>
+            ) : null}
+
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -2098,6 +2298,14 @@ export default function LicensesLionTv() {
                 )
               }}
             />
+            {serverForm.lineSource === 'PLUS' && !selectedServerContext.valid ? (
+              <FormHelperText error>
+                {t(
+                  'licenses.server.plusLineMissing',
+                  'Line plus could not be resolved from current metadata. Review the selected subscription before submitting.'
+                )}
+              </FormHelperText>
+            ) : null}
           </Stack>
         </DialogContent>
         <DialogActions>
