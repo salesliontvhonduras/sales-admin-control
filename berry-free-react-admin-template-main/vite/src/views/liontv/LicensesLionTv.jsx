@@ -1060,7 +1060,8 @@ export default function LicensesLionTv() {
       lineSource: context.source,
       provider: context.provider,
       username: context.username,
-      password: context.password
+      password: context.password,
+      playlistName: context.source === 'PLUS' ? 'Plus' : prev.playlistName === 'Plus' ? 'Lion Tv Premium' : prev.playlistName
     }));
   };
 
@@ -1250,7 +1251,13 @@ export default function LicensesLionTv() {
         lineSource: selectedServerContext.source,
         provider: selectedServerContext.provider,
         username: selectedServerContext.username || prev.username,
-        password: selectedServerContext.password || prev.password
+        password: selectedServerContext.password || prev.password,
+        playlistName:
+          selectedServerContext.source === 'PLUS'
+            ? 'Plus'
+            : prev.playlistName === 'Plus'
+              ? 'Lion Tv Premium'
+              : prev.playlistName
       };
     });
   }, [openServerChange.open, selectedServerContext, selectedServerSubscription]);
