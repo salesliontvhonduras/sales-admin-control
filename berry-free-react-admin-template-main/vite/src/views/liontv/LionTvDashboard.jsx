@@ -255,16 +255,25 @@ function radarStats(items, dateField, statusField = 'status') {
 }
 
 function metricCardStyle(theme, color = 'primary') {
+  const palette = theme.palette[color] || theme.palette.primary;
   return {
-    ...theme.applyStyles('light', {
-      boxShadow: '0 10px 24px rgba(15, 23, 42, 0.08)',
-      background: `linear-gradient(135deg, ${theme.vars.palette[color]?.light || theme.vars.palette.primary.light}1f 0%, ${theme.vars.palette.background.paper} 70%)`
-    }),
-    borderRadius: 2.5,
+    borderRadius: 3.5,
     border: '1px solid',
-    borderColor: 'divider',
-    boxShadow: '0 12px 26px rgba(2, 8, 23, 0.38)',
-    background: `linear-gradient(135deg, ${theme.vars.palette.surface.card} 0%, ${theme.vars.palette.surface.muted} 100%)`
+    borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
+    overflow: 'hidden',
+    boxShadow: theme.palette.mode === 'dark' ? '0 22px 44px rgba(2, 8, 23, 0.34)' : '0 20px 34px rgba(15, 23, 42, 0.08)',
+    background:
+      theme.palette.mode === 'dark'
+        ? `linear-gradient(155deg, rgba(15, 23, 42, 0.98) 0%, rgba(11, 18, 32, 0.94) 60%, rgba(7, 15, 28, 0.98) 100%)`
+        : `linear-gradient(155deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 58%, rgba(241,245,249,0.98) 100%)`,
+    position: 'relative',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      inset: 0,
+      pointerEvents: 'none',
+      background: `radial-gradient(circle at top right, ${palette.main}22 0%, transparent 52%)`
+    }
   };
 }
 
@@ -274,14 +283,14 @@ function MetricCard({ title, value, helper, icon, color = 'primary' }) {
       <CardContent>
         <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.5}>
           <Box>
-            <Typography variant="subtitle2" color="text.secondary">
+            <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.12em', fontWeight: 700 }}>
               {title}
             </Typography>
-            <Typography variant="h2" sx={{ mt: 0.5 }}>
+            <Typography variant="h2" sx={{ mt: 0.8, lineHeight: 1.05 }}>
               {value}
             </Typography>
             {helper ? (
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.6, maxWidth: 220 }}>
                 {helper}
               </Typography>
             ) : null}
@@ -289,10 +298,13 @@ function MetricCard({ title, value, helper, icon, color = 'primary' }) {
           <Avatar
             variant="rounded"
             sx={(theme) => ({
-              width: 46,
-              height: 46,
-              bgcolor: theme.palette[color]?.lighter || theme.palette.primary.lighter,
-              color: theme.palette[color]?.main || theme.palette.primary.main
+              width: 54,
+              height: 54,
+              borderRadius: 2.8,
+              bgcolor: `${theme.palette[color]?.main || theme.palette.primary.main}18`,
+              color: theme.palette[color]?.main || theme.palette.primary.main,
+              border: '1px solid',
+              borderColor: `${theme.palette[color]?.main || theme.palette.primary.main}26`
             })}
           >
             {icon}
@@ -307,10 +319,21 @@ function RadarCard({ title, stats, icon, color = 'primary', onOpen, t }) {
   return (
     <Card sx={(theme) => metricCardStyle(theme, color)}>
       <CardContent>
-        <Stack spacing={1.2}>
+        <Stack spacing={1.5}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Stack direction="row" alignItems="center" spacing={0.8}>
-              {icon}
+              <Avatar
+                variant="rounded"
+                sx={(theme) => ({
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2.4,
+                  bgcolor: `${theme.palette[color]?.main || theme.palette.primary.main}18`,
+                  color: theme.palette[color]?.main || theme.palette.primary.main
+                })}
+              >
+                {icon}
+              </Avatar>
               <Typography variant="h4">{title}</Typography>
             </Stack>
             <Button variant="outlined" size="small" onClick={onOpen} endIcon={<LaunchIcon fontSize="small" />}>
@@ -355,11 +378,52 @@ function RadarCard({ title, stats, icon, color = 'primary', onOpen, t }) {
   );
 }
 
+function SectionHeader({ eyebrow, title, description, action }) {
+  return (
+    <Stack
+      direction={{ xs: 'column', md: 'row' }}
+      justifyContent="space-between"
+      alignItems={{ xs: 'flex-start', md: 'flex-end' }}
+      spacing={1.2}
+      sx={{ mb: 0.2 }}
+    >
+      <Box>
+        {eyebrow ? (
+          <Typography variant="overline" color="primary.main" sx={{ letterSpacing: '0.16em', fontWeight: 800 }}>
+            {eyebrow}
+          </Typography>
+        ) : null}
+        <Typography variant="h3" sx={{ mt: 0.25 }}>
+          {title}
+        </Typography>
+        {description ? (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 780 }}>
+            {description}
+          </Typography>
+        ) : null}
+      </Box>
+      {action ? <Box>{action}</Box> : null}
+    </Stack>
+  );
+}
+
 function AlertsBucketCard({ title, helper, alerts, onOpenAlert, t }) {
   return (
-    <Card sx={{ borderRadius: 2.5, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+    <Card
+      sx={(theme) => ({
+        borderRadius: 3.5,
+        border: '1px solid',
+        borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
+        height: '100%',
+        boxShadow: theme.palette.mode === 'dark' ? '0 18px 36px rgba(2, 8, 23, 0.28)' : '0 16px 28px rgba(15, 23, 42, 0.06)',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(180deg, rgba(11,18,32,0.96) 0%, rgba(10,16,29,0.98) 100%)'
+            : 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.96) 100%)'
+      })}
+    >
       <CardContent>
-        <Stack spacing={1.2}>
+        <Stack spacing={1.5}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="h4">{title}</Typography>
             <Chip
@@ -379,7 +443,25 @@ function AlertsBucketCard({ title, helper, alerts, onOpenAlert, t }) {
             {alerts.slice(0, 8).map((alert) => {
               const sev = severityMeta(alert.severity, t);
               return (
-                <Card key={`${title}-${alert.type}-${alert.entityId}-${alert.reference}`} variant="outlined" sx={{ borderRadius: 2 }}>
+                <Card
+                  key={`${title}-${alert.type}-${alert.entityId}-${alert.reference}`}
+                  variant="outlined"
+                  sx={(theme) => ({
+                    borderRadius: 3,
+                    borderColor:
+                      sev.color === 'error'
+                        ? `${theme.palette.error.main}30`
+                        : sev.color === 'warning'
+                          ? `${theme.palette.warning.main}30`
+                          : sev.color === 'info'
+                            ? `${theme.palette.info.main}30`
+                            : 'divider',
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'linear-gradient(180deg, rgba(15,23,42,0.76) 0%, rgba(10,16,29,0.82) 100%)'
+                        : 'linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(248,250,252,0.98) 100%)'
+                  })}
+                >
                   <CardContent sx={{ '&:last-child': { pb: 2 } }}>
                     <Stack spacing={1}>
                       <Stack
@@ -401,7 +483,7 @@ function AlertsBucketCard({ title, helper, alerts, onOpenAlert, t }) {
                           {t('liontvDashboard.actions.view', 'Ver')}
                         </Button>
                       </Stack>
-                      <Typography variant="subtitle2" sx={{ wordBreak: 'break-word' }}>
+                      <Typography variant="subtitle1" sx={{ wordBreak: 'break-word', fontWeight: 700 }}>
                         {alert.reference}
                       </Typography>
                       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} useFlexGap>
@@ -438,13 +520,83 @@ export default function LionTvDashboard() {
   const { accessToken, user, lionTvViewMode } = useAuth();
   const navigate = useNavigate();
   const resellerMode = isResellerConsoleUser(user, lionTvViewMode);
-
   const [horizonDays, setHorizonDays] = useState(30);
   const [criticalOnly, setCriticalOnly] = useState(false);
   const locale = useMemo(() => {
     const lang = String(i18n?.resolvedLanguage || i18n?.language || 'es').toLowerCase();
     return lang.startsWith('en') ? 'en-US' : 'es-HN';
   }, [i18n?.language, i18n?.resolvedLanguage]);
+  const isEnglish = locale === 'en-US';
+  const dashboardCopy = useMemo(
+    () =>
+      isEnglish
+        ? {
+            heroBadge: 'Operations command center',
+            heroTitle: 'Professional tracking for renewals, collections and service risk',
+            heroSubtitle:
+              'This view is now designed like an executive console: immediate alerts first, revenue exposure second, and operational radar after that.',
+            heroSignals: {
+              critical: 'Critical now',
+              revenue: 'Revenue exposed',
+              expiration: 'Expiration queue',
+              shared: 'Shared risk'
+            },
+            sections: {
+              pulseEyebrow: 'Immediate response',
+              pulseTitle: 'What needs action in the next 7 days',
+              pulseDescription: 'Read this block first. It isolates what expires today, tomorrow or in the next week so operations can react before customers notice.',
+              metricsEyebrow: 'Command metrics',
+              metricsTitle: 'Portfolio pressure and commercial leakage',
+              metricsDescription:
+                'These KPIs summarize operational pressure, overdue exposure and collections still open. They are meant to be scanned in seconds.',
+              radarEyebrow: 'Coverage radar',
+              radarTitle: 'Expiration radar by resource',
+              radarDescription: 'Every resource keeps its own expiry rhythm. This radar shows where operational debt is accumulating.',
+              queueEyebrow: 'Priority queue',
+              queueTitle: 'Prioritized workbench',
+              queueDescription:
+                'The queue is sorted by urgency so support and operations can attack the most dangerous cases first without losing context.',
+              financeEyebrow: 'Collections watch',
+              financeTitle: 'Money still pending',
+              financeDescription: 'Keep these tables close. They show what is still open and where revenue can leak if follow-up slows down.'
+            }
+          }
+        : {
+            heroBadge: 'Centro de mando operativo',
+            heroTitle: 'Tracking profesional para renovaciones, cobros y riesgo de servicio',
+            heroSubtitle:
+              'Esta vista ahora funciona como una consola ejecutiva: primero alertas inmediatas, después dinero expuesto y luego radar operativo por recurso.',
+            heroSignals: {
+              critical: 'Crítico ahora',
+              revenue: 'Dinero expuesto',
+              expiration: 'Cola expiración',
+              shared: 'Riesgo shared'
+            },
+            sections: {
+              pulseEyebrow: 'Respuesta inmediata',
+              pulseTitle: 'Qué necesita acción en los próximos 7 días',
+              pulseDescription:
+                'Lee este bloque primero. Aísla lo que vence hoy, mañana y en la próxima semana para que operaciones reaccione antes de que el cliente lo sienta.',
+              metricsEyebrow: 'Métricas de mando',
+              metricsTitle: 'Presión del portafolio y fugas comerciales',
+              metricsDescription:
+                'Estos KPI resumen presión operativa, exposición vencida y cobros todavía abiertos. Deben poder leerse en segundos.',
+              radarEyebrow: 'Radar de cobertura',
+              radarTitle: 'Radar de vencimientos por recurso',
+              radarDescription:
+                'Cada recurso tiene su propio ritmo de vencimiento. Este radar muestra dónde se está acumulando deuda operativa.',
+              queueEyebrow: 'Cola priorizada',
+              queueTitle: 'Mesa de trabajo priorizada',
+              queueDescription:
+                'La cola está ordenada por urgencia para que soporte y operaciones ataquen primero los casos más peligrosos sin perder contexto.',
+              financeEyebrow: 'Seguimiento de cobros',
+              financeTitle: 'Dinero todavía pendiente',
+              financeDescription:
+                'Mantén estas tablas cerca. Aquí ves qué sigue abierto y dónde se puede escapar ingreso si el seguimiento se enfría.'
+            }
+          },
+    [isEnglish, locale]
+  );
 
   const [customers, setCustomers] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -785,13 +937,141 @@ export default function LionTvDashboard() {
         </Stack>
       }
     >
-      <Stack spacing={2.2}>
-        <Alert severity="info" variant="outlined">
-          {t(
-            'liontvDashboard.infoBanner',
-            'Módulo de seguimiento para no olvidar nada: vencimientos, pendientes, riesgos y próximos eventos del negocio.'
-          )}
-        </Alert>
+      <Stack spacing={3}>
+        <Card
+          sx={(theme) => ({
+            borderRadius: 4,
+            overflow: 'hidden',
+            border: '1px solid',
+            borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
+            color: 'common.white',
+            background:
+              theme.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, #07111f 0%, #0f172a 28%, #10233c 62%, #0f3a4a 100%)'
+                : 'linear-gradient(135deg, #0f172a 0%, #183b5b 38%, #0b5e72 72%, #22c55e 120%)',
+            boxShadow: theme.palette.mode === 'dark' ? '0 28px 52px rgba(2, 8, 23, 0.42)' : '0 24px 46px rgba(15, 23, 42, 0.18)'
+          })}
+        >
+          <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+            <Grid container spacing={3} alignItems="stretch">
+              <Grid size={{ xs: 12, lg: 7 }}>
+                <Stack spacing={2}>
+                  <Chip
+                    label={dashboardCopy.heroBadge}
+                    sx={{
+                      alignSelf: 'flex-start',
+                      bgcolor: 'rgba(255,255,255,0.14)',
+                      color: 'common.white',
+                      fontWeight: 700,
+                      letterSpacing: '0.04em'
+                    }}
+                  />
+                  <Typography variant="h2" sx={{ fontSize: { xs: '1.9rem', md: '2.75rem' }, maxWidth: 780 }}>
+                    {dashboardCopy.heroTitle}
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.78)', maxWidth: 720, lineHeight: 1.7 }}>
+                    {dashboardCopy.heroSubtitle}
+                  </Typography>
+
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} alignItems={{ xs: 'flex-start', md: 'center' }}>
+                    <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.75)' }}>
+                      {t('liontvDashboard.horizonLabel', 'Horizonte de alertas:')}
+                    </Typography>
+                    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                      {HORIZON_OPTIONS.map((days) => (
+                        <Chip
+                          key={days}
+                          label={t('liontvDashboard.daysChip', { days, defaultValue: '{{days}} días' })}
+                          clickable
+                          color={horizonDays === days ? 'primary' : 'default'}
+                          variant={horizonDays === days ? 'filled' : 'outlined'}
+                          onClick={() => setHorizonDays(days)}
+                          sx={{
+                            bgcolor: horizonDays === days ? 'common.white' : 'rgba(255,255,255,0.06)',
+                            color: horizonDays === days ? 'primary.main' : 'common.white',
+                            borderColor: 'rgba(255,255,255,0.18)'
+                          }}
+                        />
+                      ))}
+                      <Chip
+                        label={t('liontvDashboard.criticalOnly', 'Solo críticos')}
+                        clickable
+                        color={criticalOnly ? 'error' : 'default'}
+                        variant={criticalOnly ? 'filled' : 'outlined'}
+                        onClick={() => setCriticalOnly((prev) => !prev)}
+                        sx={{
+                          bgcolor: criticalOnly ? 'error.main' : 'rgba(255,255,255,0.06)',
+                          color: 'common.white',
+                          borderColor: criticalOnly ? 'error.main' : 'rgba(255,255,255,0.18)'
+                        }}
+                      />
+                    </Stack>
+                  </Stack>
+                </Stack>
+              </Grid>
+
+              <Grid size={{ xs: 12, lg: 5 }}>
+                <Grid container spacing={1.5}>
+                  {[
+                    {
+                      title: dashboardCopy.heroSignals.critical,
+                      value: tracking.criticalCount,
+                      helper: t('liontvDashboard.metrics.todayAlerts.helper', 'vence hoy'),
+                      color: 'rgba(248, 113, 113, 0.22)'
+                    },
+                    {
+                      title: dashboardCopy.heroSignals.revenue,
+                      value: formatMoney(tracking.invoicesPendingAmount + tracking.commitmentsPendingAmount, locale),
+                      helper: t('liontvDashboard.table.pendingAmount', 'Monto pendiente'),
+                      color: 'rgba(250, 204, 21, 0.2)'
+                    },
+                    {
+                      title: dashboardCopy.heroSignals.expiration,
+                      value: expirationAttentionCount,
+                      helper: expirationStale ? t('liontvDashboard.expirationAlert.stale', 'Proceso stale') : t('liontvDashboard.expirationAlert.open', 'Abrir expiraciones'),
+                      color: 'rgba(96, 165, 250, 0.18)'
+                    },
+                    {
+                      title: dashboardCopy.heroSignals.shared,
+                      value: sharedRiskKpi.criticalClusters,
+                      helper: t('liontvDashboard.metrics.sharedRisk.helper', {
+                        overdue: sharedRiskKpi.overdueClusters,
+                        defaultValue: '{{overdue}} overdue hosts'
+                      }),
+                      color: 'rgba(52, 211, 153, 0.16)'
+                    }
+                  ].map((item) => (
+                    <Grid key={item.title} size={{ xs: 12, sm: 6 }}>
+                      <Card
+                        sx={{
+                          height: '100%',
+                          borderRadius: 3,
+                          bgcolor: item.color,
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          backdropFilter: 'blur(14px)'
+                        }}
+                      >
+                        <CardContent>
+                          <Stack spacing={0.8}>
+                            <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.72)', letterSpacing: '0.12em' }}>
+                              {item.title}
+                            </Typography>
+                            <Typography variant="h3" color="common.white" sx={{ lineHeight: 1.05, wordBreak: 'break-word' }}>
+                              {item.value}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.74)' }}>
+                              {item.helper}
+                            </Typography>
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
 
         {expirationAttentionCount > 0 || expirationStale ? (
           <Alert
@@ -895,7 +1175,11 @@ export default function LionTvDashboard() {
         {hasSourceData ? (
           <Grid container spacing={gridSpacing}>
             <Grid size={12}>
-              <Typography variant="h4">{t('liontvDashboard.sections.trackingByDate', 'Seguimiento por fecha')}</Typography>
+              <SectionHeader
+                eyebrow={dashboardCopy.sections.pulseEyebrow}
+                title={dashboardCopy.sections.pulseTitle}
+                description={dashboardCopy.sections.pulseDescription}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <MetricCard
@@ -924,13 +1208,30 @@ export default function LionTvDashboard() {
                 icon={<CalendarMonthIcon fontSize="small" />}
               />
             </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <MetricCard
+                title={isEnglish ? 'Revenue exposed' : 'Dinero expuesto'}
+                value={formatMoney(tracking.invoicesPendingAmount + tracking.commitmentsPendingAmount, locale)}
+                helper={isEnglish ? 'Pending invoices + commitments' : 'Facturas pendientes + compromisos'}
+                color="secondary"
+                icon={<PriceCheckIcon fontSize="small" />}
+              />
+            </Grid>
 
             <Grid size={12}>
               <Divider />
             </Grid>
 
             <Grid size={12}>
-              <Typography variant="h4">{t('liontvDashboard.sections.detailByDate', 'Detalle por fecha')}</Typography>
+              <SectionHeader
+                eyebrow={isEnglish ? 'Daily windows' : 'Ventanas diarias'}
+                title={isEnglish ? 'Detailed buckets by day' : 'Buckets detallados por día'}
+                description={
+                  isEnglish
+                    ? 'Each bucket isolates concrete work. Open from here and jump straight to the module that needs attention.'
+                    : 'Cada bucket aísla trabajo concreto. Desde aquí puedes saltar directo al módulo que necesita atención.'
+                }
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <AlertsBucketCard
@@ -964,6 +1265,13 @@ export default function LionTvDashboard() {
               <Divider />
             </Grid>
 
+            <Grid size={12}>
+              <SectionHeader
+                eyebrow={dashboardCopy.sections.metricsEyebrow}
+                title={dashboardCopy.sections.metricsTitle}
+                description={dashboardCopy.sections.metricsDescription}
+              />
+            </Grid>
             <Grid size={{ xs: 12, sm: 12, md: 6, lg: 4, xl: 2 }}>
               <MetricCard
                 title={t('liontvDashboard.metrics.criticalAlerts.title', 'Alertas críticas')}
@@ -1047,7 +1355,11 @@ export default function LionTvDashboard() {
             </Grid>
 
             <Grid size={12}>
-              <Typography variant="h4">{t('liontvDashboard.sections.expiryRadar', 'Radar de vencimientos')}</Typography>
+              <SectionHeader
+                eyebrow={dashboardCopy.sections.radarEyebrow}
+                title={dashboardCopy.sections.radarTitle}
+                description={dashboardCopy.sections.radarDescription}
+              />
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
@@ -1092,20 +1404,46 @@ export default function LionTvDashboard() {
             </Grid>
 
             <Grid size={12}>
-              <Card sx={{ borderRadius: 2.5, border: '1px solid', borderColor: 'divider' }}>
+              <SectionHeader
+                eyebrow={dashboardCopy.sections.queueEyebrow}
+                title={dashboardCopy.sections.queueTitle}
+                description={dashboardCopy.sections.queueDescription}
+                action={
+                  <Chip
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                    label={t('liontvDashboard.labels.alertsCount', {
+                      count: tracking.queueFiltered.length,
+                      defaultValue: '{{count}} alertas'
+                    })}
+                  />
+                }
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, xl: 8 }}>
+              <Card
+                sx={(theme) => ({
+                  borderRadius: 3.5,
+                  border: '1px solid',
+                  borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
+                  boxShadow: theme.palette.mode === 'dark' ? '0 20px 36px rgba(2, 8, 23, 0.28)' : '0 16px 28px rgba(15, 23, 42, 0.06)'
+                })}
+              >
                 <CardContent>
                   <Stack spacing={1.4}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                       <Typography variant="h4">{t('liontvDashboard.sections.priorityQueue', 'Cola de alertas priorizada')}</Typography>
-                      <Chip
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                        label={t('liontvDashboard.labels.alertsCount', {
-                          count: tracking.queueFiltered.length,
-                          defaultValue: '{{count}} alertas'
-                        })}
-                      />
+                      <Typography variant="body2" color="text.secondary">
+                        {criticalOnly
+                          ? isEnglish
+                            ? 'Critical filter enabled'
+                            : 'Filtro crítico activado'
+                          : isEnglish
+                            ? 'Showing full operational queue'
+                            : 'Mostrando cola operativa completa'}
+                      </Typography>
                     </Stack>
                     <Divider />
                     <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
@@ -1168,92 +1506,98 @@ export default function LionTvDashboard() {
               </Card>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Card sx={{ borderRadius: 2.5, border: '1px solid', borderColor: 'divider', height: '100%' }}>
-                <CardContent>
-                  <Stack spacing={1.2}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography variant="h4">{t('liontvDashboard.sections.pendingInvoices', 'Facturas pendientes')}</Typography>
-                      <Button size="small" variant="outlined" onClick={() => navigate(ROUTES.invoices)}>
-                        {t('liontvDashboard.actions.openInvoices', 'Abrir facturas')}
-                      </Button>
-                    </Stack>
-                    <Divider />
-                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                      <Table size="small" sx={{ minWidth: { xs: 760, md: '100%' } }}>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>{t('liontvDashboard.table.id', 'ID')}</TableCell>
-                            <TableCell>{t('liontvDashboard.table.customer', 'Cliente')}</TableCell>
-                            <TableCell>{t('liontvDashboard.table.pendingAmount', 'Monto pendiente')}</TableCell>
-                            <TableCell>{t('liontvDashboard.table.dueDate', 'Vence')}</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {tracking.pendingInvoices.slice(0, 10).map((row) => (
-                            <TableRow key={`inv-${row.id}`}>
-                              <TableCell>#{row.id}</TableCell>
-                              <TableCell>{customerNameMap[row.customerId] || '-'}</TableCell>
-                              <TableCell>{formatMoney(row.pendingAmount, locale)}</TableCell>
-                              <TableCell>{formatDate(row.dueDate || row.createdAt || row.paymentDate, locale)}</TableCell>
-                            </TableRow>
-                          ))}
-                          {tracking.pendingInvoices.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={4}>{t('liontvDashboard.messages.noPendingInvoices', 'No hay facturas pendientes.')}</TableCell>
-                            </TableRow>
-                          ) : null}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
+            <Grid size={{ xs: 12, xl: 4 }}>
+              <Stack spacing={gridSpacing}>
+                <SectionHeader
+                  eyebrow={dashboardCopy.sections.financeEyebrow}
+                  title={dashboardCopy.sections.financeTitle}
+                  description={dashboardCopy.sections.financeDescription}
+                />
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Card sx={{ borderRadius: 2.5, border: '1px solid', borderColor: 'divider', height: '100%' }}>
-                <CardContent>
-                  <Stack spacing={1.2}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography variant="h4">{t('liontvDashboard.sections.pendingCommitments', 'Compromisos de pago pendientes')}</Typography>
-                      <Button size="small" variant="outlined" onClick={() => navigate(ROUTES.commitments)}>
-                        {t('liontvDashboard.actions.openCommitments', 'Abrir compromisos')}
-                      </Button>
-                    </Stack>
-                    <Divider />
-                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                      <Table size="small" sx={{ minWidth: { xs: 760, md: '100%' } }}>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>{t('liontvDashboard.table.id', 'ID')}</TableCell>
-                            <TableCell>{t('liontvDashboard.table.customer', 'Cliente')}</TableCell>
-                            <TableCell>{t('liontvDashboard.table.pendingAmount', 'Monto pendiente')}</TableCell>
-                            <TableCell>{t('liontvDashboard.table.promisedDate', 'Fecha promesa')}</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {tracking.pendingCommitments.slice(0, 10).map((row) => (
-                            <TableRow key={`commit-${row.id}`}>
-                              <TableCell>#{row.id}</TableCell>
-                              <TableCell>{customerNameMap[row.customerId] || '-'}</TableCell>
-                              <TableCell>{formatMoney(row.pendingAmount, locale)}</TableCell>
-                              <TableCell>{formatDate(row.promisedDate, locale)}</TableCell>
-                            </TableRow>
-                          ))}
-                          {tracking.pendingCommitments.length === 0 ? (
+                <Card sx={{ borderRadius: 3.5, border: '1px solid', borderColor: 'divider' }}>
+                  <CardContent>
+                    <Stack spacing={1.2}>
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Typography variant="h4">{t('liontvDashboard.sections.pendingInvoices', 'Facturas pendientes')}</Typography>
+                        <Button size="small" variant="outlined" onClick={() => navigate(ROUTES.invoices)}>
+                          {t('liontvDashboard.actions.openInvoices', 'Abrir facturas')}
+                        </Button>
+                      </Stack>
+                      <Divider />
+                      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                        <Table size="small">
+                          <TableHead>
                             <TableRow>
-                              <TableCell colSpan={4}>
-                                {t('liontvDashboard.messages.noPendingCommitments', 'No hay compromisos pendientes.')}
-                              </TableCell>
+                              <TableCell>{t('liontvDashboard.table.id', 'ID')}</TableCell>
+                              <TableCell>{t('liontvDashboard.table.customer', 'Cliente')}</TableCell>
+                              <TableCell>{t('liontvDashboard.table.pendingAmount', 'Monto pendiente')}</TableCell>
+                              <TableCell>{t('liontvDashboard.table.dueDate', 'Vence')}</TableCell>
                             </TableRow>
-                          ) : null}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Stack>
-                </CardContent>
-              </Card>
+                          </TableHead>
+                          <TableBody>
+                            {tracking.pendingInvoices.slice(0, 6).map((row) => (
+                              <TableRow key={`inv-${row.id}`}>
+                                <TableCell>#{row.id}</TableCell>
+                                <TableCell>{customerNameMap[row.customerId] || '-'}</TableCell>
+                                <TableCell>{formatMoney(row.pendingAmount, locale)}</TableCell>
+                                <TableCell>{formatDate(row.dueDate || row.createdAt || row.paymentDate, locale)}</TableCell>
+                              </TableRow>
+                            ))}
+                            {tracking.pendingInvoices.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={4}>{t('liontvDashboard.messages.noPendingInvoices', 'No hay facturas pendientes.')}</TableCell>
+                              </TableRow>
+                            ) : null}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Stack>
+                  </CardContent>
+                </Card>
+
+                <Card sx={{ borderRadius: 3.5, border: '1px solid', borderColor: 'divider' }}>
+                  <CardContent>
+                    <Stack spacing={1.2}>
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Typography variant="h4">{t('liontvDashboard.sections.pendingCommitments', 'Compromisos de pago pendientes')}</Typography>
+                        <Button size="small" variant="outlined" onClick={() => navigate(ROUTES.commitments)}>
+                          {t('liontvDashboard.actions.openCommitments', 'Abrir compromisos')}
+                        </Button>
+                      </Stack>
+                      <Divider />
+                      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>{t('liontvDashboard.table.id', 'ID')}</TableCell>
+                              <TableCell>{t('liontvDashboard.table.customer', 'Cliente')}</TableCell>
+                              <TableCell>{t('liontvDashboard.table.pendingAmount', 'Monto pendiente')}</TableCell>
+                              <TableCell>{t('liontvDashboard.table.promisedDate', 'Fecha promesa')}</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {tracking.pendingCommitments.slice(0, 6).map((row) => (
+                              <TableRow key={`commit-${row.id}`}>
+                                <TableCell>#{row.id}</TableCell>
+                                <TableCell>{customerNameMap[row.customerId] || '-'}</TableCell>
+                                <TableCell>{formatMoney(row.pendingAmount, locale)}</TableCell>
+                                <TableCell>{formatDate(row.promisedDate, locale)}</TableCell>
+                              </TableRow>
+                            ))}
+                            {tracking.pendingCommitments.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={4}>
+                                  {t('liontvDashboard.messages.noPendingCommitments', 'No hay compromisos pendientes.')}
+                                </TableCell>
+                              </TableRow>
+                            ) : null}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Stack>
             </Grid>
 
             <Grid size={12}>

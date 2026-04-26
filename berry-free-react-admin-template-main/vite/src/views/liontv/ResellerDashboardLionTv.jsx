@@ -34,28 +34,53 @@ import { getResellerWalletSummary } from 'api/liontv-reseller-wallet';
 function metricCard(icon, title, value, helper, color = 'primary') {
   const Icon = icon;
   return (
-    <Card sx={{ height: '100%', borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+    <Card
+      sx={(theme) => ({
+        height: '100%',
+        borderRadius: 3.5,
+        border: '1px solid',
+        borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
+        overflow: 'hidden',
+        boxShadow: theme.palette.mode === 'dark' ? '0 18px 34px rgba(2,8,23,0.26)' : '0 16px 28px rgba(15,23,42,0.06)',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
+            : 'linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)',
+        position: 'relative',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          background: `radial-gradient(circle at top right, ${theme.palette[color].main}22 0%, transparent 56%)`,
+          pointerEvents: 'none'
+        }
+      })}
+    >
       <CardContent>
         <Stack spacing={1.5}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="subtitle2" color="text.secondary">
+            <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.12em', fontWeight: 700 }}>
               {title}
             </Typography>
             <Box
               sx={(theme) => ({
-                width: 42,
-                height: 42,
-                borderRadius: 2,
+                width: 46,
+                height: 46,
+                borderRadius: 2.8,
                 display: 'grid',
                 placeItems: 'center',
                 color: theme.palette[color].main,
-                bgcolor: `${theme.palette[color].main}14`
+                bgcolor: `${theme.palette[color].main}16`,
+                border: '1px solid',
+                borderColor: `${theme.palette[color].main}24`
               })}
             >
               <Icon fontSize="small" />
             </Box>
           </Stack>
-          <Typography variant="h3">{value}</Typography>
+          <Typography variant="h3" sx={{ lineHeight: 1.05 }}>
+            {value}
+          </Typography>
           <Typography variant="body2" color="text.secondary">
             {helper}
           </Typography>
@@ -71,15 +96,23 @@ function quickActionCard({ icon, title, helper, actionLabel, onClick, color = 'p
     <Card
       sx={(theme) => ({
         height: '100%',
-        borderRadius: 3,
+        borderRadius: 3.5,
         border: '1px solid',
-        borderColor: 'divider',
+        borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
         cursor: 'pointer',
-        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
+        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
+            : 'linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)',
         '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: theme.shadows[8],
-          borderColor: `${theme.palette[color].main}55`
+          transform: 'translateY(-3px)',
+          boxShadow: theme.palette.mode === 'dark' ? '0 18px 34px rgba(2,8,23,0.26)' : theme.shadows[8],
+          borderColor: `${theme.palette[color].main}55`,
+          background:
+            theme.palette.mode === 'dark'
+              ? `linear-gradient(160deg, rgba(11,18,32,0.98) 0%, ${theme.palette[color].dark}20 100%)`
+              : `linear-gradient(160deg, rgba(255,255,255,0.98) 0%, ${theme.palette[color].light}18 100%)`
         }
       })}
       onClick={onClick}
@@ -88,13 +121,13 @@ function quickActionCard({ icon, title, helper, actionLabel, onClick, color = 'p
         <Stack spacing={1.5}>
           <Box
             sx={(theme) => ({
-              width: 46,
-              height: 46,
-              borderRadius: 2.5,
+              width: 50,
+              height: 50,
+              borderRadius: 3,
               display: 'grid',
               placeItems: 'center',
               color: theme.palette[color].main,
-              bgcolor: `${theme.palette[color].main}14`
+              bgcolor: `${theme.palette[color].main}16`
             })}
           >
             <Icon fontSize="small" />
@@ -116,10 +149,21 @@ function quickActionCard({ icon, title, helper, actionLabel, onClick, color = 'p
 
 function focusCard({ title, value, helper, buttonLabel, onClick, color = 'primary' }) {
   return (
-    <Card sx={{ height: '100%', borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+    <Card
+      sx={(theme) => ({
+        height: '100%',
+        borderRadius: 3.5,
+        border: '1px solid',
+        borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
+            : 'linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)'
+      })}
+    >
       <CardContent>
         <Stack spacing={1.5}>
-          <Typography variant="subtitle2" color="text.secondary">
+          <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.12em', fontWeight: 700 }}>
             {title}
           </Typography>
           <Typography variant="h3" color={`${color}.main`}>
@@ -148,8 +192,9 @@ export default function ResellerDashboardLionTv({
   errorMessage,
   onRefresh
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const locale = String(i18n?.resolvedLanguage || i18n?.language || 'es').toLowerCase().startsWith('en') ? 'en' : 'es';
   const [walletSummary, setWalletSummary] = useState(null);
   const [walletLoading, setWalletLoading] = useState(true);
   const [walletError, setWalletError] = useState('');
@@ -281,12 +326,13 @@ export default function ResellerDashboardLionTv({
               borderRadius: 4,
               overflow: 'hidden',
               border: '1px solid',
-              borderColor: 'divider',
+              borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
               color: 'common.white',
               background:
                 theme.palette.mode === 'dark'
-                  ? `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.secondary.dark} 50%, #020617 100%)`
-                  : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 55%, #111827 100%)`
+                  ? 'linear-gradient(135deg, #07111f 0%, #0f172a 32%, #133b5c 64%, #164e63 100%)'
+                  : 'linear-gradient(135deg, #0f172a 0%, #1d4ed8 34%, #0f766e 68%, #16a34a 120%)',
+              boxShadow: theme.palette.mode === 'dark' ? '0 28px 52px rgba(2, 8, 23, 0.42)' : '0 24px 46px rgba(15, 23, 42, 0.18)'
             })}
           >
             <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
@@ -294,17 +340,18 @@ export default function ResellerDashboardLionTv({
                 <Grid item xs={12} md={8}>
                   <Stack spacing={1.5}>
                     <Chip
-                      label={t('resellerDashboard.hero.badge', 'Consola reseller')}
+                      label={locale === 'en' ? 'Reseller command center' : 'Centro reseller'}
                       sx={{ alignSelf: 'flex-start', bgcolor: 'rgba(255,255,255,0.14)', color: 'common.white', fontWeight: 700 }}
                     />
                     <Typography variant="h2" sx={{ fontSize: { xs: '1.9rem', md: '2.5rem' } }}>
-                      {t('resellerDashboard.hero.title', 'Controla ventas, líneas y saldo desde un solo lugar')}
+                      {locale === 'en'
+                        ? 'Sell faster, protect service and watch your credit balance from one console'
+                        : 'Vende más rápido, protege el servicio y vigila tu saldo desde una sola consola'}
                     </Typography>
                     <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.82)', maxWidth: 700 }}>
-                      {t(
-                        'resellerDashboard.hero.subtitle',
-                        'Esta vista prioriza lo que sí mueve tu operación: créditos disponibles, acceso rápido a clientes, lines y shared, y recarga manual cuando te quedas corto.'
-                      )}
+                      {locale === 'en'
+                        ? 'The reseller dashboard now prioritizes what actually moves the business: available credits, fast access to customers and subscriptions, and clear risk visibility for lines and shared accounts.'
+                        : 'El dashboard reseller ahora prioriza lo que sí mueve el negocio: créditos disponibles, acceso rápido a clientes y suscripciones, y visibilidad clara del riesgo en lines y shared accounts.'}
                     </Typography>
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
                       <Button
@@ -329,10 +376,10 @@ export default function ResellerDashboardLionTv({
                   </Stack>
                 </Grid>
                 <Grid item xs={12} md={4}>
-                  <Card sx={{ borderRadius: 3, bgcolor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}>
+                  <Card sx={{ borderRadius: 3.2, bgcolor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}>
                     <CardContent>
-                      <Stack spacing={1}>
-                        <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.72)' }}>
+                      <Stack spacing={1.25}>
+                        <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.72)', letterSpacing: '0.12em', fontWeight: 700 }}>
                           {t('resellerDashboard.hero.balanceLabel', 'Créditos disponibles')}
                         </Typography>
                         <Typography variant="h1" sx={{ lineHeight: 1 }}>
@@ -350,6 +397,25 @@ export default function ResellerDashboardLionTv({
                           }
                           sx={{ alignSelf: 'flex-start', fontWeight: 700 }}
                         />
+                        <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)' }} />
+                        <Grid container spacing={1.2}>
+                          <Grid item xs={6}>
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.68)' }}>
+                              {locale === 'en' ? 'Pending invoices' : 'Facturas pendientes'}
+                            </Typography>
+                            <Typography variant="h5" color="common.white">
+                              {pendingInvoices}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.68)' }}>
+                              {locale === 'en' ? 'Shared risk' : 'Riesgo shared'}
+                            </Typography>
+                            <Typography variant="h5" color="common.white">
+                              {Number(sharedRiskKpi?.criticalClusters || 0)}
+                            </Typography>
+                          </Grid>
+                        </Grid>
                       </Stack>
                     </CardContent>
                   </Card>
@@ -426,7 +492,10 @@ export default function ResellerDashboardLionTv({
           </Grid>
 
           <Box>
-            <Typography variant="h4" sx={{ mb: 0.5 }}>
+            <Typography variant="overline" color="primary.main" sx={{ letterSpacing: '0.16em', fontWeight: 800 }}>
+              {locale === 'en' ? 'Operate faster' : 'Opera más rápido'}
+            </Typography>
+            <Typography variant="h3" sx={{ mb: 0.5 }}>
               {t('resellerDashboard.quick.title', 'Accesos rápidos que sí sirven')}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -445,6 +514,19 @@ export default function ResellerDashboardLionTv({
           </Box>
 
           <Grid container spacing={gridSpacing}>
+            <Grid item xs={12}>
+              <Typography variant="overline" color="primary.main" sx={{ letterSpacing: '0.16em', fontWeight: 800 }}>
+                {locale === 'en' ? 'Commercial focus' : 'Foco comercial'}
+              </Typography>
+              <Typography variant="h3" sx={{ mb: 0.5 }}>
+                {locale === 'en' ? 'Three signals you should not ignore today' : 'Tres señales que no debes ignorar hoy'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                {locale === 'en'
+                  ? 'These cards tell the reseller where money, service quality or renewals may break first.'
+                  : 'Estas tarjetas le dicen al reseller dónde puede romperse primero el dinero, la calidad del servicio o las renovaciones.'}
+              </Typography>
+            </Grid>
             <Grid item xs={12} md={4}>
               {focusCard({
                 title: t('resellerDashboard.focus.renewals.title', 'Renovaciones críticas'),

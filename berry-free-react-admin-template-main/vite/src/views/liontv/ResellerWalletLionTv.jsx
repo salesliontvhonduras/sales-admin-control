@@ -12,8 +12,10 @@ import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
+import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
 import MenuItem from '@mui/material/MenuItem';
+import LinearProgress from '@mui/material/LinearProgress';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
@@ -26,6 +28,7 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import Avatar from '@mui/material/Avatar';
 
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import AddCircleOutlineOutlinedIcon from '@mui/icons-material/AddCircleOutlineOutlined';
@@ -36,6 +39,9 @@ import RequestQuoteOutlinedIcon from '@mui/icons-material/RequestQuoteOutlined';
 import TrendingDownOutlinedIcon from '@mui/icons-material/TrendingDownOutlined';
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined';
+import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
+import BoltOutlinedIcon from '@mui/icons-material/BoltOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
@@ -69,28 +75,51 @@ function formatDateTime(value, locale = 'es-HN') {
 function walletMetric(icon, title, value, helper, color = 'primary') {
   const Icon = icon;
   return (
-    <Card sx={{ height: '100%', borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+    <Card
+      sx={(theme) => ({
+        height: '100%',
+        borderRadius: 3.5,
+        border: '1px solid',
+        borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
+        boxShadow: theme.palette.mode === 'dark' ? '0 18px 34px rgba(2,8,23,0.26)' : '0 16px 28px rgba(15,23,42,0.06)',
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
+            : 'linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)',
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          background: `radial-gradient(circle at top right, ${theme.palette[color].main}20 0%, transparent 56%)`,
+          pointerEvents: 'none'
+        }
+      })}
+    >
       <CardContent>
         <Stack spacing={1.5}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
-            <Typography variant="subtitle2" color="text.secondary">
+            <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.12em', fontWeight: 700 }}>
               {title}
             </Typography>
-            <Box
+            <Avatar
               sx={(theme) => ({
-                width: 42,
-                height: 42,
-                borderRadius: 2,
-                display: 'grid',
-                placeItems: 'center',
+                width: 46,
+                height: 46,
+                borderRadius: 2.8,
                 color: theme.palette[color].main,
-                bgcolor: `${theme.palette[color].main}14`
+                bgcolor: `${theme.palette[color].main}16`,
+                border: '1px solid',
+                borderColor: `${theme.palette[color].main}24`
               })}
             >
               <Icon fontSize="small" />
-            </Box>
+            </Avatar>
           </Stack>
-          <Typography variant="h3">{value}</Typography>
+          <Typography variant="h3" sx={{ lineHeight: 1.05 }}>
+            {value}
+          </Typography>
           <Typography variant="body2" color="text.secondary">
             {helper}
           </Typography>
@@ -117,11 +146,40 @@ function todayIsoDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function SectionHeader({ eyebrow, title, description, action }) {
+  return (
+    <Stack
+      direction={{ xs: 'column', md: 'row' }}
+      justifyContent="space-between"
+      alignItems={{ xs: 'flex-start', md: 'flex-end' }}
+      spacing={1.25}
+    >
+      <Box>
+        {eyebrow ? (
+          <Typography variant="overline" color="primary.main" sx={{ letterSpacing: '0.16em', fontWeight: 800 }}>
+            {eyebrow}
+          </Typography>
+        ) : null}
+        <Typography variant="h3" sx={{ mt: 0.25 }}>
+          {title}
+        </Typography>
+        {description ? (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: 720 }}>
+            {description}
+          </Typography>
+        ) : null}
+      </Box>
+      {action ? <Box>{action}</Box> : null}
+    </Stack>
+  );
+}
+
 export default function ResellerWalletLionTv() {
   const { t, i18n } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken, user } = useAuth();
   const locale = String(i18n?.resolvedLanguage || i18n?.language || 'es').toLowerCase().startsWith('en') ? 'en-US' : 'es-HN';
+  const language = locale === 'en-US' ? 'en' : 'es';
   const canAdjust = hasPermissionExact(user, { any: ['LIONTV_RESELLER_WALLET_ADJUST', 'ROLE_LIONTV_RESELLER_WALLET_ADJUST', 'ROLE_ADMIN', 'ADMIN'] });
 
   const [summary, setSummary] = useState(null);
@@ -170,6 +228,53 @@ export default function ResellerWalletLionTv() {
   const pendingRequests = useMemo(
     () => creditRequests.filter((item) => String(item.status || '').toUpperCase() === 'PENDING').length,
     [creditRequests]
+  );
+  const lastRequest = useMemo(() => (creditRequests.length ? creditRequests[0] : null), [creditRequests]);
+  const lowBalanceThreshold = Number(summary?.lowBalanceThreshold || 0);
+  const availableCredits = Number(summary?.availableCredits || 0);
+  const thresholdProgress = lowBalanceThreshold > 0 ? Math.min((availableCredits / lowBalanceThreshold) * 100, 100) : 100;
+  const walletCopy = useMemo(
+    () =>
+      language === 'en'
+        ? {
+            heroBadge: 'Commercial wallet',
+            heroTitle: 'Request credits with a flow that feels premium and fast',
+            heroSubtitle:
+              'This module now behaves like a reseller finance console: clear balance, clean request experience, pending status visibility and movement history in one place.',
+            sections: {
+              requestEyebrow: 'Request flow',
+              requestTitle: 'Ask for credits without internal friction',
+              requestDescription:
+                'Pick the amount, leave a short note if needed and send the request. Admin receives it as a pending internal purchase.',
+              activityEyebrow: 'Wallet intelligence',
+              activityTitle: 'Signals you should watch before selling more',
+              activityDescription: 'These cards tell you if balance is healthy, if requests are still pending and what changed recently.',
+              ledgerEyebrow: 'Movement history',
+              ledgerTitle: 'Full wallet ledger',
+              ledgerDescription: 'Use this table as your financial trace for credits consumed, manual top-ups and wallet adjustments.'
+            }
+          }
+        : {
+            heroBadge: 'Wallet comercial',
+            heroTitle: 'Solicita créditos con una experiencia más premium y rápida',
+            heroSubtitle:
+              'Este módulo ahora funciona como una consola financiera reseller: saldo claro, solicitud limpia, visibilidad de pendientes e historial de movimientos en un solo lugar.',
+            sections: {
+              requestEyebrow: 'Flujo de solicitud',
+              requestTitle: 'Pide créditos sin fricción interna',
+              requestDescription:
+                'Define la cantidad, deja una nota corta si hace falta y envía la solicitud. Admin la recibe como una compra interna pendiente.',
+              activityEyebrow: 'Inteligencia del wallet',
+              activityTitle: 'Señales que debes vigilar antes de vender más',
+              activityDescription:
+                'Estas tarjetas te dicen si el saldo está saludable, si aún hay solicitudes abiertas y qué cambió recientemente.',
+              ledgerEyebrow: 'Historial de movimientos',
+              ledgerTitle: 'Ledger completo del wallet',
+              ledgerDescription:
+                'Usa esta tabla como trazabilidad financiera de créditos consumidos, recargas manuales y ajustes del wallet.'
+            }
+          },
+    [language]
   );
 
   const handleSubmitAdjustment = async () => {
@@ -289,12 +394,13 @@ export default function ResellerWalletLionTv() {
               borderRadius: 4,
               overflow: 'hidden',
               border: '1px solid',
-              borderColor: 'divider',
+              borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
               color: 'common.white',
               background:
                 theme.palette.mode === 'dark'
-                  ? `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.secondary.dark} 52%, #020617 100%)`
-                  : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 52%, #111827 100%)`
+                  ? 'linear-gradient(135deg, #07111f 0%, #0f172a 32%, #133b5c 64%, #164e63 100%)'
+                  : 'linear-gradient(135deg, #0f172a 0%, #1d4ed8 34%, #0f766e 68%, #16a34a 120%)',
+              boxShadow: theme.palette.mode === 'dark' ? '0 28px 52px rgba(2, 8, 23, 0.42)' : '0 24px 46px rgba(15, 23, 42, 0.18)'
             })}
           >
             <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
@@ -303,33 +409,43 @@ export default function ResellerWalletLionTv() {
                   <Stack spacing={1.25}>
                     <Chip
                       icon={<CreditScoreOutlinedIcon />}
-                      label={t('resellerWallet.hero.badge', 'Saldo y recargas')}
+                      label={walletCopy.heroBadge}
                       sx={{ alignSelf: 'flex-start', bgcolor: 'rgba(255,255,255,0.14)', color: 'common.white', fontWeight: 700 }}
                     />
                     <Typography variant="h2" sx={{ fontSize: { xs: '1.9rem', md: '2.4rem' } }}>
-                      {t('resellerWallet.hero.title', 'Pide créditos sin escribir códigos ni referencias internas')}
+                      {walletCopy.heroTitle}
                     </Typography>
                     <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.82)', maxWidth: 720 }}>
-                      {t(
-                        'resellerWallet.hero.subtitle',
-                        'Solo define cuántos créditos necesitas y envía la solicitud. Administración la recibe en su módulo interno y luego acredita tu saldo.'
-                      )}
+                      {walletCopy.heroSubtitle}
                     </Typography>
                   </Stack>
                 </Grid>
                 <Grid item xs={12} md={4}>
-                  <Card sx={{ borderRadius: 3, bgcolor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}>
+                  <Card sx={{ borderRadius: 3.2, bgcolor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}>
                     <CardContent>
-                      <Stack spacing={1}>
-                        <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.72)' }}>
+                      <Stack spacing={1.1}>
+                        <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.72)', letterSpacing: '0.12em', fontWeight: 700 }}>
                           {t('resellerWallet.hero.balanceLabel', 'Saldo disponible')}
                         </Typography>
                         <Typography variant="h1" sx={{ lineHeight: 1 }}>
-                          {summary.availableCredits ?? 0}
+                          {availableCredits}
                         </Typography>
                         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.72)' }}>
                           {t('resellerWallet.hero.balanceHelper', 'Créditos listos para ventas nuevas y renovaciones.')}
                         </Typography>
+                        <LinearProgress
+                          variant="determinate"
+                          value={thresholdProgress}
+                          sx={{
+                            height: 8,
+                            borderRadius: 999,
+                            bgcolor: 'rgba(255,255,255,0.12)',
+                            '& .MuiLinearProgress-bar': {
+                              borderRadius: 999,
+                              bgcolor: summary.lowBalance ? '#f59e0b' : '#22c55e'
+                            }
+                          }}
+                        />
                         <Chip
                           color={summary.lowBalance ? 'warning' : 'success'}
                           label={
@@ -339,6 +455,24 @@ export default function ResellerWalletLionTv() {
                           }
                           sx={{ alignSelf: 'flex-start', fontWeight: 700 }}
                         />
+                        <Grid container spacing={1.2}>
+                          <Grid item xs={6}>
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.68)' }}>
+                              {language === 'en' ? 'Threshold' : 'Umbral'}
+                            </Typography>
+                            <Typography variant="h6" color="common.white">
+                              {lowBalanceThreshold || 0}
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={6}>
+                            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.68)' }}>
+                              {language === 'en' ? 'Pending' : 'Pendientes'}
+                            </Typography>
+                            <Typography variant="h6" color="common.white">
+                              {pendingRequests}
+                            </Typography>
+                          </Grid>
+                        </Grid>
                       </Stack>
                     </CardContent>
                   </Card>
@@ -357,6 +491,13 @@ export default function ResellerWalletLionTv() {
           ) : null}
 
           <Grid container spacing={gridSpacing}>
+            <Grid item xs={12}>
+              <SectionHeader
+                eyebrow={walletCopy.sections.activityEyebrow}
+                title={walletCopy.sections.activityTitle}
+                description={walletCopy.sections.activityDescription}
+              />
+            </Grid>
             <Grid item xs={12} md={3}>
               {walletMetric(
                 AccountBalanceWalletOutlinedIcon,
@@ -397,18 +538,22 @@ export default function ResellerWalletLionTv() {
 
           <Grid container spacing={gridSpacing}>
             <Grid item xs={12} lg={7}>
-              <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+              <Card
+                sx={(theme) => ({
+                  borderRadius: 3.5,
+                  border: '1px solid',
+                  borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
+                  height: '100%',
+                  boxShadow: theme.palette.mode === 'dark' ? '0 18px 34px rgba(2,8,23,0.24)' : '0 16px 28px rgba(15,23,42,0.06)'
+                })}
+              >
                 <CardContent>
                   <Stack spacing={2.25}>
-                    <Box>
-                      <Typography variant="h4">{t('resellerWallet.buy.title', 'Solicitar créditos')}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {t(
-                          'resellerWallet.buy.subtitle',
-                          'Elige cuántos créditos necesitas. La solicitud llega al módulo admin y tu saldo se acredita cuando el pago sea confirmado.'
-                        )}
-                      </Typography>
-                    </Box>
+                    <SectionHeader
+                      eyebrow={walletCopy.sections.requestEyebrow}
+                      title={walletCopy.sections.requestTitle}
+                      description={walletCopy.sections.requestDescription}
+                    />
 
                     <Stack direction="row" spacing={1} flexWrap="wrap">
                       {QUICK_CREDIT_OPTIONS.map((option) => (
@@ -423,6 +568,73 @@ export default function ResellerWalletLionTv() {
                         />
                       ))}
                     </Stack>
+
+                    <Grid container spacing={1.5}>
+                      {[
+                        {
+                          icon: BoltOutlinedIcon,
+                          title: language === 'en' ? 'No internal codes' : 'Sin códigos internos',
+                          text:
+                            language === 'en'
+                              ? 'The reseller only chooses quantity and sends the request.'
+                              : 'El reseller solo elige cantidad y envía la solicitud.'
+                        },
+                        {
+                          icon: TaskAltOutlinedIcon,
+                          title: language === 'en' ? 'Admin receives it' : 'Admin la recibe',
+                          text:
+                            language === 'en'
+                              ? 'The request lands as a pending admin purchase ready to process.'
+                              : 'La solicitud cae como compra admin pendiente lista para procesar.'
+                        },
+                        {
+                          icon: InsightsOutlinedIcon,
+                          title: language === 'en' ? 'Traceable flow' : 'Flujo trazable',
+                          text:
+                            language === 'en'
+                              ? 'The wallet and the request history keep the operation auditable.'
+                              : 'El wallet y el historial de solicitudes mantienen la operación auditable.'
+                        }
+                      ].map((item) => (
+                        <Grid item xs={12} md={4} key={item.title}>
+                          <Card
+                            variant="outlined"
+                            sx={(theme) => ({
+                              height: '100%',
+                              borderRadius: 3,
+                              borderColor: theme.palette.mode === 'dark' ? 'rgba(148,163,184,0.12)' : 'rgba(15,23,42,0.08)',
+                              background:
+                                theme.palette.mode === 'dark'
+                                  ? 'linear-gradient(180deg, rgba(15,23,42,0.78) 0%, rgba(10,16,29,0.84) 100%)'
+                                  : 'linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%)'
+                            })}
+                          >
+                            <CardContent>
+                              <Stack spacing={1}>
+                                <Avatar
+                                  variant="rounded"
+                                  sx={(theme) => ({
+                                    width: 38,
+                                    height: 38,
+                                    borderRadius: 2.4,
+                                    bgcolor: `${theme.palette.primary.main}16`,
+                                    color: 'primary.main'
+                                  })}
+                                >
+                                  <item.icon fontSize="small" />
+                                </Avatar>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                                  {item.title}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                  {item.text}
+                                </Typography>
+                              </Stack>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      ))}
+                    </Grid>
 
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={4}>
@@ -468,65 +680,151 @@ export default function ResellerWalletLionTv() {
             </Grid>
 
             <Grid item xs={12} lg={5}>
-              <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider', height: '100%' }}>
-                <CardContent>
-                  <Stack spacing={2}>
-                    <Box>
-                      <Typography variant="h4">{t('resellerWallet.requests.title', 'Últimas solicitudes')}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {t(
-                          'resellerWallet.requests.subtitle',
-                          'Aquí ves el estado de tus recargas recientes mientras administración las procesa.'
-                        )}
-                      </Typography>
-                    </Box>
+              <Stack spacing={gridSpacing} sx={{ height: '100%' }}>
+                <Card
+                  sx={(theme) => ({
+                    borderRadius: 3.5,
+                    border: '1px solid',
+                    borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
+                    boxShadow: theme.palette.mode === 'dark' ? '0 18px 34px rgba(2,8,23,0.24)' : '0 16px 28px rgba(15,23,42,0.06)'
+                  })}
+                >
+                  <CardContent>
+                    <Stack spacing={2}>
+                      <Box>
+                        <Typography variant="h4">{t('resellerWallet.requests.title', 'Últimas solicitudes')}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {t(
+                            'resellerWallet.requests.subtitle',
+                            'Aquí ves el estado de tus recargas recientes mientras administración las procesa.'
+                          )}
+                        </Typography>
+                      </Box>
 
-                    {creditRequests.length ? (
-                      <Stack spacing={1.25}>
-                        {creditRequests.map((request) => (
-                          <Card key={request.id} variant="outlined" sx={{ borderRadius: 2.5 }}>
-                            <CardContent sx={{ p: 2 }}>
-                              <Stack spacing={1}>
-                                <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
-                                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                                    {request.itemName || t('resellerWallet.requests.fallback', 'Solicitud de créditos')}
+                      {creditRequests.length ? (
+                        <Stack spacing={1.25}>
+                          {creditRequests.map((request) => (
+                            <Card
+                              key={request.id}
+                              variant="outlined"
+                              sx={(theme) => ({
+                                borderRadius: 2.8,
+                                borderColor: theme.palette.mode === 'dark' ? 'rgba(148,163,184,0.12)' : 'rgba(15,23,42,0.08)',
+                                background:
+                                  theme.palette.mode === 'dark'
+                                    ? 'linear-gradient(180deg, rgba(15,23,42,0.76) 0%, rgba(10,16,29,0.82) 100%)'
+                                    : 'linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%)'
+                              })}
+                            >
+                              <CardContent sx={{ p: 2 }}>
+                                <Stack spacing={1}>
+                                  <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                      {request.itemName || t('resellerWallet.requests.fallback', 'Solicitud de créditos')}
+                                    </Typography>
+                                    <Chip size="small" color={statusColor(request.status)} label={request.status || 'PENDING'} />
+                                  </Stack>
+                                  <Stack direction="row" spacing={1} flexWrap="wrap">
+                                    <Chip
+                                      size="small"
+                                      variant="outlined"
+                                      icon={<CreditScoreOutlinedIcon fontSize="small" />}
+                                      label={`${Number(request.quantity || 0)} cr`}
+                                    />
+                                    <Chip
+                                      size="small"
+                                      variant="outlined"
+                                      icon={<HistoryOutlinedIcon fontSize="small" />}
+                                      label={formatDateTime(request.createdAt || request.purchaseDate, locale)}
+                                    />
+                                  </Stack>
+                                  <Typography variant="body2" color="text.secondary">
+                                    {request.notes || t('resellerWallet.requests.noNotes', 'Sin notas adicionales en esta solicitud.')}
                                   </Typography>
-                                  <Chip size="small" color={statusColor(request.status)} label={request.status || 'PENDING'} />
                                 </Stack>
-                                <Stack direction="row" spacing={1} flexWrap="wrap">
-                                  <Chip
-                                    size="small"
-                                    variant="outlined"
-                                    icon={<CreditScoreOutlinedIcon fontSize="small" />}
-                                    label={`${Number(request.quantity || 0)} cr`}
-                                  />
-                                  <Chip
-                                    size="small"
-                                    variant="outlined"
-                                    icon={<HistoryOutlinedIcon fontSize="small" />}
-                                    label={formatDateTime(request.createdAt || request.purchaseDate, locale)}
-                                  />
-                                </Stack>
-                                <Typography variant="body2" color="text.secondary">
-                                  {request.notes || t('resellerWallet.requests.noNotes', 'Sin notas adicionales en esta solicitud.')}
-                                </Typography>
-                              </Stack>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </Stack>
-                    ) : (
-                      <Alert severity="info">
-                        {t('resellerWallet.requests.empty', 'Todavía no has enviado solicitudes de créditos.')}
-                      </Alert>
-                    )}
-                  </Stack>
-                </CardContent>
-              </Card>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </Stack>
+                      ) : (
+                        <Alert severity="info">
+                          {t('resellerWallet.requests.empty', 'Todavía no has enviado solicitudes de créditos.')}
+                        </Alert>
+                      )}
+                    </Stack>
+                  </CardContent>
+                </Card>
+
+                <Card
+                  sx={(theme) => ({
+                    borderRadius: 3.5,
+                    border: '1px solid',
+                    borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
+                        : 'linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)'
+                  })}
+                >
+                  <CardContent>
+                    <Stack spacing={1.4}>
+                      <Typography variant="h4">{language === 'en' ? 'Wallet snapshot' : 'Snapshot del wallet'}</Typography>
+                      <Divider />
+                      <Grid container spacing={1.5}>
+                        <Grid item xs={6}>
+                          <Typography variant="caption" color="text.secondary">
+                            {language === 'en' ? 'Last movement' : 'Último movimiento'}
+                          </Typography>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                            {formatDateTime(summary.lastEventAt, locale)}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <Typography variant="caption" color="text.secondary">
+                            {language === 'en' ? 'Open requests' : 'Solicitudes abiertas'}
+                          </Typography>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                            {pendingRequests}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <Typography variant="caption" color="text.secondary">
+                            {language === 'en' ? 'Low balance threshold' : 'Umbral de saldo bajo'}
+                          </Typography>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                            {lowBalanceThreshold}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <Typography variant="caption" color="text.secondary">
+                            {language === 'en' ? 'Last request' : 'Última solicitud'}
+                          </Typography>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                            {lastRequest ? `${Number(lastRequest.quantity || 0)} cr` : '-'}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Stack>
             </Grid>
           </Grid>
 
-          <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+          <SectionHeader
+            eyebrow={walletCopy.sections.ledgerEyebrow}
+            title={walletCopy.sections.ledgerTitle}
+            description={walletCopy.sections.ledgerDescription}
+          />
+
+          <Card
+            sx={(theme) => ({
+              borderRadius: 3.5,
+              border: '1px solid',
+              borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
+              boxShadow: theme.palette.mode === 'dark' ? '0 18px 34px rgba(2,8,23,0.24)' : '0 16px 28px rgba(15,23,42,0.06)'
+            })}
+          >
             <CardContent>
               <Stack spacing={2}>
                 <Box>
