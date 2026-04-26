@@ -698,6 +698,10 @@ const resources = {
       subscriptionSharing: {
         title: 'Shared subscriptions monitoring',
         subtitle: 'Visual monitoring based on subscriptions that reuse the same line_id across different customers.',
+        tabs: {
+          clusters: 'Shared clusters',
+          capacity: 'Available spaces by day'
+        },
         kpi: {
           totalSubscriptions: 'Total subscriptions',
           activeSubscriptions: 'Active',
@@ -718,7 +722,9 @@ const resources = {
           riskBucket: 'Risk bucket',
           atRiskOnly: 'At risk',
           renewalDay: 'Renewal day',
+          ownRenewalDay: 'Own renewal day',
           renewalDayAll: 'All days',
+          misalignedOnly: 'Misaligned',
           recommendedMoves: 'Recommended moves',
           visible: 'Visible: {{count}}',
           hostsVisible: 'Hosts: {{count}}',
@@ -727,6 +733,7 @@ const resources = {
           blockedVisible: 'Blocked: {{count}}',
           criticalVisible: 'Critical hosts: {{count}}',
           overdueVisible: 'Overdue hosts: {{count}}',
+          misalignedVisible: 'Misaligned: {{count}}',
           recommendedVisible: 'Recommended moves: {{count}}',
           reset: 'Reset filters',
           blockedHint:
@@ -753,6 +760,10 @@ const resources = {
           recommendationOptions: {
             all: 'All',
             yes: 'Recommended only'
+          },
+          misalignedOptions: {
+            all: 'All',
+            yes: 'Misaligned only'
           }
         },
         sections: {
@@ -767,6 +778,35 @@ const resources = {
             'This list surfaces subscriptions that stay outside sharing and explains whether the block is status, term or available capacity.',
           noNotEligible: 'No non-eligible subscriptions matched current filters.'
         },
+        capacity: {
+          title: 'Available spaces grouped by renewal day',
+          subtitle: 'Use this operational view to place new 1-screen sales on lines that still have real capacity on that exact renewal day.',
+          info:
+            'This tab is operational. It uses active capacity available right now and ignores the Eligible / Misaligned / Recommended filters so monthly accounts with free space are still visible.',
+          empty: 'No active lines with spare capacity were found for the current filters.',
+          summary: {
+            lines: 'Lines with space: {{count}}',
+            slots: '1-screen slots: {{count}}',
+            hosts: 'Hosts with space: {{count}}',
+            standalone: 'Standalone with space: {{count}}'
+          },
+          bucket: {
+            lineCount: 'Lines: {{count}}',
+            slotCount: '1-screen slots: {{count}}',
+            hostCount: 'Hosts: {{count}}',
+            standaloneCount: 'Standalone: {{count}}',
+            helper: 'Use this bucket for new 1-screen customers that should renew on this day. Nearest renewal: {{date}}',
+            helperNoDate: 'Use this bucket for lines without a visible renewal date only after manual validation.'
+          },
+          card: {
+            slotBadge: '{{count}} slot(s) free',
+            billing: 'Billing',
+            availableSlots: 'Available 1-screen slots',
+            salesHelper: 'You can place {{count}} sale(s) of 1 screen here',
+            currentUsage: 'Current usage',
+            roleHelper: 'Role: {{role}}'
+          }
+        },
         role: {
           host: 'HOST',
           shared: 'SHARED',
@@ -776,6 +816,20 @@ const resources = {
           inactive: 'Inactive',
           minimumTerm: 'Minimum {{count}} months',
           noCapacity: 'No available capacity'
+        },
+        alignment: {
+          aligned: 'Aligned',
+          misaligned: 'Misaligned',
+          noHostDate: 'Host date missing',
+          noOwnDate: 'Own date missing',
+          unknown: 'Alignment unknown'
+        },
+        alignmentReason: {
+          alreadyAligned: 'Own renewal day already matches the host.',
+          hostDayDiffers: 'Own renewal day does not match the current host day.',
+          noHostDate: 'Current host does not have a renewal date.',
+          noOwnDate: 'This subscription does not have a renewal date.',
+          unknown: 'Renewal alignment could not be determined.'
         },
         risk: {
           overdue: 'Overdue',
@@ -794,6 +848,7 @@ const resources = {
         bucket: {
           hostCount: 'Hosts: {{count}}',
           sharedCount: 'Shared: {{count}}',
+          misalignedCount: 'Misaligned: {{count}}',
           recommendedCount: 'Recommended: {{count}}',
           nearestDate: 'Nearest host renewal: {{date}}',
           nearestDateUnknown: 'Hosts without renewal date in this bucket.',
@@ -825,10 +880,15 @@ const resources = {
           sharedClusterSize: 'Cluster size {{count}}',
           status: 'Status',
           beneficiaries: 'Beneficiaries',
-          beneficiariesHint: 'These subscriptions inherit the operational risk from the host and reuse the same shared capacity.',
+          beneficiariesHint: 'Each shared subscription should renew on the same day as the host. Misaligned accounts are shown first so you can reorganize them.',
           noBeneficiaries: 'No SHARED subscriptions linked to this host.',
           affectsShared: 'Affects {{count}} shared',
-          inheritedRisk: 'Inherited risk from host #{{hostId}}'
+          inheritedRisk: 'Inherited risk from host #{{hostId}}',
+          misalignedShared: 'Misaligned shared',
+          alignedShared: 'Aligned shared',
+          sectionCount: '{{count}} items',
+          ownRenewalDayValue: 'Own day: {{day}}',
+          currentHostDayValue: 'Host day: {{day}}'
         },
         actions: {
           viewDiagnostics: 'View diagnostics',
@@ -839,6 +899,7 @@ const resources = {
           roleCurrent: 'Role mode: {{role}}',
           roleHelp: 'Choose who should behave as host inside this shared line. Auto keeps the system decision.',
           moveToDay: 'Move to day {{day}}',
+          moveToHost: 'Move to host #{{id}}',
           moving: 'Moving...',
           confirmMove: 'Move beneficiary'
         },
@@ -850,14 +911,17 @@ const resources = {
             none: 'No move'
           },
           reason: {
-            recommended: 'Recommended destination ready.',
-            stableHost: 'Current host is stable for now.',
-            noCapacity: 'No compatible destination has enough capacity.',
-            noCompatibleHost: 'No compatible destination was found.',
+            recommended: 'A host with the exact same renewal day is available.',
+            alreadyAligned: 'This shared subscription is already aligned with its host.',
+            missingRenewalDate: 'Own renewal day or host renewal day is missing.',
+            noCapacity: 'The exact-day destination exists, but it does not have enough capacity.',
+            incompatibleService: 'Exact-day hosts exist, but they are not compatible by service.',
+            noExactDayHost: 'No exact-day host or eligible account was found.',
             none: 'No move recommendation yet.'
           },
-          hostAlert: '{{count}} beneficiary(ies) should be moved from this host to a safer renewal day.',
+          hostAlert: '{{count}} beneficiary(ies) do not renew on the same day as this host.',
           recommendedBadge: 'Recommended move',
+          ownDay: 'Own renewal day',
           currentDay: 'Current host day',
           recommendedDay: 'Recommended day',
           requiredScreens: 'Screens to move',
@@ -865,14 +929,15 @@ const resources = {
           recommendedLine: 'Line: {{line}}',
           recommendedLinePlus: 'Plus: {{value}}',
           recommendedCustomer: 'Customer: {{customer}}',
-          confirmTitle: 'Move beneficiary to a safer host',
+          confirmTitle: 'Move beneficiary to exact-day host',
           confirmSubtitle: 'Subscription #{{subscriptionId}}',
           confirmSubtitleFallback: 'Confirm the recommended move',
-          confirmBody: 'This will update the subscription line to the recommended host account and keep the destination pinned as HOST.',
+          confirmBody: 'This will move the shared subscription to a host that renews on the same day and keep the destination pinned as HOST.',
           currentAssignment: 'Current assignment',
           currentHost: 'Host #{{id}}',
           currentLine: 'Line: {{line}}',
           currentDayValue: 'Day: {{day}}',
+          ownDayValue: 'Own day: {{day}}',
           destinationAssignment: 'Recommended destination',
           confirmWarning: 'This action changes lineId/linePlusId of the beneficiary subscription and immediately affects how the shared cluster is organized.'
         },
@@ -895,10 +960,12 @@ const resources = {
           billing: 'Billing',
           startDate: 'Start date',
           renewalDate: 'Renewal date',
+          ownRenewalDay: 'Own renewal day',
           hostRenewalDate: 'Host renewal date',
           hostRenewalDay: 'Renewal day',
           hostDaysToRenewal: 'Days to host renewal',
           hostRiskBucket: 'Host risk bucket',
+          alignmentTitle: 'Renewal alignment',
           termMonths: 'Calculated months',
           minimumEligibleMonths: 'Minimum: {{count}}',
           activatedScreens: 'Activated screens',
@@ -4180,6 +4247,10 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
       subscriptionSharing: {
         title: 'Seguimiento de suscripciones compartidas',
         subtitle: 'Monitoreo visual basado en suscripciones que reutilizan el mismo line_id entre clientes distintos.',
+        tabs: {
+          clusters: 'Clústeres shared',
+          capacity: 'Espacios disponibles por día'
+        },
         kpi: {
           totalSubscriptions: 'Suscripciones totales',
           activeSubscriptions: 'Activas',
@@ -4200,7 +4271,9 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           riskBucket: 'Bucket de riesgo',
           atRiskOnly: 'En riesgo',
           renewalDay: 'Día de renovación',
+          ownRenewalDay: 'Día propio de renovación',
           renewalDayAll: 'Todos los días',
+          misalignedOnly: 'Desalineadas',
           recommendedMoves: 'Movimientos recomendados',
           visible: 'Visibles: {{count}}',
           hostsVisible: 'Hosts: {{count}}',
@@ -4209,6 +4282,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           blockedVisible: 'Bloqueadas: {{count}}',
           criticalVisible: 'Hosts críticos: {{count}}',
           overdueVisible: 'Hosts vencidos: {{count}}',
+          misalignedVisible: 'Desalineadas: {{count}}',
           recommendedVisible: 'Movimientos recomendados: {{count}}',
           reset: 'Resetear filtros',
           blockedHint:
@@ -4235,6 +4309,10 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           recommendationOptions: {
             all: 'Todos',
             yes: 'Solo recomendados'
+          },
+          misalignedOptions: {
+            all: 'Todas',
+            yes: 'Solo desalineadas'
           }
         },
         sections: {
@@ -4250,6 +4328,35 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             'Esta lista muestra las suscripciones que siguen fuera del sharing y explica si el bloqueo es por estado, duración o capacidad disponible.',
           noNotEligible: 'No hay suscripciones no elegibles con los filtros actuales.'
         },
+        capacity: {
+          title: 'Espacios disponibles agrupados por día de renovación',
+          subtitle: 'Usa esta vista operativa para colocar nuevas ventas de 1 pantalla en líneas que todavía tienen capacidad real en ese día exacto.',
+          info:
+            'Este tab es operativo. Usa la capacidad activa disponible en este momento e ignora los filtros de Elegible / Desalineadas / Recomendados para que las cuentas mensuales con espacio sigan visibles.',
+          empty: 'No se encontraron líneas activas con capacidad libre para los filtros actuales.',
+          summary: {
+            lines: 'Líneas con espacio: {{count}}',
+            slots: 'Espacios de 1 pantalla: {{count}}',
+            hosts: 'Hosts con espacio: {{count}}',
+            standalone: 'Independientes con espacio: {{count}}'
+          },
+          bucket: {
+            lineCount: 'Líneas: {{count}}',
+            slotCount: 'Espacios de 1 pantalla: {{count}}',
+            hostCount: 'Hosts: {{count}}',
+            standaloneCount: 'Independientes: {{count}}',
+            helper: 'Usa este bucket para nuevos clientes de 1 pantalla que deban renovar ese día. Renovación más próxima: {{date}}',
+            helperNoDate: 'Usa este bucket para líneas sin fecha visible solo después de validación manual.'
+          },
+          card: {
+            slotBadge: '{{count}} espacio(s) libres',
+            billing: 'Facturación',
+            availableSlots: 'Espacios disponibles de 1 pantalla',
+            salesHelper: 'Puedes colocar {{count}} venta(s) de 1 pantalla aquí',
+            currentUsage: 'Uso actual',
+            roleHelper: 'Rol: {{role}}'
+          }
+        },
         role: {
           host: 'HOST',
           shared: 'SHARED',
@@ -4259,6 +4366,20 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           inactive: 'Inactiva',
           minimumTerm: 'Mínimo {{count}} meses',
           noCapacity: 'Sin capacidad disponible'
+        },
+        alignment: {
+          aligned: 'Alineada',
+          misaligned: 'Desalineada',
+          noHostDate: 'Host sin fecha',
+          noOwnDate: 'Sin fecha propia',
+          unknown: 'Alineación desconocida'
+        },
+        alignmentReason: {
+          alreadyAligned: 'El día propio ya coincide con el host.',
+          hostDayDiffers: 'El día propio no coincide con el día del host actual.',
+          noHostDate: 'El host actual no tiene fecha de renovación.',
+          noOwnDate: 'Esta suscripción no tiene fecha de renovación.',
+          unknown: 'No se pudo determinar la alineación de renovación.'
         },
         risk: {
           overdue: 'Vencido',
@@ -4277,6 +4398,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         bucket: {
           hostCount: 'Hosts: {{count}}',
           sharedCount: 'Shared: {{count}}',
+          misalignedCount: 'Desalineadas: {{count}}',
           recommendedCount: 'Recomendados: {{count}}',
           nearestDate: 'Renovación host más próxima: {{date}}',
           nearestDateUnknown: 'Hosts sin fecha de renovación en este bucket.',
@@ -4308,10 +4430,15 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           sharedClusterSize: 'Tamaño clúster {{count}}',
           status: 'Estado',
           beneficiaries: 'Beneficiarios',
-          beneficiariesHint: 'Estas suscripciones heredan el riesgo operativo del host y reutilizan la misma capacidad compartida.',
+          beneficiariesHint: 'Cada shared debería renovar el mismo día que el host. Las cuentas desalineadas se muestran primero para reorganizarlas.',
           noBeneficiaries: 'No hay suscripciones SHARED vinculadas a este host.',
           affectsShared: 'Afecta {{count}} shared',
-          inheritedRisk: 'Riesgo heredado del host #{{hostId}}'
+          inheritedRisk: 'Riesgo heredado del host #{{hostId}}',
+          misalignedShared: 'Shared desalineadas',
+          alignedShared: 'Shared alineadas',
+          sectionCount: '{{count}} items',
+          ownRenewalDayValue: 'Día propio: {{day}}',
+          currentHostDayValue: 'Día del host: {{day}}'
         },
         actions: {
           viewDiagnostics: 'Ver diagnóstico',
@@ -4322,6 +4449,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           roleCurrent: 'Modo de rol: {{role}}',
           roleHelp: 'Elige qué suscripción debe comportarse como host dentro de esta línea compartida. Auto mantiene la decisión del sistema.',
           moveToDay: 'Mover al día {{day}}',
+          moveToHost: 'Mover al host #{{id}}',
           moving: 'Moviendo...',
           confirmMove: 'Mover beneficiario'
         },
@@ -4333,14 +4461,17 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             none: 'Sin movimiento'
           },
           reason: {
-            recommended: 'Ya existe un destino recomendado.',
-            stableHost: 'El host actual está estable por ahora.',
-            noCapacity: 'Ningún destino compatible tiene capacidad suficiente.',
-            noCompatibleHost: 'No se encontró un destino compatible.',
+            recommended: 'Ya existe un host con el mismo día exacto de renovación.',
+            alreadyAligned: 'Esta suscripción shared ya está alineada con su host.',
+            missingRenewalDate: 'Falta el día propio o el día del host.',
+            noCapacity: 'Existe un destino del mismo día, pero no tiene capacidad suficiente.',
+            incompatibleService: 'Existen hosts del mismo día, pero no son compatibles por servicio.',
+            noExactDayHost: 'No se encontró un host o cuenta elegible con el mismo día exacto.',
             none: 'Todavía no hay una recomendación de movimiento.'
           },
-          hostAlert: '{{count}} beneficiario(s) deberían moverse de este host a un día de renovación más seguro.',
+          hostAlert: '{{count}} beneficiario(s) no renuevan el mismo día que este host.',
           recommendedBadge: 'Movimiento recomendado',
+          ownDay: 'Día propio de renovación',
           currentDay: 'Día actual del host',
           recommendedDay: 'Día recomendado',
           requiredScreens: 'Pantallas a mover',
@@ -4348,14 +4479,15 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           recommendedLine: 'Línea: {{line}}',
           recommendedLinePlus: 'Plus: {{value}}',
           recommendedCustomer: 'Cliente: {{customer}}',
-          confirmTitle: 'Mover beneficiario a un host más seguro',
+          confirmTitle: 'Mover beneficiario a host del mismo día',
           confirmSubtitle: 'Suscripción #{{subscriptionId}}',
           confirmSubtitleFallback: 'Confirma el movimiento recomendado',
-          confirmBody: 'Esto actualizará la línea de la suscripción al host recomendado y dejará el destino fijado como HOST.',
+          confirmBody: 'Esto moverá la suscripción shared a un host que renueva el mismo día y dejará el destino fijado como HOST.',
           currentAssignment: 'Asignación actual',
           currentHost: 'Host #{{id}}',
           currentLine: 'Línea: {{line}}',
           currentDayValue: 'Día: {{day}}',
+          ownDayValue: 'Día propio: {{day}}',
           destinationAssignment: 'Destino recomendado',
           confirmWarning: 'Esta acción cambia lineId/linePlusId de la suscripción beneficiaria y afecta de inmediato cómo queda organizado el clúster compartido.'
         },
@@ -4378,10 +4510,12 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           billing: 'Billing',
           startDate: 'Fecha de inicio',
           renewalDate: 'Fecha de renovación',
+          ownRenewalDay: 'Día propio de renovación',
           hostRenewalDate: 'Fecha de renovación del host',
           hostRenewalDay: 'Día de renovación',
           hostDaysToRenewal: 'Días al vencimiento del host',
           hostRiskBucket: 'Bucket de riesgo del host',
+          alignmentTitle: 'Alineación de renovación',
           termMonths: 'Meses calculados',
           minimumEligibleMonths: 'Mínimo: {{count}}',
           activatedScreens: 'Pantallas activadas',
