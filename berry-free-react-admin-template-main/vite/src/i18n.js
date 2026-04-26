@@ -2664,7 +2664,7 @@ const resources = {
         subtitle: 'Register and track interested contacts.',
         search: 'Search prospects',
         searchPlaceholder: 'Search by name, email, phone, country',
-        filters: { status: 'Status' },
+        filters: { status: 'Status', category: 'Category', groupName: 'Name group' },
         headers: {
           name: 'Name',
           email: 'Email',
@@ -2685,8 +2685,34 @@ const resources = {
           new: 'New potential customer',
           edit: 'Edit potential customer',
           markContacted: 'Mark as contacted',
+          exportWhatsappCsv: 'Export WhatsApp CSV',
+          importWhatsappCsv: 'Import WhatsApp CSV',
           sendPaymentFailedEmail: 'Send payment failed email',
           sendAbandonedCartEmail: 'Send abandoned cart email'
+        },
+        export: {
+          byName: 'Export grouped by name',
+          byCategory: 'Export grouped by category',
+          fallbackName: 'Prospect',
+          fileSuffixName: 'by-name',
+          fileSuffixCategory: 'by-category'
+        },
+        import: {
+          title: 'Import WhatsApp CSV',
+          subtitle: 'Upload a phone,group file and create prospects only for the authenticated user.',
+          helper: 'Existing phones for the same user are skipped automatically. Categories are inferred from the group label when possible.',
+          fileName: 'Selected file',
+          rowsDetected: 'Rows detected',
+          groupsDetected: 'Groups detected',
+          defaults: 'Import defaults',
+          defaultCountry: 'Default country',
+          defaultCategory: 'Default category',
+          preview: 'Preview groups',
+          noGroups: 'No groups detected in the file.',
+          changeFile: 'Choose another file',
+          confirm: 'Import now',
+          importing: 'Importing...',
+          fallbackName: 'WhatsApp Lead'
         },
         form: {
           identity: 'Identity',
@@ -2755,6 +2781,14 @@ If you want, I can share a demo with no commitment so you can see how it looks i
           paymentFailedError: 'Could not send the payment failed email.',
           abandonedCartSent: 'Abandoned cart email sent.',
           abandonedCartError: 'Could not send the abandoned cart email.',
+          exportEmpty: 'There are no records to export with the current filters.',
+          exportNoPhones: 'The filtered records do not have valid phones to export or they already belong to registered customers.',
+          exportSuccess: 'CSV exported with {{count}} records.',
+          importInvalidFile: 'The selected file does not contain valid WhatsApp rows.',
+          importParsingError: 'The CSV file could not be parsed. Check the format and try again.',
+          importSuccess:
+            'Import finished. Inserted {{inserted}}, skipped existing leads {{skipped}}, skipped customers {{skippedCustomers}}, invalid {{invalid}}.',
+          importError: 'Could not import the WhatsApp CSV.',
           requiredName: 'Complete the name.',
           created: 'Potential customer created.',
           updated: 'Potential customer updated.',
@@ -3024,7 +3058,7 @@ If you want, I can share a demo with no commitment so you can see how it looks i
         subtitle: 'Registra y da seguimiento a contactos interesados.',
         search: 'Buscar potenciales',
         searchPlaceholder: 'Buscar por nombre, correo, teléfono, país',
-        filters: { status: 'Estado' },
+        filters: { status: 'Estado', category: 'Categoría', groupName: 'Grupo por nombre' },
         headers: {
           name: 'Nombre',
           email: 'Correo',
@@ -3044,7 +3078,35 @@ If you want, I can share a demo with no commitment so you can see how it looks i
         actions: {
           new: 'Nuevo cliente potencial',
           edit: 'Editar cliente potencial',
-          markContacted: 'Marcar como contactado'
+          markContacted: 'Marcar como contactado',
+          exportWhatsappCsv: 'Exportar CSV WhatsApp',
+          importWhatsappCsv: 'Importar CSV WhatsApp',
+          sendPaymentFailedEmail: 'Enviar correo de pago fallido',
+          sendAbandonedCartEmail: 'Enviar correo de carrito abandonado'
+        },
+        export: {
+          byName: 'Exportar agrupado por nombre',
+          byCategory: 'Exportar agrupado por categoría',
+          fallbackName: 'Prospecto',
+          fileSuffixName: 'por-nombre',
+          fileSuffixCategory: 'por-categoria'
+        },
+        import: {
+          title: 'Importar CSV WhatsApp',
+          subtitle: 'Sube un archivo phone,group y crea prospectos solo para el usuario autenticado.',
+          helper: 'Los teléfonos existentes para el mismo usuario se omiten automáticamente. Las categorías se infieren desde el nombre del grupo cuando es posible.',
+          fileName: 'Archivo seleccionado',
+          rowsDetected: 'Filas detectadas',
+          groupsDetected: 'Grupos detectados',
+          defaults: 'Valores por defecto',
+          defaultCountry: 'País por defecto',
+          defaultCategory: 'Categoría por defecto',
+          preview: 'Vista previa de grupos',
+          noGroups: 'No se detectaron grupos en el archivo.',
+          changeFile: 'Elegir otro archivo',
+          confirm: 'Importar ahora',
+          importing: 'Importando...',
+          fallbackName: 'Lead WhatsApp'
         },
         form: {
           identity: 'Identidad',
@@ -3108,6 +3170,14 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           markContactedSuccess: 'Estado actualizado a Contacted.',
           markContactedError: 'No se pudo actualizar el estado.',
           invalidWhatsAppPhone: 'Este prospecto no tiene teléfono válido para WhatsApp.',
+          exportEmpty: 'No hay registros para exportar con los filtros actuales.',
+          exportNoPhones: 'Los registros filtrados no tienen teléfonos válidos para exportar o ya pertenecen a clientes registrados.',
+          exportSuccess: 'CSV exportado con {{count}} registros.',
+          importInvalidFile: 'El archivo seleccionado no contiene filas válidas de WhatsApp.',
+          importParsingError: 'No se pudo interpretar el archivo CSV. Revisa el formato e inténtalo de nuevo.',
+          importSuccess:
+            'Importación completada. Insertados {{inserted}}, omitidos por existentes {{skipped}}, omitidos por clientes {{skippedCustomers}}, inválidos {{invalid}}.',
+          importError: 'No se pudo importar el CSV de WhatsApp.',
           requiredName: 'Completa el nombre.',
           created: 'Cliente potencial creado.',
           updated: 'Cliente potencial actualizado.',

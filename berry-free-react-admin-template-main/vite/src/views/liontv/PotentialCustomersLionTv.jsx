@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
 import { useTranslation } from 'react-i18next';
@@ -55,6 +55,8 @@ import ContactPhoneOutlinedIcon from '@mui/icons-material/ContactPhoneOutlined';
 import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
 import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
+import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
 import LionMetricCard from 'ui-component/cards/LionMetricCard';
@@ -237,6 +239,84 @@ function normalizePotential(item = {}) {
   };
 }
 
+function sanitizeCsvCell(value) {
+  return String(value ?? '')
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/,/g, ' ')
+    .trim();
+}
+
+function parseCsvLine(line) {
+  const columns = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+
+    if (character === '"') {
+      if (inQuotes && line[index + 1] === '"') {
+        current += '"';
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (character === ',' && !inQuotes) {
+      columns.push(current);
+      current = '';
+      continue;
+    }
+
+    current += character;
+  }
+
+  columns.push(current);
+  return columns.map((value) => value.trim());
+}
+
+function isImportHeaderRow(firstColumn, secondColumn) {
+  const first = String(firstColumn || '')
+    .trim()
+    .toLowerCase();
+  const second = String(secondColumn || '')
+    .trim()
+    .toLowerCase();
+
+  const phoneHeader = ['phone', 'telefono', 'teléfono', 'celular', 'numero', 'número', 'mobile'];
+  const labelHeader = ['group', 'grupo', 'label', 'etiqueta', 'name', 'nombre', 'category', 'categoria', 'categoría'];
+
+  return phoneHeader.includes(first) && labelHeader.includes(second);
+}
+
+function parseWhatsAppImportCsv(text) {
+  const rows = [];
+
+  String(text || '')
+    .split(/\r?\n/)
+    .forEach((rawLine, index) => {
+      const trimmedLine = rawLine.trim();
+      if (!trimmedLine) return;
+
+      const columns = parseCsvLine(trimmedLine);
+      const phone = String(columns[0] || '')
+        .replace(/^\uFEFF/, '')
+        .trim();
+      const label = columns.slice(1).join(',').trim();
+
+      if (index === 0 && isImportHeaderRow(phone, label)) {
+        return;
+      }
+
+      if (!phone && !label) return;
+      rows.push({ phone, label });
+    });
+
+  return rows;
+}
+
 const countryPhonePrefixMap = {
   AR: '54',
   CA: '1',
@@ -268,6 +348,21 @@ function normalizePhoneForWhatsApp(phone, countryIso = '') {
   }
 
   return digits;
+}
+
+function normalizeComparablePhone(phone) {
+  let digits = String(phone || '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('00')) {
+    digits = digits.slice(2);
+  }
+  return digits;
+}
+
+function resolveComparableLocalPhone(phone) {
+  const digits = normalizeComparablePhone(phone);
+  if (!digits) return '';
+  return digits.length > 8 ? digits.slice(-8) : digits;
 }
 
 function StatusChip({ status }) {
@@ -441,6 +536,7 @@ export default function PotentialCustomersLionTv() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const uiLanguage = i18n.resolvedLanguage || i18n.language || 'en';
+  const fileInputRef = useRef(null);
 
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -450,14 +546,45 @@ export default function PotentialCustomersLionTv() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [groupNameFilter, setGroupNameFilter] = useState('');
   const [openModal, setOpenModal] = useState(false);
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
   const [form, setForm] = useState(defaultForm);
   const [sending, setSending] = useState(false);
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [importDialog, setImportDialog] = useState({ open: false, fileName: '', rows: [] });
+  const [importDefaults, setImportDefaults] = useState({
+    defaultCountry: 'HN',
+    defaultCategory: 'SOCIAL_MEDIA'
+  });
+  const [customerComparablePhones, setCustomerComparablePhones] = useState(() => new Set());
   const categoryOptions = useMemo(() => buildCategoryOptions(t), [t]);
   const statusOptions = useMemo(() => buildStatusOptions(t), [t]);
   const isoCountryOptions = useMemo(() => buildIsoCountryOptions(uiLanguage), [uiLanguage]);
   const whatsAppMessage = useMemo(() => t('potentialCustomers.whatsappMessage'), [t]);
+  const groupNameOptions = useMemo(
+    () =>
+      [...new Set(rows.map((row) => String(row.fullName || '').trim()).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b)),
+    [rows]
+  );
+  const exportMenuOpen = Boolean(exportAnchorEl);
+  const importPreview = useMemo(() => {
+    const grouped = new Map();
+    importDialog.rows.forEach((row) => {
+      const label = sanitizeCsvCell(row?.label || t('potentialCustomers.import.fallbackName', 'WhatsApp Lead'));
+      if (!label) return;
+      grouped.set(label, (grouped.get(label) || 0) + 1);
+    });
+
+    return {
+      detectedRows: importDialog.rows.length,
+      detectedGroups: grouped.size,
+      topGroups: [...grouped.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 8)
+    };
+  }, [importDialog.rows, t]);
 
   const handleUnauthorized = (err) => {
     const status = err?.response?.status || err?.request?.status;
@@ -490,15 +617,52 @@ export default function PotentialCustomersLionTv() {
     }
   }, [accessToken, enqueueSnackbar, t]);
 
+  const loadCustomerPhones = useCallback(async () => {
+    if (!accessToken) return;
+    try {
+      const response = await lionTvApi.get('/customers/v1', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: { index: 0, size: 5000 },
+        skipAuthRedirect: true
+      });
+
+      const payload = response?.data?.data ?? response?.data ?? {};
+      const collection = payload.data ?? payload.items ?? payload.content ?? [];
+      const comparablePhones = new Set();
+
+      (Array.isArray(collection) ? collection : []).forEach((item) => {
+        const phone = item?.customerPhone ?? item?.customer_phone ?? item?.phone ?? '';
+        const normalized = normalizeComparablePhone(phone);
+        if (!normalized) return;
+        comparablePhones.add(normalized);
+        comparablePhones.add(resolveComparableLocalPhone(normalized));
+      });
+
+      setCustomerComparablePhones(comparablePhones);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('customers.messages.loadError', 'Could not load customers.'), {
+          variant: 'error'
+        });
+      }
+    }
+  }, [accessToken, enqueueSnackbar, t]);
+
   useEffect(() => {
     loadPotentialCustomers();
   }, [loadPotentialCustomers, refreshKey]);
 
+  useEffect(() => {
+    loadCustomerPhones();
+  }, [loadCustomerPhones, refreshKey]);
+
   const filteredRows = useMemo(() => {
-    if (!search && !statusFilter) return rows;
+    if (!search && !statusFilter && !categoryFilter && !groupNameFilter) return rows;
     const term = search.toLowerCase();
     return rows.filter((row) => {
       if (statusFilter && (row.status || '').toLowerCase() !== statusFilter.toLowerCase()) return false;
+      if (categoryFilter && (row.category || '').toUpperCase() !== categoryFilter.toUpperCase()) return false;
+      if (groupNameFilter && String(row.fullName || '').trim() !== groupNameFilter) return false;
       return (
         (row.fullName || '').toLowerCase().includes(term) ||
         (row.email || '').toLowerCase().includes(term) ||
@@ -508,7 +672,7 @@ export default function PotentialCustomersLionTv() {
         (row.status || '').toLowerCase().includes(term)
       );
     });
-  }, [rows, search, statusFilter]);
+  }, [rows, search, statusFilter, categoryFilter, groupNameFilter]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -612,6 +776,176 @@ export default function PotentialCustomersLionTv() {
 
     const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(whatsAppMessage)}`;
     window.open(waUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const buildWhatsAppCsv = useCallback(
+    (groupBy) => {
+      return filteredRows
+        .map((row) => {
+          const phone = normalizePhoneForWhatsApp(row?.phone, row?.country);
+          if (!phone) return null;
+          const comparablePhone = normalizeComparablePhone(phone);
+          const localComparablePhone = resolveComparableLocalPhone(phone);
+          if (customerComparablePhones.has(comparablePhone) || customerComparablePhones.has(localComparablePhone)) {
+            return null;
+          }
+
+          const label =
+            groupBy === 'category'
+              ? optionLabel(categoryOptions, row.category, row.category || 'GENERAL')
+              : sanitizeCsvCell(row.fullName || t('potentialCustomers.export.fallbackName', 'Prospect'));
+
+          return `${sanitizeCsvCell(phone)},${sanitizeCsvCell(label)}`;
+        })
+        .filter(Boolean)
+        .join('\n');
+    },
+    [filteredRows, categoryOptions, customerComparablePhones, t]
+  );
+
+  const downloadWhatsAppCsv = useCallback(
+    (groupBy) => {
+      const csvContent = buildWhatsAppCsv(groupBy);
+      setExportAnchorEl(null);
+
+      if (!filteredRows.length) {
+        enqueueSnackbar(t('potentialCustomers.messages.exportEmpty', 'No hay registros para exportar con los filtros actuales.'), {
+          variant: 'warning'
+        });
+        return;
+      }
+
+      if (!csvContent) {
+        enqueueSnackbar(
+          t(
+            'potentialCustomers.messages.exportNoPhones',
+            'The filtered records do not have valid phones to export or they already belong to registered customers.'
+          ),
+          {
+          variant: 'warning'
+          }
+        );
+        return;
+      }
+
+      const fileSuffix =
+        groupBy === 'category'
+          ? t('potentialCustomers.export.fileSuffixCategory', 'by-category')
+          : t('potentialCustomers.export.fileSuffixName', 'by-name');
+      const fileName = `potential-customers-whatsapp-${fileSuffix}-${new Date().toISOString().slice(0, 10)}.csv`;
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      enqueueSnackbar(
+        t('potentialCustomers.messages.exportSuccess', {
+          count: csvContent.split('\n').filter(Boolean).length,
+          defaultValue: 'CSV exportado con {{count}} registros.'
+        }),
+        { variant: 'success' }
+      );
+    },
+    [buildWhatsAppCsv, enqueueSnackbar, filteredRows.length, t]
+  );
+
+  const handleOpenImportPicker = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImportDefaultChange = (field) => (event) => {
+    setImportDefaults((previous) => ({ ...previous, [field]: event.target.value }));
+  };
+
+  const handleImportFileSelected = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const parsedRows = parseWhatsAppImportCsv(text);
+
+      if (!parsedRows.length) {
+        enqueueSnackbar(t('potentialCustomers.messages.importInvalidFile', 'The selected file does not contain valid WhatsApp rows.'), {
+          variant: 'warning'
+        });
+        return;
+      }
+
+      setImportDialog({
+        open: true,
+        fileName: file.name,
+        rows: parsedRows
+      });
+    } catch (error) {
+      enqueueSnackbar(
+        t('potentialCustomers.messages.importParsingError', 'The CSV file could not be parsed. Check the format and try again.'),
+        { variant: 'error' }
+      );
+    }
+  };
+
+  const handleCloseImportDialog = () => {
+    if (importing) return;
+    setImportDialog({ open: false, fileName: '', rows: [] });
+  };
+
+  const handleConfirmImport = async () => {
+    if (!importDialog.rows.length) {
+      enqueueSnackbar(t('potentialCustomers.messages.importInvalidFile', 'The selected file does not contain valid WhatsApp rows.'), {
+        variant: 'warning'
+      });
+      return;
+    }
+
+    setImporting(true);
+    try {
+      const response = await lionTvApi.post(
+        '/potential-customers/v1/import',
+        {
+          rows: importDialog.rows,
+          defaultCountry: importDefaults.defaultCountry || 'HN',
+          defaultCategory: importDefaults.defaultCategory || 'SOCIAL_MEDIA',
+          defaultStatus: 'NEW',
+          fallbackName: t('potentialCustomers.import.fallbackName', 'WhatsApp Lead')
+        },
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          skipAuthRedirect: true
+        }
+      );
+
+      const payload = response?.data?.data ?? response?.data ?? {};
+      enqueueSnackbar(
+        t('potentialCustomers.messages.importSuccess', {
+          inserted: payload.insertedRows ?? 0,
+          skipped: payload.skippedExistingRows ?? 0,
+          skippedCustomers: payload.skippedCustomerRows ?? 0,
+          invalid: payload.invalidRows ?? 0,
+          defaultValue:
+            'Import finished. Inserted {{inserted}}, skipped existing leads {{skipped}}, skipped customers {{skippedCustomers}}, invalid {{invalid}}.'
+        }),
+        { variant: 'success' }
+      );
+
+      handleCloseImportDialog();
+      setRefreshKey((value) => value + 1);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('potentialCustomers.messages.importError'), {
+          variant: 'error'
+        });
+      }
+    } finally {
+      setImporting(false);
+    }
   };
 
   const handleSave = async () => {
@@ -745,6 +1079,7 @@ export default function PotentialCustomersLionTv() {
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
+      <input ref={fileInputRef} type="file" accept=".csv,text/csv" hidden onChange={handleImportFileSelected} />
       <MainCard
         title={t('potentialCustomers.title', 'Potential Customers')}
         secondary={
@@ -760,6 +1095,30 @@ export default function PotentialCustomersLionTv() {
               }}
             >
               {t('actions.refresh')}
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<FileDownloadOutlinedIcon />}
+              onClick={(event) => setExportAnchorEl(event.currentTarget)}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                px: 2
+              }}
+            >
+              {t('potentialCustomers.actions.exportWhatsappCsv', 'Exportar CSV WhatsApp')}
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<CloudUploadOutlinedIcon />}
+              onClick={handleOpenImportPicker}
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                px: 2
+              }}
+            >
+              {t('potentialCustomers.actions.importWhatsappCsv', 'Import WhatsApp CSV')}
             </Button>
             <Button
               variant="contained"
@@ -837,6 +1196,32 @@ export default function PotentialCustomersLionTv() {
                 {statusOptions.map((opt) => (
                   <MenuItem key={opt.value} value={opt.value}>
                     {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 220, '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}>
+              <InputLabel>{t('potentialCustomers.filters.category', 'Categoría')}</InputLabel>
+              <Select value={categoryFilter} label={t('potentialCustomers.filters.category', 'Categoría')} onChange={(e) => setCategoryFilter(e.target.value)}>
+                <MenuItem value="">
+                  <em>{t('invoices.filters.all', 'All')}</em>
+                </MenuItem>
+                {categoryOptions.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 240, '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}>
+              <InputLabel>{t('potentialCustomers.filters.groupName', 'Grupo por nombre')}</InputLabel>
+              <Select value={groupNameFilter} label={t('potentialCustomers.filters.groupName', 'Grupo por nombre')} onChange={(e) => setGroupNameFilter(e.target.value)}>
+                <MenuItem value="">
+                  <em>{t('invoices.filters.all', 'All')}</em>
+                </MenuItem>
+                {groupNameOptions.map((opt) => (
+                  <MenuItem key={opt} value={opt}>
+                    {opt}
                   </MenuItem>
                 ))}
               </Select>
@@ -1007,6 +1392,138 @@ export default function PotentialCustomersLionTv() {
           showDivider={!isMobile}
         />
       </MainCard>
+
+      <Menu anchorEl={exportAnchorEl} open={exportMenuOpen} onClose={() => setExportAnchorEl(null)}>
+        <MenuItem onClick={() => downloadWhatsAppCsv('name')}>
+          {t('potentialCustomers.export.byName', 'Exportar agrupado por nombre')}
+        </MenuItem>
+        <MenuItem onClick={() => downloadWhatsAppCsv('category')}>
+          {t('potentialCustomers.export.byCategory', 'Exportar agrupado por categoría')}
+        </MenuItem>
+      </Menu>
+
+      <Dialog open={importDialog.open} onClose={handleCloseImportDialog} fullWidth maxWidth="sm" fullScreen={isMobile}>
+        <DialogTitleWithClose onClose={handleCloseImportDialog}>
+          <Stack spacing={0.5}>
+            <Typography variant="h6">{t('potentialCustomers.import.title', 'Import WhatsApp CSV')}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {t(
+                'potentialCustomers.import.subtitle',
+                'Upload a phone,group file and the platform will create prospects only for the authenticated user.'
+              )}
+            </Typography>
+          </Stack>
+        </DialogTitleWithClose>
+        <DialogContent dividers sx={{ bgcolor: 'background.default' }}>
+          <Stack spacing={2}>
+            <Card sx={{ ...sectionSx, p: 2 }}>
+              <Stack spacing={1.5}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
+                  <Typography variant="subtitle2">{t('potentialCustomers.import.fileName', 'Selected file')}</Typography>
+                  <Chip size="small" color="primary" label={importDialog.fileName || '-'} />
+                </Stack>
+                <Grid container spacing={1.5}>
+                  <Grid item xs={12} sm={6}>
+                    <Card sx={{ ...glassCard(theme), p: 1.75 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        {t('potentialCustomers.import.rowsDetected', 'Rows detected')}
+                      </Typography>
+                      <Typography variant="h4">{importPreview.detectedRows}</Typography>
+                    </Card>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Card sx={{ ...glassCard(theme), p: 1.75 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        {t('potentialCustomers.import.groupsDetected', 'Groups detected')}
+                      </Typography>
+                      <Typography variant="h4">{importPreview.detectedGroups}</Typography>
+                    </Card>
+                  </Grid>
+                </Grid>
+                <Typography variant="caption" color="text.secondary">
+                  {t(
+                    'potentialCustomers.import.helper',
+                    'Existing phones for the same user are skipped automatically. Categories are inferred from the group label when possible.'
+                  )}
+                </Typography>
+              </Stack>
+            </Card>
+
+            <Card sx={{ ...sectionSx, p: 2 }}>
+              <Stack spacing={1.5}>
+                <Typography variant="subtitle2">{t('potentialCustomers.import.defaults', 'Import defaults')}</Typography>
+                <Grid container spacing={1.5}>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>{t('potentialCustomers.import.defaultCountry', 'Default country')}</InputLabel>
+                      <Select
+                        value={importDefaults.defaultCountry}
+                        label={t('potentialCustomers.import.defaultCountry', 'Default country')}
+                        onChange={handleImportDefaultChange('defaultCountry')}
+                      >
+                        {isoCountryOptions.map((country) => (
+                          <MenuItem key={country.value} value={country.value}>
+                            {country.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>{t('potentialCustomers.import.defaultCategory', 'Default category')}</InputLabel>
+                      <Select
+                        value={importDefaults.defaultCategory}
+                        label={t('potentialCustomers.import.defaultCategory', 'Default category')}
+                        onChange={handleImportDefaultChange('defaultCategory')}
+                      >
+                        {categoryOptions.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              </Stack>
+            </Card>
+
+            <Card sx={{ ...sectionSx, p: 2 }}>
+              <Stack spacing={1.25}>
+                <Typography variant="subtitle2">{t('potentialCustomers.import.preview', 'Preview groups')}</Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  {importPreview.topGroups.length ? (
+                    importPreview.topGroups.map(([label, count]) => (
+                      <Chip key={label} variant="outlined" label={`${label} · ${count}`} />
+                    ))
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      {t('potentialCustomers.import.noGroups', 'No groups detected in the file.')}
+                    </Typography>
+                  )}
+                </Stack>
+              </Stack>
+            </Card>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button variant="outlined" onClick={handleOpenImportPicker} disabled={importing}>
+            {t('potentialCustomers.import.changeFile', 'Choose another file')}
+          </Button>
+          <Button onClick={handleCloseImportDialog} disabled={importing}>
+            {t('actions.cancel', 'Cancel')}
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<CloudUploadOutlinedIcon />}
+            onClick={handleConfirmImport}
+            disabled={importing || !importDialog.rows.length}
+          >
+            {importing ? t('potentialCustomers.import.importing', 'Importing...') : t('potentialCustomers.import.confirm', 'Import now')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={openModal}
