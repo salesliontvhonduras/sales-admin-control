@@ -261,7 +261,7 @@ function premiumSurface(theme, color = 'primary') {
     borderRadius: 3.5,
     border: '1px solid',
     borderColor:
-      theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.08) : alpha(palette.main, 0.14),
+      theme.palette.mode === 'dark' ? alpha(palette.main, 0.18) : alpha(palette.main, 0.14),
     overflow: 'hidden',
     boxShadow:
       theme.palette.mode === 'dark'
@@ -288,7 +288,7 @@ function softSurface(theme, color = 'primary') {
     borderRadius: 3.5,
     border: '1px solid',
     borderColor:
-      theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.08) : alpha(palette.main, 0.12),
+      theme.palette.mode === 'dark' ? alpha(palette.main, 0.18) : alpha(palette.main, 0.12),
     boxShadow:
       theme.palette.mode === 'dark'
         ? '0 18px 36px rgba(2, 8, 23, 0.28)'
@@ -304,15 +304,15 @@ function heroInsetSurface(theme, tint) {
   return {
     height: '100%',
     borderRadius: 3,
-    border: `1px solid ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.12 : 0.18)}`,
+    border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.18)}`,
     backdropFilter: 'blur(14px)',
     background:
       theme.palette.mode === 'dark'
-        ? tint
-        : `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.16)} 0%, ${alpha(theme.palette.primary.light, 0.12)} 100%)`,
+        ? `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.95)} 0%, ${tint} 100%)`
+        : `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(theme.palette.primary.light, 0.14)} 100%)`,
     boxShadow:
       theme.palette.mode === 'dark'
-        ? `inset 0 1px 0 ${alpha(theme.palette.common.white, 0.03)}`
+        ? `0 12px 24px ${alpha(theme.palette.common.black, 0.24)}`
         : `0 10px 22px ${alpha(theme.palette.common.black, 0.1)}`
   };
 }

@@ -39,7 +39,7 @@ function premiumSurface(theme, color = 'primary') {
     borderRadius: 3.5,
     border: '1px solid',
     borderColor:
-      theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.08) : alpha(palette.main, 0.14),
+      theme.palette.mode === 'dark' ? alpha(palette.main, 0.18) : alpha(palette.main, 0.14),
     overflow: 'hidden',
     boxShadow:
       theme.palette.mode === 'dark'
@@ -65,12 +65,12 @@ function heroInsetSurface(theme) {
     borderRadius: 3.2,
     background:
       theme.palette.mode === 'dark'
-        ? `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.08)} 0%, ${alpha(theme.palette.common.white, 0.04)} 100%)`
-        : `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.18)} 0%, ${alpha(theme.palette.primary.light, 0.14)} 100%)`,
-    border: `1px solid ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.14 : 0.22)}`,
+        ? `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.96)} 0%, ${alpha(theme.palette.primary.main, 0.16)} 100%)`
+        : `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(theme.palette.primary.light, 0.16)} 100%)`,
+    border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.18)}`,
     boxShadow:
       theme.palette.mode === 'dark'
-        ? `inset 0 1px 0 ${alpha(theme.palette.common.white, 0.03)}`
+        ? `0 12px 24px ${alpha(theme.palette.common.black, 0.24)}`
         : `0 10px 24px ${alpha(theme.palette.common.black, 0.1)}`
   };
 }

@@ -72,7 +72,7 @@ function premiumSurface(theme, color = 'primary') {
     borderRadius: 3.5,
     border: '1px solid',
     borderColor:
-      theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.08) : alpha(palette.main, 0.14),
+      theme.palette.mode === 'dark' ? alpha(palette.main, 0.18) : alpha(palette.main, 0.14),
     boxShadow:
       theme.palette.mode === 'dark'
         ? '0 18px 34px rgba(2,8,23,0.26)'
@@ -89,10 +89,10 @@ function insetSurface(theme, color = 'primary') {
   return {
     borderRadius: 3,
     borderColor:
-      theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.1) : alpha(palette.main, 0.12),
+      theme.palette.mode === 'dark' ? alpha(palette.main, 0.18) : alpha(palette.main, 0.12),
     background:
       theme.palette.mode === 'dark'
-        ? 'linear-gradient(180deg, rgba(15,23,42,0.78) 0%, rgba(10,16,29,0.84) 100%)'
+        ? `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.94)} 0%, ${alpha(palette.main, 0.14)} 100%)`
         : `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(palette.light, 0.12)} 100%)`
   };
 }
@@ -102,12 +102,12 @@ function heroInsetSurface(theme) {
     borderRadius: 3.2,
     background:
       theme.palette.mode === 'dark'
-        ? `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.08)} 0%, ${alpha(theme.palette.common.white, 0.04)} 100%)`
-        : `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.18)} 0%, ${alpha(theme.palette.primary.light, 0.14)} 100%)`,
-    border: `1px solid ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.14 : 0.22)}`,
+        ? `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.96)} 0%, ${alpha(theme.palette.primary.main, 0.16)} 100%)`
+        : `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(theme.palette.primary.light, 0.16)} 100%)`,
+    border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.18)}`,
     boxShadow:
       theme.palette.mode === 'dark'
-        ? `inset 0 1px 0 ${alpha(theme.palette.common.white, 0.03)}`
+        ? `0 12px 24px ${alpha(theme.palette.common.black, 0.24)}`
         : `0 10px 24px ${alpha(theme.palette.common.black, 0.1)}`
   };
 }
