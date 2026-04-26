@@ -51,6 +51,7 @@ import { gridSpacing } from 'store/constant';
 import { createCreditRequest, listCreditRequests } from 'api/liontv-credit-requests';
 import { createResellerWalletAdjustment, getResellerWalletLedger, getResellerWalletSummary } from 'api/liontv-reseller-wallet';
 import { hasPermissionExact } from 'utils/rbac';
+import { withAlpha } from 'utils/colorUtils';
 
 const DEFAULT_ADJUSTMENT_FORM = {
   creditsDelta: '',
@@ -68,11 +69,14 @@ const QUICK_CREDIT_OPTIONS = [10, 25, 50, 100, 250, 500];
 
 function premiumSurface(theme, color = 'primary') {
   const palette = theme.palette[color] || theme.palette.primary;
+  const paletteMain = theme.vars?.palette?.[color]?.main || palette.main;
+  const paletteLight = theme.vars?.palette?.[color]?.light || palette.light;
+  const surfaceCard = theme.vars?.palette?.surface?.card || theme.palette.background.paper;
   return {
     borderRadius: 3.5,
     border: '1px solid',
     borderColor:
-      theme.palette.mode === 'dark' ? alpha(palette.main, 0.18) : alpha(palette.main, 0.14),
+      theme.palette.mode === 'dark' ? withAlpha(paletteMain, 0.18) : withAlpha(paletteMain, 0.14),
     boxShadow:
       theme.palette.mode === 'dark'
         ? '0 18px 34px rgba(2,8,23,0.26)'
@@ -80,31 +84,37 @@ function premiumSurface(theme, color = 'primary') {
     background:
       theme.palette.mode === 'dark'
         ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
-        : `linear-gradient(160deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(palette.light, 0.14)} 100%)`
+        : `linear-gradient(160deg, ${surfaceCard} 0%, ${withAlpha(paletteLight, 0.14)} 100%)`
   };
 }
 
 function insetSurface(theme, color = 'primary') {
   const palette = theme.palette[color] || theme.palette.primary;
+  const paletteMain = theme.vars?.palette?.[color]?.main || palette.main;
+  const paletteLight = theme.vars?.palette?.[color]?.light || palette.light;
+  const surfaceCard = theme.vars?.palette?.surface?.card || theme.palette.background.paper;
   return {
     borderRadius: 3,
     borderColor:
-      theme.palette.mode === 'dark' ? alpha(palette.main, 0.18) : alpha(palette.main, 0.12),
+      theme.palette.mode === 'dark' ? withAlpha(paletteMain, 0.18) : withAlpha(paletteMain, 0.12),
     background:
       theme.palette.mode === 'dark'
-        ? `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.94)} 0%, ${alpha(palette.main, 0.14)} 100%)`
-        : `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(palette.light, 0.12)} 100%)`
+        ? `linear-gradient(180deg, ${withAlpha(surfaceCard, 0.94)} 0%, ${withAlpha(paletteMain, 0.14)} 100%)`
+        : `linear-gradient(180deg, ${surfaceCard} 0%, ${withAlpha(paletteLight, 0.12)} 100%)`
   };
 }
 
 function heroInsetSurface(theme) {
+  const primaryMain = theme.vars?.palette?.primary?.main || theme.palette.primary.main;
+  const primaryLight = theme.vars?.palette?.primary?.light || theme.palette.primary.light;
+  const surfaceCard = theme.vars?.palette?.surface?.card || theme.palette.background.paper;
   return {
     borderRadius: 3.2,
     background:
       theme.palette.mode === 'dark'
-        ? `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.96)} 0%, ${alpha(theme.palette.primary.main, 0.16)} 100%)`
-        : `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(theme.palette.primary.light, 0.16)} 100%)`,
-    border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.18)}`,
+        ? `linear-gradient(180deg, ${withAlpha(surfaceCard, 0.96)} 0%, ${withAlpha(primaryMain, 0.16)} 100%)`
+        : `linear-gradient(180deg, ${surfaceCard} 0%, ${withAlpha(primaryLight, 0.16)} 100%)`,
+    border: `1px solid ${withAlpha(primaryMain, theme.palette.mode === 'dark' ? 0.2 : 0.18)}`,
     boxShadow:
       theme.palette.mode === 'dark'
         ? `0 12px 24px ${alpha(theme.palette.common.black, 0.24)}`
@@ -132,7 +142,10 @@ function walletMetric(icon, title, value, helper, color = 'primary') {
           content: '""',
           position: 'absolute',
           inset: 0,
-          background: `radial-gradient(circle at top right, ${alpha(theme.palette[color].main, theme.palette.mode === 'dark' ? 0.12 : 0.1)} 0%, transparent 56%)`,
+          background: `radial-gradient(circle at top right, ${withAlpha(
+            theme.vars?.palette?.[color]?.main || theme.palette[color].main,
+            theme.palette.mode === 'dark' ? 0.12 : 0.1
+          )} 0%, transparent 56%)`,
           pointerEvents: 'none'
         }
       })}

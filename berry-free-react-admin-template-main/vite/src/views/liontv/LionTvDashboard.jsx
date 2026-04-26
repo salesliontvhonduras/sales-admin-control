@@ -47,6 +47,7 @@ import { useLionTvOverview } from 'api/liontv-overview';
 import { useSubscriptionExpirationOverview } from 'api/liontv-subscription-expiration';
 import { lionTvApi } from 'utils/api';
 import { isResellerConsoleUser } from 'utils/rbac';
+import { withAlpha } from 'utils/colorUtils';
 import ResellerDashboardLionTv from 'views/liontv/ResellerDashboardLionTv';
 
 const ROUTES = {
@@ -257,11 +258,14 @@ function radarStats(items, dateField, statusField = 'status') {
 
 function premiumSurface(theme, color = 'primary') {
   const palette = theme.palette[color] || theme.palette.primary;
+  const paletteMain = theme.vars?.palette?.[color]?.main || palette.main;
+  const paletteLight = theme.vars?.palette?.[color]?.light || palette.light;
+  const surfaceCard = theme.vars?.palette?.surface?.card || theme.palette.background.paper;
   return {
     borderRadius: 3.5,
     border: '1px solid',
     borderColor:
-      theme.palette.mode === 'dark' ? alpha(palette.main, 0.18) : alpha(palette.main, 0.14),
+      theme.palette.mode === 'dark' ? withAlpha(paletteMain, 0.18) : withAlpha(paletteMain, 0.14),
     overflow: 'hidden',
     boxShadow:
       theme.palette.mode === 'dark'
@@ -270,25 +274,28 @@ function premiumSurface(theme, color = 'primary') {
     background:
       theme.palette.mode === 'dark'
         ? `linear-gradient(155deg, rgba(15, 23, 42, 0.98) 0%, rgba(11, 18, 32, 0.94) 60%, rgba(7, 15, 28, 0.98) 100%)`
-        : `linear-gradient(155deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(palette.light, 0.14)} 100%)`,
+        : `linear-gradient(155deg, ${surfaceCard} 0%, ${withAlpha(paletteLight, 0.14)} 100%)`,
     position: 'relative',
     '&::before': {
       content: '""',
       position: 'absolute',
       inset: 0,
       pointerEvents: 'none',
-      background: `radial-gradient(circle at top right, ${alpha(palette.main, theme.palette.mode === 'dark' ? 0.14 : 0.1)} 0%, transparent 54%)`
+      background: `radial-gradient(circle at top right, ${withAlpha(paletteMain, theme.palette.mode === 'dark' ? 0.14 : 0.1)} 0%, transparent 54%)`
     }
   };
 }
 
 function softSurface(theme, color = 'primary') {
   const palette = theme.palette[color] || theme.palette.primary;
+  const paletteMain = theme.vars?.palette?.[color]?.main || palette.main;
+  const paletteLight = theme.vars?.palette?.[color]?.light || palette.light;
+  const surfaceCard = theme.vars?.palette?.surface?.card || theme.palette.background.paper;
   return {
     borderRadius: 3.5,
     border: '1px solid',
     borderColor:
-      theme.palette.mode === 'dark' ? alpha(palette.main, 0.18) : alpha(palette.main, 0.12),
+      theme.palette.mode === 'dark' ? withAlpha(paletteMain, 0.18) : withAlpha(paletteMain, 0.12),
     boxShadow:
       theme.palette.mode === 'dark'
         ? '0 18px 36px rgba(2, 8, 23, 0.28)'
@@ -296,20 +303,23 @@ function softSurface(theme, color = 'primary') {
     background:
       theme.palette.mode === 'dark'
         ? 'linear-gradient(180deg, rgba(11,18,32,0.96) 0%, rgba(10,16,29,0.98) 100%)'
-        : `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(palette.light, 0.1)} 100%)`
+        : `linear-gradient(180deg, ${surfaceCard} 0%, ${withAlpha(paletteLight, 0.1)} 100%)`
   };
 }
 
 function heroInsetSurface(theme, tint) {
+  const surfaceCard = theme.vars?.palette?.surface?.card || theme.palette.background.paper;
+  const primaryMain = theme.vars?.palette?.primary?.main || theme.palette.primary.main;
+  const primaryLight = theme.vars?.palette?.primary?.light || theme.palette.primary.light;
   return {
     height: '100%',
     borderRadius: 3,
-    border: `1px solid ${alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.18)}`,
+    border: `1px solid ${withAlpha(primaryMain, theme.palette.mode === 'dark' ? 0.2 : 0.18)}`,
     backdropFilter: 'blur(14px)',
     background:
       theme.palette.mode === 'dark'
-        ? `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.95)} 0%, ${tint} 100%)`
-        : `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(theme.palette.primary.light, 0.14)} 100%)`,
+        ? `linear-gradient(180deg, ${withAlpha(surfaceCard, 0.95)} 0%, ${tint} 100%)`
+        : `linear-gradient(180deg, ${surfaceCard} 0%, ${withAlpha(primaryLight, 0.14)} 100%)`,
     boxShadow:
       theme.palette.mode === 'dark'
         ? `0 12px 24px ${alpha(theme.palette.common.black, 0.24)}`
@@ -491,8 +501,9 @@ function AlertsBucketCard({ title, helper, alerts, onOpenAlert, t }) {
                     background:
                       theme.palette.mode === 'dark'
                         ? 'linear-gradient(180deg, rgba(15,23,42,0.76) 0%, rgba(10,16,29,0.82) 100%)'
-                        : `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(
-                            theme.palette[sev.color === 'default' ? 'primary' : sev.color].light,
+                        : `linear-gradient(180deg, ${theme.vars?.palette?.surface?.card || theme.palette.background.paper} 0%, ${withAlpha(
+                            theme.vars?.palette?.[sev.color === 'default' ? 'primary' : sev.color]?.light ||
+                              theme.palette[sev.color === 'default' ? 'primary' : sev.color].light,
                             0.14
                           )} 100%)`
                   })}
