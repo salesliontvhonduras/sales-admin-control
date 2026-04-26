@@ -42,6 +42,7 @@ import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined';
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
 import BoltOutlinedIcon from '@mui/icons-material/BoltOutlined';
+import { alpha } from '@mui/material/styles';
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
@@ -65,6 +66,52 @@ const DEFAULT_REQUEST_FORM = {
 
 const QUICK_CREDIT_OPTIONS = [10, 25, 50, 100, 250, 500];
 
+function premiumSurface(theme, color = 'primary') {
+  const palette = theme.palette[color] || theme.palette.primary;
+  return {
+    borderRadius: 3.5,
+    border: '1px solid',
+    borderColor:
+      theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.08) : alpha(palette.main, 0.14),
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? '0 18px 34px rgba(2,8,23,0.26)'
+        : `0 16px 30px ${alpha(theme.palette.common.black, 0.08)}`,
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
+        : `linear-gradient(160deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(palette.light, 0.14)} 100%)`
+  };
+}
+
+function insetSurface(theme, color = 'primary') {
+  const palette = theme.palette[color] || theme.palette.primary;
+  return {
+    borderRadius: 3,
+    borderColor:
+      theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.1) : alpha(palette.main, 0.12),
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(180deg, rgba(15,23,42,0.78) 0%, rgba(10,16,29,0.84) 100%)'
+        : `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(palette.light, 0.12)} 100%)`
+  };
+}
+
+function heroInsetSurface(theme) {
+  return {
+    borderRadius: 3.2,
+    background:
+      theme.palette.mode === 'dark'
+        ? `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.08)} 0%, ${alpha(theme.palette.common.white, 0.04)} 100%)`
+        : `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.18)} 0%, ${alpha(theme.palette.primary.light, 0.14)} 100%)`,
+    border: `1px solid ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.14 : 0.22)}`,
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? `inset 0 1px 0 ${alpha(theme.palette.common.white, 0.03)}`
+        : `0 10px 24px ${alpha(theme.palette.common.black, 0.1)}`
+  };
+}
+
 function formatDateTime(value, locale = 'es-HN') {
   if (!value) return '-';
   const parsed = new Date(value);
@@ -77,22 +124,15 @@ function walletMetric(icon, title, value, helper, color = 'primary') {
   return (
     <Card
       sx={(theme) => ({
+        ...premiumSurface(theme, color),
         height: '100%',
-        borderRadius: 3.5,
-        border: '1px solid',
-        borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
-        boxShadow: theme.palette.mode === 'dark' ? '0 18px 34px rgba(2,8,23,0.26)' : '0 16px 28px rgba(15,23,42,0.06)',
-        background:
-          theme.palette.mode === 'dark'
-            ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
-            : 'linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)',
         position: 'relative',
         overflow: 'hidden',
         '&::before': {
           content: '""',
           position: 'absolute',
           inset: 0,
-          background: `radial-gradient(circle at top right, ${theme.palette[color].main}20 0%, transparent 56%)`,
+          background: `radial-gradient(circle at top right, ${alpha(theme.palette[color].main, theme.palette.mode === 'dark' ? 0.12 : 0.1)} 0%, transparent 56%)`,
           pointerEvents: 'none'
         }
       })}
@@ -421,7 +461,7 @@ export default function ResellerWalletLionTv() {
                   </Stack>
                 </Grid>
                 <Grid item xs={12} md={4}>
-                  <Card sx={{ borderRadius: 3.2, bgcolor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}>
+                  <Card sx={(theme) => heroInsetSurface(theme)}>
                     <CardContent>
                       <Stack spacing={1.1}>
                         <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.72)', letterSpacing: '0.12em', fontWeight: 700 }}>
@@ -540,11 +580,8 @@ export default function ResellerWalletLionTv() {
             <Grid item xs={12} lg={7}>
               <Card
                 sx={(theme) => ({
-                  borderRadius: 3.5,
-                  border: '1px solid',
-                  borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
-                  height: '100%',
-                  boxShadow: theme.palette.mode === 'dark' ? '0 18px 34px rgba(2,8,23,0.24)' : '0 16px 28px rgba(15,23,42,0.06)'
+                  ...premiumSurface(theme, 'primary'),
+                  height: '100%'
                 })}
               >
                 <CardContent>
@@ -600,13 +637,8 @@ export default function ResellerWalletLionTv() {
                           <Card
                             variant="outlined"
                             sx={(theme) => ({
-                              height: '100%',
-                              borderRadius: 3,
-                              borderColor: theme.palette.mode === 'dark' ? 'rgba(148,163,184,0.12)' : 'rgba(15,23,42,0.08)',
-                              background:
-                                theme.palette.mode === 'dark'
-                                  ? 'linear-gradient(180deg, rgba(15,23,42,0.78) 0%, rgba(10,16,29,0.84) 100%)'
-                                  : 'linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%)'
+                              ...insetSurface(theme, 'primary'),
+                              height: '100%'
                             })}
                           >
                             <CardContent>
@@ -683,10 +715,7 @@ export default function ResellerWalletLionTv() {
               <Stack spacing={gridSpacing} sx={{ height: '100%' }}>
                 <Card
                   sx={(theme) => ({
-                    borderRadius: 3.5,
-                    border: '1px solid',
-                    borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
-                    boxShadow: theme.palette.mode === 'dark' ? '0 18px 34px rgba(2,8,23,0.24)' : '0 16px 28px rgba(15,23,42,0.06)'
+                    ...premiumSurface(theme, 'secondary')
                   })}
                 >
                   <CardContent>
@@ -708,12 +737,8 @@ export default function ResellerWalletLionTv() {
                               key={request.id}
                               variant="outlined"
                               sx={(theme) => ({
-                                borderRadius: 2.8,
-                                borderColor: theme.palette.mode === 'dark' ? 'rgba(148,163,184,0.12)' : 'rgba(15,23,42,0.08)',
-                                background:
-                                  theme.palette.mode === 'dark'
-                                    ? 'linear-gradient(180deg, rgba(15,23,42,0.76) 0%, rgba(10,16,29,0.82) 100%)'
-                                    : 'linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.98) 100%)'
+                                ...insetSurface(theme, statusColor(request.status) === 'default' ? 'primary' : statusColor(request.status)),
+                                borderRadius: 2.8
                               })}
                             >
                               <CardContent sx={{ p: 2 }}>
@@ -757,13 +782,7 @@ export default function ResellerWalletLionTv() {
 
                 <Card
                   sx={(theme) => ({
-                    borderRadius: 3.5,
-                    border: '1px solid',
-                    borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
-                        : 'linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)'
+                    ...premiumSurface(theme, 'info')
                   })}
                 >
                   <CardContent>
@@ -819,10 +838,7 @@ export default function ResellerWalletLionTv() {
 
           <Card
             sx={(theme) => ({
-              borderRadius: 3.5,
-              border: '1px solid',
-              borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
-              boxShadow: theme.palette.mode === 'dark' ? '0 18px 34px rgba(2,8,23,0.24)' : '0 16px 28px rgba(15,23,42,0.06)'
+              ...premiumSurface(theme, 'primary')
             })}
           >
             <CardContent>

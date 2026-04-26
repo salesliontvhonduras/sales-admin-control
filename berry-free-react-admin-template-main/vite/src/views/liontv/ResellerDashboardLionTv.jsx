@@ -26,35 +26,62 @@ import ViewTimelineOutlinedIcon from '@mui/icons-material/ViewTimelineOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import AddCircleOutlineOutlinedIcon from '@mui/icons-material/AddCircleOutlineOutlined';
 import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
+import { alpha } from '@mui/material/styles';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
 import { gridSpacing } from 'store/constant';
 import { getResellerWalletSummary } from 'api/liontv-reseller-wallet';
 
+function premiumSurface(theme, color = 'primary') {
+  const palette = theme.palette[color] || theme.palette.primary;
+  return {
+    borderRadius: 3.5,
+    border: '1px solid',
+    borderColor:
+      theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.08) : alpha(palette.main, 0.14),
+    overflow: 'hidden',
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? '0 18px 34px rgba(2,8,23,0.26)'
+        : `0 16px 30px ${alpha(theme.palette.common.black, 0.08)}`,
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
+        : `linear-gradient(160deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(palette.light, 0.14)} 100%)`,
+    position: 'relative',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      inset: 0,
+      background: `radial-gradient(circle at top right, ${alpha(palette.main, theme.palette.mode === 'dark' ? 0.14 : 0.1)} 0%, transparent 56%)`,
+      pointerEvents: 'none'
+    }
+  };
+}
+
+function heroInsetSurface(theme) {
+  return {
+    borderRadius: 3.2,
+    background:
+      theme.palette.mode === 'dark'
+        ? `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.08)} 0%, ${alpha(theme.palette.common.white, 0.04)} 100%)`
+        : `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.18)} 0%, ${alpha(theme.palette.primary.light, 0.14)} 100%)`,
+    border: `1px solid ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.14 : 0.22)}`,
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? `inset 0 1px 0 ${alpha(theme.palette.common.white, 0.03)}`
+        : `0 10px 24px ${alpha(theme.palette.common.black, 0.1)}`
+  };
+}
+
 function metricCard(icon, title, value, helper, color = 'primary') {
   const Icon = icon;
   return (
     <Card
       sx={(theme) => ({
-        height: '100%',
-        borderRadius: 3.5,
-        border: '1px solid',
-        borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
-        overflow: 'hidden',
-        boxShadow: theme.palette.mode === 'dark' ? '0 18px 34px rgba(2,8,23,0.26)' : '0 16px 28px rgba(15,23,42,0.06)',
-        background:
-          theme.palette.mode === 'dark'
-            ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
-            : 'linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)',
-        position: 'relative',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          inset: 0,
-          background: `radial-gradient(circle at top right, ${theme.palette[color].main}22 0%, transparent 56%)`,
-          pointerEvents: 'none'
-        }
+        ...premiumSurface(theme, color),
+        height: '100%'
       })}
     >
       <CardContent>
@@ -96,24 +123,18 @@ function quickActionCard({ icon, title, helper, actionLabel, onClick, color = 'p
   return (
     <Card
       sx={(theme) => ({
+        ...premiumSurface(theme, color),
         height: '100%',
-        borderRadius: 3.5,
-        border: '1px solid',
-        borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
         cursor: 'pointer',
         transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease',
-        background:
-          theme.palette.mode === 'dark'
-            ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
-            : 'linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)',
         '&:hover': {
           transform: 'translateY(-3px)',
-          boxShadow: theme.palette.mode === 'dark' ? '0 18px 34px rgba(2,8,23,0.26)' : theme.shadows[8],
-          borderColor: `${theme.palette[color].main}55`,
+          boxShadow: theme.palette.mode === 'dark' ? '0 20px 38px rgba(2,8,23,0.28)' : theme.shadows[8],
+          borderColor: alpha(theme.palette[color].main, 0.34),
           background:
             theme.palette.mode === 'dark'
               ? `linear-gradient(160deg, rgba(11,18,32,0.98) 0%, ${theme.palette[color].dark}20 100%)`
-              : `linear-gradient(160deg, rgba(255,255,255,0.98) 0%, ${theme.palette[color].light}18 100%)`
+              : `linear-gradient(160deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(theme.palette[color].light, 0.18)} 100%)`
         }
       })}
       onClick={onClick}
@@ -152,14 +173,8 @@ function focusCard({ title, value, helper, buttonLabel, onClick, color = 'primar
   return (
     <Card
       sx={(theme) => ({
-        height: '100%',
-        borderRadius: 3.5,
-        border: '1px solid',
-        borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
-        background:
-          theme.palette.mode === 'dark'
-            ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
-            : 'linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)'
+        ...premiumSurface(theme, color),
+        height: '100%'
       })}
     >
       <CardContent>
@@ -377,7 +392,7 @@ export default function ResellerDashboardLionTv({
                   </Stack>
                 </Grid>
                 <Grid item xs={12} md={4}>
-                  <Card sx={{ borderRadius: 3.2, bgcolor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}>
+                  <Card sx={(theme) => heroInsetSurface(theme)}>
                     <CardContent>
                       <Stack spacing={1.25}>
                         <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.72)', letterSpacing: '0.12em', fontWeight: 700 }}>

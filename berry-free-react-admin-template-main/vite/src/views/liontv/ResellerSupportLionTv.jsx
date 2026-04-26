@@ -29,6 +29,7 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined';
 import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
+import { alpha } from '@mui/material/styles';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
@@ -37,6 +38,53 @@ import { getResellerSupportProfile, updateResellerSupportProfile } from 'api/lio
 
 function normalizeDigits(value = '') {
   return String(value).replace(/\D/g, '');
+}
+
+function premiumSurface(theme, color = 'primary') {
+  const palette = theme.palette[color] || theme.palette.primary;
+  return {
+    borderRadius: 3.5,
+    border: '1px solid',
+    borderColor:
+      theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.08) : alpha(palette.main, 0.14),
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? '0 18px 34px rgba(2,8,23,0.26)'
+        : `0 16px 30px ${alpha(theme.palette.common.black, 0.08)}`,
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
+        : `linear-gradient(160deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(palette.light, 0.14)} 100%)`
+  };
+}
+
+function insetSurface(theme, color = 'primary') {
+  const palette = theme.palette[color] || theme.palette.primary;
+  return {
+    borderRadius: 3,
+    border: '1px solid',
+    borderColor:
+      theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.1) : alpha(palette.main, 0.12),
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(180deg, rgba(15,23,42,0.76) 0%, rgba(10,16,29,0.82) 100%)'
+        : `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(palette.light, 0.12)} 100%)`
+  };
+}
+
+function heroInsetSurface(theme) {
+  return {
+    borderRadius: 3,
+    background:
+      theme.palette.mode === 'dark'
+        ? `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.08)} 0%, ${alpha(theme.palette.common.white, 0.04)} 100%)`
+        : `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.18)} 0%, ${alpha(theme.palette.primary.light, 0.14)} 100%)`,
+    border: `1px solid ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.14 : 0.22)}`,
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? `inset 0 1px 0 ${alpha(theme.palette.common.white, 0.03)}`
+        : `0 10px 24px ${alpha(theme.palette.common.black, 0.1)}`
+  };
 }
 
 function SectionHeader({ eyebrow, title, description, action }) {
@@ -71,22 +119,15 @@ function MetricCard({ title, value, helper, icon, color = 'primary' }) {
   return (
     <Card
       sx={(theme) => ({
+        ...premiumSurface(theme, color),
         height: '100%',
-        borderRadius: 3.5,
-        border: '1px solid',
-        borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
-        boxShadow: theme.palette.mode === 'dark' ? '0 18px 34px rgba(2,8,23,0.26)' : '0 16px 28px rgba(15,23,42,0.06)',
-        background:
-          theme.palette.mode === 'dark'
-            ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
-            : 'linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)',
         position: 'relative',
         overflow: 'hidden',
         '&::before': {
           content: '""',
           position: 'absolute',
           inset: 0,
-          background: `radial-gradient(circle at top right, ${theme.palette[color].main}20 0%, transparent 56%)`,
+          background: `radial-gradient(circle at top right, ${alpha(theme.palette[color].main, theme.palette.mode === 'dark' ? 0.12 : 0.1)} 0%, transparent 56%)`,
           pointerEvents: 'none'
         }
       })}
@@ -129,20 +170,14 @@ function ActionCard({ icon, title, description, actionLabel, onClick, color = 'p
   return (
     <Card
       sx={(theme) => ({
+        ...premiumSurface(theme, color),
         height: '100%',
-        borderRadius: 3.5,
-        border: '1px solid',
-        borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
         cursor: 'pointer',
         transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
-        background:
-          theme.palette.mode === 'dark'
-            ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
-            : 'linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)',
         '&:hover': {
           transform: 'translateY(-3px)',
-          boxShadow: theme.palette.mode === 'dark' ? '0 18px 34px rgba(2,8,23,0.26)' : theme.shadows[8],
-          borderColor: `${theme.palette[color].main}55`
+          boxShadow: theme.palette.mode === 'dark' ? '0 20px 38px rgba(2,8,23,0.28)' : theme.shadows[8],
+          borderColor: alpha(theme.palette[color].main, 0.34)
         }
       })}
       onClick={onClick}
@@ -180,14 +215,8 @@ function SupportStep({ icon: Icon, title, description, color = 'primary' }) {
   return (
     <Card
       sx={(theme) => ({
-        height: '100%',
-        borderRadius: 3.5,
-        border: '1px solid',
-        borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
-        background:
-          theme.palette.mode === 'dark'
-            ? 'linear-gradient(160deg, rgba(11,18,32,0.98) 0%, rgba(9,16,29,0.98) 100%)'
-            : 'linear-gradient(160deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)'
+        ...premiumSurface(theme, color),
+        height: '100%'
       })}
     >
       <CardContent>
@@ -399,7 +428,7 @@ export default function ResellerSupportLionTv() {
               <Grid item xs={12} lg={5}>
                 <Grid container spacing={1.5}>
                   <Grid item xs={12} sm={6}>
-                    <Card sx={{ height: '100%', borderRadius: 3, bgcolor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}>
+                    <Card sx={(theme) => ({ ...heroInsetSurface(theme), height: '100%' })}>
                       <CardContent>
                         <Stack spacing={0.8}>
                           <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.72)', letterSpacing: '0.12em', fontWeight: 700 }}>
@@ -428,7 +457,7 @@ export default function ResellerSupportLionTv() {
                     </Card>
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <Card sx={{ height: '100%', borderRadius: 3, bgcolor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}>
+                    <Card sx={(theme) => ({ ...heroInsetSurface(theme), height: '100%' })}>
                       <CardContent>
                         <Stack spacing={0.8}>
                           <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.72)', letterSpacing: '0.12em', fontWeight: 700 }}>
@@ -445,7 +474,7 @@ export default function ResellerSupportLionTv() {
                     </Card>
                   </Grid>
                   <Grid item xs={12}>
-                    <Card sx={{ borderRadius: 3, bgcolor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}>
+                    <Card sx={(theme) => heroInsetSurface(theme)}>
                       <CardContent>
                         <Stack spacing={0.8}>
                           <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.72)', letterSpacing: '0.12em', fontWeight: 700 }}>
@@ -486,13 +515,8 @@ export default function ResellerSupportLionTv() {
           <Grid item xs={12} lg={7}>
             <Card
               sx={(theme) => ({
-                borderRadius: 4,
-                border: '1px solid',
-                borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
-                background:
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(180deg, rgba(16,24,40,0.98) 0%, rgba(9,16,29,0.98) 100%)'
-                    : 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 100%)'
+                ...premiumSurface(theme, 'primary'),
+                borderRadius: 4
               })}
             >
               <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
@@ -536,14 +560,8 @@ export default function ResellerSupportLionTv() {
                     <Grid item xs={12} md={5}>
                       <Card
                         sx={(theme) => ({
-                          height: '100%',
-                          borderRadius: 3,
-                          border: '1px solid',
-                          borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
-                          background:
-                            theme.palette.mode === 'dark'
-                              ? 'linear-gradient(180deg, rgba(15,23,42,0.76) 0%, rgba(10,16,29,0.82) 100%)'
-                              : 'linear-gradient(180deg, rgba(248,250,252,0.96) 0%, rgba(241,245,249,0.98) 100%)'
+                          ...insetSurface(theme, 'success'),
+                          height: '100%'
                         })}
                       >
                         <CardContent>
@@ -588,7 +606,7 @@ export default function ResellerSupportLionTv() {
           </Grid>
 
           <Grid item xs={12} lg={5}>
-            <Card sx={{ borderRadius: 4, border: '1px solid', borderColor: 'divider', height: '100%' }}>
+            <Card sx={(theme) => ({ ...premiumSurface(theme, 'success'), borderRadius: 4, height: '100%' })}>
               <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
                 <Stack spacing={2}>
                   <Stack direction="row" spacing={1.25} alignItems="center">

@@ -38,6 +38,7 @@ import RouterIcon from '@mui/icons-material/Router';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import LaunchIcon from '@mui/icons-material/Launch';
+import { alpha } from '@mui/material/styles';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { PageEmptyState, PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
@@ -254,27 +255,70 @@ function radarStats(items, dateField, statusField = 'status') {
   return out;
 }
 
-function metricCardStyle(theme, color = 'primary') {
+function premiumSurface(theme, color = 'primary') {
   const palette = theme.palette[color] || theme.palette.primary;
   return {
     borderRadius: 3.5,
     border: '1px solid',
-    borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
+    borderColor:
+      theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.08) : alpha(palette.main, 0.14),
     overflow: 'hidden',
-    boxShadow: theme.palette.mode === 'dark' ? '0 22px 44px rgba(2, 8, 23, 0.34)' : '0 20px 34px rgba(15, 23, 42, 0.08)',
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? '0 22px 44px rgba(2, 8, 23, 0.34)'
+        : `0 18px 34px ${alpha(theme.palette.common.black, 0.08)}`,
     background:
       theme.palette.mode === 'dark'
         ? `linear-gradient(155deg, rgba(15, 23, 42, 0.98) 0%, rgba(11, 18, 32, 0.94) 60%, rgba(7, 15, 28, 0.98) 100%)`
-        : `linear-gradient(155deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.98) 58%, rgba(241,245,249,0.98) 100%)`,
+        : `linear-gradient(155deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(palette.light, 0.14)} 100%)`,
     position: 'relative',
     '&::before': {
       content: '""',
       position: 'absolute',
       inset: 0,
       pointerEvents: 'none',
-      background: `radial-gradient(circle at top right, ${palette.main}22 0%, transparent 52%)`
+      background: `radial-gradient(circle at top right, ${alpha(palette.main, theme.palette.mode === 'dark' ? 0.14 : 0.1)} 0%, transparent 54%)`
     }
   };
+}
+
+function softSurface(theme, color = 'primary') {
+  const palette = theme.palette[color] || theme.palette.primary;
+  return {
+    borderRadius: 3.5,
+    border: '1px solid',
+    borderColor:
+      theme.palette.mode === 'dark' ? alpha(theme.palette.common.white, 0.08) : alpha(palette.main, 0.12),
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? '0 18px 36px rgba(2, 8, 23, 0.28)'
+        : `0 16px 28px ${alpha(theme.palette.common.black, 0.06)}`,
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(180deg, rgba(11,18,32,0.96) 0%, rgba(10,16,29,0.98) 100%)'
+        : `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(palette.light, 0.1)} 100%)`
+  };
+}
+
+function heroInsetSurface(theme, tint) {
+  return {
+    height: '100%',
+    borderRadius: 3,
+    border: `1px solid ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.12 : 0.18)}`,
+    backdropFilter: 'blur(14px)',
+    background:
+      theme.palette.mode === 'dark'
+        ? tint
+        : `linear-gradient(180deg, ${alpha(theme.palette.common.white, 0.16)} 0%, ${alpha(theme.palette.primary.light, 0.12)} 100%)`,
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? `inset 0 1px 0 ${alpha(theme.palette.common.white, 0.03)}`
+        : `0 10px 22px ${alpha(theme.palette.common.black, 0.1)}`
+  };
+}
+
+function metricCardStyle(theme, color = 'primary') {
+  return premiumSurface(theme, color);
 }
 
 function MetricCard({ title, value, helper, icon, color = 'primary' }) {
@@ -409,19 +453,7 @@ function SectionHeader({ eyebrow, title, description, action }) {
 
 function AlertsBucketCard({ title, helper, alerts, onOpenAlert, t }) {
   return (
-    <Card
-      sx={(theme) => ({
-        borderRadius: 3.5,
-        border: '1px solid',
-        borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
-        height: '100%',
-        boxShadow: theme.palette.mode === 'dark' ? '0 18px 36px rgba(2, 8, 23, 0.28)' : '0 16px 28px rgba(15, 23, 42, 0.06)',
-        background:
-          theme.palette.mode === 'dark'
-            ? 'linear-gradient(180deg, rgba(11,18,32,0.96) 0%, rgba(10,16,29,0.98) 100%)'
-            : 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.96) 100%)'
-      })}
-    >
+    <Card sx={(theme) => ({ ...softSurface(theme, 'info'), height: '100%' })}>
       <CardContent>
         <Stack spacing={1.5}>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -459,7 +491,10 @@ function AlertsBucketCard({ title, helper, alerts, onOpenAlert, t }) {
                     background:
                       theme.palette.mode === 'dark'
                         ? 'linear-gradient(180deg, rgba(15,23,42,0.76) 0%, rgba(10,16,29,0.82) 100%)'
-                        : 'linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(248,250,252,0.98) 100%)'
+                        : `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(
+                            theme.palette[sev.color === 'default' ? 'primary' : sev.color].light,
+                            0.14
+                          )} 100%)`
                   })}
                 >
                   <CardContent sx={{ '&:last-child': { pb: 2 } }}>
@@ -1042,15 +1077,7 @@ export default function LionTvDashboard() {
                     }
                   ].map((item) => (
                     <Grid key={item.title} size={{ xs: 12, sm: 6 }}>
-                      <Card
-                        sx={{
-                          height: '100%',
-                          borderRadius: 3,
-                          bgcolor: item.color,
-                          border: '1px solid rgba(255,255,255,0.12)',
-                          backdropFilter: 'blur(14px)'
-                        }}
-                      >
+                      <Card sx={(theme) => heroInsetSurface(theme, item.color)}>
                         <CardContent>
                           <Stack spacing={0.8}>
                             <Typography variant="overline" sx={{ color: 'rgba(255,255,255,0.72)', letterSpacing: '0.12em' }}>
@@ -1423,14 +1450,7 @@ export default function LionTvDashboard() {
             </Grid>
 
             <Grid size={{ xs: 12, xl: 8 }}>
-              <Card
-                sx={(theme) => ({
-                  borderRadius: 3.5,
-                  border: '1px solid',
-                  borderColor: theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.12)' : 'rgba(15, 23, 42, 0.08)',
-                  boxShadow: theme.palette.mode === 'dark' ? '0 20px 36px rgba(2, 8, 23, 0.28)' : '0 16px 28px rgba(15, 23, 42, 0.06)'
-                })}
-              >
+              <Card sx={(theme) => softSurface(theme, 'primary')}>
                 <CardContent>
                   <Stack spacing={1.4}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -1514,7 +1534,7 @@ export default function LionTvDashboard() {
                   description={dashboardCopy.sections.financeDescription}
                 />
 
-                <Card sx={{ borderRadius: 3.5, border: '1px solid', borderColor: 'divider' }}>
+                <Card sx={(theme) => softSurface(theme, 'warning')}>
                   <CardContent>
                     <Stack spacing={1.2}>
                       <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -1555,7 +1575,7 @@ export default function LionTvDashboard() {
                   </CardContent>
                 </Card>
 
-                <Card sx={{ borderRadius: 3.5, border: '1px solid', borderColor: 'divider' }}>
+                <Card sx={(theme) => softSurface(theme, 'info')}>
                   <CardContent>
                     <Stack spacing={1.2}>
                       <Stack direction="row" justifyContent="space-between" alignItems="center">
