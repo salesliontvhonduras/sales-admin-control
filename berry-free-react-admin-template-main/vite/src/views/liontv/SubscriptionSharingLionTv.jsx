@@ -669,6 +669,19 @@ export default function SubscriptionSharingLionTv() {
   const hostRows = useMemo(() => filteredRows.filter((row) => row.sharingRole === 'HOST'), [filteredRows]);
   const eligibleNotSharedRows = useMemo(() => (recommendationFilter === 'YES' ? [] : filteredRows.filter((row) => row.eligible && row.sharingRole === 'NONE')), [filteredRows, recommendationFilter]);
   const notEligibleRows = useMemo(() => (recommendationFilter === 'YES' ? [] : filteredRows.filter((row) => !row.eligible && row.sharingRole === 'NONE')), [filteredRows, recommendationFilter]);
+  const beneficiariesByHost = useMemo(() => {
+    const map = {};
+    filteredRows.forEach((row) => {
+      if (row.sharingRole !== 'SHARED') return;
+      if (recommendationFilter === 'YES' && !row.moveRecommendationAvailable) return;
+      const hostId = row.sharedHostSubscriptionId;
+      if (!hostId) return;
+      if (!map[hostId]) map[hostId] = [];
+      map[hostId].push(row);
+    });
+    return map;
+  }, [filteredRows, recommendationFilter]);
+
   const filteredSummary = useMemo(
     () => {
       const visibleHostCount =
@@ -697,19 +710,6 @@ export default function SubscriptionSharingLionTv() {
     },
     [beneficiariesByHost, eligibleNotSharedRows.length, filteredRows, hostRows, notEligibleRows.length, recommendationFilter]
   );
-
-  const beneficiariesByHost = useMemo(() => {
-    const map = {};
-    filteredRows.forEach((row) => {
-      if (row.sharingRole !== 'SHARED') return;
-      if (recommendationFilter === 'YES' && !row.moveRecommendationAvailable) return;
-      const hostId = row.sharedHostSubscriptionId;
-      if (!hostId) return;
-      if (!map[hostId]) map[hostId] = [];
-      map[hostId].push(row);
-    });
-    return map;
-  }, [filteredRows, recommendationFilter]);
 
   const hostDayBuckets = useMemo(() => {
     const groups = new Map();
