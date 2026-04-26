@@ -10,6 +10,7 @@ const dashboard = {
   id: 'dashboard',
   title: 'menu.dashboard',
   type: 'group',
+  resellerVisible: false,
   permission: { any: ['DASHBOARD_VIEW', 'ROLE_DASHBOARD_VIEW'] },
   children: [
     {

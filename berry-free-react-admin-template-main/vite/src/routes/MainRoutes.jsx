@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import RequireAuth from '../routes/RequireAuth';
 import RequirePermission from '../routes/RequirePermission';
+import RequireInternalLionTv from '../routes/RequireInternalLionTv';
 
 // project imports
 import MainLayout from 'layout/MainLayout';
@@ -28,6 +29,8 @@ const CustomerCrmLionTv = Loadable(lazy(() => import('views/liontv/CustomerCrmLi
 const SubscriptionsLionTv = Loadable(lazy(() => import('views/liontv/SubscriptionsLionTv')));
 const SubscriptionSharingLionTv = Loadable(lazy(() => import('views/liontv/SubscriptionSharingLionTv')));
 const InvoicesLionTv = Loadable(lazy(() => import('views/liontv/InvoicesLionTv')));
+const ResellerWalletLionTv = Loadable(lazy(() => import('views/liontv/ResellerWalletLionTv')));
+const ResellerSupportLionTv = Loadable(lazy(() => import('views/liontv/ResellerSupportLionTv')));
 const VipCustomersLionTv = Loadable(lazy(() => import('views/liontv/VipCustomersLionTv')));
 const LoyaltyLionTv = Loadable(lazy(() => import('views/liontv/LoyaltyLionTv')));
 const RafflesLionTv = Loadable(lazy(() => import('views/liontv/RafflesLionTv')));
@@ -44,9 +47,9 @@ const LicenseAppsCatalogAdmin = Loadable(lazy(() => import('views/security/catal
 const CountryPhoneCodesCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/CountryPhoneCodesCatalogAdmin')));
 const PackagesCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/PackagesCatalogAdmin')));
 
-const protectPage = (permission, element, fallbackPath = '/dashboard/default') => (
+const protectPage = (permission, element, fallbackPath = '/dashboard/default', hideForReseller = false) => (
   <RequirePermission permission={permission} fallbackPath={fallbackPath}>
-    {element}
+    {hideForReseller ? <RequireInternalLionTv>{element}</RequireInternalLionTv> : element}
   </RequirePermission>
 );
 
@@ -76,7 +79,12 @@ const MainRoutes = {
         },
         {
           path: '/liontv/demos',
-          element: protectPage({ any: ['LIONTV_DEMOS_VIEW', 'LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <DemosLionTv />)
+          element: protectPage(
+            { any: ['LIONTV_DEMOS_VIEW', 'LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+            <DemosLionTv />,
+            '/liontv/dashboard',
+            true
+          )
         },
         {
           path: '/liontv/customers',
@@ -86,92 +94,121 @@ const MainRoutes = {
           path: '/liontv/potential-customers',
           element: protectPage(
             { any: ['LIONTV_POTENTIAL_CUSTOMERS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <PotentialCustomersLionTv />
+            <PotentialCustomersLionTv />,
+            '/liontv/dashboard',
+            true
           )
         },
         {
           path: '/liontv/referrals',
           element: protectPage(
             { any: ['LIONTV_POTENTIAL_CUSTOMERS_VIEW', 'LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <ReferralLeadsLionTv />
+            <ReferralLeadsLionTv />,
+            '/liontv/dashboard',
+            true
           )
         },
         {
           path: '/liontv/payment-commitments',
           element: protectPage(
             { any: ['LIONTV_PAYMENT_COMMITMENTS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <PaymentCommitmentsLionTv />
+            <PaymentCommitmentsLionTv />,
+            '/liontv/dashboard',
+            true
           )
         },
         {
           path: '/liontv/movies-feed',
           element: protectPage(
             { any: ['LIONTV_FEED_VIEW', 'LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <MoviesFeedLionTv />
+            <MoviesFeedLionTv />,
+            '/liontv/dashboard',
+            true
           )
         },
         {
           path: '/liontv/series-feed',
           element: protectPage(
             { any: ['LIONTV_FEED_VIEW', 'LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <SeriesFeedLionTv />
+            <SeriesFeedLionTv />,
+            '/liontv/dashboard',
+            true
           )
         },
         {
           path: '/liontv/futbol-events-feed',
           element: protectPage(
             { any: ['LIONTV_FEED_VIEW', 'LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <FutbolEventsFeedLionTv />
+            <FutbolEventsFeedLionTv />,
+            '/liontv/dashboard',
+            true
           )
         },
         {
           path: '/liontv/catalog-curation',
           element: protectPage(
             { any: ['LIONTV_FEED_VIEW', 'LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <CatalogCurationLionTv />
+            <CatalogCurationLionTv />,
+            '/liontv/dashboard',
+            true
           )
         },
         {
           path: '/liontv/m3u-line-sources',
           element: protectPage(
             { any: ['LIONTV_FEED_VIEW', 'LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <M3uLineSourcesLionTv />
+            <M3uLineSourcesLionTv />,
+            '/liontv/dashboard',
+            true
           )
         },
         {
           path: '/liontv/m3u-backup-links',
           element: protectPage(
             { any: ['LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <M3uBackupLinksLionTv />
+            <M3uBackupLinksLionTv />,
+            '/liontv/dashboard',
+            true
           )
         },
         {
           path: '/liontv/managed-accounts',
-          element: protectPage({ any: ['LIONTV_MANAGED_ACCOUNTS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <ManagedAccountsLionTv />)
+          element: protectPage(
+            { any: ['LIONTV_MANAGED_ACCOUNTS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+            <ManagedAccountsLionTv />,
+            '/liontv/dashboard',
+            true
+          )
         },
         {
           path: '/liontv/subscription-expiration',
           element: protectPage(
             { any: ['LIONTV_SUBSCRIPTION_EXPIRATION_VIEW', 'LIONTV_TECH_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <SubscriptionExpirationLionTv />
+            <SubscriptionExpirationLionTv />,
+            '/liontv/dashboard',
+            true
           )
         },
         {
           path: '/liontv/crm',
-          element: protectPage({ any: ['LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <CustomerCrmLionTv />)
+          element: protectPage({ any: ['LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <CustomerCrmLionTv />, '/liontv/dashboard', true)
         },
         {
           path: '/liontv/email-templates',
           element: protectPage(
             { any: ['LIONTV_EMAIL_TEMPLATES_VIEW', 'LIONTV_MARKETING_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <EmailTemplatesLionTv />
+            <EmailTemplatesLionTv />,
+            '/liontv/dashboard',
+            true
           )
         },
         {
           path: '/liontv/email-campaigns',
           element: protectPage(
             { any: ['LIONTV_EMAIL_CAMPAIGNS_VIEW', 'LIONTV_MARKETING_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <EmailCampaignsLionTv />
+            <EmailCampaignsLionTv />,
+            '/liontv/dashboard',
+            true
           )
         },
         {
@@ -180,15 +217,30 @@ const MainRoutes = {
         },
         {
           path: '/liontv/vip-customers',
-          element: protectPage({ any: ['LIONTV_VIP_VIEW', 'LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <VipCustomersLionTv />)
+          element: protectPage(
+            { any: ['LIONTV_VIP_VIEW', 'LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+            <VipCustomersLionTv />,
+            '/liontv/dashboard',
+            true
+          )
         },
         {
           path: '/liontv/loyalty',
-          element: protectPage({ any: ['LIONTV_LOYALTY_VIEW', 'LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <LoyaltyLionTv />)
+          element: protectPage(
+            { any: ['LIONTV_LOYALTY_VIEW', 'LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+            <LoyaltyLionTv />,
+            '/liontv/dashboard',
+            true
+          )
         },
         {
           path: '/liontv/raffles',
-          element: protectPage({ any: ['LIONTV_RAFFLES_VIEW', 'LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <RafflesLionTv />)
+          element: protectPage(
+            { any: ['LIONTV_RAFFLES_VIEW', 'LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+            <RafflesLionTv />,
+            '/liontv/dashboard',
+            true
+          )
         },
         {
           path: '/liontv/subscription-sharing',
@@ -202,8 +254,27 @@ const MainRoutes = {
           element: protectPage({ any: ['LIONTV_INVOICES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <InvoicesLionTv />)
         },
         {
+          path: '/liontv/reseller-wallet',
+          element: protectPage(
+            { any: ['LIONTV_RESELLER_WALLET_VIEW', 'ROLE_LIONTV_RESELLER_WALLET_VIEW', 'ROLE_ADMIN', 'ADMIN'] },
+            <ResellerWalletLionTv />
+          )
+        },
+        {
+          path: '/liontv/support',
+          element: protectPage(
+            { any: ['LIONTV_RESELLER_SUPPORT_VIEW', 'ROLE_LIONTV_RESELLER_SUPPORT_VIEW', 'ROLE_ADMIN', 'ADMIN'] },
+            <ResellerSupportLionTv />
+          )
+        },
+        {
           path: '/liontv/business-purchases',
-          element: protectPage({ any: ['LIONTV_BUSINESS_PURCHASES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <BusinessPurchasesLionTv />)
+          element: protectPage(
+            { any: ['LIONTV_BUSINESS_PURCHASES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+            <BusinessPurchasesLionTv />,
+            '/liontv/dashboard',
+            true
+          )
         },
         {
           path: '/liontv/licenses',
@@ -211,13 +282,15 @@ const MainRoutes = {
         },
         {
           path: '/liontv/lines',
-          element: protectPage({ any: ['LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <LinesLionTv />)
+          element: protectPage({ any: ['LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <LinesLionTv />, '/liontv/dashboard', true)
         },
         {
           path: '/liontv/plus-lines',
           element: protectPage(
             { any: ['LIONTV_PLUS_LINES_VIEW', 'LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <PlusLinesExplorer />
+            <PlusLinesExplorer />,
+            '/liontv/dashboard',
+            true
           )
         },
         {

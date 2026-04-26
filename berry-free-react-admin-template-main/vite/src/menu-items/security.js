@@ -10,6 +10,7 @@ const security = {
   id: 'security',
   title: 'menu.security',
   type: 'group',
+  resellerVisible: false,
   permission: { any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] },
   children: [
     {

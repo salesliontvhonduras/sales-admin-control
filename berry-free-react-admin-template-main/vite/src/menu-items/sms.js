@@ -7,6 +7,7 @@ const sms = {
   id: 'sms',
   title: 'menu.sms',
   type: 'group',
+  resellerVisible: false,
   permission: { any: ['SMS_VIEW', 'ROLE_SMS_VIEW'] },
   children: [
     {

@@ -96,9 +96,43 @@ export function hasPermission(user, requirement) {
   return true;
 }
 
+export function hasPermissionExact(user, requirement) {
+  if (!requirement) return true;
+  const permissions = getUserPermissions(user);
+  if (permissions.size === 0) return true;
+  if (hasAdminBypass(permissions)) return true;
+
+  if (typeof requirement === 'string') {
+    return permissions.has(normalizePermissionValue(requirement));
+  }
+
+  if (Array.isArray(requirement)) {
+    return checkAny(permissions, requirement);
+  }
+
+  if (typeof requirement === 'object') {
+    const anyList = normalizeToArray(requirement.any);
+    const allList = normalizeToArray(requirement.all);
+    return checkAny(permissions, anyList) && checkAll(permissions, allList);
+  }
+
+  return true;
+}
+
+export function isResellerConsoleUser(user) {
+  const permissions = getUserPermissions(user);
+  return (
+    permissions.has('ROLE_LIONTV_RESELLER_OWNER') ||
+    permissions.has('ROLE_LIONTV_RESELLER_OPERATOR') ||
+    permissions.has('LIONTV_RESELLER_PORTAL_VIEW') ||
+    permissions.has('ROLE_LIONTV_RESELLER_PORTAL_VIEW')
+  );
+}
+
 function filterMenuNode(item, user) {
   if (!item) return null;
-  if (!hasPermission(user, item.permission)) return null;
+  if (isResellerConsoleUser(user) && item.resellerVisible === false) return null;
+  if (!hasPermissionExact(user, item.permission)) return null;
 
   if (!Array.isArray(item.children)) return item;
 

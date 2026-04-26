@@ -45,6 +45,8 @@ import { gridSpacing } from 'store/constant';
 import { useLionTvOverview } from 'api/liontv-overview';
 import { useSubscriptionExpirationOverview } from 'api/liontv-subscription-expiration';
 import { lionTvApi } from 'utils/api';
+import { isResellerConsoleUser } from 'utils/rbac';
+import ResellerDashboardLionTv from 'views/liontv/ResellerDashboardLionTv';
 
 const ROUTES = {
   licenses: '/liontv/licenses',
@@ -433,8 +435,9 @@ function AlertsBucketCard({ title, helper, alerts, onOpenAlert, t }) {
 export default function LionTvDashboard() {
   const { t, i18n } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
   const navigate = useNavigate();
+  const resellerMode = isResellerConsoleUser(user);
 
   const [horizonDays, setHorizonDays] = useState(30);
   const [criticalOnly, setCriticalOnly] = useState(false);
@@ -732,6 +735,26 @@ export default function LionTvDashboard() {
       }
     };
   }, [licenses, subscriptions, lines, managedAccounts, invoices, commitments, horizonDays, criticalOnly, customerNameMap, locale, t]);
+
+  if (resellerMode) {
+    return (
+      <ResellerDashboardLionTv
+        customers={customers}
+        subscriptions={subscriptions}
+        licenses={licenses}
+        invoices={invoices}
+        expirationAttentionCount={expirationAttentionCount}
+        sharedRiskKpi={sharedRiskKpi}
+        loadingCore={loading}
+        errorMessage={overviewError?.response?.data?.message || ''}
+        onRefresh={() => {
+          refresh();
+          loadSharedRiskOverview();
+        }}
+      />
+    );
+  }
+
   const hasSourceData =
     customers.length +
       subscriptions.length +
