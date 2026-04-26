@@ -17,11 +17,11 @@ import { useGetMenuMaster } from 'api/menu';
 
 function MenuList() {
   const { menuMaster } = useGetMenuMaster();
-  const { user } = useAuth();
+  const { user, lionTvViewMode } = useAuth();
   const drawerOpen = menuMaster.isDashboardDrawerOpened;
 
   const [selectedID, setSelectedID] = useState('');
-  const visibleMenuItems = filterMenuByPermission(menuItems.items, user);
+  const visibleMenuItems = filterMenuByPermission(menuItems.items, user, lionTvViewMode);
 
   const lastItem = null;
 

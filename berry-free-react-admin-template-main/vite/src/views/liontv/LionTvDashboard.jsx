@@ -435,9 +435,9 @@ function AlertsBucketCard({ title, helper, alerts, onOpenAlert, t }) {
 export default function LionTvDashboard() {
   const { t, i18n } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
-  const { accessToken, user } = useAuth();
+  const { accessToken, user, lionTvViewMode } = useAuth();
   const navigate = useNavigate();
-  const resellerMode = isResellerConsoleUser(user);
+  const resellerMode = isResellerConsoleUser(user, lionTvViewMode);
 
   const [horizonDays, setHorizonDays] = useState(30);
   const [criticalOnly, setCriticalOnly] = useState(false);

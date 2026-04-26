@@ -3,11 +3,14 @@ import { authApi } from '../utils/api';
 import {
   clearSessionStorage,
   getStoredAccessToken,
+  getStoredLionTvViewMode,
   getStoredUser,
   isCookieSessionMode,
   listenAuthLogout,
+  persistLionTvViewMode,
   persistSession
 } from '../utils/authSession';
+import { getDefaultLionTvViewMode, resolveLionTvViewMode } from '../utils/rbac';
 
 export const AuthContext = createContext(null);
 
@@ -45,6 +48,7 @@ const parseTwoFactor = (payload = {}) => {
 export default function AuthProvider({ children }) {
   const [accessToken, setAccessToken] = useState(() => getStoredAccessToken());
   const [user, setUser] = useState(() => getStoredUser());
+  const [lionTvViewMode, setLionTvViewModeState] = useState(() => resolveLionTvViewMode(getStoredUser(), getStoredLionTvViewMode()));
   // Si se requiere 2FA, guardamos el desafío pendiente aquí
   const [pendingTwoFactor, setPendingTwoFactor] = useState(null);
 
@@ -60,10 +64,29 @@ export default function AuthProvider({ children }) {
     const unsubscribe = listenAuthLogout(() => {
       setAccessToken(null);
       setUser(null);
+      setLionTvViewModeState(getDefaultLionTvViewMode(null));
       setPendingTwoFactor(null);
     });
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setLionTvViewModeState(getDefaultLionTvViewMode(null));
+      return;
+    }
+
+    const resolvedMode = resolveLionTvViewMode(user, getStoredLionTvViewMode());
+    setLionTvViewModeState((currentMode) => (currentMode === resolvedMode ? currentMode : resolvedMode));
+    persistLionTvViewMode(resolvedMode);
+  }, [user]);
+
+  const setLionTvViewMode = (nextMode) => {
+    const resolvedMode = resolveLionTvViewMode(user, nextMode);
+    persistLionTvViewMode(resolvedMode);
+    setLionTvViewModeState(resolvedMode);
+    return resolvedMode;
+  };
 
   // ======================
   // LOGIN NORMAL (luego lo haremos)
@@ -85,11 +108,14 @@ export default function AuthProvider({ children }) {
     }
 
     const { accessToken: token, user: userData } = payload;
+    const defaultViewMode = getDefaultLionTvViewMode(userData);
 
     persistSession({ accessToken: token, user: userData, remember });
+    persistLionTvViewMode(defaultViewMode);
 
     setAccessToken(token);
     setUser(userData);
+    setLionTvViewModeState(defaultViewMode);
     setPendingTwoFactor(null);
 
     return res;
@@ -109,12 +135,15 @@ export default function AuthProvider({ children }) {
 
     const payload = res.data?.data ?? {};
     const { accessToken: token, user: userData } = payload;
+    const defaultViewMode = getDefaultLionTvViewMode(userData);
 
     const remember = pendingTwoFactor?.remember ?? true;
     persistSession({ accessToken: token, user: userData, remember });
+    persistLionTvViewMode(defaultViewMode);
 
     setAccessToken(token);
     setUser(userData);
+    setLionTvViewModeState(defaultViewMode);
     setPendingTwoFactor(null);
 
     return res;
@@ -143,11 +172,14 @@ export default function AuthProvider({ children }) {
     const res = await authApi.post('/auth/v1/google', { credential });
 
     const { accessToken, user } = res.data.data;
+    const defaultViewMode = getDefaultLionTvViewMode(user);
 
     persistSession({ accessToken, user, remember: true });
+    persistLionTvViewMode(defaultViewMode);
 
     setAccessToken(accessToken);
     setUser(user);
+    setLionTvViewModeState(defaultViewMode);
 
     return res; // 🔥 necesario para validación en el callback
   };
@@ -168,12 +200,27 @@ export default function AuthProvider({ children }) {
     clearSessionStorage();
     setAccessToken(null);
     setUser(null);
+    setLionTvViewModeState(getDefaultLionTvViewMode(null));
     setPendingTwoFactor(null);
     window.location.replace(`${BASE_URL}/pages/login`);
   };
 
   return (
-    <AuthContext.Provider value={{ user, accessToken, pendingTwoFactor, login, verifyOtp, resendOtp, loginWithGoogle, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        accessToken,
+        lionTvViewMode,
+        setLionTvViewMode,
+        pendingTwoFactor,
+        login,
+        verifyOtp,
+        resendOtp,
+        loginWithGoogle,
+        register,
+        logout
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

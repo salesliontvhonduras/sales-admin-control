@@ -55,6 +55,7 @@ const liontv = {
           title: 'menu.resellerWallet',
           type: 'item',
           url: '/liontv/reseller-wallet',
+          resellerOnly: true,
           breadcrumbs: true,
           permission: { any: ['LIONTV_RESELLER_WALLET_VIEW', 'ROLE_LIONTV_RESELLER_WALLET_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
         },
@@ -63,6 +64,7 @@ const liontv = {
           title: 'menu.resellerSupport',
           type: 'item',
           url: '/liontv/support',
+          resellerOnly: true,
           breadcrumbs: true,
           permission: { any: ['LIONTV_RESELLER_SUPPORT_VIEW', 'ROLE_LIONTV_RESELLER_SUPPORT_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
         }

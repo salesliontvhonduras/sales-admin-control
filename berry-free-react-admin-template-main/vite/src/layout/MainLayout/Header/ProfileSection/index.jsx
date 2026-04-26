@@ -19,6 +19,8 @@ import OutlinedInput from '@mui/material/OutlinedInput';
 import Paper from '@mui/material/Paper';
 import Popper from '@mui/material/Popper';
 import Stack from '@mui/material/Stack';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
@@ -44,6 +46,7 @@ import ThemeModeSwitcher from 'ui-component/ThemeModeSwitcher';
 // assets
 import User1 from 'assets/images/users/user-round.svg';
 import { IconLogout, IconSearch, IconSettings, IconUser, IconLock, IconKey, IconEye, IconEyeOff } from '@tabler/icons-react';
+import { canSwitchLionTvViewMode, isResellerConsoleUser, LIONTV_VIEW_MODE } from 'utils/rbac';
 
 // ==============================|| PROFILE MENU ||============================== //
 
@@ -56,9 +59,11 @@ export default function ProfileSection() {
     state: { borderRadius }
   } = useConfig();
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
+  const { logout, user, lionTvViewMode, setLionTvViewMode } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation();
+  const canToggleLionTvViewMode = canSwitchLionTvViewMode(user);
+  const activeLionTvViewMode = isResellerConsoleUser(user, lionTvViewMode) ? LIONTV_VIEW_MODE.RESELLER : LIONTV_VIEW_MODE.ADMIN;
 
   const [value, setValue] = useState('');
   const [open, setOpen] = useState(false);
@@ -99,6 +104,20 @@ export default function ProfileSection() {
     enqueueSnackbar(t('profileMenu.messages.logoutSuccess'), { variant: 'success' });
     setOpen(false);
     navigate(BASE_URL + '/pages/login');
+  };
+
+  const handleLionTvViewModeChange = (_event, nextMode) => {
+    if (!nextMode) return;
+
+    const resolvedMode = setLionTvViewMode(nextMode);
+    enqueueSnackbar(
+      t('profileMenu.messages.viewModeUpdated', {
+        mode: resolvedMode === LIONTV_VIEW_MODE.RESELLER ? t('profileMenu.viewMode.reseller') : t('profileMenu.viewMode.admin')
+      }),
+      { variant: 'info' }
+    );
+    setOpen(false);
+    navigate('/liontv/dashboard');
   };
 
   const handleChangePwd = async () => {
@@ -288,6 +307,49 @@ export default function ProfileSection() {
                             </Box>
                           </Stack>
                         </ListItemButton>
+                        {canToggleLionTvViewMode ? (
+                          <Box
+                            sx={{
+                              mt: 0.5,
+                              px: 1.5,
+                              py: 1.25,
+                              borderRadius: `${borderRadius}px`,
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              bgcolor: 'background.default',
+                              boxShadow: theme.shadows[1]
+                            }}
+                          >
+                            <Stack spacing={1}>
+                              <Box>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                  {t('profileMenu.viewMode.title')}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {t('profileMenu.viewMode.subtitle')}
+                                </Typography>
+                              </Box>
+                              <ToggleButtonGroup
+                                exclusive
+                                fullWidth
+                                size="small"
+                                color="primary"
+                                value={activeLionTvViewMode}
+                                onChange={handleLionTvViewModeChange}
+                                sx={{
+                                  '& .MuiToggleButton-root': {
+                                    textTransform: 'none',
+                                    fontWeight: 600,
+                                    py: 0.75
+                                  }
+                                }}
+                              >
+                                <ToggleButton value={LIONTV_VIEW_MODE.ADMIN}>{t('profileMenu.viewMode.admin')}</ToggleButton>
+                                <ToggleButton value={LIONTV_VIEW_MODE.RESELLER}>{t('profileMenu.viewMode.reseller')}</ToggleButton>
+                              </ToggleButtonGroup>
+                            </Stack>
+                          </Box>
+                        ) : null}
                         <ListItemButton sx={{ borderRadius: `${borderRadius}px` }}>
                           <ListItemIcon>
                             <IconSettings stroke={1.5} size="20px" />

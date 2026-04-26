@@ -1,7 +1,8 @@
 const STORAGE_KEYS = {
   TOKEN: 'token',
   USER: 'user',
-  REMEMBER: 'auth.remember'
+  REMEMBER: 'auth.remember',
+  LIONTV_VIEW_MODE: 'liontv.viewMode'
 };
 
 const AUTH_LOGOUT_EVENT = 'app:auth:logout';
@@ -37,6 +38,10 @@ export function getStoredUser() {
   }
 }
 
+export function getStoredLionTvViewMode() {
+  return sessionStorage.getItem(STORAGE_KEYS.LIONTV_VIEW_MODE);
+}
+
 export function persistSession({ accessToken, user, remember = true }) {
   const storage = remember ? localStorage : sessionStorage;
   const otherStorage = remember ? sessionStorage : localStorage;
@@ -60,6 +65,14 @@ export function persistSession({ accessToken, user, remember = true }) {
   storage.setItem(STORAGE_KEYS.REMEMBER, String(remember));
 }
 
+export function persistLionTvViewMode(viewMode) {
+  if (!viewMode) {
+    sessionStorage.removeItem(STORAGE_KEYS.LIONTV_VIEW_MODE);
+    return;
+  }
+  sessionStorage.setItem(STORAGE_KEYS.LIONTV_VIEW_MODE, String(viewMode).toUpperCase());
+}
+
 export function persistAccessToken(accessToken) {
   if (COOKIE_MODE) return;
   if (!accessToken) return;
@@ -72,9 +85,11 @@ export function clearSessionStorage() {
   localStorage.removeItem(STORAGE_KEYS.TOKEN);
   localStorage.removeItem(STORAGE_KEYS.USER);
   localStorage.removeItem(STORAGE_KEYS.REMEMBER);
+  localStorage.removeItem(STORAGE_KEYS.LIONTV_VIEW_MODE);
   sessionStorage.removeItem(STORAGE_KEYS.TOKEN);
   sessionStorage.removeItem(STORAGE_KEYS.USER);
   sessionStorage.removeItem(STORAGE_KEYS.REMEMBER);
+  sessionStorage.removeItem(STORAGE_KEYS.LIONTV_VIEW_MODE);
 }
 
 export function dispatchAuthLogout(reason = 'UNAUTHORIZED') {

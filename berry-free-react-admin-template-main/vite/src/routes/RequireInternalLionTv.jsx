@@ -4,9 +4,9 @@ import useAuth from 'hooks/useAuth';
 import { isResellerConsoleUser } from 'utils/rbac';
 
 export default function RequireInternalLionTv({ children, fallbackPath = '/liontv/dashboard' }) {
-  const { user } = useAuth();
+  const { user, lionTvViewMode } = useAuth();
 
-  if (isResellerConsoleUser(user)) {
+  if (isResellerConsoleUser(user, lionTvViewMode)) {
     return <Navigate to={fallbackPath} replace />;
   }
 

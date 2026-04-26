@@ -1,5 +1,10 @@
 const RBAC_STRICT = String(import.meta.env.VITE_RBAC_STRICT || 'false').toLowerCase() === 'true';
 
+export const LIONTV_VIEW_MODE = {
+  ADMIN: 'ADMIN',
+  RESELLER: 'RESELLER'
+};
+
 function normalizeToArray(value) {
   if (!value) return [];
   if (Array.isArray(value)) return value;
@@ -119,8 +124,7 @@ export function hasPermissionExact(user, requirement) {
   return true;
 }
 
-export function isResellerConsoleUser(user) {
-  const permissions = getUserPermissions(user);
+function hasResellerPortalPermission(permissions) {
   return (
     permissions.has('ROLE_LIONTV_RESELLER_OWNER') ||
     permissions.has('ROLE_LIONTV_RESELLER_OPERATOR') ||
@@ -129,14 +133,56 @@ export function isResellerConsoleUser(user) {
   );
 }
 
-function filterMenuNode(item, user) {
+function normalizeViewMode(value) {
+  const normalized = String(value || '')
+    .trim()
+    .toUpperCase();
+  return normalized === LIONTV_VIEW_MODE.RESELLER ? LIONTV_VIEW_MODE.RESELLER : LIONTV_VIEW_MODE.ADMIN;
+}
+
+export function isAdminConsoleUser(user) {
+  const permissions = getUserPermissions(user);
+  return hasAdminBypass(permissions);
+}
+
+export function hasResellerPortalAccess(user) {
+  return hasResellerPortalPermission(getUserPermissions(user));
+}
+
+export function isPureResellerUser(user) {
+  return hasResellerPortalAccess(user) && !isAdminConsoleUser(user);
+}
+
+export function canSwitchLionTvViewMode(user) {
+  return isAdminConsoleUser(user) && hasResellerPortalAccess(user);
+}
+
+export function getDefaultLionTvViewMode(user) {
+  return isPureResellerUser(user) ? LIONTV_VIEW_MODE.RESELLER : LIONTV_VIEW_MODE.ADMIN;
+}
+
+export function resolveLionTvViewMode(user, requestedMode) {
+  if (isPureResellerUser(user)) return LIONTV_VIEW_MODE.RESELLER;
+  if (canSwitchLionTvViewMode(user)) {
+    return normalizeViewMode(requestedMode);
+  }
+  return LIONTV_VIEW_MODE.ADMIN;
+}
+
+export function isResellerConsoleUser(user, viewMode) {
+  return hasResellerPortalAccess(user) && resolveLionTvViewMode(user, viewMode) === LIONTV_VIEW_MODE.RESELLER;
+}
+
+function filterMenuNode(item, user, viewMode) {
   if (!item) return null;
-  if (isResellerConsoleUser(user) && item.resellerVisible === false) return null;
+  const resellerMode = isResellerConsoleUser(user, viewMode);
+  if (resellerMode && item.resellerVisible === false) return null;
+  if (!resellerMode && item.resellerOnly === true) return null;
   if (!hasPermissionExact(user, item.permission)) return null;
 
   if (!Array.isArray(item.children)) return item;
 
-  const filteredChildren = item.children.map((child) => filterMenuNode(child, user)).filter(Boolean);
+  const filteredChildren = item.children.map((child) => filterMenuNode(child, user, viewMode)).filter(Boolean);
 
   if (filteredChildren.length === 0 && item.type !== 'item') return null;
   return {
@@ -145,7 +191,7 @@ function filterMenuNode(item, user) {
   };
 }
 
-export function filterMenuByPermission(menuItems, user) {
+export function filterMenuByPermission(menuItems, user, viewMode) {
   if (!Array.isArray(menuItems)) return [];
-  return menuItems.map((item) => filterMenuNode(item, user)).filter(Boolean);
+  return menuItems.map((item) => filterMenuNode(item, user, viewMode)).filter(Boolean);
 }

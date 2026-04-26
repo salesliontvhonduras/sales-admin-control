@@ -2439,7 +2439,14 @@ const resources = {
           fillAllFields: 'Complete all fields.',
           passwordMismatch: 'Passwords do not match.',
           passwordUpdated: 'Password updated.',
-          passwordUpdateError: 'Could not update password.'
+          passwordUpdateError: 'Could not update password.',
+          viewModeUpdated: 'View changed to {{mode}}.'
+        },
+        viewMode: {
+          title: 'Console mode',
+          subtitle: 'Choose which workspace you want to use in this session.',
+          admin: 'Admin mode',
+          reseller: 'Reseller mode'
         },
         passwordDialog: {
           title: 'Change password',
@@ -2792,7 +2799,14 @@ If you want, I can share a demo with no commitment so you can see how it looks i
           fillAllFields: 'Completa todos los campos.',
           passwordMismatch: 'Las contraseñas no coinciden.',
           passwordUpdated: 'Contraseña actualizada.',
-          passwordUpdateError: 'No se pudo actualizar la contraseña.'
+          passwordUpdateError: 'No se pudo actualizar la contraseña.',
+          viewModeUpdated: 'Vista cambiada a {{mode}}.'
+        },
+        viewMode: {
+          title: 'Modo de consola',
+          subtitle: 'Elige qué espacio de trabajo quieres usar en esta sesión.',
+          admin: 'Modo admin',
+          reseller: 'Modo reseller'
         },
         passwordDialog: {
           title: 'Cambiar contraseña',
