@@ -371,15 +371,18 @@ export default function DemosLionTv() {
   };
 
   const loadLineOptions = useCallback(async () => {
+    if (!accessToken) return;
     setLoadingLineOptions(true);
     try {
       const response = await lionTvApi.get('/lines/v1/list-lines', {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: 0, start: 0, size: 1000, filters: '', sorting: '' },
+        params: { index: 0, start: 0, size: 5000, filters: '', sorting: '' },
         skipAuthRedirect: true
       });
-      const data = response?.data?.data ?? response?.data ?? [];
-      const normalized = (Array.isArray(data) ? data : [])
+      const payload = response?.data?.data ?? response?.data ?? {};
+      const raw = payload.data ?? payload.items ?? payload.content ?? payload ?? [];
+      const list = Array.isArray(raw) ? raw : [];
+      const normalized = list
         .map(normalizeLineOption)
         .filter((item) => item.value)
         .sort((a, b) => a.label.localeCompare(b.label));
