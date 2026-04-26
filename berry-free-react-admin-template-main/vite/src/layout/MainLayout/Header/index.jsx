@@ -9,6 +9,7 @@ import LogoSection from '../LogoSection';
 import SearchSection from './SearchSection';
 import ProfileSection from './ProfileSection';
 import NotificationSection from './NotificationSection';
+import ResellerCreditsChip from './ResellerCreditsChip';
 import ThemeModeSwitcher from 'ui-component/ThemeModeSwitcher';
 
 import { handlerDrawerOpen, useGetMenuMaster } from 'api/menu';
@@ -58,6 +59,9 @@ export default function Header() {
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: { xs: 0.75, sm: 1 }, minWidth: 0, flexShrink: 0 }}>
+        <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+          <ResellerCreditsChip />
+        </Box>
         <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
           <ThemeModeSwitcher compact />
         </Box>

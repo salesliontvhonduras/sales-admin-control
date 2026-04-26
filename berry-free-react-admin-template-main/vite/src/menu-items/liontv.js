@@ -109,7 +109,6 @@ const liontv = {
           title: 'menu.crm',
           type: 'item',
           url: '/liontv/crm',
-          resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         },
@@ -118,7 +117,6 @@ const liontv = {
           title: 'menu.vipCustomers',
           type: 'item',
           url: '/liontv/vip-customers',
-          resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['LIONTV_VIP_VIEW', 'LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         },
@@ -127,7 +125,6 @@ const liontv = {
           title: 'menu.loyalty',
           type: 'item',
           url: '/liontv/loyalty',
-          resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['LIONTV_LOYALTY_VIEW', 'LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         },
@@ -169,7 +166,6 @@ const liontv = {
           title: 'menu.paymentCommitments',
           type: 'item',
           url: '/liontv/payment-commitments',
-          resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['LIONTV_PAYMENT_COMMITMENTS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         },
@@ -178,7 +174,6 @@ const liontv = {
           title: 'menu.businessPurchases',
           type: 'item',
           url: '/liontv/business-purchases',
-          resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['LIONTV_BUSINESS_PURCHASES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         }
@@ -224,7 +219,6 @@ const liontv = {
           title: 'menu.lines',
           type: 'item',
           url: '/liontv/lines',
-          resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         },
@@ -233,7 +227,6 @@ const liontv = {
           title: 'menu.plusLines',
           type: 'item',
           url: '/liontv/plus-lines',
-          resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['LIONTV_PLUS_LINES_VIEW', 'LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         },
@@ -269,7 +262,6 @@ const liontv = {
           caption: 'menu.subscriptionExpirationCaption',
           type: 'item',
           url: '/liontv/subscription-expiration',
-          resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['LIONTV_SUBSCRIPTION_EXPIRATION_VIEW', 'LIONTV_TECH_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         }
@@ -281,7 +273,6 @@ const liontv = {
       caption: 'menu.liontvContentCaption',
       type: 'collapse',
       icon: icons.IconDeviceTv,
-      resellerVisible: false,
       permission: { any: ['LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
       children: [
         {
@@ -297,6 +288,7 @@ const liontv = {
           title: 'menu.moviesFeed',
           type: 'item',
           url: '/liontv/movies-feed',
+          resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['LIONTV_FEED_VIEW', 'LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         },
@@ -305,6 +297,7 @@ const liontv = {
           title: 'menu.seriesFeed',
           type: 'item',
           url: '/liontv/series-feed',
+          resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['LIONTV_FEED_VIEW', 'LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         },
@@ -313,6 +306,7 @@ const liontv = {
           title: 'menu.futbolEventsFeed',
           type: 'item',
           url: '/liontv/futbol-events-feed',
+          resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['LIONTV_FEED_VIEW', 'LIONTV_CONTENT_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
         }

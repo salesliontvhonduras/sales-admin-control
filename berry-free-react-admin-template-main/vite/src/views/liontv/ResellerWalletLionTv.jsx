@@ -3,16 +3,19 @@ import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
 
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import Grid from '@mui/material/Grid';
+import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
-import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
-import Button from '@mui/material/Button';
-import Alert from '@mui/material/Alert';
-import Divider from '@mui/material/Divider';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import Grid from '@mui/material/Grid';
+import MenuItem from '@mui/material/MenuItem';
+import Skeleton from '@mui/material/Skeleton';
+import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -21,34 +24,40 @@ import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import Dialog from '@mui/material/Dialog';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
-import Skeleton from '@mui/material/Skeleton';
+import Typography from '@mui/material/Typography';
 
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
-import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
-import TrendingDownOutlinedIcon from '@mui/icons-material/TrendingDownOutlined';
-import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import AddCircleOutlineOutlinedIcon from '@mui/icons-material/AddCircleOutlineOutlined';
+import CreditScoreOutlinedIcon from '@mui/icons-material/CreditScoreOutlined';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
+import RequestQuoteOutlinedIcon from '@mui/icons-material/RequestQuoteOutlined';
+import TrendingDownOutlinedIcon from '@mui/icons-material/TrendingDownOutlined';
+import TrendingUpOutlinedIcon from '@mui/icons-material/TrendingUpOutlined';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { PageEmptyState, PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
 import { gridSpacing } from 'store/constant';
-import { lionTvApi } from 'utils/api';
+import { createCreditRequest, listCreditRequests } from 'api/liontv-credit-requests';
 import { createResellerWalletAdjustment, getResellerWalletLedger, getResellerWalletSummary } from 'api/liontv-reseller-wallet';
 import { hasPermissionExact } from 'utils/rbac';
 
-const DEFAULT_FORM = {
+const DEFAULT_ADJUSTMENT_FORM = {
   creditsDelta: '',
   reason: '',
   sourceType: 'MANUAL',
   sourceId: ''
 };
+
+const DEFAULT_REQUEST_FORM = {
+  credits: 25,
+  notes: ''
+};
+
+const QUICK_CREDIT_OPTIONS = [10, 25, 50, 100, 250, 500];
 
 function formatDateTime(value, locale = 'es-HN') {
   if (!value) return '-';
@@ -91,6 +100,23 @@ function walletMetric(icon, title, value, helper, color = 'primary') {
   );
 }
 
+function statusColor(status) {
+  const normalized = String(status || '').toUpperCase();
+  if (normalized === 'PAID') return 'success';
+  if (normalized === 'PENDING') return 'warning';
+  if (normalized === 'PARTIAL') return 'info';
+  if (normalized === 'CANCELLED') return 'error';
+  return 'default';
+}
+
+function createCreditPurchaseCode() {
+  return `CR-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+}
+
+function todayIsoDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default function ResellerWalletLionTv() {
   const { t, i18n } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
@@ -101,14 +127,16 @@ export default function ResellerWalletLionTv() {
   const [summary, setSummary] = useState(null);
   const [ledgerRows, setLedgerRows] = useState([]);
   const [ledgerTotal, setLedgerTotal] = useState(0);
-  const [packages, setPackages] = useState([]);
+  const [creditRequests, setCreditRequests] = useState([]);
   const [index, setIndex] = useState(0);
   const [size, setSize] = useState(10);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState(DEFAULT_FORM);
+  const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
+  const [adjustSaving, setAdjustSaving] = useState(false);
+  const [requestSaving, setRequestSaving] = useState(false);
+  const [adjustForm, setAdjustForm] = useState(DEFAULT_ADJUSTMENT_FORM);
+  const [requestForm, setRequestForm] = useState(DEFAULT_REQUEST_FORM);
 
   const loadData = useCallback(
     async ({ silent = false } = {}) => {
@@ -116,16 +144,16 @@ export default function ResellerWalletLionTv() {
       if (!silent) setLoading(true);
       setError('');
       try {
-        const [summaryPayload, ledgerPayload, packagesResponse] = await Promise.all([
+        const [summaryPayload, ledgerPayload, requestsPayload] = await Promise.all([
           getResellerWalletSummary({ skipAuthRedirect: true }),
           getResellerWalletLedger({ index, size }, { skipAuthRedirect: true }),
-          lionTvApi.get('/packages/v1', { skipAuthRedirect: true })
+          listCreditRequests({ index: 0, size: 6 }, { skipAuthRedirect: true })
         ]);
 
         setSummary(summaryPayload);
         setLedgerRows(Array.isArray(ledgerPayload?.data) ? ledgerPayload.data : []);
         setLedgerTotal(Number(ledgerPayload?.total || 0));
-        setPackages(Array.isArray(packagesResponse?.data?.data) ? packagesResponse.data.data : []);
+        setCreditRequests(Array.isArray(requestsPayload?.data) ? requestsPayload.data : []);
       } catch (err) {
         setError(err?.response?.data?.message || t('resellerWallet.errors.load', 'No se pudo cargar el wallet de créditos.'));
       } finally {
@@ -139,47 +167,90 @@ export default function ResellerWalletLionTv() {
     loadData();
   }, [loadData]);
 
-  const packageRules = useMemo(
-    () =>
-      packages
-        .map((item) => ({
-          packageId: item.packageId ?? item.id ?? null,
-          name: item.name || `#${item.packageId ?? item.id ?? '-'}`,
-          officialCredits: item.officialCredits ?? '0'
-        }))
-        .filter((item) => Number(item.officialCredits) > 0)
-        .sort((a, b) => Number(a.officialCredits) - Number(b.officialCredits)),
-    [packages]
+  const pendingRequests = useMemo(
+    () => creditRequests.filter((item) => String(item.status || '').toUpperCase() === 'PENDING').length,
+    [creditRequests]
   );
 
   const handleSubmitAdjustment = async () => {
-    const creditsDelta = Number(form.creditsDelta);
+    const creditsDelta = Number(adjustForm.creditsDelta);
     if (!Number.isFinite(creditsDelta) || creditsDelta === 0) {
       enqueueSnackbar(t('resellerWallet.messages.invalidDelta', 'Ingresa un ajuste distinto de cero.'), { variant: 'warning' });
       return;
     }
 
-    setSaving(true);
+    setAdjustSaving(true);
     try {
       await createResellerWalletAdjustment(
         {
           creditsDelta,
-          reason: form.reason || null,
-          sourceType: form.sourceType || 'MANUAL',
-          sourceId: form.sourceId ? Number(form.sourceId) : null
+          reason: adjustForm.reason || null,
+          sourceType: adjustForm.sourceType || 'MANUAL',
+          sourceId: adjustForm.sourceId ? Number(adjustForm.sourceId) : null
         },
         { skipAuthRedirect: true }
       );
       enqueueSnackbar(t('resellerWallet.messages.adjusted', 'Wallet actualizado correctamente.'), { variant: 'success' });
-      setDialogOpen(false);
-      setForm(DEFAULT_FORM);
+      setAdjustDialogOpen(false);
+      setAdjustForm(DEFAULT_ADJUSTMENT_FORM);
       await loadData({ silent: true });
     } catch (err) {
       enqueueSnackbar(err?.response?.data?.message || t('resellerWallet.errors.adjust', 'No se pudo aplicar el ajuste.'), {
         variant: 'error'
       });
     } finally {
-      setSaving(false);
+      setAdjustSaving(false);
+    }
+  };
+
+  const handleCreateRequest = async () => {
+    const credits = Number(requestForm.credits);
+    if (!Number.isFinite(credits) || credits <= 0) {
+      enqueueSnackbar(t('resellerWallet.messages.invalidRequestCredits', 'Ingresa una cantidad válida de créditos.'), {
+        variant: 'warning'
+      });
+      return;
+    }
+
+    setRequestSaving(true);
+    try {
+      await createCreditRequest(
+        {
+          purchaseCode: createCreditPurchaseCode(),
+          purchaseType: 'LION_TV_CREDITS',
+          category: 'CREDITS',
+          providerName: 'LION_TV_PLATFORM',
+          itemName: `Solicitud de ${credits} créditos`,
+          description: `Solicitud manual de recarga reseller por ${credits} créditos`,
+          quantity: credits,
+          unitCost: 0,
+          totalAmount: 0,
+          currency: 'HNL',
+          purchaseDate: todayIsoDate(),
+          paymentMethod: 'OTHER',
+          businessArea: 'IPTV',
+          status: 'PENDING',
+          isRecurring: false,
+          recurrenceType: 'NONE',
+          notes: requestForm.notes || null
+        },
+        { skipAuthRedirect: true }
+      );
+      enqueueSnackbar(
+        t(
+          'resellerWallet.messages.requestCreated',
+          'La solicitud de créditos fue enviada a administración. Te notificarán cuando la recarga quede acreditada.'
+        ),
+        { variant: 'success' }
+      );
+      setRequestForm(DEFAULT_REQUEST_FORM);
+      await loadData({ silent: true });
+    } catch (err) {
+      enqueueSnackbar(err?.response?.data?.message || t('resellerWallet.errors.request', 'No se pudo crear la solicitud de créditos.'), {
+        variant: 'error'
+      });
+    } finally {
+      setRequestSaving(false);
     }
   };
 
@@ -205,28 +276,82 @@ export default function ResellerWalletLionTv() {
               {t('actions.refresh', 'Recargar')}
             </Button>
             {canAdjust ? (
-              <Button startIcon={<AddCircleOutlineOutlinedIcon />} variant="contained" onClick={() => setDialogOpen(true)}>
-                {t('resellerWallet.actions.manualTopUp', 'Ajuste manual')}
+              <Button startIcon={<AddCircleOutlineOutlinedIcon />} variant="contained" onClick={() => setAdjustDialogOpen(true)}>
+                {t('resellerWallet.actions.manualTopUp', 'Ajuste admin')}
               </Button>
             ) : null}
           </Stack>
         }
       >
         <Stack spacing={3}>
-          <Box>
-            <Typography variant="body1" color="text.secondary">
-              {t(
-                'resellerWallet.subtitle',
-                'Saldo actual, historial de movimientos y consumo comercial del reseller. Las recargas se acreditan manualmente después del cobro externo.'
-              )}
-            </Typography>
-          </Box>
+          <Card
+            sx={(theme) => ({
+              borderRadius: 4,
+              overflow: 'hidden',
+              border: '1px solid',
+              borderColor: 'divider',
+              color: 'common.white',
+              background:
+                theme.palette.mode === 'dark'
+                  ? `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.secondary.dark} 52%, #020617 100%)`
+                  : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 52%, #111827 100%)`
+            })}
+          >
+            <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+              <Grid container spacing={3} alignItems="center">
+                <Grid item xs={12} md={8}>
+                  <Stack spacing={1.25}>
+                    <Chip
+                      icon={<CreditScoreOutlinedIcon />}
+                      label={t('resellerWallet.hero.badge', 'Saldo y recargas')}
+                      sx={{ alignSelf: 'flex-start', bgcolor: 'rgba(255,255,255,0.14)', color: 'common.white', fontWeight: 700 }}
+                    />
+                    <Typography variant="h2" sx={{ fontSize: { xs: '1.9rem', md: '2.4rem' } }}>
+                      {t('resellerWallet.hero.title', 'Pide créditos sin escribir códigos ni referencias internas')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.82)', maxWidth: 720 }}>
+                      {t(
+                        'resellerWallet.hero.subtitle',
+                        'Solo define cuántos créditos necesitas y envía la solicitud. Administración la recibe en su módulo interno y luego acredita tu saldo.'
+                      )}
+                    </Typography>
+                  </Stack>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Card sx={{ borderRadius: 3, bgcolor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}>
+                    <CardContent>
+                      <Stack spacing={1}>
+                        <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.72)' }}>
+                          {t('resellerWallet.hero.balanceLabel', 'Saldo disponible')}
+                        </Typography>
+                        <Typography variant="h1" sx={{ lineHeight: 1 }}>
+                          {summary.availableCredits ?? 0}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.72)' }}>
+                          {t('resellerWallet.hero.balanceHelper', 'Créditos listos para ventas nuevas y renovaciones.')}
+                        </Typography>
+                        <Chip
+                          color={summary.lowBalance ? 'warning' : 'success'}
+                          label={
+                            summary.lowBalance
+                              ? t('resellerWallet.hero.balanceLow', 'Recarga recomendada')
+                              : t('resellerWallet.hero.balanceHealthy', 'Saldo saludable')
+                          }
+                          sx={{ alignSelf: 'flex-start', fontWeight: 700 }}
+                        />
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
 
           {summary.lowBalance ? (
             <Alert severity="warning" icon={<WarningAmberOutlinedIcon />}>
               {t(
                 'resellerWallet.lowBalance',
-                'El saldo está por debajo del umbral recomendado. Considera cargar créditos antes de nuevas activaciones.'
+                'Tu saldo está por debajo del umbral recomendado. Solicita más créditos antes de seguir activando cuentas.'
               )}
             </Alert>
           ) : null}
@@ -237,7 +362,7 @@ export default function ResellerWalletLionTv() {
                 AccountBalanceWalletOutlinedIcon,
                 t('resellerWallet.cards.available', 'Saldo disponible'),
                 summary.availableCredits ?? 0,
-                t('resellerWallet.cards.availableHelper', 'Créditos listos para activar nuevas ventas.'),
+                t('resellerWallet.cards.availableHelper', 'Disponible para activaciones inmediatas.'),
                 'primary'
               )}
             </Grid>
@@ -261,125 +386,214 @@ export default function ResellerWalletLionTv() {
             </Grid>
             <Grid item xs={12} md={3}>
               {walletMetric(
-                WarningAmberOutlinedIcon,
-                t('resellerWallet.cards.threshold', 'Umbral de alerta'),
-                summary.lowBalanceThreshold ?? 10,
-                t('resellerWallet.cards.thresholdHelper', 'Cuando el saldo cae a este nivel, el dashboard marca alerta.'),
-                'info'
+                RequestQuoteOutlinedIcon,
+                t('resellerWallet.cards.pendingRequests', 'Solicitudes pendientes'),
+                pendingRequests,
+                t('resellerWallet.cards.pendingRequestsHelper', 'Recargas enviadas a administración y aún no procesadas.'),
+                'secondary'
               )}
             </Grid>
           </Grid>
 
           <Grid container spacing={gridSpacing}>
             <Grid item xs={12} lg={7}>
-              <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+              <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider', height: '100%' }}>
                 <CardContent>
-                  <Stack spacing={2}>
-                    <Typography variant="h5">{t('resellerWallet.ledger.title', 'Historial de movimientos')}</Typography>
-                    <TableContainer component={Paper} variant="outlined">
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>{t('resellerWallet.ledger.headers.date', 'Fecha')}</TableCell>
-                            <TableCell>{t('resellerWallet.ledger.headers.type', 'Tipo')}</TableCell>
-                            <TableCell>{t('resellerWallet.ledger.headers.delta', 'Delta')}</TableCell>
-                            <TableCell>{t('resellerWallet.ledger.headers.balance', 'Saldo')}</TableCell>
-                            <TableCell>{t('resellerWallet.ledger.headers.reason', 'Motivo')}</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {ledgerRows.length ? (
-                            ledgerRows.map((row) => (
-                              <TableRow hover key={row.id}>
-                                <TableCell>{formatDateTime(row.createdAt, locale)}</TableCell>
-                                <TableCell>
-                                  <Chip
-                                    size="small"
-                                    color={Number(row.creditsDelta) >= 0 ? 'success' : 'warning'}
-                                    label={row.movementType || '-'}
-                                  />
-                                </TableCell>
-                                <TableCell sx={{ fontWeight: 700, color: Number(row.creditsDelta) >= 0 ? 'success.main' : 'warning.main' }}>
-                                  {Number(row.creditsDelta) > 0 ? '+' : ''}
-                                  {row.creditsDelta}
-                                </TableCell>
-                                <TableCell>{row.balanceAfter}</TableCell>
-                                <TableCell>{row.reason || '-'}</TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={5}>
-                                <Typography variant="body2" color="text.secondary">
-                                  {t('resellerWallet.ledger.empty', 'Todavía no hay movimientos registrados.')}
-                                </Typography>
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                    <TablePagination
-                      component="div"
-                      count={ledgerTotal}
-                      page={index}
-                      onPageChange={(_, nextPage) => setIndex(nextPage)}
-                      rowsPerPage={size}
-                      onRowsPerPageChange={(event) => {
-                        setSize(Number(event.target.value));
-                        setIndex(0);
-                      }}
-                      rowsPerPageOptions={[10, 20, 50]}
-                    />
+                  <Stack spacing={2.25}>
+                    <Box>
+                      <Typography variant="h4">{t('resellerWallet.buy.title', 'Solicitar créditos')}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {t(
+                          'resellerWallet.buy.subtitle',
+                          'Elige cuántos créditos necesitas. La solicitud llega al módulo admin y tu saldo se acredita cuando el pago sea confirmado.'
+                        )}
+                      </Typography>
+                    </Box>
+
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                      {QUICK_CREDIT_OPTIONS.map((option) => (
+                        <Chip
+                          key={option}
+                          clickable
+                          color={Number(requestForm.credits) === option ? 'primary' : 'default'}
+                          variant={Number(requestForm.credits) === option ? 'filled' : 'outlined'}
+                          label={`${option} cr`}
+                          onClick={() => setRequestForm((prev) => ({ ...prev, credits: option }))}
+                          sx={{ fontWeight: 700 }}
+                        />
+                      ))}
+                    </Stack>
+
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={4}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label={t('resellerWallet.buy.credits', 'Créditos deseados')}
+                          value={requestForm.credits}
+                          onChange={(event) => setRequestForm((prev) => ({ ...prev, credits: event.target.value }))}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={8}>
+                        <TextField
+                          fullWidth
+                          label={t('resellerWallet.buy.notes', 'Nota opcional')}
+                          placeholder={t('resellerWallet.buy.notesPlaceholder', 'Ejemplo: necesito recargar antes de las renovaciones del día 2')}
+                          value={requestForm.notes}
+                          onChange={(event) => setRequestForm((prev) => ({ ...prev, notes: event.target.value }))}
+                        />
+                      </Grid>
+                    </Grid>
+
+                    <Alert severity="info">
+                      {t(
+                        'resellerWallet.buy.helper',
+                        'No necesitas digitar IDs ni referencias internas. El sistema genera la solicitud y administración la recibe como compra pendiente de créditos.'
+                      )}
+                    </Alert>
+
+                    <Button
+                      variant="contained"
+                      size="large"
+                      startIcon={<CreditScoreOutlinedIcon />}
+                      onClick={handleCreateRequest}
+                      disabled={requestSaving}
+                      sx={{ alignSelf: 'flex-start', minWidth: 220 }}
+                    >
+                      {requestSaving ? t('resellerWallet.buy.sending', 'Enviando...') : t('resellerWallet.buy.action', 'Enviar solicitud')}
+                    </Button>
                   </Stack>
                 </CardContent>
               </Card>
             </Grid>
+
             <Grid item xs={12} lg={5}>
-              <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+              <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider', height: '100%' }}>
                 <CardContent>
                   <Stack spacing={2}>
-                    <Typography variant="h5">{t('resellerWallet.rules.title', 'Costo por operación')}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {t(
-                        'resellerWallet.rules.subtitle',
-                        'En fase 1 el consumo automático se descuenta al crear suscripciones, usando los créditos oficiales configurados en cada paquete.'
-                      )}
-                    </Typography>
-                    <Divider />
-                    {packageRules.length ? (
-                      packageRules.slice(0, 10).map((item) => (
-                        <Stack key={item.packageId || item.name} direction="row" justifyContent="space-between" alignItems="center">
-                          <Box>
-                            <Typography variant="subtitle2">{item.name}</Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {t('resellerWallet.rules.helper', 'Se consume al crear la suscripción.')}
-                            </Typography>
-                          </Box>
-                          <Chip color="primary" size="small" label={`${item.officialCredits} cr`} />
-                        </Stack>
-                      ))
-                    ) : (
+                    <Box>
+                      <Typography variant="h4">{t('resellerWallet.requests.title', 'Últimas solicitudes')}</Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {t('resellerWallet.rules.empty', 'No hay paquetes con créditos oficiales configurados todavía.')}
+                        {t(
+                          'resellerWallet.requests.subtitle',
+                          'Aquí ves el estado de tus recargas recientes mientras administración las procesa.'
+                        )}
                       </Typography>
+                    </Box>
+
+                    {creditRequests.length ? (
+                      <Stack spacing={1.25}>
+                        {creditRequests.map((request) => (
+                          <Card key={request.id} variant="outlined" sx={{ borderRadius: 2.5 }}>
+                            <CardContent sx={{ p: 2 }}>
+                              <Stack spacing={1}>
+                                <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+                                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                    {request.itemName || t('resellerWallet.requests.fallback', 'Solicitud de créditos')}
+                                  </Typography>
+                                  <Chip size="small" color={statusColor(request.status)} label={request.status || 'PENDING'} />
+                                </Stack>
+                                <Stack direction="row" spacing={1} flexWrap="wrap">
+                                  <Chip
+                                    size="small"
+                                    variant="outlined"
+                                    icon={<CreditScoreOutlinedIcon fontSize="small" />}
+                                    label={`${Number(request.quantity || 0)} cr`}
+                                  />
+                                  <Chip
+                                    size="small"
+                                    variant="outlined"
+                                    icon={<HistoryOutlinedIcon fontSize="small" />}
+                                    label={formatDateTime(request.createdAt || request.purchaseDate, locale)}
+                                  />
+                                </Stack>
+                                <Typography variant="body2" color="text.secondary">
+                                  {request.notes || t('resellerWallet.requests.noNotes', 'Sin notas adicionales en esta solicitud.')}
+                                </Typography>
+                              </Stack>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </Stack>
+                    ) : (
+                      <Alert severity="info">
+                        {t('resellerWallet.requests.empty', 'Todavía no has enviado solicitudes de créditos.')}
+                      </Alert>
                     )}
-                    <Alert severity="info">
-                      {t(
-                        'resellerWallet.rules.note',
-                        'Si una operación requiere corrección comercial, ajusta el wallet manualmente mientras la compra automática de créditos llega en fase 2.'
-                      )}
-                    </Alert>
                   </Stack>
                 </CardContent>
               </Card>
             </Grid>
           </Grid>
+
+          <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+            <CardContent>
+              <Stack spacing={2}>
+                <Box>
+                  <Typography variant="h4">{t('resellerWallet.ledger.title', 'Historial de movimientos')}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('resellerWallet.ledger.subtitle', 'Consulta recargas acreditadas y consumos históricos del wallet.')}
+                  </Typography>
+                </Box>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>{t('resellerWallet.ledger.headers.date', 'Fecha')}</TableCell>
+                        <TableCell>{t('resellerWallet.ledger.headers.type', 'Tipo')}</TableCell>
+                        <TableCell>{t('resellerWallet.ledger.headers.delta', 'Delta')}</TableCell>
+                        <TableCell>{t('resellerWallet.ledger.headers.balance', 'Saldo')}</TableCell>
+                        <TableCell>{t('resellerWallet.ledger.headers.reason', 'Motivo')}</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {ledgerRows.length ? (
+                        ledgerRows.map((row) => (
+                          <TableRow hover key={row.id}>
+                            <TableCell>{formatDateTime(row.createdAt, locale)}</TableCell>
+                            <TableCell>
+                              <Chip size="small" color={Number(row.creditsDelta) >= 0 ? 'success' : 'warning'} label={row.movementType || '-'} />
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 700, color: Number(row.creditsDelta) >= 0 ? 'success.main' : 'warning.main' }}>
+                              {Number(row.creditsDelta) > 0 ? '+' : ''}
+                              {row.creditsDelta}
+                            </TableCell>
+                            <TableCell>{row.balanceAfter}</TableCell>
+                            <TableCell>{row.reason || '-'}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5}>
+                            <Typography variant="body2" color="text.secondary">
+                              {t('resellerWallet.ledger.empty', 'Todavía no hay movimientos registrados.')}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <TablePagination
+                  component="div"
+                  count={ledgerTotal}
+                  page={index}
+                  onPageChange={(_, nextPage) => setIndex(nextPage)}
+                  rowsPerPage={size}
+                  onRowsPerPageChange={(event) => {
+                    setSize(Number(event.target.value));
+                    setIndex(0);
+                  }}
+                  rowsPerPageOptions={[10, 20, 50]}
+                />
+              </Stack>
+            </CardContent>
+          </Card>
         </Stack>
       </MainCard>
 
-      <Dialog open={dialogOpen} onClose={() => !saving && setDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitleWithClose onClose={() => !saving && setDialogOpen(false)}>
+      <Dialog open={adjustDialogOpen} onClose={() => !adjustSaving && setAdjustDialogOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitleWithClose onClose={() => !adjustSaving && setAdjustDialogOpen(false)}>
           {t('resellerWallet.dialog.title', 'Ajuste manual de créditos')}
         </DialogTitleWithClose>
         <DialogContent>
@@ -387,22 +601,22 @@ export default function ResellerWalletLionTv() {
             <Alert severity="info">
               {t(
                 'resellerWallet.dialog.helper',
-                'Usa valores positivos para recargas y negativos para descuentos. Puedes enlazar la operación con una factura o compra si ya existe.'
+                'Este formulario es solo para operación interna. Usa valores positivos para recargas y negativos para descuentos.'
               )}
             </Alert>
             <TextField
               fullWidth
               type="number"
               label={t('resellerWallet.dialog.creditsDelta', 'Créditos')}
-              value={form.creditsDelta}
-              onChange={(event) => setForm((prev) => ({ ...prev, creditsDelta: event.target.value }))}
+              value={adjustForm.creditsDelta}
+              onChange={(event) => setAdjustForm((prev) => ({ ...prev, creditsDelta: event.target.value }))}
             />
             <TextField
               fullWidth
               select
               label={t('resellerWallet.dialog.sourceType', 'Origen')}
-              value={form.sourceType}
-              onChange={(event) => setForm((prev) => ({ ...prev, sourceType: event.target.value }))}
+              value={adjustForm.sourceType}
+              onChange={(event) => setAdjustForm((prev) => ({ ...prev, sourceType: event.target.value }))}
             >
               <MenuItem value="MANUAL">MANUAL</MenuItem>
               <MenuItem value="INVOICE">INVOICE</MenuItem>
@@ -411,25 +625,25 @@ export default function ResellerWalletLionTv() {
             <TextField
               fullWidth
               label={t('resellerWallet.dialog.sourceId', 'ID de referencia')}
-              value={form.sourceId}
-              onChange={(event) => setForm((prev) => ({ ...prev, sourceId: event.target.value }))}
+              value={adjustForm.sourceId}
+              onChange={(event) => setAdjustForm((prev) => ({ ...prev, sourceId: event.target.value }))}
             />
             <TextField
               fullWidth
               multiline
               minRows={3}
               label={t('resellerWallet.dialog.reason', 'Motivo')}
-              value={form.reason}
-              onChange={(event) => setForm((prev) => ({ ...prev, reason: event.target.value }))}
+              value={adjustForm.reason}
+              onChange={(event) => setAdjustForm((prev) => ({ ...prev, reason: event.target.value }))}
             />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)} disabled={saving}>
+          <Button onClick={() => setAdjustDialogOpen(false)} disabled={adjustSaving}>
             {t('actions.cancel', 'Cancelar')}
           </Button>
-          <Button variant="contained" onClick={handleSubmitAdjustment} disabled={saving}>
-            {saving ? <Skeleton width={80} /> : t('resellerWallet.actions.apply', 'Aplicar ajuste')}
+          <Button variant="contained" onClick={handleSubmitAdjustment} disabled={adjustSaving}>
+            {adjustSaving ? <Skeleton width={80} /> : t('resellerWallet.actions.apply', 'Aplicar ajuste')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -62,7 +62,7 @@ import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
-import { shopifyDemosApi } from 'utils/api';
+import { lionTvApi, shopifyDemosApi } from 'utils/api';
 
 const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
@@ -323,6 +323,21 @@ function normalizeDemo(item = {}) {
   };
 }
 
+function normalizeLineOption(item = {}) {
+  const id = String(item.id ?? item.lineId ?? item.line_id ?? '').trim();
+  const lineId = String(item.lineId ?? item.line_id ?? item.id ?? '').trim();
+  const usernameEncode = String(item.username_encode ?? item.usernameEncode ?? item.username ?? '').trim();
+  const provider = String(item.provider ?? '').trim();
+  return {
+    value: id || lineId,
+    id,
+    lineId,
+    usernameEncode,
+    provider,
+    label: `${lineId || id || '-'}${usernameEncode ? ` · ${usernameEncode}` : ''}${provider ? ` · ${provider}` : ''}`
+  };
+}
+
 export default function DemosLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
@@ -337,6 +352,12 @@ export default function DemosLionTv() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [lineOptions, setLineOptions] = useState([]);
+  const [loadingLineOptions, setLoadingLineOptions] = useState(false);
+  const [sourceConfig, setSourceConfig] = useState(null);
+  const [sourceConfigForm, setSourceConfigForm] = useState('');
+  const [loadingSourceConfig, setLoadingSourceConfig] = useState(false);
+  const [savingSourceConfig, setSavingSourceConfig] = useState(false);
 
   const [openModal, setOpenModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
@@ -348,6 +369,51 @@ export default function DemosLionTv() {
     const status = err?.response?.status || err?.request?.status;
     return status === 401;
   };
+
+  const loadLineOptions = useCallback(async () => {
+    setLoadingLineOptions(true);
+    try {
+      const response = await lionTvApi.get('/lines/v1/list-lines', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: { index: 0, start: 0, size: 1000, filters: '', sorting: '' },
+        skipAuthRedirect: true
+      });
+      const data = response?.data?.data ?? response?.data ?? [];
+      const normalized = (Array.isArray(data) ? data : [])
+        .map(normalizeLineOption)
+        .filter((item) => item.value)
+        .sort((a, b) => a.label.localeCompare(b.label));
+      setLineOptions(normalized);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudieron cargar las líneas disponibles para demos.', {
+          variant: 'error'
+        });
+      }
+    } finally {
+      setLoadingLineOptions(false);
+    }
+  }, [accessToken, enqueueSnackbar]);
+
+  const loadSourceConfig = useCallback(async () => {
+    setLoadingSourceConfig(true);
+    try {
+      const response = await shopifyDemosApi.get('/demos/source-config', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const data = response?.data?.data ?? null;
+      setSourceConfig(data);
+      setSourceConfigForm(data?.sourceLineIdentifier ? String(data.sourceLineIdentifier) : '');
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo cargar la configuración de demos.', {
+          variant: 'error'
+        });
+      }
+    } finally {
+      setLoadingSourceConfig(false);
+    }
+  }, [accessToken, enqueueSnackbar]);
 
   const loadDemos = useCallback(async () => {
     setLoading(true);
@@ -370,6 +436,11 @@ export default function DemosLionTv() {
   useEffect(() => {
     loadDemos();
   }, [refreshKey, loadDemos]);
+
+  useEffect(() => {
+    loadLineOptions();
+    loadSourceConfig();
+  }, [loadLineOptions, loadSourceConfig]);
 
   useEffect(() => {
     const maxPage = Math.max(0, Math.ceil(rows.length / rowsPerPage) - 1);
@@ -411,6 +482,17 @@ export default function DemosLionTv() {
 
   const resetForm = () => setForm(defaultForm);
 
+  const selectedSourceLine = useMemo(
+    () =>
+      lineOptions.find(
+        (item) => String(item.value) === String(sourceConfigForm || '') || String(item.lineId) === String(sourceConfigForm || '')
+      ) || null,
+    [lineOptions, sourceConfigForm]
+  );
+
+  const demoSourceReady = Boolean(sourceConfig?.configured);
+  const requiresDemoSourceSetup = !loadingSourceConfig && !demoSourceReady;
+
   const handleMacChange = (event) => {
     const raw = (event.target.value || '').replace(/[^a-fA-F0-9]/g, '').slice(0, 12);
     const formatted = raw.match(/.{1,2}/g)?.join(':') ?? raw;
@@ -418,9 +500,39 @@ export default function DemosLionTv() {
   };
 
   const openCreateModal = () => {
+    if (requiresDemoSourceSetup) {
+      enqueueSnackbar('Configura primero la línea que usarás para demos antes de crear una demo directa.', { variant: 'warning' });
+      return;
+    }
     resetForm();
     setIsEdit(false);
     setOpenModal(true);
+  };
+
+  const handleSaveSourceConfig = async () => {
+    if (!sourceConfigForm) {
+      enqueueSnackbar('Selecciona una línea para demos.', { variant: 'warning' });
+      return;
+    }
+
+    setSavingSourceConfig(true);
+    try {
+      const response = await shopifyDemosApi.put(
+        '/demos/source-config',
+        { sourceLineIdentifier: sourceConfigForm },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const data = response?.data?.data ?? null;
+      setSourceConfig(data);
+      setSourceConfigForm(data?.sourceLineIdentifier ? String(data.sourceLineIdentifier) : sourceConfigForm);
+      enqueueSnackbar(data?.message || 'Configuración demo actualizada.', { variant: 'success' });
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || 'No se pudo guardar la configuración demo.', { variant: 'error' });
+      }
+    } finally {
+      setSavingSourceConfig(false);
+    }
   };
 
   const openEditModal = (row) => {
@@ -542,6 +654,7 @@ export default function DemosLionTv() {
               variant="contained"
               startIcon={<AddCircleOutlineIcon />}
               onClick={openCreateModal}
+              disabled={requiresDemoSourceSetup}
               sx={{ borderRadius: 2, textTransform: 'none', px: 2.5, boxShadow: '0 10px 24px rgba(0,0,0,0.12)' }}
               fullWidth={isMobile}
             >
@@ -578,6 +691,81 @@ export default function DemosLionTv() {
             <LionMetricCard {...item} key={idx} />
           ))}
         </ResponsiveMetricGrid>
+      </MainCard>
+
+      <MainCard title="Configuración de línea demo">
+        <Stack spacing={2}>
+          <Typography variant="body2" color="text.secondary">
+            Cada reseller debe definir su propia línea para demos directas. Esa configuración queda asociada al usuario autenticado y las demos creadas desde este módulo respetan ese aislamiento.
+          </Typography>
+
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={7}>
+              <FormControl fullWidth size="small" sx={fieldSx}>
+                <InputLabel id="demo-source-line-label">Línea para demos</InputLabel>
+                <Select
+                  labelId="demo-source-line-label"
+                  label="Línea para demos"
+                  value={sourceConfigForm}
+                  onChange={(event) => setSourceConfigForm(event.target.value)}
+                  disabled={loadingLineOptions || loadingSourceConfig}
+                >
+                  {lineOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={5}>
+              <ResponsiveActionBar>
+                <Button
+                  variant="outlined"
+                  onClick={loadSourceConfig}
+                  disabled={loadingSourceConfig || savingSourceConfig}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                >
+                  Recargar configuración
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleSaveSourceConfig}
+                  disabled={!sourceConfigForm || savingSourceConfig}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                >
+                  Guardar línea demo
+                </Button>
+              </ResponsiveActionBar>
+            </Grid>
+          </Grid>
+
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.25} flexWrap="wrap">
+            <Chip
+              color={demoSourceReady ? 'success' : sourceConfig?.legacyFallback ? 'warning' : 'default'}
+              label={
+                demoSourceReady
+                  ? 'Configuración activa'
+                  : sourceConfig?.legacyFallback
+                    ? 'Modo legado'
+                    : 'Falta configuración'
+              }
+            />
+            <Chip label={`Línea: ${sourceConfig?.lineId || selectedSourceLine?.lineId || '-'}`} variant="outlined" />
+            <Chip label={`Cuenta: ${sourceConfig?.usernameEncode || selectedSourceLine?.usernameEncode || '-'}`} variant="outlined" />
+            <Chip label={`Provider: ${sourceConfig?.provider || selectedSourceLine?.provider || '-'}`} variant="outlined" />
+          </Stack>
+
+          {sourceConfig?.message ? (
+            <Typography
+              variant="caption"
+              color={sourceConfig?.configured ? 'success.main' : sourceConfig?.legacyFallback ? 'warning.main' : 'error.main'}
+              sx={{ fontWeight: 700 }}
+            >
+              {sourceConfig.message}
+            </Typography>
+          ) : null}
+        </Stack>
       </MainCard>
 
       <MainCard
@@ -956,6 +1144,14 @@ export default function DemosLionTv() {
           }}
         >
           <Stack spacing={2} sx={{ position: 'relative', zIndex: 1 }}>
+            <SectionCard title="Configuración demo activa" helper="La demo directa usará la línea configurada para este reseller.">
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} flexWrap="wrap">
+                <Chip size="small" label={`Línea: ${sourceConfig?.lineId || '-'}`} />
+                <Chip size="small" label={`Cuenta: ${sourceConfig?.usernameEncode || '-'}`} />
+                <Chip size="small" label={`Provider: ${sourceConfig?.provider || '-'}`} />
+              </Stack>
+            </SectionCard>
+
             <SectionCard title={t('demos.form.customer', 'Cliente')} helper={t('demos.form.customerHelper', 'Datos de contacto')}>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={4}>

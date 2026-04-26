@@ -523,6 +523,7 @@ export default function BusinessPurchasesLionTv() {
       paid: rows.filter((r) => r.status === 'PAID').length,
       pending: rows.filter((r) => r.status === 'PENDING').length,
       recurring: rows.filter((r) => r.isRecurring).length,
+      pendingCreditRequests: rows.filter((r) => r.status === 'PENDING' && r.category === 'CREDITS' && r.purchaseType === 'LION_TV_CREDITS').length,
       totalAmount: rows.reduce((acc, row) => acc + toSafeNumber(row.totalAmount), 0)
     }),
     [rows]
@@ -740,6 +741,16 @@ export default function BusinessPurchasesLionTv() {
               }),
               icon: <LocalAtmIcon fontSize="small" />,
               color: 'secondary'
+            },
+            {
+              title: t('businessPurchases.summary.pendingCreditRequestsLabel', 'Solicitudes de créditos'),
+              value: summary.pendingCreditRequests,
+              helper: t('businessPurchases.summary.pendingCreditRequests', {
+                defaultValue: 'Pendientes de reseller: {{count}}',
+                count: summary.pendingCreditRequests
+              }),
+              icon: <AccountBalanceWalletIcon fontSize="small" />,
+              color: 'warning'
             }
           ].map((item, idx) => (
             <LionMetricCard {...item} key={idx} />
@@ -936,6 +947,7 @@ export default function BusinessPurchasesLionTv() {
                           value: `${row.currency || 'HNL'} ${toSafeNumber(row.totalAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
                           emphasis: true
                         },
+                        { label: t('businessPurchases.headers.requester', 'Solicitado por'), value: row.username || '-' },
                         {
                           label: t('businessPurchases.headers.date', 'Purchase date'),
                           value: row.paidAt
@@ -992,6 +1004,7 @@ export default function BusinessPurchasesLionTv() {
                   >
                     <TableCell>{t('businessPurchases.headers.code', 'Code')}</TableCell>
                     <TableCell>{t('businessPurchases.headers.item', 'Item')}</TableCell>
+                    <TableCell>{t('businessPurchases.headers.requester', 'Solicitado por')}</TableCell>
                     <TableCell>{t('businessPurchases.headers.type', 'Type')}</TableCell>
                     <TableCell>{t('businessPurchases.headers.category', 'Category')}</TableCell>
                     <TableCell>{t('businessPurchases.headers.amount', 'Amount')}</TableCell>
@@ -1061,6 +1074,9 @@ export default function BusinessPurchasesLionTv() {
                         </Stack>
                       </TableCell>
                       <TableCell>
+                        <Typography variant="body2">{row.username || '-'}</Typography>
+                      </TableCell>
+                      <TableCell>
                         <Chip
                           size="small"
                           variant="outlined"
@@ -1117,7 +1133,7 @@ export default function BusinessPurchasesLionTv() {
 
                   {!loading && filteredRows.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
+                      <TableCell colSpan={10} align="center" sx={{ py: 6 }}>
                         <Stack spacing={1} alignItems="center">
                           <Avatar
                             sx={(muiTheme) => ({
@@ -1144,7 +1160,7 @@ export default function BusinessPurchasesLionTv() {
 
                   {loading && (
                     <TableRow>
-                      <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                      <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                         <Stack spacing={1} alignItems="center">
                           <Avatar
                             sx={(muiTheme) => ({

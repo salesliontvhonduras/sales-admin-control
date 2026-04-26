@@ -2,29 +2,33 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import Grid from '@mui/material/Grid';
+import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
-import Alert from '@mui/material/Alert';
-import Divider from '@mui/material/Divider';
+import Grid from '@mui/material/Grid';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 
+import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
+import CreditScoreOutlinedIcon from '@mui/icons-material/CreditScoreOutlined';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
+import HubOutlinedIcon from '@mui/icons-material/HubOutlined';
+import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined';
+import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
+import RouterOutlinedIcon from '@mui/icons-material/RouterOutlined';
 import SubscriptionsOutlinedIcon from '@mui/icons-material/SubscriptionsOutlined';
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
-import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
-import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
-import RocketLaunchOutlinedIcon from '@mui/icons-material/RocketLaunchOutlined';
-import HeadsetMicOutlinedIcon from '@mui/icons-material/HeadsetMicOutlined';
+import ViewTimelineOutlinedIcon from '@mui/icons-material/ViewTimelineOutlined';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import AddCircleOutlineOutlinedIcon from '@mui/icons-material/AddCircleOutlineOutlined';
+import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
 import { gridSpacing } from 'store/constant';
-import { lionTvApi } from 'utils/api';
 import { getResellerWalletSummary } from 'api/liontv-reseller-wallet';
 
 function metricCard(icon, title, value, helper, color = 'primary') {
@@ -61,6 +65,78 @@ function metricCard(icon, title, value, helper, color = 'primary') {
   );
 }
 
+function quickActionCard({ icon, title, helper, actionLabel, onClick, color = 'primary' }) {
+  const Icon = icon;
+  return (
+    <Card
+      sx={(theme) => ({
+        height: '100%',
+        borderRadius: 3,
+        border: '1px solid',
+        borderColor: 'divider',
+        cursor: 'pointer',
+        transition: 'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: theme.shadows[8],
+          borderColor: `${theme.palette[color].main}55`
+        }
+      })}
+      onClick={onClick}
+    >
+      <CardContent>
+        <Stack spacing={1.5}>
+          <Box
+            sx={(theme) => ({
+              width: 46,
+              height: 46,
+              borderRadius: 2.5,
+              display: 'grid',
+              placeItems: 'center',
+              color: theme.palette[color].main,
+              bgcolor: `${theme.palette[color].main}14`
+            })}
+          >
+            <Icon fontSize="small" />
+          </Box>
+          <Box>
+            <Typography variant="h5">{title}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {helper}
+            </Typography>
+          </Box>
+          <Button variant="text" sx={{ p: 0, justifyContent: 'flex-start', textTransform: 'none', fontWeight: 700 }}>
+            {actionLabel}
+          </Button>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+
+function focusCard({ title, value, helper, buttonLabel, onClick, color = 'primary' }) {
+  return (
+    <Card sx={{ height: '100%', borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+      <CardContent>
+        <Stack spacing={1.5}>
+          <Typography variant="subtitle2" color="text.secondary">
+            {title}
+          </Typography>
+          <Typography variant="h3" color={`${color}.main`}>
+            {value}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {helper}
+          </Typography>
+          <Button variant="outlined" color={color} onClick={onClick} sx={{ alignSelf: 'flex-start', textTransform: 'none' }}>
+            {buttonLabel}
+          </Button>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ResellerDashboardLionTv({
   customers,
   subscriptions,
@@ -75,7 +151,6 @@ export default function ResellerDashboardLionTv({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [walletSummary, setWalletSummary] = useState(null);
-  const [packages, setPackages] = useState([]);
   const [walletLoading, setWalletLoading] = useState(true);
   const [walletError, setWalletError] = useState('');
 
@@ -83,14 +158,10 @@ export default function ResellerDashboardLionTv({
     setWalletLoading(true);
     setWalletError('');
     try {
-      const [summaryPayload, packagesResponse] = await Promise.all([
-        getResellerWalletSummary({ skipAuthRedirect: true }),
-        lionTvApi.get('/packages/v1', { skipAuthRedirect: true })
-      ]);
+      const summaryPayload = await getResellerWalletSummary({ skipAuthRedirect: true });
       setWalletSummary(summaryPayload);
-      setPackages(Array.isArray(packagesResponse?.data?.data) ? packagesResponse.data.data : []);
     } catch (error) {
-      setWalletError(error?.response?.data?.message || t('resellerDashboard.errors.wallet', 'No se pudo cargar el wallet reseller.'));
+      setWalletError(error?.response?.data?.message || t('resellerDashboard.errors.wallet', 'No se pudo cargar el saldo reseller.'));
     } finally {
       setWalletLoading(false);
     }
@@ -112,14 +183,59 @@ export default function ResellerDashboardLionTv({
     () => invoices.filter((item) => String(item.status || '').toUpperCase() === 'PENDING').length,
     [invoices]
   );
-  const creditRules = useMemo(
-    () =>
-      packages
-        .map((item) => ({ name: item.name || `#${item.packageId || item.id || '-'}`, credits: Number(item.officialCredits || 0) }))
-        .filter((item) => item.credits > 0)
-        .sort((a, b) => a.credits - b.credits)
-        .slice(0, 6),
-    [packages]
+
+  const quickActions = useMemo(
+    () => [
+      {
+        icon: GroupsOutlinedIcon,
+        title: t('resellerDashboard.quick.customers.title', 'Clientes'),
+        helper: t('resellerDashboard.quick.customers.helper', 'Administra tu cartera y crea nuevos clientes.'),
+        actionLabel: t('resellerDashboard.quick.customers.action', 'Abrir clientes'),
+        onClick: () => navigate('/liontv/customers'),
+        color: 'primary'
+      },
+      {
+        icon: SubscriptionsOutlinedIcon,
+        title: t('resellerDashboard.quick.subscriptions.title', 'Suscripciones'),
+        helper: t('resellerDashboard.quick.subscriptions.helper', 'Crea, renueva y reorganiza planes rápidamente.'),
+        actionLabel: t('resellerDashboard.quick.subscriptions.action', 'Abrir suscripciones'),
+        onClick: () => navigate('/liontv/subscriptions'),
+        color: 'info'
+      },
+      {
+        icon: VpnKeyOutlinedIcon,
+        title: t('resellerDashboard.quick.licenses.title', 'Licencias'),
+        helper: t('resellerDashboard.quick.licenses.helper', 'Gestiona activaciones, cambios de server y soporte.'),
+        actionLabel: t('resellerDashboard.quick.licenses.action', 'Abrir licencias'),
+        onClick: () => navigate('/liontv/licenses'),
+        color: 'warning'
+      },
+      {
+        icon: RouterOutlinedIcon,
+        title: t('resellerDashboard.quick.lines.title', 'Lines'),
+        helper: t('resellerDashboard.quick.lines.helper', 'Revisa líneas activas, capacidad y vencimientos.'),
+        actionLabel: t('resellerDashboard.quick.lines.action', 'Abrir lines'),
+        onClick: () => navigate('/liontv/lines'),
+        color: 'secondary'
+      },
+      {
+        icon: ViewTimelineOutlinedIcon,
+        title: t('resellerDashboard.quick.plusLines.title', 'Plus Lines'),
+        helper: t('resellerDashboard.quick.plusLines.helper', 'Consulta líneas plus y su estado actual.'),
+        actionLabel: t('resellerDashboard.quick.plusLines.action', 'Abrir plus lines'),
+        onClick: () => navigate('/liontv/plus-lines'),
+        color: 'success'
+      },
+      {
+        icon: HubOutlinedIcon,
+        title: t('resellerDashboard.quick.shared.title', 'Shared Subscriptions'),
+        helper: t('resellerDashboard.quick.shared.helper', 'Ordena hosts, shared y buckets por día.'),
+        actionLabel: t('resellerDashboard.quick.shared.action', 'Abrir shared'),
+        onClick: () => navigate('/liontv/subscription-sharing'),
+        color: 'error'
+      }
+    ],
+    [navigate, t]
   );
 
   if (loadingCore && walletLoading) {
@@ -150,47 +266,103 @@ export default function ResellerDashboardLionTv({
         title={t('menu.liontvDashboard', 'Lion TV Dashboard')}
         secondary={
           <Stack direction="row" spacing={1}>
-            <Button variant="outlined" onClick={onRefresh}>
+            <Button variant="outlined" startIcon={<RefreshOutlinedIcon />} onClick={onRefresh}>
               {t('actions.refresh', 'Recargar')}
             </Button>
-            <Button variant="contained" onClick={() => navigate('/liontv/reseller-wallet')}>
-              {t('menu.resellerWallet', 'Credit Wallet')}
+            <Button variant="contained" startIcon={<AddCircleOutlineOutlinedIcon />} onClick={() => navigate('/liontv/reseller-wallet')}>
+              {t('resellerDashboard.actions.buyCredits', 'Solicitar créditos')}
             </Button>
           </Stack>
         }
       >
         <Stack spacing={3}>
-          <Box>
-            <Typography variant="h4">{t('resellerDashboard.title', 'Consola comercial reseller')}</Typography>
-            <Typography variant="body1" color="text.secondary">
-              {t(
-                'resellerDashboard.subtitle',
-                'Vista simplificada para vender, activar y controlar saldo de créditos sin entrar a módulos internos de operación.'
-              )}
-            </Typography>
-          </Box>
+          <Card
+            sx={(theme) => ({
+              borderRadius: 4,
+              overflow: 'hidden',
+              border: '1px solid',
+              borderColor: 'divider',
+              color: 'common.white',
+              background:
+                theme.palette.mode === 'dark'
+                  ? `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.secondary.dark} 50%, #020617 100%)`
+                  : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 55%, #111827 100%)`
+            })}
+          >
+            <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+              <Grid container spacing={3} alignItems="center">
+                <Grid item xs={12} md={8}>
+                  <Stack spacing={1.5}>
+                    <Chip
+                      label={t('resellerDashboard.hero.badge', 'Consola reseller')}
+                      sx={{ alignSelf: 'flex-start', bgcolor: 'rgba(255,255,255,0.14)', color: 'common.white', fontWeight: 700 }}
+                    />
+                    <Typography variant="h2" sx={{ fontSize: { xs: '1.9rem', md: '2.5rem' } }}>
+                      {t('resellerDashboard.hero.title', 'Controla ventas, líneas y saldo desde un solo lugar')}
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.82)', maxWidth: 700 }}>
+                      {t(
+                        'resellerDashboard.hero.subtitle',
+                        'Esta vista prioriza lo que sí mueve tu operación: créditos disponibles, acceso rápido a clientes, lines y shared, y recarga manual cuando te quedas corto.'
+                      )}
+                    </Typography>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
+                      <Button
+                        variant="contained"
+                        color="inherit"
+                        startIcon={<CreditScoreOutlinedIcon />}
+                        onClick={() => navigate('/liontv/reseller-wallet')}
+                        sx={{ color: 'primary.main', fontWeight: 700 }}
+                      >
+                        {t('resellerDashboard.hero.primary', 'Solicitar créditos')}
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="inherit"
+                        startIcon={<RouterOutlinedIcon />}
+                        onClick={() => navigate('/liontv/lines')}
+                        sx={{ borderColor: 'rgba(255,255,255,0.3)', color: 'common.white' }}
+                      >
+                        {t('resellerDashboard.hero.secondary', 'Revisar lines')}
+                      </Button>
+                    </Stack>
+                  </Stack>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Card sx={{ borderRadius: 3, bgcolor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)' }}>
+                    <CardContent>
+                      <Stack spacing={1}>
+                        <Typography variant="subtitle2" sx={{ color: 'rgba(255,255,255,0.72)' }}>
+                          {t('resellerDashboard.hero.balanceLabel', 'Créditos disponibles')}
+                        </Typography>
+                        <Typography variant="h1" sx={{ lineHeight: 1 }}>
+                          {walletSummary?.availableCredits ?? 0}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.72)' }}>
+                          {t('resellerDashboard.hero.balanceHelper', 'Úsalos para nuevas activaciones y renovaciones.')}
+                        </Typography>
+                        <Chip
+                          color={walletSummary?.lowBalance ? 'warning' : 'success'}
+                          label={
+                            walletSummary?.lowBalance
+                              ? t('resellerDashboard.hero.balanceStatusLow', 'Saldo bajo')
+                              : t('resellerDashboard.hero.balanceStatusGood', 'Saldo saludable')
+                          }
+                          sx={{ alignSelf: 'flex-start', fontWeight: 700 }}
+                        />
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
 
           {walletSummary?.lowBalance ? (
-            <Alert severity="warning">
+            <Alert severity="warning" icon={<WarningAmberOutlinedIcon />}>
               {t(
                 'resellerDashboard.lowBalance',
-                'Saldo bajo: conviene solicitar recarga manual antes de nuevas activaciones para no frenar ventas.'
-              )}
-            </Alert>
-          ) : null}
-          {expirationAttentionCount > 0 ? (
-            <Alert severity="error">
-              {t(
-                'resellerDashboard.expirationAlert',
-                'Hay suscripciones con vencimiento crítico o pendientes de revisión. Prioriza renovaciones antes de seguir vendiendo.'
-              )}
-            </Alert>
-          ) : null}
-          {sharedRiskKpi?.criticalClusters > 0 ? (
-            <Alert severity="warning">
-              {t(
-                'resellerDashboard.sharedAlert',
-                'Existen shared subscriptions atadas a hosts críticos. Revisa el módulo de Shared Subscriptions para reorganizar antes del vencimiento.'
+                'Tu saldo está bajo. Solicita créditos ahora para no frenar ventas o renovaciones durante el día.'
               )}
             </Alert>
           ) : null}
@@ -211,7 +383,7 @@ export default function ResellerDashboardLionTv({
                 GroupsOutlinedIcon,
                 t('resellerDashboard.cards.customers', 'Clientes activos'),
                 customers.length,
-                t('resellerDashboard.cards.customersHelper', 'Base de clientes bajo tu cuenta reseller.'),
+                t('resellerDashboard.cards.customersHelper', 'Base activa bajo tu cuenta reseller.'),
                 'success'
               )}
             </Grid>
@@ -220,7 +392,7 @@ export default function ResellerDashboardLionTv({
                 SubscriptionsOutlinedIcon,
                 t('resellerDashboard.cards.subscriptions', 'Suscripciones activas'),
                 activeSubscriptions,
-                t('resellerDashboard.cards.subscriptionsHelper', 'Planes en producción y generando consumo.'),
+                t('resellerDashboard.cards.subscriptionsHelper', 'Planes actualmente en producción.'),
                 'info'
               )}
             </Grid>
@@ -229,90 +401,88 @@ export default function ResellerDashboardLionTv({
                 VpnKeyOutlinedIcon,
                 t('resellerDashboard.cards.licenses', 'Licencias activas'),
                 activeLicenses,
-                t('resellerDashboard.cards.licensesHelper', 'Licencias listas o en uso por tus clientes.'),
+                t('resellerDashboard.cards.licensesHelper', 'Licencias listas o ya en uso.'),
                 'warning'
               )}
             </Grid>
             <Grid item xs={12} md={4}>
               {metricCard(
-                ReceiptLongOutlinedIcon,
+                PaidOutlinedIcon,
                 t('resellerDashboard.cards.pendingInvoices', 'Facturas pendientes'),
                 pendingInvoices,
-                t('resellerDashboard.cards.pendingInvoicesHelper', 'Cobros manuales aún no cerrados.'),
+                t('resellerDashboard.cards.pendingInvoicesHelper', 'Cobros manuales todavía abiertos.'),
                 'secondary'
               )}
             </Grid>
             <Grid item xs={12} md={4}>
               {metricCard(
                 RocketLaunchOutlinedIcon,
-                t('resellerDashboard.cards.consumed', 'Créditos consumidos'),
+                t('resellerDashboard.cards.consumed', 'Consumo histórico'),
                 walletSummary?.lifetimeConsumed ?? 0,
-                t('resellerDashboard.cards.consumedHelper', 'Consumo acumulado por activaciones del reseller.'),
+                t('resellerDashboard.cards.consumedHelper', 'Créditos gastados por activaciones del reseller.'),
                 'error'
               )}
             </Grid>
           </Grid>
 
-          <Grid container spacing={gridSpacing}>
-            <Grid item xs={12} lg={7}>
-              <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
-                <CardContent>
-                  <Stack spacing={2}>
-                    <Typography variant="h5">{t('resellerDashboard.nextActions.title', 'Próximas acciones')}</Typography>
-                    <Stack spacing={1.25}>
-                      <Button variant="outlined" onClick={() => navigate('/liontv/customers')} sx={{ justifyContent: 'space-between' }}>
-                        {t('resellerDashboard.nextActions.customers', 'Administrar clientes')}
-                      </Button>
-                      <Button variant="outlined" onClick={() => navigate('/liontv/subscriptions')} sx={{ justifyContent: 'space-between' }}>
-                        {t('resellerDashboard.nextActions.subscriptions', 'Crear o revisar suscripciones')}
-                      </Button>
-                      <Button variant="outlined" onClick={() => navigate('/liontv/licenses')} sx={{ justifyContent: 'space-between' }}>
-                        {t('resellerDashboard.nextActions.licenses', 'Gestionar licencias')}
-                      </Button>
-                      <Button variant="outlined" onClick={() => navigate('/liontv/invoices')} sx={{ justifyContent: 'space-between' }}>
-                        {t('resellerDashboard.nextActions.invoices', 'Confirmar cobros manuales')}
-                      </Button>
-                      <Button variant="outlined" onClick={() => navigate('/liontv/support')} sx={{ justifyContent: 'space-between' }}>
-                        {t('resellerDashboard.nextActions.support', 'Abrir soporte')}
-                      </Button>
-                    </Stack>
-                  </Stack>
-                </CardContent>
-              </Card>
+          <Box>
+            <Typography variant="h4" sx={{ mb: 0.5 }}>
+              {t('resellerDashboard.quick.title', 'Accesos rápidos que sí sirven')}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              {t(
+                'resellerDashboard.quick.subtitle',
+                'Todo lo necesario para vender, revisar capacidad y reorganizar cuentas sin entrar a módulos internos que no te aportan.'
+              )}
+            </Typography>
+            <Grid container spacing={gridSpacing}>
+              {quickActions.map((item) => (
+                <Grid item xs={12} sm={6} lg={4} key={item.title}>
+                  {quickActionCard(item)}
+                </Grid>
+              ))}
             </Grid>
-            <Grid item xs={12} lg={5}>
-              <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
-                <CardContent>
-                  <Stack spacing={2}>
-                    <Typography variant="h5">{t('resellerDashboard.rules.title', 'Costo por paquete')}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {t(
-                        'resellerDashboard.rules.subtitle',
-                        'La fase 1 consume créditos al crear suscripciones según el valor oficial configurado en el paquete.'
-                      )}
-                    </Typography>
-                    <Divider />
-                    {creditRules.length ? (
-                      creditRules.map((rule) => (
-                        <Stack key={rule.name} direction="row" justifyContent="space-between" alignItems="center">
-                          <Typography variant="subtitle2">{rule.name}</Typography>
-                          <Chip color="primary" size="small" label={`${rule.credits} cr`} />
-                        </Stack>
-                      ))
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        {t('resellerDashboard.rules.empty', 'Todavía no hay reglas comerciales configuradas con créditos oficiales.')}
-                      </Typography>
-                    )}
-                    <Alert severity="info" icon={<HeadsetMicOutlinedIcon />}>
-                      {t(
-                        'resellerDashboard.rules.note',
-                        'Si necesitas corregir un cobro o una activación, usa wallet manual + invoices mientras llega la compra automática de créditos en fase 2.'
-                      )}
-                    </Alert>
-                  </Stack>
-                </CardContent>
-              </Card>
+          </Box>
+
+          <Grid container spacing={gridSpacing}>
+            <Grid item xs={12} md={4}>
+              {focusCard({
+                title: t('resellerDashboard.focus.renewals.title', 'Renovaciones críticas'),
+                value: expirationAttentionCount,
+                helper: t(
+                  'resellerDashboard.focus.renewals.helper',
+                  'Si este número sube, revisa suscripciones por vencer antes de ofrecer nuevos movimientos.'
+                ),
+                buttonLabel: t('resellerDashboard.focus.renewals.action', 'Abrir suscripciones'),
+                onClick: () => navigate('/liontv/subscriptions'),
+                color: expirationAttentionCount > 0 ? 'error' : 'primary'
+              })}
+            </Grid>
+            <Grid item xs={12} md={4}>
+              {focusCard({
+                title: t('resellerDashboard.focus.shared.title', 'Shared en riesgo'),
+                value: Number(sharedRiskKpi?.criticalClusters || 0),
+                helper: t(
+                  'resellerDashboard.focus.shared.helper',
+                  'Aquí detectas hosts y shared que debes reorganizar antes de que afecten el servicio.'
+                ),
+                buttonLabel: t('resellerDashboard.focus.shared.action', 'Abrir shared'),
+                onClick: () => navigate('/liontv/subscription-sharing'),
+                color: Number(sharedRiskKpi?.criticalClusters || 0) > 0 ? 'warning' : 'primary'
+              })}
+            </Grid>
+            <Grid item xs={12} md={4}>
+              {focusCard({
+                title: t('resellerDashboard.focus.collections.title', 'Cobros pendientes'),
+                value: pendingInvoices,
+                helper: t(
+                  'resellerDashboard.focus.collections.helper',
+                  'Mantén cobros al día para no descapitalizarte mientras sigues activando cuentas.'
+                ),
+                buttonLabel: t('resellerDashboard.focus.collections.action', 'Abrir facturas'),
+                onClick: () => navigate('/liontv/invoices'),
+                color: pendingInvoices > 0 ? 'secondary' : 'primary'
+              })}
             </Grid>
           </Grid>
         </Stack>
