@@ -350,21 +350,6 @@ function normalizePhoneForWhatsApp(phone, countryIso = '') {
   return digits;
 }
 
-function normalizeComparablePhone(phone) {
-  let digits = String(phone || '').replace(/\D/g, '');
-  if (!digits) return '';
-  if (digits.startsWith('00')) {
-    digits = digits.slice(2);
-  }
-  return digits;
-}
-
-function resolveComparableLocalPhone(phone) {
-  const digits = normalizeComparablePhone(phone);
-  if (!digits) return '';
-  return digits.length > 8 ? digits.slice(-8) : digits;
-}
-
 function StatusChip({ status }) {
   const { t, i18n } = useTranslation();
   const map = {
@@ -545,6 +530,7 @@ export default function PotentialCustomersLionTv() {
   const [total, setTotal] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [groupNameFilter, setGroupNameFilter] = useState('');
@@ -553,23 +539,19 @@ export default function PotentialCustomersLionTv() {
   const [form, setForm] = useState(defaultForm);
   const [sending, setSending] = useState(false);
   const [exportAnchorEl, setExportAnchorEl] = useState(null);
+  const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importDialog, setImportDialog] = useState({ open: false, fileName: '', rows: [] });
   const [importDefaults, setImportDefaults] = useState({
     defaultCountry: 'HN',
     defaultCategory: 'SOCIAL_MEDIA'
   });
-  const [customerComparablePhones, setCustomerComparablePhones] = useState(() => new Set());
+  const [groupNameOptions, setGroupNameOptions] = useState([]);
+  const [summary, setSummary] = useState({ newCount: 0, contacted: 0, converted: 0 });
   const categoryOptions = useMemo(() => buildCategoryOptions(t), [t]);
   const statusOptions = useMemo(() => buildStatusOptions(t), [t]);
   const isoCountryOptions = useMemo(() => buildIsoCountryOptions(uiLanguage), [uiLanguage]);
   const whatsAppMessage = useMemo(() => t('potentialCustomers.whatsappMessage'), [t]);
-  const groupNameOptions = useMemo(
-    () =>
-      [...new Set(rows.map((row) => String(row.fullName || '').trim()).filter(Boolean))]
-        .sort((a, b) => a.localeCompare(b)),
-    [rows]
-  );
   const exportMenuOpen = Boolean(exportAnchorEl);
   const importPreview = useMemo(() => {
     const grouped = new Map();
@@ -597,7 +579,14 @@ export default function PotentialCustomersLionTv() {
     try {
       const response = await lionTvApi.get('/potential-customers/v1', {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: 0, size: 5000 },
+        params: {
+          index: page,
+          size: rowsPerPage,
+          search: debouncedSearch || undefined,
+          status: statusFilter || undefined,
+          category: categoryFilter || undefined,
+          groupName: groupNameFilter || undefined
+        },
         skipAuthRedirect: true
       });
 
@@ -606,6 +595,11 @@ export default function PotentialCustomersLionTv() {
       const normalized = (Array.isArray(collection) ? collection : []).map(normalizePotential);
       setRows(normalized);
       setTotal(payload.total ?? normalized.length);
+      setSummary({
+        newCount: payload.newCount ?? 0,
+        contacted: payload.contactedCount ?? 0,
+        converted: payload.convertedCount ?? 0
+      });
     } catch (err) {
       if (!handleUnauthorized(err)) {
         enqueueSnackbar(err?.response?.data?.message || err.message || t('potentialCustomers.messages.loadError'), {
@@ -615,90 +609,54 @@ export default function PotentialCustomersLionTv() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar, t]);
+  }, [accessToken, categoryFilter, debouncedSearch, enqueueSnackbar, groupNameFilter, page, rowsPerPage, statusFilter, t]);
 
-  const loadCustomerPhones = useCallback(async () => {
+  const loadGroupNames = useCallback(async () => {
     if (!accessToken) return;
     try {
-      const response = await lionTvApi.get('/customers/v1', {
+      const response = await lionTvApi.get('/potential-customers/v1/groups', {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: 0, size: 5000 },
+        params: {
+          search: debouncedSearch || undefined,
+          status: statusFilter || undefined,
+          category: categoryFilter || undefined
+        },
         skipAuthRedirect: true
       });
 
       const payload = response?.data?.data ?? response?.data ?? {};
-      const collection = payload.data ?? payload.items ?? payload.content ?? [];
-      const comparablePhones = new Set();
-
-      (Array.isArray(collection) ? collection : []).forEach((item) => {
-        const phone = item?.customerPhone ?? item?.customer_phone ?? item?.phone ?? '';
-        const normalized = normalizeComparablePhone(phone);
-        if (!normalized) return;
-        comparablePhones.add(normalized);
-        comparablePhones.add(resolveComparableLocalPhone(normalized));
-      });
-
-      setCustomerComparablePhones(comparablePhones);
+      const collection = Array.isArray(payload) ? payload : payload.data ?? payload.items ?? payload.content ?? [];
+      setGroupNameOptions((Array.isArray(collection) ? collection : []).filter(Boolean));
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || t('customers.messages.loadError', 'Could not load customers.'), {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('potentialCustomers.messages.groupLoadError', 'Could not load name groups.'), {
           variant: 'error'
         });
       }
     }
-  }, [accessToken, enqueueSnackbar, t]);
+  }, [accessToken, categoryFilter, debouncedSearch, enqueueSnackbar, statusFilter, t]);
 
   useEffect(() => {
     loadPotentialCustomers();
   }, [loadPotentialCustomers, refreshKey]);
 
   useEffect(() => {
-    loadCustomerPhones();
-  }, [loadCustomerPhones, refreshKey]);
-
-  const filteredRows = useMemo(() => {
-    if (!search && !statusFilter && !categoryFilter && !groupNameFilter) return rows;
-    const term = search.toLowerCase();
-    return rows.filter((row) => {
-      if (statusFilter && (row.status || '').toLowerCase() !== statusFilter.toLowerCase()) return false;
-      if (categoryFilter && (row.category || '').toUpperCase() !== categoryFilter.toUpperCase()) return false;
-      if (groupNameFilter && String(row.fullName || '').trim() !== groupNameFilter) return false;
-      return (
-        (row.fullName || '').toLowerCase().includes(term) ||
-        (row.email || '').toLowerCase().includes(term) ||
-        (row.phone || '').toLowerCase().includes(term) ||
-        (row.country || '').toLowerCase().includes(term) ||
-        (row.category || '').toLowerCase().includes(term) ||
-        (row.status || '').toLowerCase().includes(term)
-      );
-    });
-  }, [rows, search, statusFilter, categoryFilter, groupNameFilter]);
-
-  const paginatedRows = useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredRows.slice(start, start + rowsPerPage);
-  }, [filteredRows, page, rowsPerPage]);
+    loadGroupNames();
+  }, [loadGroupNames, refreshKey]);
 
   useEffect(() => {
-    const maxPage = Math.max(0, Math.ceil(filteredRows.length / rowsPerPage) - 1);
-    if (page > maxPage) {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 250);
+
+    return () => window.clearTimeout(timeout);
+  }, [search]);
+
+  useEffect(() => {
+    if (page !== 0) {
       setPage(0);
     }
-  }, [filteredRows.length, page, rowsPerPage]);
-
-  const summary = useMemo(
-    () =>
-      rows.reduce(
-        (acc, row) => {
-          if (row.status === 'NEW') acc.newCount += 1;
-          if (row.status === 'CONTACTED') acc.contacted += 1;
-          if (row.status === 'CONVERTED') acc.converted += 1;
-          return acc;
-        },
-        { newCount: 0, contacted: 0, converted: 0 }
-      ),
-    [rows]
-  );
+  }, [debouncedSearch, statusFilter, categoryFilter, groupNameFilter]);
 
   const handleFormChange = (field) => (event) => {
     setForm((prev) => ({ ...prev, [field]: event.target.value }));
@@ -778,80 +736,94 @@ export default function PotentialCustomersLionTv() {
     window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 
-  const buildWhatsAppCsv = useCallback(
-    (groupBy) => {
-      return filteredRows
-        .map((row) => {
-          const phone = normalizePhoneForWhatsApp(row?.phone, row?.country);
-          if (!phone) return null;
-          const comparablePhone = normalizeComparablePhone(phone);
-          const localComparablePhone = resolveComparableLocalPhone(phone);
-          if (customerComparablePhones.has(comparablePhone) || customerComparablePhones.has(localComparablePhone)) {
-            return null;
-          }
-
-          const label =
-            groupBy === 'category'
-              ? optionLabel(categoryOptions, row.category, row.category || 'GENERAL')
-              : sanitizeCsvCell(row.fullName || t('potentialCustomers.export.fallbackName', 'Prospect'));
-
-          return `${sanitizeCsvCell(phone)},${sanitizeCsvCell(label)}`;
-        })
-        .filter(Boolean)
-        .join('\n');
-    },
-    [filteredRows, categoryOptions, customerComparablePhones, t]
-  );
-
   const downloadWhatsAppCsv = useCallback(
-    (groupBy) => {
-      const csvContent = buildWhatsAppCsv(groupBy);
+    async (groupBy) => {
       setExportAnchorEl(null);
+      setExporting(true);
 
-      if (!filteredRows.length) {
-        enqueueSnackbar(t('potentialCustomers.messages.exportEmpty', 'No hay registros para exportar con los filtros actuales.'), {
-          variant: 'warning'
+      try {
+        const response = await lionTvApi.get('/potential-customers/v1/export', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          params: {
+            search: debouncedSearch || undefined,
+            status: statusFilter || undefined,
+            category: categoryFilter || undefined,
+            groupName: groupNameFilter || undefined
+          },
+          skipAuthRedirect: true
         });
-        return;
-      }
 
-      if (!csvContent) {
+        const payload = response?.data?.data ?? response?.data ?? [];
+        const exportRows = (Array.isArray(payload) ? payload : []).map(normalizePotential);
+
+        if (!exportRows.length) {
+          enqueueSnackbar(t('potentialCustomers.messages.exportEmpty', 'There are no records to export with the current filters.'), {
+            variant: 'warning'
+          });
+          return;
+        }
+
+        const csvContent = exportRows
+          .map((row) => {
+            const phone = normalizePhoneForWhatsApp(row?.phone, row?.country);
+            if (!phone) return null;
+
+            const label =
+              groupBy === 'category'
+                ? optionLabel(categoryOptions, row.category, row.category || 'GENERAL')
+                : sanitizeCsvCell(row.fullName || t('potentialCustomers.export.fallbackName', 'Prospect'));
+
+            return `${sanitizeCsvCell(phone)},${sanitizeCsvCell(label)}`;
+          })
+          .filter(Boolean)
+          .join('\n');
+
+        if (!csvContent) {
+          enqueueSnackbar(
+            t(
+              'potentialCustomers.messages.exportNoPhones',
+              'The filtered records do not have valid phones to export or they already belong to registered customers.'
+            ),
+            {
+              variant: 'warning'
+            }
+          );
+          return;
+        }
+
+        const fileSuffix =
+          groupBy === 'category'
+            ? t('potentialCustomers.export.fileSuffixCategory', 'by-category')
+            : t('potentialCustomers.export.fileSuffixName', 'by-name');
+        const fileName = `potential-customers-whatsapp-${fileSuffix}-${new Date().toISOString().slice(0, 10)}.csv`;
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+
         enqueueSnackbar(
-          t(
-            'potentialCustomers.messages.exportNoPhones',
-            'The filtered records do not have valid phones to export or they already belong to registered customers.'
-          ),
-          {
-          variant: 'warning'
-          }
+          t('potentialCustomers.messages.exportSuccess', {
+            count: csvContent.split('\n').filter(Boolean).length,
+            defaultValue: 'CSV exported with {{count}} records.'
+          }),
+          { variant: 'success' }
         );
-        return;
+      } catch (err) {
+        if (!handleUnauthorized(err)) {
+          enqueueSnackbar(err?.response?.data?.message || err.message || t('potentialCustomers.messages.exportError', 'Could not export the WhatsApp CSV.'), {
+            variant: 'error'
+          });
+        }
+      } finally {
+        setExporting(false);
       }
-
-      const fileSuffix =
-        groupBy === 'category'
-          ? t('potentialCustomers.export.fileSuffixCategory', 'by-category')
-          : t('potentialCustomers.export.fileSuffixName', 'by-name');
-      const fileName = `potential-customers-whatsapp-${fileSuffix}-${new Date().toISOString().slice(0, 10)}.csv`;
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-
-      enqueueSnackbar(
-        t('potentialCustomers.messages.exportSuccess', {
-          count: csvContent.split('\n').filter(Boolean).length,
-          defaultValue: 'CSV exportado con {{count}} registros.'
-        }),
-        { variant: 'success' }
-      );
     },
-    [buildWhatsAppCsv, enqueueSnackbar, filteredRows.length, t]
+    [accessToken, categoryFilter, categoryOptions, debouncedSearch, enqueueSnackbar, groupNameFilter, statusFilter, t]
   );
 
   const handleOpenImportPicker = () => {
@@ -1100,6 +1072,7 @@ export default function PotentialCustomersLionTv() {
               variant="outlined"
               startIcon={<FileDownloadOutlinedIcon />}
               onClick={(event) => setExportAnchorEl(event.currentTarget)}
+              disabled={exporting}
               sx={{
                 borderRadius: 2,
                 textTransform: 'none',
@@ -1237,9 +1210,9 @@ export default function PotentialCustomersLionTv() {
                   <Skeleton key={`potential-mobile-${idx}`} variant="rounded" height={210} />
                 ))}
               </Stack>
-            ) : paginatedRows.length ? (
+            ) : rows.length ? (
               <Stack spacing={1.5}>
-                {paginatedRows.map((row) => (
+                {rows.map((row) => (
                   <MobileSummaryCard
                     key={row.potentialCustomerId}
                     icon={
@@ -1314,7 +1287,7 @@ export default function PotentialCustomersLionTv() {
                     ))}
 
                   {!loading &&
-                    paginatedRows.map((row) => (
+                    rows.map((row) => (
                       <TableRow key={row.potentialCustomerId} hover>
                         <TableCell>
                           <Stack direction="row" spacing={1} alignItems="center">
@@ -1368,7 +1341,7 @@ export default function PotentialCustomersLionTv() {
                       </TableRow>
                     ))}
 
-                  {!loading && paginatedRows.length === 0 && (
+                  {!loading && rows.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={8} align="center">
                         {t('potentialCustomers.empty', 'No hay clientes potenciales registrados.')}
@@ -1382,11 +1355,14 @@ export default function PotentialCustomersLionTv() {
           pagination={
             <TablePagination
               component="div"
-              count={filteredRows.length}
+              count={total}
               page={page}
               rowsPerPage={rowsPerPage}
               onPageChange={(e, p) => setPage(p)}
-              onRowsPerPageChange={(e) => setRowsPerPage(parseInt(e.target.value, 10))}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
             />
           }
           showDivider={!isMobile}

@@ -2781,9 +2781,11 @@ If you want, I can share a demo with no commitment so you can see how it looks i
           paymentFailedError: 'Could not send the payment failed email.',
           abandonedCartSent: 'Abandoned cart email sent.',
           abandonedCartError: 'Could not send the abandoned cart email.',
+          groupLoadError: 'Could not load name groups.',
           exportEmpty: 'There are no records to export with the current filters.',
           exportNoPhones: 'The filtered records do not have valid phones to export or they already belong to registered customers.',
           exportSuccess: 'CSV exported with {{count}} records.',
+          exportError: 'Could not export the WhatsApp CSV.',
           importInvalidFile: 'The selected file does not contain valid WhatsApp rows.',
           importParsingError: 'The CSV file could not be parsed. Check the format and try again.',
           importSuccess:
@@ -3170,9 +3172,11 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           markContactedSuccess: 'Estado actualizado a Contacted.',
           markContactedError: 'No se pudo actualizar el estado.',
           invalidWhatsAppPhone: 'Este prospecto no tiene teléfono válido para WhatsApp.',
+          groupLoadError: 'No se pudieron cargar los grupos por nombre.',
           exportEmpty: 'No hay registros para exportar con los filtros actuales.',
           exportNoPhones: 'Los registros filtrados no tienen teléfonos válidos para exportar o ya pertenecen a clientes registrados.',
           exportSuccess: 'CSV exportado con {{count}} registros.',
+          exportError: 'No se pudo exportar el CSV de WhatsApp.',
           importInvalidFile: 'El archivo seleccionado no contiene filas válidas de WhatsApp.',
           importParsingError: 'No se pudo interpretar el archivo CSV. Revisa el formato e inténtalo de nuevo.',
           importSuccess:
