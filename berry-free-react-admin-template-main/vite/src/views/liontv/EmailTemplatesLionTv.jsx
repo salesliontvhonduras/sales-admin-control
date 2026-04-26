@@ -70,7 +70,19 @@ const fieldSx = {
 
 const INPUT_TYPE_OPTIONS = ['text', 'textarea', 'number', 'date', 'url', 'email', 'color', 'boolean'];
 const VALUE_SOURCE_OPTIONS = ['MANUAL', 'RECIPIENT'];
-const BINDING_KEY_OPTIONS = ['customerName', 'customerEmail', 'customerStatus', 'channel', 'customerPhone', 'customerId', 'fullName', 'email', 'username'];
+const BINDING_KEY_OPTIONS = [
+  'customerName',
+  'customerEmail',
+  'customerStatus',
+  'channel',
+  'customerPhone',
+  'customerId',
+  'fullName',
+  'email',
+  'username',
+  'supportWhatsappUrl',
+  'supportPhoneDisplay'
+];
 const ACTIVE_FILTERS = ['ALL', 'ACTIVE', 'INACTIVE'];
 const PLACEHOLDER_REGEX = /{{\s*([a-zA-Z0-9_]+)\s*}}/g;
 
@@ -83,7 +95,9 @@ const SAMPLE_RECIPIENT_CONTEXT = {
   customerId: '101',
   fullName: 'Alejandro Rosales',
   email: 'alejandro@example.com',
-  username: 'arosales'
+  username: 'arosales',
+  supportWhatsappUrl: 'https://wa.me/50499887766',
+  supportPhoneDisplay: '50499887766'
 };
 
 const defaultVariable = (sortOrder = 1) => ({

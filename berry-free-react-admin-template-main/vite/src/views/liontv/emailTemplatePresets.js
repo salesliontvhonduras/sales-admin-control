@@ -43,7 +43,7 @@ const IMPORTANT_MATCH_TEMPLATE_HTML = `<div style="margin:0;padding:0;background
         </div>
 
         <div style="text-align:center;margin-top:18px;">
-          <a href="https://wa.me/50488204404"
+          <a href="{{supportWhatsappUrl}}"
              style="color:#b3b3b3;text-decoration:none;font-size:14px;">
             ¿Necesitas ayuda? Escríbenos por WhatsApp
           </a>
@@ -157,6 +157,17 @@ export function buildImportantMatchTemplatePreset() {
         sortOrder: 8
       },
       {
+        variableName: 'supportWhatsappUrl',
+        label: 'WhatsApp de soporte',
+        inputType: 'url',
+        valueSource: 'RECIPIENT',
+        bindingKey: 'supportWhatsappUrl',
+        required: false,
+        defaultValue: 'https://wa.me/50488204404',
+        helpText: 'Se resuelve automáticamente según el reseller dueño del envío o del cliente.',
+        sortOrder: 10
+      },
+      {
         variableName: 'ctaLabel',
         label: 'Texto del botón',
         inputType: 'text',
@@ -165,7 +176,7 @@ export function buildImportantMatchTemplatePreset() {
         required: true,
         defaultValue: 'ACTIVAR AHORA',
         helpText: 'Texto visible del CTA principal.',
-        sortOrder: 9
+        sortOrder: 11
       }
     ]
   };
