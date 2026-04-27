@@ -731,6 +731,12 @@ const resources = {
           sharedClusters: 'Shared clusters',
           hosts: 'Hosts',
           sharedSubscriptions: 'Shared subscriptions',
+          misalignedShared: 'Misaligned shared',
+          recommendedMoves: 'Recommended moves',
+          renewalBuckets: 'Renewal buckets',
+          capacityLines: 'Lines with space',
+          capacitySlots: '1-screen slots',
+          pendingSetupCustomers: 'Pending setup',
           eligibleSubscriptions: 'Eligible',
           overdueClusters: 'Overdue hosts',
           criticalClusters: 'Critical hosts',
@@ -838,9 +844,16 @@ const resources = {
           title: 'Customers pending license setup',
           subtitle: 'These are active standalone subscriptions that still have contracted screens available to configure.',
           empty: 'No standalone customers with pending license setup were found for the current filters.',
+          slotsBadge: '{{count}} pending slot(s)',
           slots: 'Pending slots',
           slotsHelper: 'Screens still available to configure for this customer.',
-          usageHelper: 'Configured licenses versus contracted screens.'
+          usageHelper: 'Configured licenses versus contracted screens.',
+          bucket: {
+            customers: 'Customers: {{count}}',
+            slots: 'Pending slots: {{count}}',
+            helper: 'Active standalone customers in this renewal day still need license setup. Nearest renewal: {{date}}',
+            helperNoDate: 'These standalone customers still need license setup, but their renewal date should be validated manually.'
+          }
         },
         role: {
           host: 'HOST',
@@ -4503,6 +4516,12 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           sharedClusters: 'Clústeres compartidos',
           hosts: 'Hosts',
           sharedSubscriptions: 'Suscripciones SHARED',
+          misalignedShared: 'Shared desalineadas',
+          recommendedMoves: 'Movimientos recomendados',
+          renewalBuckets: 'Buckets de renovación',
+          capacityLines: 'Líneas con espacio',
+          capacitySlots: 'Espacios de 1 pantalla',
+          pendingSetupCustomers: 'Pendientes de configurar',
           eligibleSubscriptions: 'Elegibles',
           overdueClusters: 'Hosts vencidos',
           criticalClusters: 'Hosts críticos',
@@ -4611,9 +4630,16 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           title: 'Clientes con licencias pendientes de configurar',
           subtitle: 'Estas son suscripciones activas e independientes que todavía tienen pantallas contratadas disponibles para configurar.',
           empty: 'No se encontraron clientes independientes con licencias pendientes de configurar para los filtros actuales.',
+          slotsBadge: '{{count}} slots pendientes',
           slots: 'Slots pendientes',
           slotsHelper: 'Pantallas que todavía faltan por configurarse para este cliente.',
-          usageHelper: 'Licencias configuradas versus pantallas contratadas.'
+          usageHelper: 'Licencias configuradas versus pantallas contratadas.',
+          bucket: {
+            customers: 'Clientes: {{count}}',
+            slots: 'Slots pendientes: {{count}}',
+            helper: 'Los clientes independientes de este día de renovación todavía necesitan configurar licencias. Renovación más próxima: {{date}}',
+            helperNoDate: 'Estos clientes independientes todavía necesitan configurar licencias, pero su fecha de renovación debe validarse manualmente.'
+          }
         },
         role: {
           host: 'HOST',

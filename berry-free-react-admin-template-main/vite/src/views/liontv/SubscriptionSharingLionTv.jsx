@@ -35,7 +35,6 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import HubIcon from '@mui/icons-material/Hub';
 import GroupWorkIcon from '@mui/icons-material/GroupWork';
 import LinkIcon from '@mui/icons-material/Link';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import RuleIcon from '@mui/icons-material/Rule';
 import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
 import BlockIcon from '@mui/icons-material/Block';
@@ -574,6 +573,171 @@ function MetricTile({ label, value, helper, color }) {
   );
 }
 
+function InlineMetric({ label, value, helper, color }) {
+  return (
+    <Box
+      sx={(theme) => ({
+        minHeight: 78,
+        px: 1.15,
+        py: 1,
+        borderRadius: 2,
+        border: '1px solid',
+        borderColor: withAlpha(color || theme.palette.divider, theme.palette.mode === 'dark' ? 0.28 : 0.18),
+        bgcolor: theme.vars?.palette?.surface?.sunken || theme.palette.background.default,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center'
+      })}
+    >
+      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, lineHeight: 1.15 }}>
+        {label}
+      </Typography>
+      <Typography variant="h6" sx={{ mt: 0.25, lineHeight: 1.15, fontWeight: 800 }}>
+        {value}
+      </Typography>
+      {helper ? (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{
+            mt: 0.25,
+            display: '-webkit-box',
+            overflow: 'hidden',
+            WebkitBoxOrient: 'vertical',
+            WebkitLineClamp: 2
+          }}
+        >
+          {helper}
+        </Typography>
+      ) : null}
+    </Box>
+  );
+}
+
+function OperationalSubscriptionRow({ row, mode, t, theme, onViewDiagnostics }) {
+  const slotValue = String(row.availableCapacity || 0);
+  const usageValue = `${row.estimatedCustomerUsage || 0} / ${row.activatedScreens || 0}`;
+  const termValue = t('subscriptionSharing.card.termValue', {
+    months: row.termMonths || 0,
+    defaultValue: '{{months}} months'
+  });
+  const accent = mode === 'pending' ? theme.palette.info.main : theme.palette.success.main;
+  const lineMeta = [
+    `${t('subscriptionSharing.card.line', 'Line')}: ${formatLineDisplay(row.lineName, row.lineId)}`,
+    row.linePlusId && row.linePlusId !== '-' ? `${t('subscriptionSharing.card.linePlus', 'Line plus')}: ${row.linePlusId}` : null,
+    row.provider ? `${t('subscriptionSharing.card.provider', 'Provider')}: ${row.provider}` : null,
+    mode === 'capacity'
+      ? `${t('subscriptionSharing.actions.rolePreference', 'Role')}: ${
+          row.sharingRole === 'HOST'
+            ? t('subscriptionSharing.role.host', 'HOST')
+            : t('subscriptionSharing.role.none', 'NONE')
+        }`
+      : null
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const packageMeta = [
+    `${t('subscriptionSharing.card.package', 'Package')}: ${formatPackageDisplay(row.packageName, row.packageId)}`,
+    row.packageType ? `${t('subscriptionSharing.card.subscriptionType', 'Subscription type')}: ${row.packageType}` : null,
+    row.billing ? `${t('subscriptionSharing.capacity.card.billing', 'Billing')}: ${row.billing}` : null
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  return (
+    <Box
+      sx={{
+        py: 1.35,
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', xl: 'minmax(0, 1fr) auto auto' },
+        gap: 1.25,
+        alignItems: 'center'
+      }}
+    >
+      <Stack spacing={0.45} sx={{ minWidth: 0 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 800, lineHeight: 1.2 }}>
+          #{row.subscriptionId} · {row.customerName || '-'}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ minWidth: 0 }}>
+          {lineMeta}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ minWidth: 0 }}>
+          {packageMeta}
+        </Typography>
+        {row.packageDescription ? (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              display: '-webkit-box',
+              overflow: 'hidden',
+              WebkitBoxOrient: 'vertical',
+              WebkitLineClamp: 1
+            }}
+          >
+            {t('subscriptionSharing.card.packageDescription', 'Description')}: {row.packageDescription}
+          </Typography>
+        ) : null}
+      </Stack>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))', md: 'repeat(3, minmax(110px, 1fr))' },
+          gap: 1,
+          width: '100%',
+          maxWidth: { xs: '100%', xl: 430 }
+        }}
+      >
+        <InlineMetric
+          label={
+            mode === 'pending'
+              ? t('subscriptionSharing.pendingSetup.slots', 'Pending slots')
+              : t('subscriptionSharing.capacity.card.availableSlots', 'Available 1-screen slots')
+          }
+          value={slotValue}
+          helper={
+            mode === 'pending'
+              ? t('subscriptionSharing.pendingSetup.slotsHelper', 'Screens still available to configure for this customer.')
+              : t('subscriptionSharing.capacity.card.salesHelper', {
+                  count: row.availableCapacity || 0,
+                  defaultValue: 'You can place {{count}} sale(s) of 1 screen here'
+                })
+          }
+          color={accent}
+        />
+        <InlineMetric
+          label={t('subscriptionSharing.capacity.card.currentUsage', 'Current usage')}
+          value={usageValue}
+          helper={t('subscriptionSharing.pendingSetup.usageHelper', 'Configured licenses versus contracted screens.')}
+          color={theme.palette.warning.main}
+        />
+        <InlineMetric
+          label={t('subscriptionSharing.card.termLabel', 'Term')}
+          value={termValue}
+          helper={row.billing || row.packageType || '-'}
+          color={theme.palette.primary.main}
+        />
+      </Box>
+
+      <Button
+        size="small"
+        variant="outlined"
+        onClick={() => onViewDiagnostics(row.subscriptionId)}
+        sx={{
+          textTransform: 'none',
+          fontWeight: 700,
+          borderRadius: 2,
+          minWidth: { xs: '100%', xl: 148 },
+          alignSelf: { xs: 'stretch', xl: 'center' }
+        }}
+      >
+        {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
+      </Button>
+    </Box>
+  );
+}
+
 export default function SubscriptionSharingLionTv() {
   const { t } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
@@ -603,7 +767,7 @@ export default function SubscriptionSharingLionTv() {
   const [misalignedFilter, setMisalignedFilter] = useState('ALL');
   const [recommendationFilter, setRecommendationFilter] = useState('ALL');
   const [rows, setRows] = useState([]);
-  const [kpi, setKpi] = useState({
+  const [, setKpi] = useState({
     totalSubscriptions: 0,
     activeSubscriptions: 0,
     sharedClusters: 0,
@@ -620,7 +784,7 @@ export default function SubscriptionSharingLionTv() {
   const [roleSavingBySubscriptionId, setRoleSavingBySubscriptionId] = useState({});
   const [moveDialogRow, setMoveDialogRow] = useState(null);
   const [moveSaving, setMoveSaving] = useState(false);
-  const [viewTab, setViewTab] = useState('clusters');
+  const [viewTab, setViewTab] = useState('capacity');
 
   const loadOverview = useCallback(async () => {
     if (!accessToken) return;
@@ -955,6 +1119,40 @@ export default function SubscriptionSharingLionTv() {
       });
   }, [ownRenewalDayFilter, renewalDayFilter, searchedRows]);
 
+  const pendingSetupDayBuckets = useMemo(() => {
+    const groups = new Map();
+
+    pendingSetupRows.forEach((row) => {
+      const day = row.renewalDayOfMonth ?? null;
+      const key = day != null ? String(day) : 'UNKNOWN';
+      const current = groups.get(key) || {
+        key,
+        day,
+        rows: [],
+        customerCount: 0,
+        totalSlots: 0,
+        nearestDate: null
+      };
+
+      current.rows.push(row);
+      current.customerCount += 1;
+      current.totalSlots += Math.max(Number(row.availableCapacity || 0), 0);
+
+      if (row.renewalDate && (!current.nearestDate || new Date(row.renewalDate) < new Date(current.nearestDate))) {
+        current.nearestDate = row.renewalDate;
+      }
+
+      groups.set(key, current);
+    });
+
+    return Array.from(groups.values()).sort((a, b) => {
+      if (a.day == null && b.day == null) return 0;
+      if (a.day == null) return 1;
+      if (b.day == null) return -1;
+      return a.day - b.day;
+    });
+  }, [pendingSetupRows]);
+
   const capacityDayBuckets = useMemo(() => {
     const groups = new Map();
 
@@ -1020,6 +1218,163 @@ export default function SubscriptionSharingLionTv() {
     p: { xs: 1.5, sm: 2 }
   };
 
+  const dashboardKpis = useMemo(() => {
+    if (viewTab === 'capacity') {
+      return [
+        {
+          icon: <CalendarMonthIcon />,
+          label: t('subscriptionSharing.kpi.renewalBuckets', 'Renewal buckets'),
+          value: capacityDayBuckets.length,
+          color: theme.vars?.palette?.info?.main || theme.palette.info.main
+        },
+        {
+          icon: <ViewTimelineIcon />,
+          label: t('subscriptionSharing.kpi.capacityLines', 'Lines with space'),
+          value: capacitySummary.lines,
+          color: theme.vars?.palette?.primary?.main || theme.palette.primary.main
+        },
+        {
+          icon: <SignalCellularAltIcon />,
+          label: t('subscriptionSharing.kpi.capacitySlots', '1-screen slots'),
+          value: capacitySummary.totalSlots,
+          color: theme.vars?.palette?.success?.main || theme.palette.success.main
+        },
+        {
+          icon: <TuneIcon />,
+          label: t('subscriptionSharing.kpi.pendingSetupCustomers', 'Pending setup'),
+          value: pendingSetupRows.length,
+          color: theme.vars?.palette?.warning?.main || theme.palette.warning.main
+        }
+      ];
+    }
+
+    return [
+      {
+        icon: <HubIcon />,
+        label: t('subscriptionSharing.kpi.hosts', 'Hosts'),
+        value: filteredSummary.hosts,
+        color: theme.vars?.palette?.warning?.main || theme.palette.warning.main
+      },
+      {
+        icon: <LinkIcon />,
+        label: t('subscriptionSharing.kpi.sharedSubscriptions', 'Shared subscriptions'),
+        value: filteredSummary.beneficiaries,
+        color: theme.vars?.palette?.info?.main || theme.palette.info.main
+      },
+      {
+        icon: <RuleIcon />,
+        label: t('subscriptionSharing.kpi.misalignedShared', 'Misaligned shared'),
+        value: filteredSummary.misalignedShared,
+        color: theme.vars?.palette?.secondary?.main || theme.palette.secondary.main
+      },
+      {
+        icon: <BlockIcon />,
+        label: t('subscriptionSharing.kpi.overdueClusters', 'Overdue hosts'),
+        value: filteredSummary.overdueHosts,
+        color: theme.vars?.palette?.error?.main || theme.palette.error.main
+      },
+      {
+        icon: <WarningAmberIcon />,
+        label: t('subscriptionSharing.kpi.criticalClusters', 'Critical hosts'),
+        value: filteredSummary.criticalHosts,
+        color: theme.vars?.palette?.warning?.main || theme.palette.warning.main
+      },
+      {
+        icon: <GroupWorkIcon />,
+        label: t('subscriptionSharing.kpi.recommendedMoves', 'Recommended moves'),
+        value: filteredSummary.recommendedMoves,
+        color: theme.vars?.palette?.primary?.main || theme.palette.primary.main
+      }
+    ];
+  }, [capacityDayBuckets.length, capacitySummary.lines, capacitySummary.totalSlots, filteredSummary.beneficiaries, filteredSummary.criticalHosts, filteredSummary.hosts, filteredSummary.misalignedShared, filteredSummary.overdueHosts, filteredSummary.recommendedMoves, pendingSetupRows.length, t, theme.palette.error.main, theme.palette.info.main, theme.palette.primary.main, theme.palette.secondary.main, theme.palette.success.main, theme.palette.warning.main, theme.vars?.palette?.info?.main, theme.vars?.palette?.primary?.main, theme.vars?.palette?.secondary?.main, theme.vars?.palette?.success?.main, theme.vars?.palette?.warning?.main, viewTab]);
+
+  const filterSummaryItems = useMemo(() => {
+    if (viewTab === 'capacity') {
+      return [
+        {
+          key: 'capacity-lines',
+          icon: <ViewTimelineIcon />,
+          label: t('subscriptionSharing.capacity.summary.lines', {
+            count: capacitySummary.lines,
+            defaultValue: 'Lines with space: {{count}}'
+          }),
+          color: 'default',
+          variant: 'filled'
+        },
+        {
+          key: 'capacity-slots',
+          icon: <SignalCellularAltIcon />,
+          label: t('subscriptionSharing.capacity.summary.slots', {
+            count: capacitySummary.totalSlots,
+            defaultValue: '1-screen slots: {{count}}'
+          }),
+          color: 'success',
+          variant: 'outlined'
+        },
+        {
+          key: 'pending-setup',
+          icon: <TuneIcon />,
+          label: t('subscriptionSharing.kpi.pendingSetupCustomers', {
+            count: pendingSetupRows.length,
+            defaultValue: 'Pending setup: {{count}}'
+          }),
+          color: 'info',
+          variant: 'outlined'
+        }
+      ];
+    }
+
+    return [
+      {
+        key: 'visible-hosts',
+        icon: <HubIcon />,
+        label: t('subscriptionSharing.filters.hostsVisible', { count: filteredSummary.hosts, defaultValue: 'Hosts: {{count}}' }),
+        color: 'default',
+        variant: 'filled'
+      },
+      {
+        key: 'visible-shared',
+        icon: <LinkIcon />,
+        label: t('subscriptionSharing.filters.sharedVisible', {
+          count: filteredSummary.beneficiaries,
+          defaultValue: 'Shared: {{count}}'
+        }),
+        color: 'info',
+        variant: 'outlined'
+      },
+      {
+        key: 'misaligned',
+        icon: <RuleIcon />,
+        label: t('subscriptionSharing.filters.misalignedVisible', {
+          count: filteredSummary.misalignedShared,
+          defaultValue: 'Misaligned: {{count}}'
+        }),
+        color: filteredSummary.misalignedShared > 0 ? 'warning' : 'default',
+        variant: 'outlined'
+      },
+      {
+        key: 'recommended',
+        icon: <LinkIcon />,
+        label: t('subscriptionSharing.filters.recommendedVisible', {
+          count: filteredSummary.recommendedMoves,
+          defaultValue: 'Recommended moves: {{count}}'
+        }),
+        color: filteredSummary.recommendedMoves > 0 ? 'secondary' : 'default',
+        variant: 'outlined'
+      },
+      {
+        key: 'overdue',
+        icon: <BlockIcon />,
+        label: t('subscriptionSharing.filters.overdueVisible', {
+          count: filteredSummary.overdueHosts,
+          defaultValue: 'Overdue hosts: {{count}}'
+        }),
+        color: filteredSummary.overdueHosts > 0 ? 'error' : 'default',
+        variant: 'outlined'
+      }
+    ];
+  }, [capacitySummary.lines, capacitySummary.totalSlots, filteredSummary.beneficiaries, filteredSummary.hosts, filteredSummary.misalignedShared, filteredSummary.overdueHosts, filteredSummary.recommendedMoves, pendingSetupRows.length, t, viewTab]);
+
   return (
     <Box sx={{ width: '100%', maxWidth: { xs: '100%', xl: 1450 }, mx: 'auto' }}>
       <MainCard
@@ -1037,67 +1392,21 @@ export default function SubscriptionSharingLionTv() {
         }
       >
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {t(
-            'subscriptionSharing.subtitle',
-            'Visual monitoring based on subscriptions that reuse the same line_id across different customers.'
-          )}
+          {viewTab === 'capacity'
+            ? t(
+                'subscriptionSharing.capacity.subtitle',
+                'Use this operational view to place new 1-screen sales on lines that still have real capacity on that exact renewal day.'
+              )
+            : t(
+                'subscriptionSharing.subtitle',
+                'Visual monitoring based on subscriptions that reuse the same line_id across different customers.'
+              )}
         </Typography>
 
-        <ResponsiveMetricGrid columns={{ xs: 1, md: 2, lg: 3, xl: 6 }}>
-          <KpiCard
-            icon={<RuleIcon />}
-            label={t('subscriptionSharing.kpi.totalSubscriptions', 'Total subscriptions')}
-            value={kpi.totalSubscriptions}
-            color={theme.vars?.palette?.primary?.main || theme.palette.primary.main}
-          />
-          <KpiCard
-            icon={<CheckCircleOutlineIcon />}
-            label={t('subscriptionSharing.kpi.activeSubscriptions', 'Active')}
-            value={kpi.activeSubscriptions}
-            color={theme.vars?.palette?.success?.main || theme.palette.success.main}
-          />
-          <KpiCard
-            icon={<HubIcon />}
-            label={t('subscriptionSharing.kpi.sharedClusters', 'Shared clusters')}
-            value={kpi.sharedClusters}
-            color={theme.vars?.palette?.warning?.main || theme.palette.warning.main}
-          />
-          <KpiCard
-            icon={<GroupWorkIcon />}
-            label={t('subscriptionSharing.kpi.hosts', 'Hosts')}
-            value={kpi.hostSubscriptions}
-            color={theme.vars?.palette?.secondary?.main || theme.palette.secondary.main}
-          />
-          <KpiCard
-            icon={<LinkIcon />}
-            label={t('subscriptionSharing.kpi.sharedSubscriptions', 'Shared subscriptions')}
-            value={kpi.sharedSubscriptions}
-            color={theme.vars?.palette?.info?.main || theme.palette.info.main}
-          />
-          <KpiCard
-            icon={<SignalCellularAltIcon />}
-            label={t('subscriptionSharing.kpi.eligibleSubscriptions', 'Eligible')}
-            value={kpi.eligibleSubscriptions}
-            color={theme.vars?.palette?.success?.main || theme.palette.success.main}
-          />
-          <KpiCard
-            icon={<BlockIcon />}
-            label={t('subscriptionSharing.kpi.overdueClusters', 'Overdue hosts')}
-            value={kpi.overdueClusters}
-            color={theme.vars?.palette?.error?.main || theme.palette.error.main}
-          />
-          <KpiCard
-            icon={<WarningAmberIcon />}
-            label={t('subscriptionSharing.kpi.criticalClusters', 'Critical hosts')}
-            value={kpi.criticalClusters}
-            color={theme.vars?.palette?.warning?.main || theme.palette.warning.main}
-          />
-          <KpiCard
-            icon={<CalendarMonthIcon />}
-            label={t('subscriptionSharing.kpi.atRiskSubscriptions', 'Subscriptions affected')}
-            value={kpi.atRiskSubscriptions}
-            color={theme.vars?.palette?.error?.main || theme.palette.error.main}
-          />
+        <ResponsiveMetricGrid columns={{ xs: 1, md: 2, xl: viewTab === 'capacity' ? 4 : 3 }}>
+          {dashboardKpis.map((item) => (
+            <KpiCard key={item.label} icon={item.icon} label={item.label} value={item.value} color={item.color} />
+          ))}
         </ResponsiveMetricGrid>
       </MainCard>
 
@@ -1238,75 +1547,16 @@ export default function SubscriptionSharingLionTv() {
 
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'stretch', md: 'center' }} sx={{ mt: 1.5 }}>
             <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
-              <Chip size="small" icon={<ViewTimelineIcon />} label={t('subscriptionSharing.filters.visible', { count: filteredSummary.total, defaultValue: 'Visible: {{count}}' })} />
-              <Chip size="small" icon={<HubIcon />} label={t('subscriptionSharing.filters.hostsVisible', { count: filteredSummary.hosts, defaultValue: 'Hosts: {{count}}' })} />
-              <Chip
-                size="small"
-                color="info"
-                variant="outlined"
-                icon={<LinkIcon />}
-                label={t('subscriptionSharing.filters.sharedVisible', { count: filteredSummary.beneficiaries, defaultValue: 'Shared: {{count}}' })}
-              />
-              <Chip
-                size="small"
-                color="success"
-                variant="outlined"
-                icon={<CheckCircleOutlineIcon />}
-                label={t('subscriptionSharing.filters.eligibleVisible', {
-                  count: filteredSummary.eligibleStandalone,
-                  defaultValue: 'Standalone eligible: {{count}}'
-                })}
-              />
-              <Chip
-                size="small"
-                color={filteredSummary.blockedStandalone > 0 ? 'warning' : 'default'}
-                variant="outlined"
-                icon={<BlockIcon />}
-                label={t('subscriptionSharing.filters.blockedVisible', {
-                  count: filteredSummary.blockedStandalone,
-                  defaultValue: 'Blocked: {{count}}'
-                })}
-              />
-              <Chip
-                size="small"
-                color={filteredSummary.criticalHosts > 0 ? 'warning' : 'default'}
-                variant="outlined"
-                icon={<WarningAmberIcon />}
-                label={t('subscriptionSharing.filters.criticalVisible', {
-                  count: filteredSummary.criticalHosts,
-                  defaultValue: 'Critical hosts: {{count}}'
-                })}
-              />
-              <Chip
-                size="small"
-                color={filteredSummary.overdueHosts > 0 ? 'error' : 'default'}
-                variant="outlined"
-                icon={<BlockIcon />}
-                label={t('subscriptionSharing.filters.overdueVisible', {
-                  count: filteredSummary.overdueHosts,
-                  defaultValue: 'Overdue hosts: {{count}}'
-                })}
-              />
-              <Chip
-                size="small"
-                color={filteredSummary.misalignedShared > 0 ? 'warning' : 'default'}
-                variant="outlined"
-                icon={<RuleIcon />}
-                label={t('subscriptionSharing.filters.misalignedVisible', {
-                  count: filteredSummary.misalignedShared,
-                  defaultValue: 'Misaligned: {{count}}'
-                })}
-              />
-              <Chip
-                size="small"
-                color={filteredSummary.recommendedMoves > 0 ? 'secondary' : 'default'}
-                variant="outlined"
-                icon={<LinkIcon />}
-                label={t('subscriptionSharing.filters.recommendedVisible', {
-                  count: filteredSummary.recommendedMoves,
-                  defaultValue: 'Recommended moves: {{count}}'
-                })}
-              />
+              {filterSummaryItems.map((item) => (
+                <Chip
+                  key={item.key}
+                  size="small"
+                  color={item.color}
+                  variant={item.variant}
+                  icon={item.icon}
+                  label={item.label}
+                />
+              ))}
             </Stack>
             <Box sx={{ flexGrow: 1 }} />
             <Button
@@ -1329,7 +1579,7 @@ export default function SubscriptionSharingLionTv() {
             </Button>
           </Stack>
 
-          {filteredSummary.blockedStandalone > 0 ? (
+          {viewTab === 'clusters' && filteredSummary.blockedStandalone > 0 ? (
             <Alert severity="warning" sx={{ mt: 1.5 }}>
               {t(
                 'subscriptionSharing.filters.blockedHint',
@@ -1355,8 +1605,8 @@ export default function SubscriptionSharingLionTv() {
               }
             }}
           >
-            <Tab value="clusters" label={t('subscriptionSharing.tabs.clusters', 'Shared clusters')} />
             <Tab value="capacity" label={t('subscriptionSharing.tabs.capacity', 'Available spaces by day')} />
+            <Tab value="clusters" label={t('subscriptionSharing.tabs.clusters', 'Shared clusters')} />
           </Tabs>
         </Box>
       </MainCard>
@@ -2216,12 +2466,12 @@ export default function SubscriptionSharingLionTv() {
             />
           }
         >
-          <Alert severity="info" sx={{ mb: 1.5 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
             {t(
               'subscriptionSharing.capacity.info',
               'This tab is operational. It uses active capacity available right now and ignores the Eligible / Misaligned / Recommended filters so monthly accounts with free space are still visible.'
             )}
-          </Alert>
+          </Typography>
 
           <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap" sx={{ mb: 1.5 }}>
             <Chip
@@ -2244,22 +2494,12 @@ export default function SubscriptionSharingLionTv() {
             />
             <Chip
               size="small"
-              color="warning"
-              variant="outlined"
-              icon={<HubIcon />}
-              label={t('subscriptionSharing.capacity.summary.hosts', {
-                count: capacitySummary.hostLines,
-                defaultValue: 'Hosts with space: {{count}}'
-              })}
-            />
-            <Chip
-              size="small"
               color="info"
               variant="outlined"
-              icon={<RuleIcon />}
-              label={t('subscriptionSharing.capacity.summary.standalone', {
-                count: capacitySummary.standaloneLines,
-                defaultValue: 'Standalone with space: {{count}}'
+              icon={<TuneIcon />}
+              label={t('subscriptionSharing.kpi.pendingSetupCustomers', {
+                count: pendingSetupRows.length,
+                defaultValue: 'Pending setup: {{count}}'
               })}
             />
           </Stack>
@@ -2282,210 +2522,58 @@ export default function SubscriptionSharingLionTv() {
                   sx={(muiTheme) => ({
                     ...sectionCardSx,
                     borderRadius: 3.25,
-                    boxShadow:
-                      muiTheme.palette.mode === 'dark'
-                        ? '0 16px 30px rgba(2,8,23,0.14)'
-                        : '0 10px 22px rgba(15,23,42,0.05)',
-                    backgroundImage:
-                      muiTheme.palette.mode === 'dark'
-                        ? `linear-gradient(160deg, ${withAlpha(muiTheme.palette.success.main, 0.08)} 0%, ${withAlpha(muiTheme.palette.background.paper, 0.98)} 64%)`
-                        : `linear-gradient(160deg, ${withAlpha(muiTheme.palette.success.main, 0.05)} 0%, ${muiTheme.palette.background.paper} 64%)`
+                    borderColor: withAlpha(muiTheme.palette.success.main, muiTheme.palette.mode === 'dark' ? 0.24 : 0.16)
                   })}
                 >
-                  <Stack spacing={1.35}>
-                    <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.1} justifyContent="space-between">
-                      <Stack spacing={0.6}>
-                        <Stack direction="row" spacing={0.75} alignItems="center" useFlexGap flexWrap="wrap">
-                          <Avatar sx={{ width: 34, height: 34, bgcolor: 'success.main', color: 'success.contrastText' }}>
-                            <CalendarMonthIcon fontSize="small" />
-                          </Avatar>
-                          <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                            {formatHostRenewalDay(bucket.day, t)}
-                          </Typography>
-                          <Chip
-                            size="small"
-                            variant="outlined"
-                            label={t('subscriptionSharing.capacity.bucket.lineCount', {
-                              count: bucket.lineCount,
-                              defaultValue: 'Lines: {{count}}'
-                            })}
-                          />
-                          <Chip
-                            size="small"
-                            color="success"
-                            variant="outlined"
-                            label={t('subscriptionSharing.capacity.bucket.slotCount', {
-                              count: bucket.totalSlots,
-                              defaultValue: '1-screen slots: {{count}}'
-                            })}
-                          />
-                          <Chip
-                            size="small"
-                            color="warning"
-                            variant="outlined"
-                            label={t('subscriptionSharing.capacity.bucket.hostCount', {
-                              count: bucket.hostCount,
-                              defaultValue: 'Hosts: {{count}}'
-                            })}
-                          />
-                          <Chip
-                            size="small"
-                            color="info"
-                            variant="outlined"
-                            label={t('subscriptionSharing.capacity.bucket.standaloneCount', {
-                              count: bucket.standaloneCount,
-                              defaultValue: 'Standalone: {{count}}'
-                            })}
-                          />
-                        </Stack>
-                        <Typography variant="body2" color="text.secondary">
-                          {bucket.nearestDate
-                            ? t('subscriptionSharing.capacity.bucket.helper', {
-                                date: formatDate(bucket.nearestDate),
-                                defaultValue: 'Use this bucket for new 1-screen customers that should renew on this day. Nearest renewal: {{date}}'
-                              })
-                            : t(
-                                'subscriptionSharing.capacity.bucket.helperNoDate',
-                                'Use this bucket for lines without a visible renewal date only after manual validation.'
-                              )}
+                  <Stack spacing={1.1}>
+                    <Stack spacing={0.55}>
+                      <Stack direction="row" spacing={0.75} alignItems="center" useFlexGap flexWrap="wrap">
+                        <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                          {formatHostRenewalDay(bucket.day, t)}
                         </Typography>
+                        <Chip
+                          size="small"
+                          color="success"
+                          variant="outlined"
+                          label={t('subscriptionSharing.capacity.bucket.slotCount', {
+                            count: bucket.totalSlots,
+                            defaultValue: '1-screen slots: {{count}}'
+                          })}
+                        />
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={t('subscriptionSharing.capacity.bucket.lineCount', {
+                            count: bucket.lineCount,
+                            defaultValue: 'Lines: {{count}}'
+                          })}
+                        />
                       </Stack>
+                      <Typography variant="body2" color="text.secondary">
+                        {bucket.nearestDate
+                          ? t('subscriptionSharing.capacity.bucket.helper', {
+                              date: formatDate(bucket.nearestDate),
+                              defaultValue: 'Use this bucket for new 1-screen customers that should renew on this day. Nearest renewal: {{date}}'
+                            })
+                          : t(
+                              'subscriptionSharing.capacity.bucket.helperNoDate',
+                              'Use this bucket for lines without a visible renewal date only after manual validation.'
+                            )}
+                      </Typography>
                     </Stack>
 
-                    <Grid container spacing={1.1}>
+                    <Stack divider={<Divider flexItem />} spacing={0}>
                       {bucket.rows.map((row) => (
-                        <Grid item xs={12} lg={6} key={`capacity-row-${row.subscriptionId}`}>
-                          <Card
-                            variant="outlined"
-                            sx={(muiTheme) => ({
-                              p: 1.4,
-                              borderRadius: 2.5,
-                              minHeight: '100%',
-                              borderColor: withAlpha(muiTheme.palette.success.main, muiTheme.palette.mode === 'dark' ? 0.36 : 0.22),
-                              backgroundImage:
-                                muiTheme.palette.mode === 'dark'
-                                  ? `linear-gradient(155deg, ${withAlpha(muiTheme.palette.success.main, 0.12)} 0%, ${withAlpha(
-                                      muiTheme.palette.background.paper,
-                                      0.96
-                                    )} 62%)`
-                                  : `linear-gradient(155deg, ${withAlpha(muiTheme.palette.success.main, 0.08)} 0%, ${muiTheme.palette.background.paper} 62%)`
-                            })}
-                          >
-                            <Stack spacing={1.1}>
-                              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.9} justifyContent="space-between">
-                                <Stack spacing={0.75}>
-                                  <Stack direction="row" spacing={0.75} alignItems="center" useFlexGap flexWrap="wrap">
-                                    <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                                      #{row.subscriptionId} · {row.customerName || '-'}
-                                    </Typography>
-                                    <RoleChip role={row.sharingRole} t={t} />
-                                    <StatusChip status={row.subscriptionStatus} t={t} />
-                                    <Chip
-                                      size="small"
-                                      color="success"
-                                      variant="outlined"
-                                      label={t('subscriptionSharing.capacity.card.slotBadge', {
-                                        count: row.availableCapacity || 0,
-                                        defaultValue: '{{count}} slot(s) free'
-                                      })}
-                                      sx={{ fontWeight: 700 }}
-                                    />
-                                  </Stack>
-                                  <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
-                                    <Chip
-                                      size="small"
-                                      variant="outlined"
-                                      label={`${t('subscriptionSharing.card.line', 'Line')}: ${formatLineDisplay(row.lineName, row.lineId)}`}
-                                    />
-                                    {row.linePlusId && row.linePlusId !== '-' ? (
-                                      <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.linePlus', 'Line plus')}: ${row.linePlusId}`} />
-                                    ) : null}
-                                    <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${row.provider || '-'}`} />
-                                    <Chip
-                                      size="small"
-                                      variant="outlined"
-                                      label={`${t('subscriptionSharing.card.package', 'Package')}: ${formatPackageDisplay(row.packageName, row.packageId)}`}
-                                    />
-                                    <Chip
-                                      size="small"
-                                      variant="outlined"
-                                      label={`${t('subscriptionSharing.card.subscriptionType', 'Subscription type')}: ${row.packageType || row.billing || '-'}`}
-                                    />
-                                    <Chip
-                                      size="small"
-                                      variant="outlined"
-                                      label={`${t('subscriptionSharing.capacity.card.billing', 'Billing')}: ${row.billing || '-'}`}
-                                    />
-                                  </Stack>
-                                  {row.packageDescription ? (
-                                    <Typography variant="body2" color="text.secondary">
-                                      {t('subscriptionSharing.card.packageDescription', 'Description')}: {row.packageDescription}
-                                    </Typography>
-                                  ) : null}
-                                </Stack>
-                                <Button
-                                  size="small"
-                                  variant="contained"
-                                  onClick={() => loadDiagnostics(row.subscriptionId)}
-                                  sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, alignSelf: { xs: 'stretch', sm: 'flex-start' } }}
-                                >
-                                  {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
-                                </Button>
-                              </Stack>
-
-                              <Grid container spacing={1}>
-                                <Grid item xs={6} md={3}>
-                                  <MetricTile
-                                    label={t('subscriptionSharing.card.renewalDay', 'Renewal day')}
-                                    value={formatHostRenewalDay(row.renewalDayOfMonth ?? row.hostRenewalDayOfMonth, t)}
-                                    helper={formatDate(row.renewalDate ?? row.hostRenewalDate)}
-                                    color={theme.palette.info.main}
-                                  />
-                                </Grid>
-                                <Grid item xs={6} md={3}>
-                                  <MetricTile
-                                    label={t('subscriptionSharing.capacity.card.availableSlots', 'Available 1-screen slots')}
-                                    value={String(row.availableCapacity || 0)}
-                                    helper={t('subscriptionSharing.capacity.card.salesHelper', {
-                                      count: row.availableCapacity || 0,
-                                      defaultValue: 'You can place {{count}} sale(s) of 1 screen here'
-                                    })}
-                                    color={theme.palette.success.main}
-                                  />
-                                </Grid>
-                                <Grid item xs={6} md={3}>
-                                  <MetricTile
-                                    label={t('subscriptionSharing.capacity.card.currentUsage', 'Current usage')}
-                                    value={`${row.estimatedCustomerUsage || 0} / ${row.activatedScreens || 0}`}
-                                    helper={t('subscriptionSharing.card.capacityShort', {
-                                      available: row.availableCapacity || 0,
-                                      defaultValue: 'Available {{available}}'
-                                    })}
-                                    color={theme.palette.warning.main}
-                                  />
-                                </Grid>
-                                <Grid item xs={6} md={3}>
-                                  <MetricTile
-                                    label={t('subscriptionSharing.card.termLabel', 'Term')}
-                                    value={t('subscriptionSharing.card.termValue', {
-                                      months: row.termMonths || 0,
-                                      defaultValue: '{{months}} months'
-                                    })}
-                                    helper={t('subscriptionSharing.capacity.card.roleHelper', {
-                                      role: row.sharingRole === 'HOST'
-                                        ? t('subscriptionSharing.role.host', 'HOST')
-                                        : t('subscriptionSharing.role.none', 'NONE'),
-                                      defaultValue: 'Role: {{role}}'
-                                    })}
-                                    color={row.sharingRole === 'HOST' ? theme.palette.warning.main : theme.palette.info.main}
-                                  />
-                                </Grid>
-                              </Grid>
-                            </Stack>
-                          </Card>
-                        </Grid>
+                        <OperationalSubscriptionRow
+                          key={`capacity-row-${row.subscriptionId}`}
+                          row={row}
+                          mode="capacity"
+                          t={t}
+                          theme={theme}
+                          onViewDiagnostics={loadDiagnostics}
+                        />
                       ))}
-                    </Grid>
+                    </Stack>
                   </Stack>
                 </Card>
               ))}
@@ -2504,7 +2592,7 @@ export default function SubscriptionSharingLionTv() {
           />
 
           <Box sx={{ mt: 1.5 }}>
-            {pendingSetupRows.length === 0 ? (
+            {pendingSetupDayBuckets.length === 0 ? (
               <Alert severity="success">
                 {t(
                   'subscriptionSharing.pendingSetup.empty',
@@ -2512,114 +2600,70 @@ export default function SubscriptionSharingLionTv() {
                 )}
               </Alert>
             ) : (
-              <Grid container spacing={1.1}>
-                {pendingSetupRows.map((row) => (
-                  <Grid item xs={12} lg={6} key={`pending-setup-${row.subscriptionId}`}>
-                    <Card
-                      variant="outlined"
-                      sx={(muiTheme) => ({
-                        p: 1.5,
-                        borderRadius: 2.75,
-                        height: '100%',
-                        borderColor: withAlpha(muiTheme.palette.info.main, muiTheme.palette.mode === 'dark' ? 0.34 : 0.2),
-                        backgroundImage:
-                          muiTheme.palette.mode === 'dark'
-                            ? `linear-gradient(155deg, ${withAlpha(muiTheme.palette.info.main, 0.08)} 0%, ${withAlpha(
-                                muiTheme.palette.background.paper,
-                                0.98
-                              )} 100%)`
-                            : `linear-gradient(155deg, ${withAlpha(muiTheme.palette.info.main, 0.06)} 0%, ${muiTheme.palette.background.paper} 100%)`
-                      })}
-                    >
-                      <Stack spacing={1.1}>
-                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.9} justifyContent="space-between">
-                          <Stack spacing={0.8}>
-                            <Stack direction="row" spacing={0.75} alignItems="center" useFlexGap flexWrap="wrap">
-                              <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                                #{row.subscriptionId} · {row.customerName || '-'}
-                              </Typography>
-                              <RoleChip role={row.sharingRole} t={t} />
-                              <StatusChip status={row.subscriptionStatus} t={t} />
-                            </Stack>
-                            <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
-                              <Chip
-                                size="small"
-                                variant="outlined"
-                                label={`${t('subscriptionSharing.card.line', 'Line')}: ${formatLineDisplay(row.lineName, row.lineId)}`}
-                              />
-                              <Chip
-                                size="small"
-                                variant="outlined"
-                                label={`${t('subscriptionSharing.card.package', 'Package')}: ${formatPackageDisplay(row.packageName, row.packageId)}`}
-                              />
-                              <Chip
-                                size="small"
-                                variant="outlined"
-                                label={`${t('subscriptionSharing.card.subscriptionType', 'Subscription type')}: ${row.packageType || row.billing || '-'}`}
-                              />
-                            </Stack>
-                          </Stack>
-                          <Button
-                            size="small"
-                            variant="contained"
-                            onClick={() => loadDiagnostics(row.subscriptionId)}
-                            sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2, alignSelf: { xs: 'stretch', sm: 'flex-start' } }}
-                          >
-                            {t('subscriptionSharing.actions.viewDiagnostics', 'View diagnostics')}
-                          </Button>
-                        </Stack>
-
-                        {row.packageDescription ? (
-                          <Typography variant="body2" color="text.secondary">
-                            {t('subscriptionSharing.card.packageDescription', 'Description')}: {row.packageDescription}
+              <Stack spacing={1.5}>
+                {pendingSetupDayBuckets.map((bucket) => (
+                  <Card
+                    key={`pending-setup-bucket-${bucket.key}`}
+                    sx={(muiTheme) => ({
+                      ...sectionCardSx,
+                      borderRadius: 3.25,
+                      borderColor: withAlpha(muiTheme.palette.info.main, muiTheme.palette.mode === 'dark' ? 0.24 : 0.16)
+                    })}
+                  >
+                    <Stack spacing={1.1}>
+                      <Stack spacing={0.55}>
+                        <Stack direction="row" spacing={0.75} alignItems="center" useFlexGap flexWrap="wrap">
+                          <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                            {formatHostRenewalDay(bucket.day, t)}
                           </Typography>
-                        ) : null}
-
-                        <Grid container spacing={1}>
-                          <Grid item xs={6} md={3}>
-                            <MetricTile
-                              label={t('subscriptionSharing.pendingSetup.slots', 'Pending slots')}
-                              value={String(row.availableCapacity || 0)}
-                              helper={t(
-                                'subscriptionSharing.pendingSetup.slotsHelper',
-                                'Screens still available to configure for this customer.'
+                          <Chip
+                            size="small"
+                            color="info"
+                            variant="outlined"
+                            label={t('subscriptionSharing.pendingSetup.bucket.customers', {
+                              count: bucket.customerCount,
+                              defaultValue: 'Customers: {{count}}'
+                            })}
+                          />
+                          <Chip
+                            size="small"
+                            color="success"
+                            variant="outlined"
+                            label={t('subscriptionSharing.pendingSetup.bucket.slots', {
+                              count: bucket.totalSlots,
+                              defaultValue: 'Pending slots: {{count}}'
+                            })}
+                          />
+                        </Stack>
+                        <Typography variant="body2" color="text.secondary">
+                          {bucket.nearestDate
+                            ? t('subscriptionSharing.pendingSetup.bucket.helper', {
+                                date: formatDate(bucket.nearestDate),
+                                defaultValue: 'Active standalone customers in this renewal day still need license setup. Nearest renewal: {{date}}'
+                              })
+                            : t(
+                                'subscriptionSharing.pendingSetup.bucket.helperNoDate',
+                                'These standalone customers still need license setup, but their renewal date should be validated manually.'
                               )}
-                              color={theme.palette.success.main}
-                            />
-                          </Grid>
-                          <Grid item xs={6} md={3}>
-                            <MetricTile
-                              label={t('subscriptionSharing.card.renewalDay', 'Renewal day')}
-                              value={formatHostRenewalDay(row.renewalDayOfMonth, t)}
-                              helper={formatDate(row.renewalDate)}
-                              color={theme.palette.info.main}
-                            />
-                          </Grid>
-                          <Grid item xs={6} md={3}>
-                            <MetricTile
-                              label={t('subscriptionSharing.card.termLabel', 'Term')}
-                              value={t('subscriptionSharing.card.termValue', {
-                                months: row.termMonths || 0,
-                                defaultValue: '{{months}} months'
-                              })}
-                              helper={row.billing || '-'}
-                              color={theme.palette.primary.main}
-                            />
-                          </Grid>
-                          <Grid item xs={6} md={3}>
-                            <MetricTile
-                              label={t('subscriptionSharing.card.usageLabel', 'Usage pressure')}
-                              value={`${row.estimatedCustomerUsage || 0} / ${row.activatedScreens || 0}`}
-                              helper={t('subscriptionSharing.pendingSetup.usageHelper', 'Configured licenses versus contracted screens.')}
-                              color={theme.palette.warning.main}
-                            />
-                          </Grid>
-                        </Grid>
+                        </Typography>
                       </Stack>
-                    </Card>
-                  </Grid>
+
+                      <Stack divider={<Divider flexItem />} spacing={0}>
+                        {bucket.rows.map((row) => (
+                          <OperationalSubscriptionRow
+                            key={`pending-setup-${row.subscriptionId}`}
+                            row={row}
+                            mode="pending"
+                            t={t}
+                            theme={theme}
+                            onViewDiagnostics={loadDiagnostics}
+                          />
+                        ))}
+                      </Stack>
+                    </Stack>
+                  </Card>
                 ))}
-              </Grid>
+              </Stack>
             )}
           </Box>
         </MainCard>
