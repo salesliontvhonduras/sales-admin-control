@@ -59,6 +59,10 @@ function normalizeRow(item = {}) {
     lineName: item.lineName ?? item.line_name ?? '',
     linePlusId: item.linePlusId ?? '-',
     provider: item.provider ?? '-',
+    packageId: item.packageId ?? null,
+    packageName: item.packageName ?? item.package_name ?? '',
+    packageType: item.packageType ?? item.package_type ?? '',
+    packageDescription: item.packageDescription ?? item.package_description ?? '',
     subscriptionStatus: String(item.subscriptionStatus || item.status || '').toUpperCase(),
     billing: item.billing ?? '-',
     startDate: item.startDate ?? null,
@@ -112,6 +116,10 @@ function normalizeDiagnostics(item = {}) {
     lineName: item.lineName ?? item.line_name ?? '',
     linePlusId: item.linePlusId ?? '-',
     provider: item.provider ?? '-',
+    packageId: item.packageId ?? null,
+    packageName: item.packageName ?? item.package_name ?? '',
+    packageType: item.packageType ?? item.package_type ?? '',
+    packageDescription: item.packageDescription ?? item.package_description ?? '',
     subscriptionStatus: String(item.subscriptionStatus || item.status || '').toUpperCase(),
     billing: item.billing ?? '-',
     startDate: item.startDate ?? null,
@@ -168,6 +176,12 @@ function formatLineDisplay(lineName, lineId) {
   const safeLineName = String(lineName || '').trim();
   if (!safeLineName || safeLineName === safeLineId) return safeLineId || '-';
   return `${safeLineName} · ${safeLineId}`;
+}
+
+function formatPackageDisplay(packageName, packageId) {
+  const safePackageName = String(packageName || '').trim();
+  if (safePackageName) return safePackageName;
+  return packageId != null ? `#${packageId}` : '-';
 }
 
 function normalizeFilterValue(value, allowedValues, fallback = 'ALL') {
@@ -735,6 +749,9 @@ export default function SubscriptionSharingLionTv() {
         String(row.lineName || '').toLowerCase().includes(term) ||
         String(row.linePlusId || '').toLowerCase().includes(term) ||
         String(row.provider || '').toLowerCase().includes(term) ||
+        String(row.packageName || '').toLowerCase().includes(term) ||
+        String(row.packageType || '').toLowerCase().includes(term) ||
+        String(row.packageDescription || '').toLowerCase().includes(term) ||
         String(row.billing || '').toLowerCase().includes(term) ||
         String(row.subscriptionStatus || '').toLowerCase().includes(term) ||
         String(row.eligibilityReason || '').toLowerCase().includes(term) ||
@@ -1497,6 +1514,16 @@ export default function SubscriptionSharingLionTv() {
                                           variant="outlined"
                                           label={`${t('subscriptionSharing.card.line', 'Line')}: ${formatLineDisplay(item.lineName, item.lineId)}`}
                                         />
+                                        <Chip
+                                          size="small"
+                                          variant="outlined"
+                                          label={`${t('subscriptionSharing.card.package', 'Package')}: ${formatPackageDisplay(item.packageName, item.packageId)}`}
+                                        />
+                                        <Chip
+                                          size="small"
+                                          variant="outlined"
+                                          label={`${t('subscriptionSharing.card.subscriptionType', 'Subscription type')}: ${item.packageType || item.billing || '-'}`}
+                                        />
                                         {item.moveRecommendationAvailable ? (
                                           <Chip
                                             size="small"
@@ -1504,8 +1531,13 @@ export default function SubscriptionSharingLionTv() {
                                             variant="outlined"
                                             label={t('subscriptionSharing.move.recommendedBadge', 'Recommended move')}
                                           />
-                                        ) : null}
-                                      </Stack>
+                                          ) : null}
+                                        </Stack>
+                                      {item.packageDescription ? (
+                                        <Typography variant="body2" color="text.secondary">
+                                          {t('subscriptionSharing.card.packageDescription', 'Description')}: {item.packageDescription}
+                                        </Typography>
+                                      ) : null}
                                       <Card
                                         variant="outlined"
                                         sx={(muiTheme) => ({
@@ -1697,7 +1729,22 @@ export default function SubscriptionSharingLionTv() {
                                     <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.linePlus', 'Line plus')}: ${host.linePlusId}`} />
                                   ) : null}
                                   <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${host.provider || '-'}`} />
+                                  <Chip
+                                    size="small"
+                                    variant="outlined"
+                                    label={`${t('subscriptionSharing.card.package', 'Package')}: ${formatPackageDisplay(host.packageName, host.packageId)}`}
+                                  />
+                                  <Chip
+                                    size="small"
+                                    variant="outlined"
+                                    label={`${t('subscriptionSharing.card.subscriptionType', 'Subscription type')}: ${host.packageType || host.billing || '-'}`}
+                                  />
                                 </Stack>
+                                {host.packageDescription ? (
+                                  <Typography variant="body2" color="text.secondary">
+                                    {t('subscriptionSharing.card.packageDescription', 'Description')}: {host.packageDescription}
+                                  </Typography>
+                                ) : null}
                               </Stack>
                               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', lg: 'flex-start' }}>
                                 <RolePreferenceSelector
@@ -1886,7 +1933,22 @@ export default function SubscriptionSharingLionTv() {
                           <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.linePlus', 'Line plus')}: ${row.linePlusId}`} />
                         ) : null}
                         <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${row.provider || '-'}`} />
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={`${t('subscriptionSharing.card.package', 'Package')}: ${formatPackageDisplay(row.packageName, row.packageId)}`}
+                        />
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={`${t('subscriptionSharing.card.subscriptionType', 'Subscription type')}: ${row.packageType || row.billing || '-'}`}
+                        />
                       </Stack>
+                      {row.packageDescription ? (
+                        <Typography variant="body2" color="text.secondary">
+                          {t('subscriptionSharing.card.packageDescription', 'Description')}: {row.packageDescription}
+                        </Typography>
+                      ) : null}
                     </Stack>
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', lg: 'flex-start' }}>
                       <RolePreferenceSelector
@@ -2004,7 +2066,22 @@ export default function SubscriptionSharingLionTv() {
                           <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.linePlus', 'Line plus')}: ${row.linePlusId}`} />
                         ) : null}
                         <Chip size="small" variant="outlined" label={`${t('subscriptionSharing.card.provider', 'Provider')}: ${row.provider || '-'}`} />
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={`${t('subscriptionSharing.card.package', 'Package')}: ${formatPackageDisplay(row.packageName, row.packageId)}`}
+                        />
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={`${t('subscriptionSharing.card.subscriptionType', 'Subscription type')}: ${row.packageType || row.billing || '-'}`}
+                        />
                       </Stack>
+                      {row.packageDescription ? (
+                        <Typography variant="body2" color="text.secondary">
+                          {t('subscriptionSharing.card.packageDescription', 'Description')}: {row.packageDescription}
+                        </Typography>
+                      ) : null}
                     </Stack>
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', lg: 'flex-start' }}>
                       <RolePreferenceSelector
@@ -2261,9 +2338,24 @@ export default function SubscriptionSharingLionTv() {
                                     <Chip
                                       size="small"
                                       variant="outlined"
+                                      label={`${t('subscriptionSharing.card.package', 'Package')}: ${formatPackageDisplay(row.packageName, row.packageId)}`}
+                                    />
+                                    <Chip
+                                      size="small"
+                                      variant="outlined"
+                                      label={`${t('subscriptionSharing.card.subscriptionType', 'Subscription type')}: ${row.packageType || row.billing || '-'}`}
+                                    />
+                                    <Chip
+                                      size="small"
+                                      variant="outlined"
                                       label={`${t('subscriptionSharing.capacity.card.billing', 'Billing')}: ${row.billing || '-'}`}
                                     />
                                   </Stack>
+                                  {row.packageDescription ? (
+                                    <Typography variant="body2" color="text.secondary">
+                                      {t('subscriptionSharing.card.packageDescription', 'Description')}: {row.packageDescription}
+                                    </Typography>
+                                  ) : null}
                                 </Stack>
                                 <Button
                                   size="small"
@@ -2718,6 +2810,22 @@ export default function SubscriptionSharingLionTv() {
                     </Typography>
                   </Card>
                 </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card sx={diagnosticsSurfaceSx}>
+                    <Typography variant="caption" color="text.secondary">
+                      {t('subscriptionSharing.diagnostics.package', 'Package')}
+                    </Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                      {formatPackageDisplay(diagnosticsData.packageName, diagnosticsData.packageId)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('subscriptionSharing.diagnostics.packageType', {
+                        value: diagnosticsData.packageType || diagnosticsData.billing || '-',
+                        defaultValue: 'Type: {{value}}'
+                      })}
+                    </Typography>
+                  </Card>
+                </Grid>
               </Grid>
 
               <Grid container spacing={1.25}>
@@ -2796,6 +2904,17 @@ export default function SubscriptionSharingLionTv() {
                   </Typography>
                 </Stack>
               </Card>
+
+              {diagnosticsData.packageDescription ? (
+                <Card sx={diagnosticsSurfaceSx}>
+                  <Typography variant="caption" color="text.secondary">
+                    {t('subscriptionSharing.diagnostics.packageDescription', 'Subscription description')}
+                  </Typography>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                    {diagnosticsData.packageDescription}
+                  </Typography>
+                </Card>
+              ) : null}
 
               <Grid container spacing={1.25}>
                 <Grid item xs={12} sm={6} md={3}>
