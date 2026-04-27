@@ -834,6 +834,14 @@ const resources = {
             roleHelper: 'Role: {{role}}'
           }
         },
+        pendingSetup: {
+          title: 'Customers pending license setup',
+          subtitle: 'These are active standalone subscriptions that still have contracted screens available to configure.',
+          empty: 'No standalone customers with pending license setup were found for the current filters.',
+          slots: 'Pending slots',
+          slotsHelper: 'Screens still available to configure for this customer.',
+          usageHelper: 'Configured licenses versus contracted screens.'
+        },
         role: {
           host: 'HOST',
           shared: 'SHARED',
@@ -4598,6 +4606,14 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             currentUsage: 'Uso actual',
             roleHelper: 'Rol: {{role}}'
           }
+        },
+        pendingSetup: {
+          title: 'Clientes con licencias pendientes de configurar',
+          subtitle: 'Estas son suscripciones activas e independientes que todavía tienen pantallas contratadas disponibles para configurar.',
+          empty: 'No se encontraron clientes independientes con licencias pendientes de configurar para los filtros actuales.',
+          slots: 'Slots pendientes',
+          slotsHelper: 'Pantallas que todavía faltan por configurarse para este cliente.',
+          usageHelper: 'Licencias configuradas versus pantallas contratadas.'
         },
         role: {
           host: 'HOST',
