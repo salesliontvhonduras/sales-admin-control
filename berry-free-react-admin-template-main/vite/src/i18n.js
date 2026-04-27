@@ -700,6 +700,27 @@ const resources = {
       subscriptionSharing: {
         title: 'Shared subscriptions monitoring',
         subtitle: 'Visual monitoring based on subscriptions that reuse the same line_id across different customers.',
+        hero: {
+          eyebrow: 'Operational alignment',
+          title: 'Organize shared subscriptions before a bad host assignment impacts renewals and service quality',
+          subtitle:
+            'Track hosts, beneficiaries, renewal-day buckets and move recommendations from one view built for daily operational decisions.',
+          hostsChip: '{{count}} visible hosts',
+          sharedChip: '{{count}} visible shared subscriptions',
+          capacityChip: '{{count}} eligible standalone subscriptions',
+          signals: {
+            criticalTitle: 'Critical',
+            criticalHelper: 'Hosts already in OVERDUE or 0-7 days that can affect shared renewals first.',
+            misalignedTitle: 'Misaligned',
+            misalignedHelper: 'Shared subscriptions whose renewal day still does not match the current host.',
+            movesTitle: 'Moves',
+            movesHelper: 'Beneficiaries with a clearer exact-day destination recommendation available now.',
+            bucketHosts: 'Visible host subscriptions inside this renewal-day bucket.',
+            bucketShared: 'Beneficiaries currently attached to these hosts.',
+            bucketMisaligned: 'Shared accounts whose own renewal day still differs from the host.',
+            bucketMoves: 'Beneficiaries that can be reorganized immediately from this bucket.'
+          }
+        },
         tabs: {
           clusters: 'Shared clusters',
           capacity: 'Available spaces by day'
@@ -798,7 +819,11 @@ const resources = {
             hostCount: 'Hosts: {{count}}',
             standaloneCount: 'Standalone: {{count}}',
             helper: 'Use this bucket for new 1-screen customers that should renew on this day. Nearest renewal: {{date}}',
-            helperNoDate: 'Use this bucket for lines without a visible renewal date only after manual validation.'
+            helperNoDate: 'Use this bucket for lines without a visible renewal date only after manual validation.',
+            helperLines: 'Operational lines currently available inside this day bucket.',
+            helperSlots: 'Real one-screen spaces available to sell on this same renewal day.',
+            helperHosts: 'Host subscriptions with spare capacity in this bucket.',
+            helperStandalone: 'Standalone subscriptions that can receive new 1-screen sales.'
           },
           card: {
             slotBadge: '{{count}} slot(s) free',
@@ -4439,6 +4464,27 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
       subscriptionSharing: {
         title: 'Seguimiento de suscripciones compartidas',
         subtitle: 'Monitoreo visual basado en suscripciones que reutilizan el mismo line_id entre clientes distintos.',
+        hero: {
+          eyebrow: 'Alineación operativa',
+          title: 'Organiza las shared subscriptions antes de que un mal host impacte renovaciones y calidad de servicio',
+          subtitle:
+            'Monitorea hosts, beneficiarios, buckets por día de renovación y movimientos recomendados desde una vista pensada para decisiones operativas diarias.',
+          hostsChip: '{{count}} hosts visibles',
+          sharedChip: '{{count}} shared visibles',
+          capacityChip: '{{count}} suscripciones elegibles independientes',
+          signals: {
+            criticalTitle: 'Críticos',
+            criticalHelper: 'Hosts ya en OVERDUE o 0-7 días que pueden afectar primero las renovaciones shared.',
+            misalignedTitle: 'Desalineadas',
+            misalignedHelper: 'Suscripciones shared cuyo día de renovación todavía no coincide con el host actual.',
+            movesTitle: 'Movimientos',
+            movesHelper: 'Beneficiarios con una recomendación clara disponible para moverse hoy mismo.',
+            bucketHosts: 'Hosts visibles dentro de este bucket de renovación.',
+            bucketShared: 'Beneficiarios actualmente colgados de estos hosts.',
+            bucketMisaligned: 'Cuentas shared cuyo día propio todavía no coincide con el host.',
+            bucketMoves: 'Beneficiarios que pueden reorganizarse de inmediato desde este bucket.'
+          }
+        },
         tabs: {
           clusters: 'Clústeres shared',
           capacity: 'Espacios disponibles por día'
@@ -4538,7 +4584,11 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             hostCount: 'Hosts: {{count}}',
             standaloneCount: 'Independientes: {{count}}',
             helper: 'Usa este bucket para nuevos clientes de 1 pantalla que deban renovar ese día. Renovación más próxima: {{date}}',
-            helperNoDate: 'Usa este bucket para líneas sin fecha visible solo después de validación manual.'
+            helperNoDate: 'Usa este bucket para líneas sin fecha visible solo después de validación manual.',
+            helperLines: 'Líneas operativas disponibles actualmente dentro de este bucket por día.',
+            helperSlots: 'Espacios reales de 1 pantalla que puedes vender en este mismo día de renovación.',
+            helperHosts: 'Suscripciones host con capacidad libre en este bucket.',
+            helperStandalone: 'Suscripciones independientes que pueden recibir nuevas ventas de 1 pantalla.'
           },
           card: {
             slotBadge: '{{count}} espacio(s) libres',
