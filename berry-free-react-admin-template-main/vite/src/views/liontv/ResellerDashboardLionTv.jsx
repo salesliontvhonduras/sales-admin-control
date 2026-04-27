@@ -218,9 +218,8 @@ export default function ResellerDashboardLionTv({
   errorMessage,
   onRefresh
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const locale = String(i18n?.resolvedLanguage || i18n?.language || 'es').toLowerCase().startsWith('en') ? 'en' : 'es';
   const [walletSummary, setWalletSummary] = useState(null);
   const [walletLoading, setWalletLoading] = useState(true);
   const [walletError, setWalletError] = useState('');
@@ -366,18 +365,20 @@ export default function ResellerDashboardLionTv({
                 <Grid item xs={12} md={8}>
                   <Stack spacing={1.5}>
                     <Chip
-                      label={locale === 'en' ? 'Reseller command center' : 'Centro reseller'}
+                      label={t('resellerDashboard.hero.badge', 'Reseller command center')}
                       sx={{ alignSelf: 'flex-start', bgcolor: 'rgba(255,255,255,0.14)', color: 'common.white', fontWeight: 700 }}
                     />
                     <Typography variant="h2" sx={{ fontSize: { xs: '1.9rem', md: '2.5rem' } }}>
-                      {locale === 'en'
-                        ? 'Sell faster, protect service and watch your credit balance from one console'
-                        : 'Vende más rápido, protege el servicio y vigila tu saldo desde una sola consola'}
+                      {t(
+                        'resellerDashboard.hero.title',
+                        'Sell faster, protect service and watch your credit balance from one console'
+                      )}
                     </Typography>
                     <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.82)', maxWidth: 700 }}>
-                      {locale === 'en'
-                        ? 'The reseller dashboard now prioritizes what actually moves the business: available credits, fast access to customers and subscriptions, and clear risk visibility for lines and shared accounts.'
-                        : 'El dashboard reseller ahora prioriza lo que sí mueve el negocio: créditos disponibles, acceso rápido a clientes y suscripciones, y visibilidad clara del riesgo en lines y shared accounts.'}
+                      {t(
+                        'resellerDashboard.hero.subtitle',
+                        'The reseller dashboard now prioritizes what actually moves the business: available credits, fast access to customers and subscriptions, and clear risk visibility for lines and shared accounts.'
+                      )}
                     </Typography>
                     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
                       <Button
@@ -427,7 +428,7 @@ export default function ResellerDashboardLionTv({
                         <Grid container spacing={1.2}>
                           <Grid item xs={6}>
                             <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.68)' }}>
-                              {locale === 'en' ? 'Pending invoices' : 'Facturas pendientes'}
+                              {t('resellerDashboard.hero.pendingInvoices', 'Pending invoices')}
                             </Typography>
                             <Typography variant="h5" color="common.white">
                               {pendingInvoices}
@@ -435,7 +436,7 @@ export default function ResellerDashboardLionTv({
                           </Grid>
                           <Grid item xs={6}>
                             <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.68)' }}>
-                              {locale === 'en' ? 'Shared risk' : 'Riesgo shared'}
+                              {t('resellerDashboard.hero.sharedRisk', 'Shared risk')}
                             </Typography>
                             <Typography variant="h5" color="common.white">
                               {Number(sharedRiskKpi?.criticalClusters || 0)}
@@ -519,7 +520,7 @@ export default function ResellerDashboardLionTv({
 
           <Box>
             <Typography variant="overline" color="primary.main" sx={{ letterSpacing: '0.16em', fontWeight: 800 }}>
-              {locale === 'en' ? 'Operate faster' : 'Opera más rápido'}
+              {t('resellerDashboard.quick.eyebrow', 'Operate faster')}
             </Typography>
             <Typography variant="h3" sx={{ mb: 0.5 }}>
               {t('resellerDashboard.quick.title', 'Accesos rápidos que sí sirven')}
@@ -542,15 +543,16 @@ export default function ResellerDashboardLionTv({
           <Grid container spacing={gridSpacing}>
             <Grid item xs={12}>
               <Typography variant="overline" color="primary.main" sx={{ letterSpacing: '0.16em', fontWeight: 800 }}>
-                {locale === 'en' ? 'Commercial focus' : 'Foco comercial'}
+                {t('resellerDashboard.focus.eyebrow', 'Commercial focus')}
               </Typography>
               <Typography variant="h3" sx={{ mb: 0.5 }}>
-                {locale === 'en' ? 'Three signals you should not ignore today' : 'Tres señales que no debes ignorar hoy'}
+                {t('resellerDashboard.focus.title', 'Three signals you should not ignore today')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                {locale === 'en'
-                  ? 'These cards tell the reseller where money, service quality or renewals may break first.'
-                  : 'Estas tarjetas le dicen al reseller dónde puede romperse primero el dinero, la calidad del servicio o las renovaciones.'}
+                {t(
+                  'resellerDashboard.focus.subtitle',
+                  'These cards tell the reseller where money, service quality or renewals may break first.'
+                )}
               </Typography>
             </Grid>
             <Grid item xs={12} md={4}>

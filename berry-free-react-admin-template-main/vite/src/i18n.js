@@ -995,6 +995,100 @@ const resources = {
           moveCompleted: 'Subscription #{{sourceId}} moved to host #{{destinationId}}.'
         }
       },
+      resellerDashboard: {
+        loading: 'Preparing reseller command center...',
+        lowBalance: 'Your balance is getting low. Request credits now so sales, renewals and urgent support actions do not stall during the day.',
+        errors: {
+          wallet: 'Could not load reseller credit balance.'
+        },
+        actions: {
+          buyCredits: 'Request credits'
+        },
+        hero: {
+          badge: 'Reseller command center',
+          title: 'Run sales, renewals and service health from one professional console',
+          subtitle:
+            'Monitor credits, customers, subscriptions, lines and shared risk with the context needed to act quickly without losing operational control.',
+          primary: 'Request credits',
+          secondary: 'Review lines',
+          balanceLabel: 'Available credits',
+          balanceHelper: 'Use them for new activations, renewals and support operations.',
+          balanceStatusLow: 'Low balance',
+          balanceStatusGood: 'Healthy balance',
+          pendingInvoices: 'Pending invoices',
+          sharedRisk: 'Shared risk'
+        },
+        cards: {
+          balance: 'Available balance',
+          balanceHelper: 'Credits ready for new activations and service continuity.',
+          customers: 'Active customers',
+          customersHelper: 'Current customer base operating under your reseller account.',
+          subscriptions: 'Active subscriptions',
+          subscriptionsHelper: 'Plans currently in production and pending to renew.',
+          licenses: 'Active licenses',
+          licensesHelper: 'Licenses already in use or ready to assign.',
+          pendingInvoices: 'Pending invoices',
+          pendingInvoicesHelper: 'Manual collections that still need follow-up.',
+          consumed: 'Lifetime credit usage',
+          consumedHelper: 'Credits already consumed by activations and operational movements.'
+        },
+        quick: {
+          eyebrow: 'Operate faster',
+          title: 'Commercial shortcuts that move the business',
+          subtitle:
+            'Open the modules you actually use every day to sell, review capacity and reorganize accounts without walking through internal admin-only flows.',
+          customers: {
+            title: 'Customers',
+            helper: 'Create, organize and follow up your active customer base from one place.',
+            action: 'Open customers'
+          },
+          subscriptions: {
+            title: 'Subscriptions',
+            helper: 'Create, renew and reorganize plans with full commercial visibility.',
+            action: 'Open subscriptions'
+          },
+          licenses: {
+            title: 'Licenses',
+            helper: 'Activate devices, change servers and resolve support cases faster.',
+            action: 'Open licenses'
+          },
+          lines: {
+            title: 'Lines',
+            helper: 'Review active lines, available capacity and upcoming renewals.',
+            action: 'Open lines'
+          },
+          plusLines: {
+            title: 'Plus Lines',
+            helper: 'Track plus inventory, status and operational readiness.',
+            action: 'Open plus lines'
+          },
+          shared: {
+            title: 'Shared Subscriptions',
+            helper: 'Organize hosts, shared accounts and renewal-day buckets before service is affected.',
+            action: 'Open shared subscriptions'
+          }
+        },
+        focus: {
+          eyebrow: 'Commercial focus',
+          title: 'Three signals you should not ignore today',
+          subtitle: 'These cards show where cash flow, service stability or renewals may break first inside your reseller operation.',
+          renewals: {
+            title: 'Critical renewals',
+            helper: 'If this number rises, review subscriptions close to expiration before moving more customers around.',
+            action: 'Open subscriptions'
+          },
+          shared: {
+            title: 'Shared accounts at risk',
+            helper: 'This is where you detect hosts and beneficiaries that need reorganization before they impact the customer service.',
+            action: 'Open shared subscriptions'
+          },
+          collections: {
+            title: 'Collections pending',
+            helper: 'Keep manual collections under control so your operation keeps cash while you continue activating accounts.',
+            action: 'Open invoices'
+          }
+        }
+      },
       licenses: {
         title: 'Licenses',
         search: 'Search (MAC, device key, customer, subscription, status)',
@@ -4641,6 +4735,102 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         messages: {
           roleUpdated: 'Preferencia de rol actualizada.',
           moveCompleted: 'La suscripción #{{sourceId}} se movió al host #{{destinationId}}.'
+        }
+      },
+      resellerDashboard: {
+        loading: 'Preparando centro de control reseller...',
+        lowBalance:
+          'Tu saldo está bajando. Solicita créditos ahora para que ventas, renovaciones y soportes urgentes no se frenen durante el día.',
+        errors: {
+          wallet: 'No se pudo cargar el saldo de créditos reseller.'
+        },
+        actions: {
+          buyCredits: 'Solicitar créditos'
+        },
+        hero: {
+          badge: 'Centro de control reseller',
+          title: 'Controla ventas, renovaciones y salud del servicio desde una sola consola profesional',
+          subtitle:
+            'Monitorea créditos, clientes, suscripciones, líneas y riesgo shared con el contexto necesario para actuar rápido sin perder control operativo.',
+          primary: 'Solicitar créditos',
+          secondary: 'Revisar lines',
+          balanceLabel: 'Créditos disponibles',
+          balanceHelper: 'Úsalos para nuevas activaciones, renovaciones y operaciones de soporte.',
+          balanceStatusLow: 'Saldo bajo',
+          balanceStatusGood: 'Saldo saludable',
+          pendingInvoices: 'Facturas pendientes',
+          sharedRisk: 'Riesgo shared'
+        },
+        cards: {
+          balance: 'Saldo disponible',
+          balanceHelper: 'Créditos listos para nuevas activaciones y continuidad del servicio.',
+          customers: 'Clientes activos',
+          customersHelper: 'Base actual de clientes operando bajo tu cuenta reseller.',
+          subscriptions: 'Suscripciones activas',
+          subscriptionsHelper: 'Planes en producción y pendientes de renovación.',
+          licenses: 'Licencias activas',
+          licensesHelper: 'Licencias ya en uso o listas para asignarse.',
+          pendingInvoices: 'Facturas pendientes',
+          pendingInvoicesHelper: 'Cobros manuales que todavía requieren seguimiento.',
+          consumed: 'Consumo histórico de créditos',
+          consumedHelper: 'Créditos ya consumidos por activaciones y movimientos operativos.'
+        },
+        quick: {
+          eyebrow: 'Opera más rápido',
+          title: 'Accesos comerciales que sí mueven el negocio',
+          subtitle:
+            'Abre los módulos que realmente usas todos los días para vender, revisar capacidad y reorganizar cuentas sin pasar por flujos internos que no te aportan.',
+          customers: {
+            title: 'Clientes',
+            helper: 'Crea, organiza y da seguimiento a tu base activa desde un solo lugar.',
+            action: 'Abrir clientes'
+          },
+          subscriptions: {
+            title: 'Suscripciones',
+            helper: 'Crea, renueva y reorganiza planes con visibilidad comercial completa.',
+            action: 'Abrir suscripciones'
+          },
+          licenses: {
+            title: 'Licencias',
+            helper: 'Activa dispositivos, cambia servidores y resuelve soporte con más velocidad.',
+            action: 'Abrir licencias'
+          },
+          lines: {
+            title: 'Lines',
+            helper: 'Revisa líneas activas, capacidad disponible y próximas renovaciones.',
+            action: 'Abrir lines'
+          },
+          plusLines: {
+            title: 'Plus Lines',
+            helper: 'Monitorea inventario plus, estado y preparación operativa.',
+            action: 'Abrir plus lines'
+          },
+          shared: {
+            title: 'Shared Subscriptions',
+            helper: 'Ordena hosts, beneficiarios y buckets por día antes de afectar el servicio al cliente.',
+            action: 'Abrir shared subscriptions'
+          }
+        },
+        focus: {
+          eyebrow: 'Foco comercial',
+          title: 'Tres señales que no debes ignorar hoy',
+          subtitle:
+            'Estas tarjetas te muestran dónde pueden romperse primero el flujo de caja, la estabilidad del servicio o las renovaciones dentro de tu operación reseller.',
+          renewals: {
+            title: 'Renovaciones críticas',
+            helper: 'Si este número sube, revisa las suscripciones cercanas al vencimiento antes de mover más clientes.',
+            action: 'Abrir suscripciones'
+          },
+          shared: {
+            title: 'Shared en riesgo',
+            helper: 'Aquí detectas hosts y beneficiarios que debes reorganizar antes de que impacten el servicio del cliente.',
+            action: 'Abrir shared subscriptions'
+          },
+          collections: {
+            title: 'Cobros pendientes',
+            helper: 'Mantén los cobros manuales bajo control para sostener caja mientras sigues activando cuentas.',
+            action: 'Abrir facturas'
+          }
         }
       },
       licenses: {
