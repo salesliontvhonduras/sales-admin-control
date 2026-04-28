@@ -12,6 +12,15 @@ export async function generateContentAutomationTomorrow(config = {}) {
   return unwrap(response);
 }
 
+export async function generateContentAutomationByDate(date, config = {}) {
+  const response = await contentAutomationApi.post(
+    '/api/content-automation/generate',
+    { date },
+    config
+  );
+  return unwrap(response);
+}
+
 export async function getContentAutomationPostsByDate(date, config = {}) {
   const response = await contentAutomationApi.get('/api/content-automation/posts', {
     ...config,

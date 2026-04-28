@@ -36,7 +36,7 @@ import NightsStayOutlinedIcon from '@mui/icons-material/NightsStayOutlined';
 
 import {
   approveContentAutomationPost,
-  generateContentAutomationTomorrow,
+  generateContentAutomationByDate,
   getContentAutomationPostsByDate,
   getContentAutomationPreviewImageBlob,
   getContentAutomationSafePreview,
@@ -651,34 +651,39 @@ export default function ContentAutomationLionTv() {
     });
   }, []);
 
-  const handleGenerateTomorrow = useCallback(async () => {
-    if (!canGenerate) return;
+  const handleGenerateSelectedDate = useCallback(async () => {
+    if (!canGenerate || !selectedDate) return;
     setGenerating(true);
     try {
-      const payload = await generateContentAutomationTomorrow({ skipAuthRedirect: true });
+      const payload = await generateContentAutomationByDate(selectedDate, { skipAuthRedirect: true });
       enqueueSnackbar(
         t('contentAutomation.messages.generated', {
+          date: payload?.targetDate || selectedDate,
           count: Array.isArray(payload?.posts) ? payload.posts.length : 0,
-          defaultValue: '{{count}} slot posts were refreshed for tomorrow.'
+          defaultValue: '{{count}} slot posts were refreshed for {{date}}.'
         }),
         { variant: 'success' }
       );
+      setPostsPayload({
+        date: payload?.targetDate || selectedDate,
+        total: Array.isArray(payload?.posts) ? payload.posts.length : 0,
+        posts: Array.isArray(payload?.posts) ? payload.posts : []
+      });
       if (isTomorrowSelected) {
-        setPostsPayload({
-          date: payload?.targetDate || tomorrowIso,
-          total: Array.isArray(payload?.posts) ? payload.posts.length : 0,
-          posts: Array.isArray(payload?.posts) ? payload.posts : []
-        });
         await loadTomorrowEvents();
       }
     } catch (apiError) {
-      enqueueSnackbar(apiError?.response?.data?.message || t('contentAutomation.errors.generate', 'Could not generate tomorrow posts.'), {
-        variant: 'error'
-      });
+      enqueueSnackbar(
+        apiError?.response?.data?.message ||
+          t('contentAutomation.errors.generate', 'Could not generate posts for the selected date.'),
+        {
+          variant: 'error'
+        }
+      );
     } finally {
       setGenerating(false);
     }
-  }, [canGenerate, enqueueSnackbar, isTomorrowSelected, loadTomorrowEvents, t, tomorrowIso]);
+  }, [canGenerate, enqueueSnackbar, isTomorrowSelected, loadTomorrowEvents, selectedDate, t]);
 
   const handleAction = useCallback(
     async (post, actionKey, request, successMessageKey, fallbackMessage) => {
@@ -791,12 +796,14 @@ export default function ContentAutomationLionTv() {
             <Button
               variant="contained"
               startIcon={<AutoAwesomeOutlinedIcon />}
-              onClick={handleGenerateTomorrow}
-              disabled={!canGenerate || generating}
+              onClick={handleGenerateSelectedDate}
+              disabled={!canGenerate || generating || !selectedDate}
             >
               {generating
                 ? t('contentAutomation.actions.generating', 'Generating...')
-                : t('contentAutomation.actions.generateTomorrow', 'Generate tomorrow')}
+                : isTomorrowSelected
+                  ? t('contentAutomation.actions.generateTomorrow', 'Generate tomorrow')
+                  : t('contentAutomation.actions.generateDate', 'Generate selected date')}
             </Button>
           </ResponsiveActionBar>
         }
@@ -824,7 +831,7 @@ export default function ContentAutomationLionTv() {
                 )
               : t(
                   'contentAutomation.filters.historyHelper',
-                  'You are reviewing a specific date snapshot. Generate tomorrow only refreshes the next scheduled day.'
+                  'You are reviewing a specific date snapshot. You can generate posts for this exact day whenever you need a manual batch.'
                 )}
           </Alert>
         </ResponsiveFilters>
@@ -917,7 +924,7 @@ export default function ContentAutomationLionTv() {
                   )
                 : t(
                     'contentAutomation.empty.history',
-                    'No posts were stored for this date yet. Select another day or generate the next scheduled review batch.'
+                    'No posts were stored for this date yet. Select another day or generate this specific review batch.'
                   )
             }
           />

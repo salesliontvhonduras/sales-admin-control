@@ -520,7 +520,7 @@ const resources = {
           tomorrowHelper:
             'Tomorrow is the default review date because this console is designed to validate what will be published next.',
           historyHelper:
-            'You are reviewing a specific date snapshot. Generate tomorrow only refreshes the next scheduled day.'
+            'You are reviewing a specific date snapshot. You can generate posts for this exact day whenever you need a manual batch.'
         },
         kpis: {
           posts: 'Posts',
@@ -559,6 +559,7 @@ const resources = {
         },
         actions: {
           generateTomorrow: 'Generate tomorrow',
+          generateDate: 'Generate selected date',
           generating: 'Generating...',
           previewImage: 'Preview image',
           safePreview: 'Safe preview',
@@ -587,7 +588,7 @@ const resources = {
         },
         empty: {
           tomorrow: 'No slot posts were generated for tomorrow yet. Use "Generate tomorrow" to build the review set.',
-          history: 'No posts were stored for this date yet. Select another day or generate the next scheduled review batch.'
+          history: 'No posts were stored for this date yet. Select another day or generate this specific review batch.'
         },
         status: {
           DRAFT: 'Draft',
@@ -597,7 +598,7 @@ const resources = {
           FAILED: 'Failed'
         },
         messages: {
-          generated: '{{count}} slot posts were refreshed for tomorrow.',
+          generated: '{{count}} slot posts were refreshed for {{date}}.',
           imageRegenerated: 'The preview image was regenerated successfully.',
           captionsRegenerated: 'The captions were regenerated successfully.',
           approved: 'The post is now approved for publishing.',
@@ -606,7 +607,7 @@ const resources = {
         errors: {
           loadPosts: 'Could not load content automation posts.',
           loadEvents: 'Could not load tomorrow events.',
-          generate: 'Could not generate tomorrow posts.',
+          generate: 'Could not generate posts for the selected date.',
           previewMissing: 'Preview image is not available yet.',
           safePreview: 'Could not load the safe preview.',
           slotFailed: 'This slot failed and needs attention.'
@@ -4480,7 +4481,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           tomorrowHelper:
             'Mañana es la fecha predeterminada porque esta consola está pensada para validar lo que se publicará a continuación.',
           historyHelper:
-            'Estás revisando una fecha específica. Generar mañana solo refresca el siguiente día programado.'
+            'Estás revisando una fecha específica. Puedes generar posts para este día exacto cuando necesites un lote manual.'
         },
         kpis: {
           posts: 'Posts',
@@ -4519,6 +4520,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         },
         actions: {
           generateTomorrow: 'Generar mañana',
+          generateDate: 'Generar fecha seleccionada',
           generating: 'Generando...',
           previewImage: 'Ver imagen',
           safePreview: 'Vista SAFE',
@@ -4547,7 +4549,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         },
         empty: {
           tomorrow: 'Todavía no se generaron posts para mañana. Usa "Generar mañana" para construir el set de revisión.',
-          history: 'No hay posts almacenados para esta fecha. Selecciona otro día o genera el siguiente lote programado.'
+          history: 'No hay posts almacenados para esta fecha. Selecciona otro día o genera este lote específico.'
         },
         status: {
           DRAFT: 'Borrador',
@@ -4557,7 +4559,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           FAILED: 'Fallido'
         },
         messages: {
-          generated: 'Se refrescaron {{count}} posts por slot para mañana.',
+          generated: 'Se refrescaron {{count}} posts por slot para {{date}}.',
           imageRegenerated: 'La imagen de vista previa se regeneró correctamente.',
           captionsRegenerated: 'Los captions se regeneraron correctamente.',
           approved: 'El post quedó aprobado para publicación.',
@@ -4566,7 +4568,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         errors: {
           loadPosts: 'No se pudieron cargar los posts de automatización.',
           loadEvents: 'No se pudieron cargar los eventos de mañana.',
-          generate: 'No se pudieron generar los posts de mañana.',
+          generate: 'No se pudieron generar los posts para la fecha seleccionada.',
           previewMissing: 'La imagen de vista previa todavía no está disponible.',
           safePreview: 'No se pudo cargar la vista SAFE.',
           slotFailed: 'Este slot falló y requiere atención.'
