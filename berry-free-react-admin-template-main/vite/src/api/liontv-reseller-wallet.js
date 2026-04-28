@@ -14,6 +14,19 @@ export async function updateResellerSupportProfile(payload, config = {}) {
   return unwrap(await lionTvApi.put('/reseller-wallet/v1/support-profile', payload, config));
 }
 
+export async function searchAdminResellerSupportProfiles(params = {}, config = {}) {
+  return unwrap(
+    await lionTvApi.get('/reseller-wallet/v1/admin/support-profiles', {
+      ...config,
+      params
+    })
+  );
+}
+
+export async function getAdminResellerSupportProfile(username, config = {}) {
+  return unwrap(await lionTvApi.get(`/reseller-wallet/v1/admin/support-profile/${encodeURIComponent(username)}`, config));
+}
+
 export async function getResellerWalletLedger(params = {}, config = {}) {
   return unwrap(
     await lionTvApi.get('/reseller-wallet/v1/ledger', {

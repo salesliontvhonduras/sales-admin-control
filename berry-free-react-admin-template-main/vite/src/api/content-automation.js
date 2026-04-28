@@ -12,10 +12,17 @@ export async function generateContentAutomationTomorrow(config = {}) {
   return unwrap(response);
 }
 
-export async function generateContentAutomationByDate(date, config = {}) {
+export async function generateContentAutomationByDate(payload, config = {}) {
+  const normalizedPayload =
+    typeof payload === 'string'
+      ? { date: payload }
+      : {
+          date: payload?.date,
+          resellerUsername: payload?.resellerUsername || null
+        };
   const response = await contentAutomationApi.post(
     '/api/content-automation/generate',
-    { date },
+    normalizedPayload,
     config
   );
   return unwrap(response);

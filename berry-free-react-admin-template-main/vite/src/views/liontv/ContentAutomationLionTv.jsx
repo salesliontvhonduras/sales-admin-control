@@ -4,6 +4,7 @@ import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
 
 import Alert from '@mui/material/Alert';
+import Autocomplete from '@mui/material/Autocomplete';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -19,6 +20,8 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 import { alpha } from '@mui/material/styles';
 
@@ -50,6 +53,7 @@ import {
   regenerateContentAutomationImage,
   updateContentAutomationPostSelectedEvents
 } from 'api/content-automation';
+import { getAdminResellerSupportProfile, searchAdminResellerSupportProfiles } from 'api/liontv-reseller-wallet';
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { PageEmptyState, PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
@@ -62,6 +66,8 @@ import { hasPermissionExact } from 'utils/rbac';
 
 const SLOT_ORDER = ['MORNING', 'AFTERNOON', 'NIGHT'];
 const URL_PATTERN = /(https?:\/\/|www\.)/i;
+const BRANDING_MODE_GENERIC = 'GENERIC';
+const BRANDING_MODE_RESELLER = 'RESELLER';
 
 function formatDateTime(value, locale = 'es-HN') {
   if (!value) return '-';
@@ -85,8 +91,24 @@ function formatEventTime(value, locale = 'es-HN') {
 
 function formatEventLabel(event = {}) {
   const home = event?.homeTeam || '-';
-  const away = event?.awayTeam || '-';
-  return `${home} vs ${away}`;
+  const away = event?.awayTeam || '';
+  return away ? `${home} vs ${away}` : home;
+}
+
+function normalizeSupportProfile(profile) {
+  if (!profile?.username) return null;
+  return {
+    username: String(profile.username),
+    supportPhone: profile?.supportPhone || '',
+    configured: Boolean(profile?.configured),
+    updatedAt: profile?.updatedAt || null
+  };
+}
+
+function resellerOptionLabel(option, t) {
+  if (!option?.username) return '';
+  if (!option?.supportPhone) return option.username;
+  return `${option.username} · ${option.supportPhone}`;
 }
 
 function toIsoDateInTimeZone(timeZone, dayOffset = 0) {
@@ -316,6 +338,7 @@ function SlotPostCard({
   const hasPost = Boolean(post?.id);
   const previewReady = Boolean(previewUrl);
   const status = String(post?.status || 'DRAFT').toUpperCase();
+  const brandingMode = String(post?.brandingMode || BRANDING_MODE_GENERIC).toUpperCase();
   const canApprovePost = hasPost && status === 'GENERATED' && canApprove;
   const canPublishPost = hasPost && status === 'APPROVED' && canPublish;
   const actionDisabled = Object.values(busyAction || {}).some(Boolean);
@@ -412,6 +435,36 @@ function SlotPostCard({
                 defaultValue: 'Updated {{value}}'
               })}
             />
+            <Chip
+              size="small"
+              color={brandingMode === BRANDING_MODE_RESELLER ? 'secondary' : 'default'}
+              variant={brandingMode === BRANDING_MODE_RESELLER ? 'filled' : 'outlined'}
+              label={
+                brandingMode === BRANDING_MODE_RESELLER
+                  ? t('contentAutomation.branding.modeReseller', 'Reseller watermark')
+                  : t('contentAutomation.branding.modeGeneric', 'Generic watermark')
+              }
+            />
+            {post?.targetResellerUsername ? (
+              <Chip
+                size="small"
+                variant="outlined"
+                label={t('contentAutomation.slotCard.resellerLabel', {
+                  username: post.targetResellerUsername,
+                  defaultValue: 'Reseller: {{username}}'
+                })}
+              />
+            ) : null}
+            {post?.targetResellerPhoneMasked ? (
+              <Chip
+                size="small"
+                variant="outlined"
+                label={t('contentAutomation.slotCard.phoneLabel', {
+                  phone: post.targetResellerPhoneMasked,
+                  defaultValue: 'Phone: {{phone}}'
+                })}
+              />
+            ) : null}
           </Stack>
 
           <Box sx={{ minHeight: 86 }}>
@@ -533,9 +586,81 @@ export default function ContentAutomationLionTv() {
   const canPublish = hasPermissionExact(user, {
     any: ['LIONTV_CONTENT_AUTOMATION_PUBLISH', 'ROLE_LIONTV_CONTENT_AUTOMATION_PUBLISH', 'ROLE_ADMIN', 'ADMIN']
   });
+  const isAdminUser = hasPermissionExact(user, {
+    any: ['ROLE_ADMIN', 'ADMIN']
+  });
 
   const isTomorrowSelected = selectedDate === tomorrowIso;
   const hasPosts = Array.isArray(postsPayload?.posts) && postsPayload.posts.length > 0;
+  const [brandingMode, setBrandingMode] = useState(BRANDING_MODE_GENERIC);
+  const [resellerOptions, setResellerOptions] = useState([]);
+  const [resellerSearchInput, setResellerSearchInput] = useState('');
+  const [resellerLookupLoading, setResellerLookupLoading] = useState(false);
+  const [selectedReseller, setSelectedReseller] = useState(null);
+  const [resellerSelectionError, setResellerSelectionError] = useState('');
+  const resellerBrandingEnabled = isAdminUser && brandingMode === BRANDING_MODE_RESELLER;
+  const selectedResellerReady = Boolean(selectedReseller?.username && selectedReseller?.configured && selectedReseller?.supportPhone);
+
+  useEffect(() => {
+    if (!resellerBrandingEnabled) {
+      setResellerSelectionError('');
+      return;
+    }
+    if (!selectedReseller?.username) {
+      setResellerSelectionError(t('contentAutomation.branding.errors.resellerRequired', 'Select a reseller to generate branded content.'));
+      return;
+    }
+    if (!selectedReseller?.configured || !selectedReseller?.supportPhone) {
+      setResellerSelectionError(
+        t(
+          'contentAutomation.branding.errors.supportMissing',
+          'The selected reseller does not have a support phone configured in Support Center.'
+        )
+      );
+      return;
+    }
+    setResellerSelectionError('');
+  }, [resellerBrandingEnabled, selectedReseller, t]);
+
+  useEffect(() => {
+    if (!accessToken || !isAdminUser || !resellerBrandingEnabled) {
+      setResellerLookupLoading(false);
+      return undefined;
+    }
+
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      setResellerLookupLoading(true);
+      try {
+        const payload = await searchAdminResellerSupportProfiles(
+          {
+            search: resellerSearchInput?.trim() || '',
+            size: 12
+          },
+          { skipAuthRedirect: true }
+        );
+        if (!active) return;
+        const items = Array.isArray(payload) ? payload.map(normalizeSupportProfile).filter(Boolean) : [];
+        setResellerOptions(items);
+      } catch (apiError) {
+        if (!active) return;
+        setResellerOptions([]);
+        setResellerSelectionError(
+          apiError?.response?.data?.message ||
+            t('contentAutomation.branding.errors.lookup', 'Could not load reseller support profiles.')
+        );
+      } finally {
+        if (active) {
+          setResellerLookupLoading(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [accessToken, isAdminUser, resellerBrandingEnabled, resellerSearchInput, t]);
 
   const loadPosts = useCallback(
     async ({ silent = false } = {}) => {
@@ -692,9 +817,23 @@ export default function ContentAutomationLionTv() {
 
   const handleGenerateSelectedDate = useCallback(async () => {
     if (!canGenerate || !selectedDate) return;
+    if (resellerBrandingEnabled && !selectedResellerReady) {
+      enqueueSnackbar(
+        resellerSelectionError ||
+          t('contentAutomation.branding.errors.resellerRequired', 'Select a reseller to generate branded content.'),
+        { variant: 'warning' }
+      );
+      return;
+    }
     setGenerating(true);
     try {
-      const payload = await generateContentAutomationByDate(selectedDate, { skipAuthRedirect: true });
+      const payload = await generateContentAutomationByDate(
+        {
+          date: selectedDate,
+          resellerUsername: resellerBrandingEnabled ? selectedReseller?.username : null
+        },
+        { skipAuthRedirect: true }
+      );
       enqueueSnackbar(
         t('contentAutomation.messages.generated', {
           date: payload?.targetDate || selectedDate,
@@ -722,7 +861,18 @@ export default function ContentAutomationLionTv() {
     } finally {
       setGenerating(false);
     }
-  }, [canGenerate, enqueueSnackbar, isTomorrowSelected, loadTomorrowEvents, selectedDate, t]);
+  }, [
+    canGenerate,
+    enqueueSnackbar,
+    isTomorrowSelected,
+    loadTomorrowEvents,
+    resellerBrandingEnabled,
+    resellerSelectionError,
+    selectedDate,
+    selectedReseller?.username,
+    selectedResellerReady,
+    t
+  ]);
 
   const handleAction = useCallback(
     async (post, actionKey, request, successMessageKey, fallbackMessage) => {
@@ -969,7 +1119,7 @@ export default function ContentAutomationLionTv() {
               variant="contained"
               startIcon={<AutoAwesomeOutlinedIcon />}
               onClick={handleGenerateSelectedDate}
-              disabled={!canGenerate || generating || !selectedDate}
+              disabled={!canGenerate || generating || !selectedDate || (resellerBrandingEnabled && !selectedResellerReady)}
             >
               {generating
                 ? t('contentAutomation.actions.generating', 'Generating...')
@@ -995,6 +1145,78 @@ export default function ContentAutomationLionTv() {
             onChange={(event) => setSelectedDate(event.target.value)}
             InputLabelProps={{ shrink: true }}
           />
+          {isAdminUser ? (
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              color="primary"
+              value={brandingMode}
+              onChange={(_, nextValue) => {
+                if (!nextValue) return;
+                setBrandingMode(nextValue);
+              }}
+            >
+              <ToggleButton value={BRANDING_MODE_GENERIC}>
+                {t('contentAutomation.branding.modeGeneric', 'Generic watermark')}
+              </ToggleButton>
+              <ToggleButton value={BRANDING_MODE_RESELLER}>
+                {t('contentAutomation.branding.modeReseller', 'Reseller watermark')}
+              </ToggleButton>
+            </ToggleButtonGroup>
+          ) : null}
+          {isAdminUser && resellerBrandingEnabled ? (
+            <Autocomplete
+              options={resellerOptions}
+              loading={resellerLookupLoading}
+              value={selectedReseller}
+              inputValue={resellerSearchInput}
+              onInputChange={(_, nextInput) => setResellerSearchInput(nextInput)}
+              onChange={async (_, nextValue) => {
+                const normalized = normalizeSupportProfile(nextValue);
+                setSelectedReseller(normalized);
+                if (!normalized?.username) {
+                  return;
+                }
+                if (normalized.supportPhone || normalized.configured) {
+                  return;
+                }
+                try {
+                  const resolved = await getAdminResellerSupportProfile(normalized.username, { skipAuthRedirect: true });
+                  setSelectedReseller(normalizeSupportProfile(resolved));
+                } catch (apiError) {
+                  setResellerSelectionError(
+                    apiError?.response?.data?.message ||
+                      t('contentAutomation.branding.errors.lookup', 'Could not load reseller support profiles.')
+                  );
+                }
+              }}
+              isOptionEqualToValue={(option, value) => String(option?.username || '') === String(value?.username || '')}
+              getOptionLabel={(option) => resellerOptionLabel(option, t)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={t('contentAutomation.branding.resellerLabel', 'Reseller')}
+                  placeholder={t('contentAutomation.branding.resellerPlaceholder', 'Search by username')}
+                />
+              )}
+              renderOption={(props, option) => (
+                <Box component="li" {...props}>
+                  <Stack spacing={0.25}>
+                    <Typography variant="subtitle2">{option.username}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {option.configured && option.supportPhone
+                        ? t('contentAutomation.branding.resellerConfigured', {
+                            phone: option.supportPhone,
+                            defaultValue: 'Support phone: {{phone}}'
+                          })
+                        : t('contentAutomation.branding.resellerMissing', 'Support phone not configured')}
+                    </Typography>
+                  </Stack>
+                </Box>
+              )}
+              sx={{ minWidth: { xs: '100%', md: 320 } }}
+            />
+          ) : null}
           <Alert severity="info" variant="outlined" sx={{ flex: 1 }}>
             {isTomorrowSelected
               ? t(
@@ -1007,6 +1229,29 @@ export default function ContentAutomationLionTv() {
                 )}
           </Alert>
         </ResponsiveFilters>
+
+        {isAdminUser ? (
+          <Stack spacing={1.25} sx={{ mb: 2 }}>
+            <Alert severity={resellerBrandingEnabled ? (selectedResellerReady ? 'success' : 'warning') : 'info'} variant="outlined">
+              {resellerBrandingEnabled
+                ? selectedResellerReady
+                  ? t('contentAutomation.branding.previewReady', {
+                      username: selectedReseller?.username,
+                      phone: selectedReseller?.supportPhone,
+                      defaultValue: 'The poster watermark will use {{phone}} for reseller {{username}}.'
+                    })
+                  : resellerSelectionError ||
+                    t(
+                      'contentAutomation.branding.previewMissing',
+                      'Choose a reseller with a configured support phone to generate branded content.'
+                    )
+                : t(
+                    'contentAutomation.branding.previewGeneric',
+                    'The poster watermark will stay on the generic Lion TV brand for this generation batch.'
+                  )}
+            </Alert>
+          </Stack>
+        ) : null}
 
         <ResponsiveMetricGrid columns={{ xs: 1, md: 2, xl: 5 }} gap={gridSpacing}>
           <MetricCard
@@ -1321,6 +1566,38 @@ export default function ContentAutomationLionTv() {
             <Typography variant="body2" color="text.secondary">
               {previewDialog.post?.title || '-'}
             </Typography>
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+              <Chip
+                size="small"
+                color={String(previewDialog.post?.brandingMode || BRANDING_MODE_GENERIC).toUpperCase() === BRANDING_MODE_RESELLER ? 'secondary' : 'default'}
+                variant={String(previewDialog.post?.brandingMode || BRANDING_MODE_GENERIC).toUpperCase() === BRANDING_MODE_RESELLER ? 'filled' : 'outlined'}
+                label={
+                  String(previewDialog.post?.brandingMode || BRANDING_MODE_GENERIC).toUpperCase() === BRANDING_MODE_RESELLER
+                    ? t('contentAutomation.branding.modeReseller', 'Reseller watermark')
+                    : t('contentAutomation.branding.modeGeneric', 'Generic watermark')
+                }
+              />
+              {previewDialog.post?.targetResellerUsername ? (
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label={t('contentAutomation.slotCard.resellerLabel', {
+                    username: previewDialog.post.targetResellerUsername,
+                    defaultValue: 'Reseller: {{username}}'
+                  })}
+                />
+              ) : null}
+              {previewDialog.post?.targetResellerPhoneMasked ? (
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label={t('contentAutomation.slotCard.phoneLabel', {
+                    phone: previewDialog.post.targetResellerPhoneMasked,
+                    defaultValue: 'Phone: {{phone}}'
+                  })}
+                />
+              ) : null}
+            </Stack>
             {previewDialog.post?.id && previewUrls[previewDialog.post.id] ? (
               <Box
                 component="img"
@@ -1366,6 +1643,36 @@ export default function ContentAutomationLionTv() {
                       : t('contentAutomation.safePreviewDialog.review', 'Review CTA and remove direct URL references')
                   }
                 />
+                <Chip
+                  size="small"
+                  color={String(safeDialog.data?.brandingMode || BRANDING_MODE_GENERIC).toUpperCase() === BRANDING_MODE_RESELLER ? 'secondary' : 'default'}
+                  variant={String(safeDialog.data?.brandingMode || BRANDING_MODE_GENERIC).toUpperCase() === BRANDING_MODE_RESELLER ? 'filled' : 'outlined'}
+                  label={
+                    String(safeDialog.data?.brandingMode || BRANDING_MODE_GENERIC).toUpperCase() === BRANDING_MODE_RESELLER
+                      ? t('contentAutomation.branding.modeReseller', 'Reseller watermark')
+                      : t('contentAutomation.branding.modeGeneric', 'Generic watermark')
+                  }
+                />
+                {safeDialog.data?.targetResellerUsername ? (
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={t('contentAutomation.slotCard.resellerLabel', {
+                      username: safeDialog.data.targetResellerUsername,
+                      defaultValue: 'Reseller: {{username}}'
+                    })}
+                  />
+                ) : null}
+                {safeDialog.data?.targetResellerPhoneMasked ? (
+                  <Chip
+                    size="small"
+                    variant="outlined"
+                    label={t('contentAutomation.slotCard.phoneLabel', {
+                      phone: safeDialog.data.targetResellerPhoneMasked,
+                      defaultValue: 'Phone: {{phone}}'
+                    })}
+                  />
+                ) : null}
               </Stack>
 
               {safeDialog.post?.id && previewUrls[safeDialog.post.id] ? (

@@ -522,6 +522,22 @@ const resources = {
           historyHelper:
             'You are reviewing a specific date snapshot. You can generate posts for this exact day whenever you need a manual batch.'
         },
+        branding: {
+          modeGeneric: 'Generic watermark',
+          modeReseller: 'Reseller watermark',
+          resellerLabel: 'Reseller',
+          resellerPlaceholder: 'Search by username',
+          resellerConfigured: 'Support phone: {{phone}}',
+          resellerMissing: 'Support phone not configured',
+          previewGeneric: 'The poster watermark will stay on the generic Lion TV brand for this generation batch.',
+          previewReady: 'The poster watermark will use {{phone}} for reseller {{username}}.',
+          previewMissing: 'Choose a reseller with a configured support phone to generate branded content.',
+          errors: {
+            lookup: 'Could not load reseller support profiles.',
+            resellerRequired: 'Select a reseller to generate branded content.',
+            supportMissing: 'The selected reseller does not have a support phone configured in Support Center.'
+          }
+        },
         kpis: {
           posts: 'Posts',
           postsHelper: 'Posts currently loaded for the selected review date.',
@@ -555,6 +571,8 @@ const resources = {
           eventCount: '{{count}} real events',
           selectedEvents: '{{count}} selected for image',
           updatedAt: 'Updated {{value}}',
+          resellerLabel: 'Reseller: {{username}}',
+          phoneLabel: 'Phone: {{phone}}',
           captionLabel: 'Caption summary',
           emptyCaption: 'Generate this slot to prepare the review copy and image.'
         },
@@ -4506,6 +4524,22 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           historyHelper:
             'Estás revisando una fecha específica. Puedes generar posts para este día exacto cuando necesites un lote manual.'
         },
+        branding: {
+          modeGeneric: 'Marca genérica',
+          modeReseller: 'Marca reseller',
+          resellerLabel: 'Reseller',
+          resellerPlaceholder: 'Buscar por username',
+          resellerConfigured: 'Teléfono de soporte: {{phone}}',
+          resellerMissing: 'El teléfono de soporte no está configurado',
+          previewGeneric: 'La marca de agua del poster se mantendrá con la marca genérica de Lion TV para este lote.',
+          previewReady: 'La marca de agua del poster usará {{phone}} para el reseller {{username}}.',
+          previewMissing: 'Elige un reseller con teléfono de soporte configurado para generar contenido branded.',
+          errors: {
+            lookup: 'No se pudieron cargar los perfiles de soporte reseller.',
+            resellerRequired: 'Selecciona un reseller para generar contenido branded.',
+            supportMissing: 'El reseller seleccionado no tiene teléfono de soporte configurado en Support Center.'
+          }
+        },
         kpis: {
           posts: 'Posts',
           postsHelper: 'Posts cargados actualmente para la fecha seleccionada.',
@@ -4539,6 +4573,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           eventCount: '{{count}} eventos reales',
           selectedEvents: '{{count}} seleccionados para la imagen',
           updatedAt: 'Actualizado {{value}}',
+          resellerLabel: 'Reseller: {{username}}',
+          phoneLabel: 'Teléfono: {{phone}}',
           captionLabel: 'Resumen del caption',
           emptyCaption: 'Genera este slot para preparar el copy y la imagen de revisión.'
         },
