@@ -195,7 +195,17 @@ const liontv = {
       type: 'collapse',
       icon: icons.IconMailCog,
       resellerVisible: false,
-      permission: { any: ['LIONTV_EMAIL_TEMPLATES_VIEW', 'LIONTV_EMAIL_CAMPAIGNS_VIEW', 'LIONTV_MARKETING_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+      permission: {
+        any: [
+          'LIONTV_EMAIL_TEMPLATES_VIEW',
+          'LIONTV_EMAIL_CAMPAIGNS_VIEW',
+          'LIONTV_CONTENT_AUTOMATION_VIEW',
+          'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW',
+          'LIONTV_MARKETING_VIEW',
+          'LIONTV_VIEW',
+          'ROLE_LIONTV_VIEW'
+        ]
+      },
       children: [
         {
           id: 'liontv-email-templates',
@@ -212,6 +222,15 @@ const liontv = {
           url: '/liontv/email-campaigns',
           breadcrumbs: true,
           permission: { any: ['LIONTV_EMAIL_CAMPAIGNS_VIEW', 'LIONTV_MARKETING_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+        },
+        {
+          id: 'liontv-content-automation',
+          title: 'menu.contentAutomation',
+          type: 'item',
+          url: '/liontv/content-automation',
+          resellerVisible: false,
+          breadcrumbs: true,
+          permission: { any: ['LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
         }
       ]
     },

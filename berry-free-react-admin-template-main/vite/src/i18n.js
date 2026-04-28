@@ -71,7 +71,8 @@ const resources = {
         liontvMarketing: 'Marketing',
         liontvMarketingCaption: 'Email templates and campaigns',
         emailTemplates: 'Email Templates',
-        emailCampaigns: 'Email Campaigns'
+        emailCampaigns: 'Email Campaigns',
+        contentAutomation: 'Content Automation'
       },
       auth: {
         hi: 'Hi, Welcome Back',
@@ -505,6 +506,110 @@ const resources = {
         errors: {
           load: 'Could not load credit requests.',
           approve: 'Could not approve this credit request.'
+        }
+      },
+      contentAutomation: {
+        subtitle: 'Review the three daily sports posts, validate the SAFE copy, and publish only after manual approval.',
+        loading: 'Loading content automation review console...',
+        safeMode: 'SAFE mode',
+        safeModeOff: 'SAFE mode disabled',
+        filters: {
+          today: 'Today',
+          tomorrow: 'Tomorrow',
+          date: 'Date',
+          tomorrowHelper:
+            'Tomorrow is the default review date because this console is designed to validate what will be published next.',
+          historyHelper:
+            'You are reviewing a specific date snapshot. Generate tomorrow only refreshes the next scheduled day.'
+        },
+        kpis: {
+          posts: 'Posts',
+          postsHelper: 'Posts currently loaded for the selected review date.',
+          generated: 'Generated',
+          generatedHelper: 'Posts ready for editorial review and approval.',
+          approved: 'Approved',
+          approvedHelper: 'Posts already validated and ready to publish.',
+          published: 'Published',
+          publishedHelper: 'Posts that were sent to the selected publishing flow.',
+          failed: 'Failed',
+          failedHelper: 'Posts that need manual intervention before they can move forward.'
+        },
+        events: {
+          title: 'Tomorrow events',
+          subtitle:
+            'Real fixtures detected for tomorrow in Honduras time. The slot cards below use this distribution to build the review content.',
+          count: '{{count}} real events',
+          emptySlot: 'No featured events were detected in this slot.'
+        },
+        slotsReviewTitle: 'Daily slot review',
+        slotsReviewSubtitle:
+          'Each slot keeps one professional review card with the final status, sanitized copy and image preview.',
+        slots: {
+          morning: 'Morning',
+          afternoon: 'Afternoon',
+          night: 'Night'
+        },
+        slotCard: {
+          emptyTitle: 'No generated post yet',
+          previewPending: 'Preview image is not available yet.',
+          eventCount: '{{count}} real events',
+          updatedAt: 'Updated {{value}}',
+          captionLabel: 'Caption summary',
+          emptyCaption: 'Generate this slot to prepare the review copy and image.'
+        },
+        actions: {
+          generateTomorrow: 'Generate tomorrow',
+          generating: 'Generating...',
+          previewImage: 'Preview image',
+          safePreview: 'Safe preview',
+          regenerateImage: 'Regenerate image',
+          regenerateCaptions: 'Regenerate captions',
+          approve: 'Approve',
+          publish: 'Publish',
+          confirmApprove: 'Approve post',
+          confirmPublish: 'Publish post'
+        },
+        previewDialog: {
+          title: 'Rendered image preview'
+        },
+        safePreviewDialog: {
+          title: 'SAFE preview',
+          loading: 'Loading SAFE preview...',
+          clean: 'No direct URL or domain detected',
+          review: 'Review CTA and remove direct URL references',
+          caption: 'Sanitized caption'
+        },
+        confirm: {
+          approveTitle: 'Approve generated post',
+          approveDescription: 'This will mark the slot as approved and keep it ready for manual publishing.',
+          publishTitle: 'Publish approved post',
+          publishDescription: 'This will send the slot through the configured publishing flow and mark it as published.'
+        },
+        empty: {
+          tomorrow: 'No slot posts were generated for tomorrow yet. Use "Generate tomorrow" to build the review set.',
+          history: 'No posts were stored for this date yet. Select another day or generate the next scheduled review batch.'
+        },
+        status: {
+          DRAFT: 'Draft',
+          GENERATED: 'Generated',
+          APPROVED: 'Approved',
+          PUBLISHED: 'Published',
+          FAILED: 'Failed'
+        },
+        messages: {
+          generated: '{{count}} slot posts were refreshed for tomorrow.',
+          imageRegenerated: 'The preview image was regenerated successfully.',
+          captionsRegenerated: 'The captions were regenerated successfully.',
+          approved: 'The post is now approved for publishing.',
+          published: 'The post was published successfully.'
+        },
+        errors: {
+          loadPosts: 'Could not load content automation posts.',
+          loadEvents: 'Could not load tomorrow events.',
+          generate: 'Could not generate tomorrow posts.',
+          previewMissing: 'Preview image is not available yet.',
+          safePreview: 'Could not load the safe preview.',
+          slotFailed: 'This slot failed and needs attention.'
         }
       },
       managedAccounts: {
@@ -3927,7 +4032,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         liontvMarketing: 'Marketing',
         liontvMarketingCaption: 'Templates y campañas de correo',
         emailTemplates: 'Templates de Email',
-        emailCampaigns: 'Campañas de Email'
+        emailCampaigns: 'Campañas de Email',
+        contentAutomation: 'Automatización de Contenido'
       },
       auth: {
         hi: 'Hola, bienvenido',
@@ -4360,6 +4466,110 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         errors: {
           load: 'No se pudieron cargar las solicitudes de créditos.',
           approve: 'No se pudo aprobar esta solicitud de créditos.'
+        }
+      },
+      contentAutomation: {
+        subtitle: 'Revisa los tres posts deportivos del día, valida el copy SAFE y publica solo después de la aprobación manual.',
+        loading: 'Cargando consola de revisión de automatización de contenido...',
+        safeMode: 'Modo SAFE',
+        safeModeOff: 'Modo SAFE desactivado',
+        filters: {
+          today: 'Hoy',
+          tomorrow: 'Mañana',
+          date: 'Fecha',
+          tomorrowHelper:
+            'Mañana es la fecha predeterminada porque esta consola está pensada para validar lo que se publicará a continuación.',
+          historyHelper:
+            'Estás revisando una fecha específica. Generar mañana solo refresca el siguiente día programado.'
+        },
+        kpis: {
+          posts: 'Posts',
+          postsHelper: 'Posts cargados actualmente para la fecha seleccionada.',
+          generated: 'Generados',
+          generatedHelper: 'Posts listos para revisión editorial y aprobación.',
+          approved: 'Aprobados',
+          approvedHelper: 'Posts ya validados y listos para publicación.',
+          published: 'Publicados',
+          publishedHelper: 'Posts que ya se enviaron al flujo de publicación configurado.',
+          failed: 'Fallidos',
+          failedHelper: 'Posts que requieren intervención manual antes de continuar.'
+        },
+        events: {
+          title: 'Eventos de mañana',
+          subtitle:
+            'Partidos reales detectados para mañana en horario de Honduras. Las cards por slot usan esta distribución para construir el contenido de revisión.',
+          count: '{{count}} eventos reales',
+          emptySlot: 'No se detectaron eventos destacados para este slot.'
+        },
+        slotsReviewTitle: 'Revisión diaria por slot',
+        slotsReviewSubtitle:
+          'Cada slot mantiene una card profesional con el estado final, el copy sanitizado y la imagen generada.',
+        slots: {
+          morning: 'Mañana',
+          afternoon: 'Tarde',
+          night: 'Noche'
+        },
+        slotCard: {
+          emptyTitle: 'Todavía no hay post generado',
+          previewPending: 'La imagen de vista previa todavía no está disponible.',
+          eventCount: '{{count}} eventos reales',
+          updatedAt: 'Actualizado {{value}}',
+          captionLabel: 'Resumen del caption',
+          emptyCaption: 'Genera este slot para preparar el copy y la imagen de revisión.'
+        },
+        actions: {
+          generateTomorrow: 'Generar mañana',
+          generating: 'Generando...',
+          previewImage: 'Ver imagen',
+          safePreview: 'Vista SAFE',
+          regenerateImage: 'Regenerar imagen',
+          regenerateCaptions: 'Regenerar captions',
+          approve: 'Aprobar',
+          publish: 'Publicar',
+          confirmApprove: 'Aprobar post',
+          confirmPublish: 'Publicar post'
+        },
+        previewDialog: {
+          title: 'Vista previa de la imagen renderizada'
+        },
+        safePreviewDialog: {
+          title: 'Vista SAFE',
+          loading: 'Cargando vista SAFE...',
+          clean: 'No se detectó URL ni dominio directo',
+          review: 'Revisa el CTA y elimina referencias directas',
+          caption: 'Caption sanitizado'
+        },
+        confirm: {
+          approveTitle: 'Aprobar post generado',
+          approveDescription: 'Esto marcará el slot como aprobado y lo dejará listo para publicación manual.',
+          publishTitle: 'Publicar post aprobado',
+          publishDescription: 'Esto enviará el slot al flujo de publicación configurado y lo marcará como publicado.'
+        },
+        empty: {
+          tomorrow: 'Todavía no se generaron posts para mañana. Usa "Generar mañana" para construir el set de revisión.',
+          history: 'No hay posts almacenados para esta fecha. Selecciona otro día o genera el siguiente lote programado.'
+        },
+        status: {
+          DRAFT: 'Borrador',
+          GENERATED: 'Generado',
+          APPROVED: 'Aprobado',
+          PUBLISHED: 'Publicado',
+          FAILED: 'Fallido'
+        },
+        messages: {
+          generated: 'Se refrescaron {{count}} posts por slot para mañana.',
+          imageRegenerated: 'La imagen de vista previa se regeneró correctamente.',
+          captionsRegenerated: 'Los captions se regeneraron correctamente.',
+          approved: 'El post quedó aprobado para publicación.',
+          published: 'El post se publicó correctamente.'
+        },
+        errors: {
+          loadPosts: 'No se pudieron cargar los posts de automatización.',
+          loadEvents: 'No se pudieron cargar los eventos de mañana.',
+          generate: 'No se pudieron generar los posts de mañana.',
+          previewMissing: 'La imagen de vista previa todavía no está disponible.',
+          safePreview: 'No se pudo cargar la vista SAFE.',
+          slotFailed: 'Este slot falló y requiere atención.'
         }
       },
       managedAccounts: {

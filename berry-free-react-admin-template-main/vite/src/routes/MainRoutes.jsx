@@ -17,6 +17,7 @@ const PotentialCustomersLionTv = Loadable(lazy(() => import('views/liontv/Potent
 const ReferralLeadsLionTv = Loadable(lazy(() => import('views/liontv/ReferralLeadsLionTv')));
 const EmailTemplatesLionTv = Loadable(lazy(() => import('views/liontv/EmailTemplatesLionTv')));
 const EmailCampaignsLionTv = Loadable(lazy(() => import('views/liontv/EmailCampaignsLionTv')));
+const ContentAutomationLionTv = Loadable(lazy(() => import('views/liontv/ContentAutomationLionTv')));
 const PaymentCommitmentsLionTv = Loadable(lazy(() => import('views/liontv/PaymentCommitmentsLionTv')));
 const MoviesFeedLionTv = Loadable(lazy(() => import('views/liontv/MoviesFeedLionTv')));
 const SeriesFeedLionTv = Loadable(lazy(() => import('views/liontv/SeriesFeedLionTv')));
@@ -202,6 +203,15 @@ const MainRoutes = {
           element: protectPage(
             { any: ['LIONTV_EMAIL_CAMPAIGNS_VIEW', 'LIONTV_MARKETING_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
             <EmailCampaignsLionTv />,
+            '/liontv/dashboard',
+            true
+          )
+        },
+        {
+          path: '/liontv/content-automation',
+          element: protectPage(
+            { any: ['LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_ADMIN', 'ADMIN'] },
+            <ContentAutomationLionTv />,
             '/liontv/dashboard',
             true
           )

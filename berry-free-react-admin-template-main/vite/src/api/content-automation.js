@@ -1,0 +1,57 @@
+import { contentAutomationApi } from 'utils/api';
+
+const unwrap = (response) => response?.data?.data ?? response?.data ?? null;
+
+export async function getContentAutomationTomorrowEvents(config = {}) {
+  const response = await contentAutomationApi.get('/api/content-automation/events/tomorrow', config);
+  return unwrap(response);
+}
+
+export async function generateContentAutomationTomorrow(config = {}) {
+  const response = await contentAutomationApi.post('/api/content-automation/generate/tomorrow', null, config);
+  return unwrap(response);
+}
+
+export async function getContentAutomationPostsByDate(date, config = {}) {
+  const response = await contentAutomationApi.get('/api/content-automation/posts', {
+    ...config,
+    params: {
+      ...(config?.params || {}),
+      date
+    }
+  });
+  return unwrap(response);
+}
+
+export async function approveContentAutomationPost(postId, config = {}) {
+  const response = await contentAutomationApi.post(`/api/content-automation/posts/${postId}/approve`, null, config);
+  return unwrap(response);
+}
+
+export async function publishContentAutomationPost(postId, config = {}) {
+  const response = await contentAutomationApi.post(`/api/content-automation/posts/${postId}/publish`, null, config);
+  return unwrap(response);
+}
+
+export async function regenerateContentAutomationImage(postId, config = {}) {
+  const response = await contentAutomationApi.post(`/api/content-automation/posts/${postId}/regenerate-image`, null, config);
+  return unwrap(response);
+}
+
+export async function regenerateContentAutomationCaptions(postId, config = {}) {
+  const response = await contentAutomationApi.post(`/api/content-automation/posts/${postId}/regenerate-captions`, null, config);
+  return unwrap(response);
+}
+
+export async function getContentAutomationSafePreview(postId, config = {}) {
+  const response = await contentAutomationApi.get(`/api/content-automation/posts/${postId}/safe-preview`, config);
+  return unwrap(response);
+}
+
+export async function getContentAutomationPreviewImageBlob(postId, config = {}) {
+  const response = await contentAutomationApi.get(`/api/content-automation/posts/${postId}/preview-image`, {
+    ...config,
+    responseType: 'blob'
+  });
+  return response?.data ?? null;
+}

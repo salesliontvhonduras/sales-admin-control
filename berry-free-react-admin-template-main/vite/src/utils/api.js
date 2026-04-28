@@ -9,8 +9,29 @@ const API_SMS = import.meta.env.VITE_API_SMS;
 const BASE_URL = import.meta.env.VITE_APP_BASE_NAME;
 const API_CATALOGS = import.meta.env.VITE_API_CATALOGS;
 const API_LIONTV = import.meta.env.VITE_API_LIONTV;
-
 const trimTrailingSlash = (value) => String(value || '').replace(/\/+$/, '');
+const normalizeContentAutomationBaseUrl = (value) => {
+  if (!value) return '';
+
+  let normalized = trimTrailingSlash(value);
+
+  if (normalized.includes('/panel-lion-tv')) {
+    normalized = normalized.replace('/panel-lion-tv', '/content-automation');
+  } else if (normalized.endsWith('/liontv')) {
+    normalized = `${normalized}/content-automation`;
+  }
+
+  return normalized;
+};
+const API_CONTENT_AUTOMATION = (() => {
+  const direct = normalizeContentAutomationBaseUrl(import.meta.env.VITE_API_CONTENT_AUTOMATION);
+  if (direct) return direct;
+
+  const lionTv = normalizeContentAutomationBaseUrl(import.meta.env.VITE_API_LIONTV);
+  if (lionTv) return lionTv;
+
+  return '';
+})();
 
 const normalizeM3uBaseUrl = (value) => {
   if (!value) return '';
@@ -98,6 +119,12 @@ export const lionTvApi = axios.create({
   withCredentials: COOKIE_MODE
 });
 
+export const contentAutomationApi = axios.create({
+  baseURL: API_CONTENT_AUTOMATION,
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: COOKIE_MODE
+});
+
 export const m3uCatalogApi = axios.create({
   baseURL: API_M3U_CATALOG,
   headers: { 'Content-Type': 'application/json' },
@@ -174,6 +201,7 @@ productsApi.interceptors.request.use(attachToken);
 reservationsApi.interceptors.request.use(attachToken);
 smsApi.interceptors.request.use(attachToken);
 lionTvApi.interceptors.request.use(attachToken);
+contentAutomationApi.interceptors.request.use(attachToken);
 m3uCatalogApi.interceptors.request.use(attachToken);
 catalogsApi.interceptors.request.use(attachToken);
 sagaApi.interceptors.request.use(attachToken);
@@ -245,6 +273,7 @@ const apiClients = [
   reservationsApi,
   smsApi,
   lionTvApi,
+  contentAutomationApi,
   m3uCatalogApi,
   catalogsApi,
   sagaApi,
