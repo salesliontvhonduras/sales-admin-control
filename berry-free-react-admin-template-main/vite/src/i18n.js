@@ -61,7 +61,7 @@ const resources = {
         userAccess: 'Users & Access',
         userAccessCaption: 'Roles and permissions',
         panelAuths: 'Panel Integrations',
-        panelAuthsCaption: 'Vivo/9xtream credentials by user',
+        panelAuthsCaption: 'Vivo, 9xtream and Bob Player credentials by user',
         catalogs: 'Catalogs',
         catalogsCaption: 'catalogs for system',
         catalogBanks: 'Banks',
@@ -2337,7 +2337,7 @@ const resources = {
       },
       panelAuthAdmin: {
         title: 'Panel Integrations',
-        subtitle: 'Manage Vivo Player and 9xtream credentials by system user from a single secure module.',
+        subtitle: 'Manage Vivo Player, 9xtream and Bob Player credentials by system user from a single secure module.',
         actions: {
           refresh: 'Refresh',
           new: 'New integration',
@@ -2347,7 +2347,11 @@ const resources = {
           delete: 'Delete',
           cancel: 'Cancel',
           save: 'Save changes',
-          create: 'Create'
+          create: 'Create',
+          authenticateBob: 'Authenticate Bob Player',
+          refreshCaptcha: 'Refresh captcha',
+          clearSession: 'Clear session',
+          completeBobLogin: 'Complete login'
         },
         filters: {
           username: 'System user',
@@ -2363,6 +2367,7 @@ const resources = {
           panelUser: 'Panel user',
           apiUrl: 'API URL',
           cmsUrl: 'CMS URL',
+          session: 'Session',
           status: 'Status',
           updatedAt: 'Updated',
           actions: 'Actions',
@@ -2375,20 +2380,37 @@ const resources = {
           password: 'Panel password',
           passwordOptional: 'Panel password (optional)',
           apiBaseUrl: 'API base URL',
-          cmsBaseUrl: 'CMS base URL'
+          cmsBaseUrl: 'CMS base URL',
+          macAddress: 'MAC address',
+          deviceKey: 'Device key',
+          deviceKeyOptional: 'Device key (optional)',
+          deviceKeyMasked: 'Stored device key',
+          captchaAnswer: 'Captcha',
+          lastRefreshed: 'Last refreshed'
         },
         status: {
           active: 'ACTIVE',
           inactive: 'INACTIVE'
         },
+        session: {
+          ready: 'Ready',
+          captchaRequired: 'Captcha required',
+          authBlocked: 'Auth blocked',
+          invalid: 'Invalid session',
+          notApplicable: 'N/A',
+          loading: 'Loading...'
+        },
         dialogs: {
           createTitle: 'Create integration',
           editTitle: 'Edit integration',
           deleteTitle: 'Delete integration',
-          deleteMessage: 'This action will permanently remove this panel integration.'
+          deleteMessage: 'This action will permanently remove this panel integration.',
+          bobAuthTitle: 'Authenticate Bob Player',
+          bobAuthHelper:
+            'The system uses the stored MAC address and device key, requests the live captcha from Bob Player and only asks the operator for the captcha answer.'
         },
         messages: {
-          apiMissing: 'VITE_API_VIVO_PLAYER is not configured. Add this environment variable to use this module.',
+          apiMissing: 'Panel integrations require the Lion TV and panel credential API routes to be configured in this environment.',
           requiredFields: 'Complete user, provider and panel user.',
           passwordRequired: 'Password is required when creating an integration.',
           loadError: 'Could not load panel integrations.',
@@ -2398,7 +2420,22 @@ const resources = {
           saveError: 'Could not save integration.',
           deleteError: 'Could not delete integration.',
           statusUpdated: 'Status updated successfully.',
-          statusError: 'Could not update status.'
+          statusError: 'Could not update status.',
+          bobStartError: 'Could not start Bob Player authentication.',
+          bobCompleteError: 'Could not complete Bob Player authentication.',
+          bobLoginSuccess: 'Bob Player session authenticated successfully.',
+          bobSessionCleared: 'Bob Player session cleared.',
+          bobClearError: 'Could not clear Bob Player session.',
+          captchaAnswerRequired: 'Enter the captcha before continuing.',
+          captchaUnavailable: 'Captcha preview unavailable. Refresh the challenge.',
+          bobProviderHint:
+            'For Bob Player, the panel user field stores the MAC address and the password field stores the device key. Complete the captcha later from the row action.'
+        },
+        metrics: {
+          total: 'Integrations',
+          active: 'Active',
+          bobTotal: 'Bob integrations',
+          bobReady: 'Bob ready'
         }
       },
       sidebarRadar: {
@@ -4076,7 +4113,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         userAccess: 'Usuarios y Accesos',
         userAccessCaption: 'Roles y permisos',
         panelAuths: 'Integraciones de Panel',
-        panelAuthsCaption: 'Credenciales Vivo/9xtream por usuario',
+        panelAuthsCaption: 'Credenciales Vivo, 9xtream y Bob Player por usuario',
         catalogs: 'Catálogos',
         catalogsCaption: 'Bancos, servicios, países y paquetes',
         catalogBanks: 'Bancos',
@@ -6357,7 +6394,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
       },
       panelAuthAdmin: {
         title: 'Integraciones de Panel',
-        subtitle: 'Administra credenciales de Vivo Player y 9xtream por usuario del sistema desde un solo módulo seguro.',
+        subtitle: 'Administra credenciales de Vivo Player, 9xtream y Bob Player por usuario del sistema desde un solo módulo seguro.',
         actions: {
           refresh: 'Refrescar',
           new: 'Nueva integración',
@@ -6367,7 +6404,11 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           delete: 'Eliminar',
           cancel: 'Cancelar',
           save: 'Guardar cambios',
-          create: 'Crear'
+          create: 'Crear',
+          authenticateBob: 'Autenticar Bob Player',
+          refreshCaptcha: 'Refrescar captcha',
+          clearSession: 'Limpiar sesión',
+          completeBobLogin: 'Completar login'
         },
         filters: {
           username: 'Usuario del sistema',
@@ -6383,6 +6424,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           panelUser: 'Usuario de panel',
           apiUrl: 'URL API',
           cmsUrl: 'URL CMS',
+          session: 'Sesión',
           status: 'Estado',
           updatedAt: 'Actualizado',
           actions: 'Acciones',
@@ -6395,20 +6437,37 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           password: 'Password de panel',
           passwordOptional: 'Password de panel (opcional)',
           apiBaseUrl: 'URL base API',
-          cmsBaseUrl: 'URL base CMS'
+          cmsBaseUrl: 'URL base CMS',
+          macAddress: 'Dirección MAC',
+          deviceKey: 'Device key',
+          deviceKeyOptional: 'Device key (opcional)',
+          deviceKeyMasked: 'Device key guardada',
+          captchaAnswer: 'Captcha',
+          lastRefreshed: 'Última actualización'
         },
         status: {
           active: 'ACTIVO',
           inactive: 'INACTIVO'
         },
+        session: {
+          ready: 'Lista',
+          captchaRequired: 'Captcha requerido',
+          authBlocked: 'Autenticación bloqueada',
+          invalid: 'Sesión inválida',
+          notApplicable: 'N/A',
+          loading: 'Cargando...'
+        },
         dialogs: {
           createTitle: 'Crear integración',
           editTitle: 'Editar integración',
           deleteTitle: 'Eliminar integración',
-          deleteMessage: 'Esta acción eliminará permanentemente esta integración de panel.'
+          deleteMessage: 'Esta acción eliminará permanentemente esta integración de panel.',
+          bobAuthTitle: 'Autenticar Bob Player',
+          bobAuthHelper:
+            'El sistema usa la MAC y el device key guardados, solicita el captcha real de Bob Player y solo le pide al operador la respuesta del captcha.'
         },
         messages: {
-          apiMissing: 'VITE_API_VIVO_PLAYER no está configurado. Agrega esta variable de entorno para usar este módulo.',
+          apiMissing: 'Las integraciones de panel requieren que las rutas Lion TV y credenciales de panel estén configuradas en este entorno.',
           requiredFields: 'Completa usuario, proveedor y usuario de panel.',
           passwordRequired: 'El password es obligatorio al crear una integración.',
           loadError: 'No se pudieron cargar las integraciones de panel.',
@@ -6418,7 +6477,22 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           saveError: 'No se pudo guardar la integración.',
           deleteError: 'No se pudo eliminar la integración.',
           statusUpdated: 'Estado actualizado correctamente.',
-          statusError: 'No se pudo actualizar el estado.'
+          statusError: 'No se pudo actualizar el estado.',
+          bobStartError: 'No se pudo iniciar la autenticación de Bob Player.',
+          bobCompleteError: 'No se pudo completar la autenticación de Bob Player.',
+          bobLoginSuccess: 'La sesión de Bob Player quedó autenticada correctamente.',
+          bobSessionCleared: 'La sesión de Bob Player fue limpiada.',
+          bobClearError: 'No se pudo limpiar la sesión de Bob Player.',
+          captchaAnswerRequired: 'Escribe el captcha antes de continuar.',
+          captchaUnavailable: 'La vista previa del captcha no está disponible. Refresca el challenge.',
+          bobProviderHint:
+            'Para Bob Player, el usuario de panel guarda la dirección MAC y el password guarda el device key. El captcha se completa después desde la acción de la fila.'
+        },
+        metrics: {
+          total: 'Integraciones',
+          active: 'Activas',
+          bobTotal: 'Integraciones Bob',
+          bobReady: 'Bob listo'
         }
       },
       sidebarRadar: {

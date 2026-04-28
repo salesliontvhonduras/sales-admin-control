@@ -83,6 +83,18 @@ function statusColor(status) {
   return 'primary';
 }
 
+function booleanChipColor(value) {
+  return value ? 'success' : 'warning';
+}
+
+function bobSessionChipColor(status) {
+  const normalized = String(status || '').toUpperCase();
+  if (normalized === 'READY') return 'success';
+  if (normalized === 'CAPTCHA_REQUIRED') return 'warning';
+  if (normalized === 'AUTH_BLOCKED' || normalized === 'INVALID') return 'error';
+  return 'default';
+}
+
 function CycleCard({ title, cycle, stale, loading, onRun, runLabel, disabled }) {
   if (loading && !cycle) {
     return (
@@ -204,6 +216,8 @@ export default function SubscriptionExpirationLionTv() {
   } = useSubscriptionExpirationOverview({
     enabled: Boolean(accessToken)
   });
+
+  const yesNoLabel = useCallback((value) => (value ? t('common.yes', 'YES') : t('common.no', 'NO')), [t]);
 
   const loadJobs = useCallback(async () => {
     if (!accessToken) return;
@@ -707,7 +721,7 @@ export default function SubscriptionExpirationLionTv() {
               </Stack>
 
               <Alert severity={detail.providerSupported && detail.credentialFound && detail.licensesFound ? 'success' : 'warning'} variant="outlined">
-                {`licensesFound=${detail.licensesFound} · providerSupported=${detail.providerSupported} · credentialFound=${detail.credentialFound}`}
+                {`${t('subscriptionExpiration.drawer.summaryFlags', 'Licenses found')}: ${yesNoLabel(detail.licensesFound)} · ${t('subscriptionExpiration.drawer.providerSupported', 'Provider supported')}: ${yesNoLabel(detail.providerSupported)} · ${t('subscriptionExpiration.drawer.credentialFound', 'Credential found')}: ${yesNoLabel(detail.credentialFound)}`}
               </Alert>
 
               <Card variant="outlined" sx={{ borderRadius: 2.5 }}>
@@ -753,10 +767,57 @@ export default function SubscriptionExpirationLionTv() {
                             <Chip size="small" label={license.status || '-'} color={statusColor(license.status)} />
                           </Stack>
                           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
-                            <Chip size="small" variant="outlined" label={`providerSupported=${license.providerSupported}`} />
-                            <Chip size="small" variant="outlined" label={`credentialFound=${license.credentialFound}`} />
-                            <Chip size="small" variant="outlined" label={`contextValid=${license.contextValid}`} />
+                            <Chip
+                              size="small"
+                              color={booleanChipColor(license.providerSupported)}
+                              variant="outlined"
+                              label={`${t('subscriptionExpiration.drawer.providerSupported', 'Provider supported')}: ${yesNoLabel(license.providerSupported)}`}
+                            />
+                            <Chip
+                              size="small"
+                              color={booleanChipColor(license.credentialFound)}
+                              variant="outlined"
+                              label={`${t('subscriptionExpiration.drawer.credentialFound', 'Credential found')}: ${yesNoLabel(license.credentialFound)}`}
+                            />
+                            <Chip
+                              size="small"
+                              color={booleanChipColor(license.contextValid)}
+                              variant="outlined"
+                              label={`${t('subscriptionExpiration.drawer.contextValid', 'Context valid')}: ${yesNoLabel(license.contextValid)}`}
+                            />
+                            {license.provider === 'BOB_PLAYER' ? (
+                              <Chip
+                                size="small"
+                                color={bobSessionChipColor(license.sessionStatus)}
+                                variant="outlined"
+                                label={`${t('subscriptionExpiration.drawer.sessionStatus', 'Session')}: ${license.sessionStatus || 'N/A'}`}
+                              />
+                            ) : null}
+                            {license.provider === 'BOB_PLAYER' ? (
+                              <Chip
+                                size="small"
+                                color={booleanChipColor(license.sessionReady)}
+                                variant="outlined"
+                                label={`${t('subscriptionExpiration.drawer.sessionReady', 'Session ready')}: ${yesNoLabel(license.sessionReady)}`}
+                              />
+                            ) : null}
+                            {license.remotePlaylistId ? (
+                              <Chip
+                                size="small"
+                                color="info"
+                                variant="outlined"
+                                label={`${t('subscriptionExpiration.drawer.remotePlaylistId', 'Remote playlist')}: ${license.remotePlaylistId}`}
+                              />
+                            ) : null}
                           </Stack>
+                          {license.provider === 'BOB_PLAYER' && !license.sessionReady ? (
+                            <Alert severity="warning" variant="outlined" sx={{ mt: 1 }}>
+                              {t(
+                                'subscriptionExpiration.drawer.bobSessionBlocked',
+                                'Bob Player requires a valid authenticated session before the automatic removal worker can manage playlists.'
+                              )}
+                            </Alert>
+                          ) : null}
                         </Box>
                       ))
                     ) : (
