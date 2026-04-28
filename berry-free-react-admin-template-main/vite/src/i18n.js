@@ -159,6 +159,11 @@ const resources = {
         cancel: 'Cancel',
         whatsapp: 'WhatsApp'
       },
+      headerCredits: {
+        label: '{{count}} credits',
+        shortLabel: '{{count}} cr',
+        tooltip: 'Open the wallet to request or review credits.'
+      },
       invoices: {
         title: 'Invoices',
         summary: {
@@ -4009,6 +4014,11 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         sending: 'Enviando...',
         cancel: 'Cancelar',
         whatsapp: 'WhatsApp'
+      },
+      headerCredits: {
+        label: '{{count}} créditos',
+        shortLabel: '{{count}} cr',
+        tooltip: 'Abre el wallet para solicitar o revisar créditos.'
       },
       invoices: {
         title: 'Facturas',

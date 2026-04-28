@@ -59,7 +59,7 @@ export default function Header() {
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: { xs: 0.75, sm: 1 }, minWidth: 0, flexShrink: 0 }}>
-        <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+        <Box sx={{ display: 'flex', minWidth: 0, flexShrink: 0 }}>
           <ResellerCreditsChip />
         </Box>
         <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
