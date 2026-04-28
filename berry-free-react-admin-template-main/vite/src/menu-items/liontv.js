@@ -194,7 +194,6 @@ const liontv = {
       caption: 'menu.liontvMarketingCaption',
       type: 'collapse',
       icon: icons.IconMailCog,
-      resellerVisible: false,
       permission: {
         any: [
           'LIONTV_EMAIL_TEMPLATES_VIEW',

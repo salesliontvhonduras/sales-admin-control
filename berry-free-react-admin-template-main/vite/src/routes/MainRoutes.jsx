@@ -193,18 +193,14 @@ const MainRoutes = {
           path: '/liontv/email-templates',
           element: protectPage(
             { any: ['LIONTV_EMAIL_TEMPLATES_VIEW', 'LIONTV_MARKETING_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <EmailTemplatesLionTv />,
-            '/liontv/dashboard',
-            true
+            <EmailTemplatesLionTv />
           )
         },
         {
           path: '/liontv/email-campaigns',
           element: protectPage(
             { any: ['LIONTV_EMAIL_CAMPAIGNS_VIEW', 'LIONTV_MARKETING_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <EmailCampaignsLionTv />,
-            '/liontv/dashboard',
-            true
+            <EmailCampaignsLionTv />
           )
         },
         {
