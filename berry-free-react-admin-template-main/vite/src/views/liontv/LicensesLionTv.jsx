@@ -4,6 +4,7 @@ import useAuth from 'hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
+import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -65,6 +66,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import PlaylistRemoveIcon from '@mui/icons-material/PlaylistRemove';
+import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
 import LionMetricCard from 'ui-component/cards/LionMetricCard';
@@ -78,6 +80,11 @@ import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { listLicenseApps } from 'api/catalog-admin';
 import { lionTvApi } from 'utils/api';
+import {
+  clearLicenseBobSession,
+  completeLicenseBobCaptcha,
+  startLicenseBobCaptcha
+} from 'api/liontv-license-bob';
 
 const UNKNOWN_RANDOM_APP = 'UNKNOWN_RANDOM';
 
@@ -89,6 +96,10 @@ function isManagedLicenseRecord(record = {}) {
   return Boolean(record) && !Boolean(record?.randomLicense) && !isRandomLicenseApp(record?.app);
 }
 
+function isBobLicenseRecord(record = {}) {
+  return String(record?.app || '').trim().toUpperCase() === 'BOB_PLAYER';
+}
+
 function hasSubscriptionLink(record = {}) {
   return Boolean(record?.subscriptionId);
 }
@@ -97,10 +108,11 @@ function requiresSubscriptionLink(record = {}) {
   return isManagedLicenseRecord(record) && !hasSubscriptionLink(record);
 }
 
-function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onHistory, onDelete, t }) {
+function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onHistory, onDelete, onBobAuth, t }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const supportsRemoteActions = isManagedLicenseRecord(row) && hasSubscriptionLink(row);
+  const supportsBobAuth = isBobLicenseRecord(row);
   return (
     <>
       <IconButton
@@ -131,6 +143,17 @@ function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onHi
           <EditOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#1e88e5' }} />
           {t('actions.edit', 'Edit')}
         </MenuItem>
+        {supportsBobAuth ? (
+          <MenuItem
+            onClick={() => {
+              setAnchorEl(null);
+              onBobAuth?.(row);
+            }}
+          >
+            <VpnKeyOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#ef6c00' }} />
+            {t('licenses.actions.authenticateBob', 'Authenticate Bob Player')}
+          </MenuItem>
+        ) : null}
         <MenuItem
           onClick={() => {
             setAnchorEl(null);
@@ -280,6 +303,12 @@ function parseToDay(value) {
   return date;
 }
 
+function formatDateTime(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
+}
+
 function resolveDisplayStatus(statusRaw, expireAt) {
   const normalized = (statusRaw ?? '').toUpperCase();
   if (normalized === 'EXPIRED') return 'EXPIRED';
@@ -397,6 +426,10 @@ function normalizeLicense(item = {}) {
     app: item.app ?? '',
     price: item.price ?? 0,
     isPaid: parsePaidValue(item.isPaid ?? item.is_paid ?? item.paid),
+    remotePlaylistId: item.remotePlaylistId ?? item.remote_playlist_id ?? '',
+    bobSessionStatus: item.bobSessionStatus ?? item.bob_session_status ?? '',
+    bobSessionRefreshedAt: item.bobSessionRefreshedAt ?? item.bob_session_refreshed_at ?? null,
+    bobLastAuthError: item.bobLastAuthError ?? item.bob_last_auth_error ?? '',
     createdAt: item.createdAt ?? item.created_at ?? null,
     expireAt,
     licensePeriod: item.licensePeriod ?? item.license_period ?? '',
@@ -418,6 +451,23 @@ function LicensePaidChip({ isPaid, t }) {
       sx={{ fontWeight: 700 }}
     />
   );
+}
+
+function bobSessionColor(status) {
+  const normalized = String(status || '').trim().toUpperCase();
+  if (normalized === 'READY') return 'success';
+  if (normalized === 'CAPTCHA_REQUIRED') return 'warning';
+  if (normalized === 'AUTH_BLOCKED' || normalized === 'INVALID') return 'error';
+  return 'default';
+}
+
+function bobSessionLabel(status, t) {
+  const normalized = String(status || '').trim().toUpperCase();
+  if (normalized === 'READY') return t('licenses.bob.session.ready', 'Ready');
+  if (normalized === 'CAPTCHA_REQUIRED') return t('licenses.bob.session.captchaRequired', 'Captcha required');
+  if (normalized === 'AUTH_BLOCKED') return t('licenses.bob.session.authBlocked', 'Auth blocked');
+  if (normalized === 'INVALID') return t('licenses.bob.session.invalid', 'Invalid session');
+  return t('licenses.bob.session.notConfigured', 'Not configured');
 }
 
 export default function LicensesLionTv() {
@@ -476,6 +526,15 @@ export default function LicensesLionTv() {
   const [historyOpen, setHistoryOpen] = useState({ open: false, row: null });
   const [openServerChange, setOpenServerChange] = useState({ open: false, row: null });
   const [openRemovePlaylists, setOpenRemovePlaylists] = useState({ open: false, row: null });
+  const [bobAuthDialog, setBobAuthDialog] = useState({
+    open: false,
+    row: null,
+    challengeId: '',
+    captchaSvg: '',
+    captchaAnswer: '',
+    session: null,
+    loading: false
+  });
   const [serverForm, setServerForm] = useState({
     serverKey: '',
     subscriptionId: '',
@@ -1241,6 +1300,108 @@ export default function LicensesLionTv() {
     }
   };
 
+  const closeBobAuth = () => {
+    setBobAuthDialog({
+      open: false,
+      row: null,
+      challengeId: '',
+      captchaSvg: '',
+      captchaAnswer: '',
+      session: null,
+      loading: false
+    });
+  };
+
+  const openBobAuth = async (row) => {
+    if (!row?.licenseId) return;
+    setBobAuthDialog({
+      open: true,
+      row,
+      challengeId: '',
+      captchaSvg: '',
+      captchaAnswer: '',
+      session: null,
+      loading: true
+    });
+    try {
+      const response = await startLicenseBobCaptcha(row.licenseId, accessToken);
+      setBobAuthDialog((prev) => ({
+        ...prev,
+        challengeId: response.challengeId || '',
+        captchaSvg: response.captchaSvg || '',
+        session: response,
+        loading: false
+      }));
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('licenses.bob.messages.startError', 'Could not start Bob Player authentication.'), {
+          variant: 'error'
+        });
+      }
+      closeBobAuth();
+    }
+  };
+
+  const handleCompleteBobCaptcha = async () => {
+    const licenseId = bobAuthDialog.row?.licenseId;
+    if (!licenseId || !bobAuthDialog.challengeId || !bobAuthDialog.captchaAnswer) {
+      enqueueSnackbar(t('licenses.bob.messages.captchaRequired', 'Enter the captcha before continuing.'), { variant: 'warning' });
+      return;
+    }
+
+    setBobAuthDialog((prev) => ({ ...prev, loading: true }));
+    try {
+      const response = await completeLicenseBobCaptcha(
+        licenseId,
+        {
+          challengeId: bobAuthDialog.challengeId,
+          captchaAnswer: bobAuthDialog.captchaAnswer
+        },
+        accessToken
+      );
+      enqueueSnackbar(t('licenses.bob.messages.success', 'Bob Player session authenticated successfully.'), { variant: 'success' });
+      setBobAuthDialog((prev) => ({
+        ...prev,
+        session: response,
+        captchaAnswer: '',
+        loading: false
+      }));
+      setRefreshKey((value) => value + 1);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('licenses.bob.messages.completeError', 'Could not complete Bob Player authentication.'), {
+          variant: 'error'
+        });
+      }
+      setBobAuthDialog((prev) => ({ ...prev, loading: false }));
+    }
+  };
+
+  const handleClearBobSession = async () => {
+    const licenseId = bobAuthDialog.row?.licenseId;
+    if (!licenseId) return;
+
+    setBobAuthDialog((prev) => ({ ...prev, loading: true }));
+    try {
+      const response = await clearLicenseBobSession(licenseId, accessToken);
+      enqueueSnackbar(t('licenses.bob.messages.cleared', 'Bob Player session cleared.'), { variant: 'success' });
+      setBobAuthDialog((prev) => ({
+        ...prev,
+        session: response,
+        captchaAnswer: '',
+        loading: false
+      }));
+      setRefreshKey((value) => value + 1);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('licenses.bob.messages.clearError', 'Could not clear Bob Player session.'), {
+          variant: 'error'
+        });
+      }
+      setBobAuthDialog((prev) => ({ ...prev, loading: false }));
+    }
+  };
+
   const selectedServerSubscription = useMemo(
     () => (serverForm.subscriptionId ? subscriptionMap[String(serverForm.subscriptionId)] ?? null : null),
     [serverForm.subscriptionId, subscriptionMap]
@@ -1488,6 +1649,15 @@ export default function LicensesLionTv() {
                       <LicenseStatusChip key="status" status={row.status} />,
                       <LicensePaidChip key="paid" isPaid={row.isPaid} t={t} />,
                       <Chip key="app" size="small" variant="outlined" label={getLicenseAppLabel(row.app)} />,
+                      isBobLicenseRecord(row) ? (
+                        <Chip
+                          key="bob-session"
+                          size="small"
+                          variant="outlined"
+                          color={bobSessionColor(row.bobSessionStatus)}
+                          label={bobSessionLabel(row.bobSessionStatus, t)}
+                        />
+                      ) : null,
                       requiresSubscriptionLink(row) ? (
                         <Chip
                           key="subscription-warning"
@@ -1512,6 +1682,7 @@ export default function LicensesLionTv() {
                           onRemovePlaylists={handleOpenRemovePlaylists}
                           onHistory={openHistory}
                           onDelete={handleDelete}
+                          onBobAuth={openBobAuth}
                         />
                       </ResponsiveActionBar>
                     }
@@ -1533,6 +1704,12 @@ export default function LicensesLionTv() {
                               ? t('licenses.labels.requiresSubscriptionLink', 'Requires subscription link')
                               : '-'
                         },
+                        ...(isBobLicenseRecord(row)
+                          ? [
+                              { label: t('licenses.bob.session.title', 'Bob session'), value: bobSessionLabel(row.bobSessionStatus, t) },
+                              { label: t('licenses.bob.remotePlaylist', 'Remote playlist'), value: row.remotePlaylistId || '-' }
+                            ]
+                          : []),
                         { label: t('licenses.headers.period'), value: row.licensePeriod || '-' }
                       ]}
                     />
@@ -1653,16 +1830,36 @@ export default function LicensesLionTv() {
                       </TableCell>
 
                       <TableCell>
-                        <Chip
-                          size="small"
-                          icon={<AppsIcon fontSize="small" />}
-                          label={getLicenseAppLabel(row.app)}
-                          sx={(theme) => ({
-                            bgcolor: isRandomLicenseApp(row.app) ? theme.palette.warning.lighter : theme.palette.info.lighter,
-                            color: isRandomLicenseApp(row.app) ? theme.palette.warning.darker : theme.palette.info.darker,
-                            fontWeight: 600
-                          })}
-                        />
+                        <Stack spacing={0.75} alignItems="flex-start">
+                          <Chip
+                            size="small"
+                            icon={<AppsIcon fontSize="small" />}
+                            label={getLicenseAppLabel(row.app)}
+                            sx={(theme) => ({
+                              bgcolor: isRandomLicenseApp(row.app) ? theme.palette.warning.lighter : theme.palette.info.lighter,
+                              color: isRandomLicenseApp(row.app) ? theme.palette.warning.darker : theme.palette.info.darker,
+                              fontWeight: 600
+                            })}
+                          />
+                          {isBobLicenseRecord(row) ? (
+                            <>
+                              <Chip
+                                size="small"
+                                variant="outlined"
+                                color={bobSessionColor(row.bobSessionStatus)}
+                                label={bobSessionLabel(row.bobSessionStatus, t)}
+                              />
+                              <Typography variant="caption" color="text.secondary">
+                                {`${t('licenses.bob.lastRefreshed', 'Last refreshed')}: ${formatDateTime(row.bobSessionRefreshedAt)}`}
+                              </Typography>
+                              {row.remotePlaylistId ? (
+                                <Typography variant="caption" color="text.secondary">
+                                  {`${t('licenses.bob.remotePlaylist', 'Remote playlist')}: ${row.remotePlaylistId}`}
+                                </Typography>
+                              ) : null}
+                            </>
+                          ) : null}
+                        </Stack>
                       </TableCell>
 
                       <TableCell>
@@ -1690,6 +1887,7 @@ export default function LicensesLionTv() {
                           onRemovePlaylists={handleOpenRemovePlaylists}
                           onHistory={openHistory}
                           onDelete={handleDelete}
+                          onBobAuth={openBobAuth}
                         />
                       </TableCell>
                     </TableRow>
@@ -2199,6 +2397,132 @@ export default function LicensesLionTv() {
                 ? t('licenses.form.buttons.save', 'Save changes')
                 : t('licenses.form.buttons.create', 'Create')}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={bobAuthDialog.open}
+        onClose={closeBobAuth}
+        fullWidth
+        maxWidth="sm"
+        fullScreen={isMobile}
+      >
+        <DialogTitleWithClose onClose={closeBobAuth}>
+          {t('licenses.bob.dialog.title', 'Authenticate Bob Player')}
+        </DialogTitleWithClose>
+        <DialogContent dividers>
+          <Stack spacing={2}>
+            <Typography variant="body2" color="text.secondary">
+              {t(
+                'licenses.bob.dialog.helper',
+                'The system uses the MAC address and device key saved on this license, requests the live captcha from Bob Player and only asks you to enter the captcha answer.'
+              )}
+            </Typography>
+
+            <Grid container spacing={1.5}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  disabled
+                  label={t('licenses.form.mac', 'Mac Address')}
+                  value={bobAuthDialog.session?.macAddress || bobAuthDialog.row?.macAddress || '-'}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  disabled
+                  label={t('licenses.bob.deviceKeyMasked', 'Stored device key')}
+                  value={bobAuthDialog.session?.deviceKeyMasked || bobAuthDialog.row?.deviceKey || '-'}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  disabled
+                  label={t('licenses.bob.session.title', 'Bob session')}
+                  value={bobSessionLabel(bobAuthDialog.session?.sessionStatus, t)}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  disabled
+                  label={t('licenses.bob.remotePlaylist', 'Remote playlist')}
+                  value={bobAuthDialog.session?.remotePlaylistId || bobAuthDialog.row?.remotePlaylistId || '-'}
+                />
+              </Grid>
+            </Grid>
+
+            {bobAuthDialog.session?.lastAuthError ? <Alert severity="warning">{bobAuthDialog.session.lastAuthError}</Alert> : null}
+
+            <Box
+              sx={(theme) => ({
+                p: 2,
+                borderRadius: 2,
+                border: `1px solid ${theme.palette.divider}`,
+                bgcolor: theme.palette.background.default,
+                '& svg': { maxWidth: '100%', height: 'auto', display: 'block', mx: 'auto' }
+              })}
+            >
+              {bobAuthDialog.captchaSvg ? (
+                <Box dangerouslySetInnerHTML={{ __html: bobAuthDialog.captchaSvg }} />
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  {t('licenses.bob.messages.captchaUnavailable', 'Captcha preview unavailable. Refresh the challenge.')}
+                </Typography>
+              )}
+            </Box>
+
+            <TextField
+              label={t('licenses.bob.captchaAnswer', 'Captcha')}
+              value={bobAuthDialog.captchaAnswer}
+              onChange={(event) => setBobAuthDialog((prev) => ({ ...prev, captchaAnswer: event.target.value }))}
+              fullWidth
+              autoFocus
+            />
+
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
+              <Chip
+                size="small"
+                variant="outlined"
+                color={bobSessionColor(bobAuthDialog.session?.sessionStatus)}
+                label={bobSessionLabel(bobAuthDialog.session?.sessionStatus, t)}
+              />
+              <Typography variant="caption" color="text.secondary">
+                {`${t('licenses.bob.lastRefreshed', 'Last refreshed')}: ${formatDateTime(bobAuthDialog.session?.sessionRefreshedAt)}`}
+              </Typography>
+            </Stack>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <ResponsiveActionBar>
+            <Button onClick={closeBobAuth}>{t('actions.cancel', 'Cancel')}</Button>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={() => bobAuthDialog.row && openBobAuth(bobAuthDialog.row)}
+              disabled={bobAuthDialog.loading}
+            >
+              {t('licenses.actions.refreshCaptcha', 'Refresh captcha')}
+            </Button>
+            <Button
+              variant="outlined"
+              color="warning"
+              onClick={handleClearBobSession}
+              disabled={bobAuthDialog.loading}
+            >
+              {t('licenses.actions.clearBobSession', 'Clear session')}
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<VpnKeyOutlinedIcon fontSize="small" />}
+              onClick={handleCompleteBobCaptcha}
+              disabled={bobAuthDialog.loading}
+            >
+              {t('licenses.actions.completeBobLogin', 'Complete login')}
+            </Button>
+          </ResponsiveActionBar>
         </DialogActions>
       </Dialog>
 
