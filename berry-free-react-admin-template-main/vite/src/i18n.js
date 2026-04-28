@@ -553,6 +553,7 @@ const resources = {
           emptyTitle: 'No generated post yet',
           previewPending: 'Preview image is not available yet.',
           eventCount: '{{count}} real events',
+          selectedEvents: '{{count}} selected for image',
           updatedAt: 'Updated {{value}}',
           captionLabel: 'Caption summary',
           emptyCaption: 'Generate this slot to prepare the review copy and image.'
@@ -563,12 +564,28 @@ const resources = {
           generating: 'Generating...',
           previewImage: 'Preview image',
           safePreview: 'Safe preview',
+          selectEvents: 'Select events',
+          useAutomaticSelection: 'Use automatic selection',
+          applySelectedEvents: 'Apply selected events',
+          applyingSelection: 'Applying selection...',
           regenerateImage: 'Regenerate image',
           regenerateCaptions: 'Regenerate captions',
           approve: 'Approve',
           publish: 'Publish',
           confirmApprove: 'Approve post',
           confirmPublish: 'Publish post'
+        },
+        selectionDialog: {
+          title: 'Select the events that should appear in the image',
+          loading: 'Loading selectable events...',
+          subtitle:
+            'Choose up to 5 real events for this slot. The system will regenerate the image and captions using exactly this editorial selection.',
+          selectedCount: '{{count}} selected',
+          limit: 'Maximum 5 events in the image',
+          manual: 'Manual selection currently active',
+          automatic: 'Automatic featured selection is currently active',
+          empty: 'No real events are available for this slot yet. Generate or import events first.',
+          fallbackLeague: 'Sporting event'
         },
         previewDialog: {
           title: 'Rendered image preview'
@@ -599,6 +616,8 @@ const resources = {
         },
         messages: {
           generated: '{{count}} slot posts were refreshed for {{date}}.',
+          eventsSelectionSaved: 'The post was regenerated with your selected events.',
+          eventsSelectionReset: 'The slot returned to the automatic featured selection.',
           imageRegenerated: 'The preview image was regenerated successfully.',
           captionsRegenerated: 'The captions were regenerated successfully.',
           approved: 'The post is now approved for publishing.',
@@ -607,8 +626,12 @@ const resources = {
         errors: {
           loadPosts: 'Could not load content automation posts.',
           loadEvents: 'Could not load tomorrow events.',
+          loadSelectableEvents: 'Could not load the available events for this slot.',
           generate: 'Could not generate posts for the selected date.',
           previewMissing: 'Preview image is not available yet.',
+          selectionLimit: 'You can only place up to 5 events in the image template.',
+          saveSelectedEvents: 'Could not apply the selected events to this post.',
+          resetSelectedEvents: 'Could not restore the automatic event selection.',
           safePreview: 'Could not load the safe preview.',
           slotFailed: 'This slot failed and needs attention.'
         }
@@ -4514,6 +4537,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           emptyTitle: 'Todavía no hay post generado',
           previewPending: 'La imagen de vista previa todavía no está disponible.',
           eventCount: '{{count}} eventos reales',
+          selectedEvents: '{{count}} seleccionados para la imagen',
           updatedAt: 'Actualizado {{value}}',
           captionLabel: 'Resumen del caption',
           emptyCaption: 'Genera este slot para preparar el copy y la imagen de revisión.'
@@ -4524,12 +4548,28 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           generating: 'Generando...',
           previewImage: 'Ver imagen',
           safePreview: 'Vista SAFE',
+          selectEvents: 'Seleccionar eventos',
+          useAutomaticSelection: 'Usar selección automática',
+          applySelectedEvents: 'Aplicar eventos seleccionados',
+          applyingSelection: 'Aplicando selección...',
           regenerateImage: 'Regenerar imagen',
           regenerateCaptions: 'Regenerar captions',
           approve: 'Aprobar',
           publish: 'Publicar',
           confirmApprove: 'Aprobar post',
           confirmPublish: 'Publicar post'
+        },
+        selectionDialog: {
+          title: 'Selecciona los eventos que deben aparecer en la imagen',
+          loading: 'Cargando eventos seleccionables...',
+          subtitle:
+            'Elige hasta 5 eventos reales para este slot. El sistema regenerará la imagen y los captions usando exactamente esta selección editorial.',
+          selectedCount: '{{count}} seleccionados',
+          limit: 'Máximo 5 eventos en la imagen',
+          manual: 'La selección manual está activa actualmente',
+          automatic: 'La selección automática destacada está activa actualmente',
+          empty: 'Todavía no hay eventos reales disponibles para este slot. Primero genera o importa eventos.',
+          fallbackLeague: 'Evento deportivo'
         },
         previewDialog: {
           title: 'Vista previa de la imagen renderizada'
@@ -4560,6 +4600,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         },
         messages: {
           generated: 'Se refrescaron {{count}} posts por slot para {{date}}.',
+          eventsSelectionSaved: 'El post se regeneró con tus eventos seleccionados.',
+          eventsSelectionReset: 'El slot volvió a la selección automática destacada.',
           imageRegenerated: 'La imagen de vista previa se regeneró correctamente.',
           captionsRegenerated: 'Los captions se regeneraron correctamente.',
           approved: 'El post quedó aprobado para publicación.',
@@ -4568,8 +4610,12 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         errors: {
           loadPosts: 'No se pudieron cargar los posts de automatización.',
           loadEvents: 'No se pudieron cargar los eventos de mañana.',
+          loadSelectableEvents: 'No se pudieron cargar los eventos disponibles para este slot.',
           generate: 'No se pudieron generar los posts para la fecha seleccionada.',
           previewMissing: 'La imagen de vista previa todavía no está disponible.',
+          selectionLimit: 'Solo puedes colocar hasta 5 eventos dentro del template de imagen.',
+          saveSelectedEvents: 'No se pudieron aplicar los eventos seleccionados a este post.',
+          resetSelectedEvents: 'No se pudo restaurar la selección automática de eventos.',
           safePreview: 'No se pudo cargar la vista SAFE.',
           slotFailed: 'Este slot falló y requiere atención.'
         }

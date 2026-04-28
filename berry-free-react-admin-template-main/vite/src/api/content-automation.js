@@ -64,3 +64,17 @@ export async function getContentAutomationPreviewImageBlob(postId, config = {}) 
   });
   return response?.data ?? null;
 }
+
+export async function getContentAutomationPostEvents(postId, config = {}) {
+  const response = await contentAutomationApi.get(`/api/content-automation/posts/${postId}/events`, config);
+  return unwrap(response);
+}
+
+export async function updateContentAutomationPostSelectedEvents(postId, eventIds, config = {}) {
+  const response = await contentAutomationApi.post(
+    `/api/content-automation/posts/${postId}/selected-events`,
+    { eventIds: Array.isArray(eventIds) ? eventIds : [] },
+    config
+  );
+  return unwrap(response);
+}

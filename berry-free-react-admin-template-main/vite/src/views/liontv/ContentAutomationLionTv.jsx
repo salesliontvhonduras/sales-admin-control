@@ -9,11 +9,13 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
+import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import Divider from '@mui/material/Divider';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
@@ -30,6 +32,7 @@ import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import TextSnippetOutlinedIcon from '@mui/icons-material/TextSnippetOutlined';
 import TodayOutlinedIcon from '@mui/icons-material/TodayOutlined';
+import ViewListOutlinedIcon from '@mui/icons-material/ViewListOutlined';
 import WbTwilightOutlinedIcon from '@mui/icons-material/WbTwilightOutlined';
 import WbSunnyOutlinedIcon from '@mui/icons-material/WbSunnyOutlined';
 import NightsStayOutlinedIcon from '@mui/icons-material/NightsStayOutlined';
@@ -38,12 +41,14 @@ import {
   approveContentAutomationPost,
   generateContentAutomationByDate,
   getContentAutomationPostsByDate,
+  getContentAutomationPostEvents,
   getContentAutomationPreviewImageBlob,
   getContentAutomationSafePreview,
   getContentAutomationTomorrowEvents,
   publishContentAutomationPost,
   regenerateContentAutomationCaptions,
-  regenerateContentAutomationImage
+  regenerateContentAutomationImage,
+  updateContentAutomationPostSelectedEvents
 } from 'api/content-automation';
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
@@ -76,6 +81,12 @@ function formatEventTime(value, locale = 'es-HN') {
     hour: 'numeric',
     minute: '2-digit'
   });
+}
+
+function formatEventLabel(event = {}) {
+  const home = event?.homeTeam || '-';
+  const away = event?.awayTeam || '-';
+  return `${home} vs ${away}`;
 }
 
 function toIsoDateInTimeZone(timeZone, dayOffset = 0) {
@@ -293,6 +304,7 @@ function SlotPostCard({
   busyAction,
   onPreview,
   onSafePreview,
+  onSelectEvents,
   onRegenerateImage,
   onRegenerateCaptions,
   onApprove,
@@ -386,6 +398,15 @@ function SlotPostCard({
             <Chip
               size="small"
               variant="outlined"
+              color={post?.manualEventSelectionEnabled ? 'warning' : 'default'}
+              label={t('contentAutomation.slotCard.selectedEvents', {
+                count: post?.selectedEventCount || 0,
+                defaultValue: '{{count}} selected for image'
+              })}
+            />
+            <Chip
+              size="small"
+              variant="outlined"
               label={t('contentAutomation.slotCard.updatedAt', {
                 value: formatDateTime(post?.updatedAt, locale),
                 defaultValue: 'Updated {{value}}'
@@ -419,6 +440,14 @@ function SlotPostCard({
             </Button>
             <Button variant="outlined" startIcon={<ShieldOutlinedIcon />} onClick={() => onSafePreview(post)} disabled={!hasPost}>
               {t('contentAutomation.actions.safePreview', 'Safe preview')}
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<ViewListOutlinedIcon />}
+              onClick={() => onSelectEvents(post)}
+              disabled={!hasPost || !canGenerate || actionDisabled}
+            >
+              {t('contentAutomation.actions.selectEvents', 'Select events')}
             </Button>
             <Button
               variant="outlined"
@@ -483,6 +512,16 @@ export default function ContentAutomationLionTv() {
   const [previewLoadErrors, setPreviewLoadErrors] = useState({});
   const [previewDialog, setPreviewDialog] = useState({ open: false, post: null });
   const [safeDialog, setSafeDialog] = useState({ open: false, post: null, data: null, loading: false, error: '' });
+  const [selectionDialog, setSelectionDialog] = useState({
+    open: false,
+    post: null,
+    loading: false,
+    saving: false,
+    error: '',
+    events: [],
+    selectedEventIds: [],
+    manualEventSelectionEnabled: false
+  });
   const [confirmDialog, setConfirmDialog] = useState({ open: false, type: '', post: null });
 
   const canGenerate = hasPermissionExact(user, {
@@ -730,6 +769,139 @@ export default function ContentAutomationLionTv() {
     return !URL_PATTERN.test(safeDialog.data.caption);
   }, [safeDialog]);
 
+  const closeSelectionDialog = useCallback(() => {
+    setSelectionDialog({
+      open: false,
+      post: null,
+      loading: false,
+      saving: false,
+      error: '',
+      events: [],
+      selectedEventIds: [],
+      manualEventSelectionEnabled: false
+    });
+  }, []);
+
+  const openSelectionDialog = useCallback(
+    async (post) => {
+      if (!post?.id) return;
+      setSelectionDialog({
+        open: true,
+        post,
+        loading: true,
+        saving: false,
+        error: '',
+        events: [],
+        selectedEventIds: [],
+        manualEventSelectionEnabled: false
+      });
+      try {
+        const payload = await getContentAutomationPostEvents(post.id, { skipAuthRedirect: true });
+        setSelectionDialog({
+          open: true,
+          post,
+          loading: false,
+          saving: false,
+          error: '',
+          events: Array.isArray(payload?.events) ? payload.events : [],
+          selectedEventIds: Array.isArray(payload?.selectedEventIds) ? payload.selectedEventIds : [],
+          manualEventSelectionEnabled: Boolean(payload?.manualEventSelectionEnabled)
+        });
+      } catch (apiError) {
+        setSelectionDialog({
+          open: true,
+          post,
+          loading: false,
+          saving: false,
+          error:
+            apiError?.response?.data?.message ||
+            t('contentAutomation.errors.loadSelectableEvents', 'Could not load the available events for this slot.'),
+          events: [],
+          selectedEventIds: [],
+          manualEventSelectionEnabled: false
+        });
+      }
+    },
+    [t]
+  );
+
+  const toggleSelectedEvent = useCallback(
+    (eventId) => {
+      setSelectionDialog((prev) => {
+        const current = Array.isArray(prev.selectedEventIds) ? prev.selectedEventIds : [];
+        const alreadySelected = current.includes(eventId);
+        if (alreadySelected) {
+          return {
+            ...prev,
+            selectedEventIds: current.filter((id) => id !== eventId)
+          };
+        }
+        if (current.length >= 5) {
+          enqueueSnackbar(
+            t('contentAutomation.errors.selectionLimit', 'You can only place up to 5 events in the image template.'),
+            { variant: 'warning' }
+          );
+          return prev;
+        }
+        return {
+          ...prev,
+          selectedEventIds: [...current, eventId]
+        };
+      });
+    },
+    [enqueueSnackbar, t]
+  );
+
+  const handleSaveSelectedEvents = useCallback(async () => {
+    if (!selectionDialog.post?.id) return;
+    setSelectionDialog((prev) => ({ ...prev, saving: true, error: '' }));
+    try {
+      const updatedPost = await updateContentAutomationPostSelectedEvents(
+        selectionDialog.post.id,
+        selectionDialog.selectedEventIds,
+        { skipAuthRedirect: true }
+      );
+      updatePost(updatedPost);
+      enqueueSnackbar(
+        t('contentAutomation.messages.eventsSelectionSaved', 'The post was regenerated with your selected events.'),
+        { variant: 'success' }
+      );
+      closeSelectionDialog();
+    } catch (apiError) {
+      setSelectionDialog((prev) => ({
+        ...prev,
+        saving: false,
+        error:
+          apiError?.response?.data?.message ||
+          t('contentAutomation.errors.saveSelectedEvents', 'Could not apply the selected events to this post.')
+      }));
+    }
+  }, [closeSelectionDialog, enqueueSnackbar, selectionDialog.post?.id, selectionDialog.selectedEventIds, t, updatePost]);
+
+  const handleResetSelectedEvents = useCallback(async () => {
+    if (!selectionDialog.post?.id) return;
+    setSelectionDialog((prev) => ({ ...prev, saving: true, error: '' }));
+    try {
+      const updatedPost = await updateContentAutomationPostSelectedEvents(selectionDialog.post.id, [], {
+        skipAuthRedirect: true
+      });
+      updatePost(updatedPost);
+      enqueueSnackbar(
+        t('contentAutomation.messages.eventsSelectionReset', 'The slot returned to the automatic featured selection.'),
+        { variant: 'success' }
+      );
+      closeSelectionDialog();
+    } catch (apiError) {
+      setSelectionDialog((prev) => ({
+        ...prev,
+        saving: false,
+        error:
+          apiError?.response?.data?.message ||
+          t('contentAutomation.errors.resetSelectedEvents', 'Could not restore the automatic event selection.')
+      }));
+    }
+  }, [closeSelectionDialog, enqueueSnackbar, selectionDialog.post?.id, t, updatePost]);
+
   const confirmPrimaryLabel = useMemo(() => {
     if (confirmDialog.type === 'approve') return t('contentAutomation.actions.confirmApprove', 'Approve post');
     if (confirmDialog.type === 'publish') return t('contentAutomation.actions.confirmPublish', 'Publish post');
@@ -964,6 +1136,7 @@ export default function ContentAutomationLionTv() {
                 busyAction={post?.id ? busyActions[post.id] : null}
                 onPreview={(selectedPost) => setPreviewDialog({ open: true, post: selectedPost })}
                 onSafePreview={openSafePreview}
+                onSelectEvents={(selectedPost) => openSelectionDialog(selectedPost)}
                 onRegenerateImage={(selectedPost) =>
                   handleAction(
                     selectedPost,
@@ -990,6 +1163,149 @@ export default function ContentAutomationLionTv() {
           })}
         </ResponsiveMetricGrid>
       </MainCard>
+
+      <Dialog
+        open={selectionDialog.open}
+        onClose={selectionDialog.saving ? undefined : closeSelectionDialog}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitleWithClose onClose={selectionDialog.saving ? undefined : closeSelectionDialog}>
+          {t('contentAutomation.selectionDialog.title', 'Select the events that should appear in the image')}
+        </DialogTitleWithClose>
+        <DialogContent dividers>
+          {selectionDialog.loading ? (
+            <PageLoadingState label={t('contentAutomation.selectionDialog.loading', 'Loading selectable events...')} />
+          ) : (
+            <Stack spacing={2}>
+              <Typography variant="body2" color="text.secondary">
+                {t(
+                  'contentAutomation.selectionDialog.subtitle',
+                  'Choose up to 5 real events for this slot. The system will regenerate the image and captions using exactly this editorial selection.'
+                )}
+              </Typography>
+
+              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                <Chip
+                  color="primary"
+                  variant="outlined"
+                  label={t('contentAutomation.selectionDialog.selectedCount', {
+                    count: selectionDialog.selectedEventIds.length,
+                    defaultValue: '{{count}} selected'
+                  })}
+                />
+                <Chip
+                  variant="outlined"
+                  label={t('contentAutomation.selectionDialog.limit', 'Maximum 5 events in the image')}
+                />
+                {selectionDialog.manualEventSelectionEnabled ? (
+                  <Chip
+                    color="warning"
+                    variant="outlined"
+                    label={t('contentAutomation.selectionDialog.manual', 'Manual selection currently active')}
+                  />
+                ) : (
+                  <Chip
+                    color="default"
+                    variant="outlined"
+                    label={t('contentAutomation.selectionDialog.automatic', 'Automatic featured selection is currently active')}
+                  />
+                )}
+              </Stack>
+
+              {selectionDialog.error ? (
+                <Alert severity="error" variant="outlined">
+                  {selectionDialog.error}
+                </Alert>
+              ) : null}
+
+              {!selectionDialog.events.length ? (
+                <PageEmptyState
+                  message={t(
+                    'contentAutomation.selectionDialog.empty',
+                    'No real events are available for this slot yet. Generate or import events first.'
+                  )}
+                />
+              ) : (
+                <Stack spacing={1.25}>
+                  {selectionDialog.events.map((event) => {
+                    const checked = selectionDialog.selectedEventIds.includes(event.id);
+                    const limitReached = selectionDialog.selectedEventIds.length >= 5 && !checked;
+                    return (
+                      <Box
+                        key={`${event.id}-${event.eventTime}`}
+                        sx={(theme) => ({
+                          borderRadius: 3,
+                          border: '1px solid',
+                          borderColor: checked
+                            ? withAlpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.42 : 0.24)
+                            : 'divider',
+                          background:
+                            checked
+                              ? theme.palette.mode === 'dark'
+                                ? `linear-gradient(165deg, ${withAlpha(theme.vars?.palette?.surface?.card || theme.palette.background.paper, 0.98)} 0%, ${withAlpha(theme.palette.primary.main, 0.14)} 100%)`
+                                : `linear-gradient(165deg, ${theme.vars?.palette?.surface?.card || theme.palette.background.paper} 0%, ${withAlpha(theme.palette.primary.light, 0.16)} 100%)`
+                              : theme.vars?.palette?.surface?.card || theme.palette.background.paper
+                        })}
+                      >
+                        <FormControlLabel
+                          sx={{ m: 0, alignItems: 'flex-start', width: '100%', px: 2, py: 1.5 }}
+                          control={
+                            <Checkbox
+                              checked={checked}
+                              disabled={limitReached || selectionDialog.saving}
+                              onChange={() => toggleSelectedEvent(event.id)}
+                            />
+                          }
+                          label={
+                            <Stack spacing={0.5} sx={{ pt: 0.5 }}>
+                              <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                                {formatEventLabel(event)}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {(event.leagueName || t('contentAutomation.selectionDialog.fallbackLeague', 'Sporting event')) +
+                                  ' · ' +
+                                  formatEventTime(event.eventTime, locale)}
+                              </Typography>
+                            </Stack>
+                          }
+                        />
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              )}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeSelectionDialog} disabled={selectionDialog.saving}>
+            {t('actions.cancel', 'Cancel')}
+          </Button>
+          <Button
+            variant="outlined"
+            color="inherit"
+            onClick={handleResetSelectedEvents}
+            disabled={selectionDialog.loading || selectionDialog.saving || !selectionDialog.events.length}
+          >
+            {t('contentAutomation.actions.useAutomaticSelection', 'Use automatic selection')}
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveSelectedEvents}
+            disabled={
+              selectionDialog.loading ||
+              selectionDialog.saving ||
+              !selectionDialog.events.length ||
+              !selectionDialog.selectedEventIds.length
+            }
+          >
+            {selectionDialog.saving
+              ? t('contentAutomation.actions.applyingSelection', 'Applying selection...')
+              : t('contentAutomation.actions.applySelectedEvents', 'Apply selected events')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={previewDialog.open}
