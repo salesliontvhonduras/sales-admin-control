@@ -4,6 +4,7 @@ import useAuth from 'hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -113,6 +114,17 @@ function formatDate(value) {
   if (!value) return '-';
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
+}
+
+function isEnglishLocale(i18n) {
+  return String(i18n?.resolvedLanguage || i18n?.language || 'es')
+    .toLowerCase()
+    .startsWith('en');
+}
+
+function isInsufficientCreditsError(error) {
+  const message = String(error?.response?.data?.message || error?.message || '').toLowerCase();
+  return message.includes('saldo de créditos insuficiente') || message.includes('insufficient credits');
 }
 
 function normalizePhoneDigits(value) {
@@ -382,10 +394,11 @@ const defaultForm = {
 export default function SubscriptionsLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const language = isEnglishLocale(i18n) ? 'en' : 'es';
 
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -1073,7 +1086,16 @@ export default function SubscriptionsLionTv() {
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || t('subscriptions.messages.saveError'), {
+        const message = isInsufficientCreditsError(err)
+          ? form.subscriptionId
+            ? language === 'en'
+              ? 'This renewal needs enough credits in the reseller wallet. Top up the wallet before extending the active subscription.'
+              : 'Esta renovación necesita créditos suficientes en el wallet reseller. Recarga el wallet antes de extender la suscripción activa.'
+            : language === 'en'
+              ? 'This activation needs enough credits in the reseller wallet. Top up the wallet before creating the subscription.'
+              : 'Esta activación necesita créditos suficientes en el wallet reseller. Recarga el wallet antes de crear la suscripción.'
+          : err?.response?.data?.message || err.message || t('subscriptions.messages.saveError');
+        enqueueSnackbar(message, {
           variant: 'error'
         });
       }
@@ -2216,45 +2238,56 @@ export default function SubscriptionsLionTv() {
               title={t('subscriptions.form.sections.dates', 'Dates')}
               helper={t('subscriptions.form.sections.datesHelper', 'Subscription start and renewal.')}
             >
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={6}>
-                  <TextField
-                    required
-                    label={t('subscriptions.form.start', 'Start')}
-                    type="date"
-                    value={form.startDate}
-                    onChange={handleFormChange('startDate')}
-                    fullWidth
-                    sx={fieldSx}
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <CalendarMonthIcon fontSize="small" color="primary" />
-                        </InputAdornment>
-                      )
-                    }}
-                  />
+              <Stack spacing={2}>
+                <Alert severity={form.subscriptionId ? 'info' : 'warning'} icon={<CreditCardIcon fontSize="inherit" />}>
+                  {form.subscriptionId
+                    ? language === 'en'
+                      ? 'Extending the renewal date of an active subscription by a real billing cycle charges the same package credits again. Small admin corrections should not create a new charge.'
+                      : 'Extender la fecha de renovación de una suscripción activa por un ciclo real de billing vuelve a cobrar los mismos créditos del paquete. Las correcciones administrativas pequeñas no deberían generar un nuevo cargo.'
+                    : language === 'en'
+                      ? 'Creating a new subscription consumes the package credits defined in officialCredits. Demos stay free in this phase.'
+                      : 'Crear una nueva suscripción consume los créditos del paquete definidos en officialCredits. Las demos siguen gratis en esta fase.'}
+                </Alert>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6} md={6}>
+                    <TextField
+                      required
+                      label={t('subscriptions.form.start', 'Start')}
+                      type="date"
+                      value={form.startDate}
+                      onChange={handleFormChange('startDate')}
+                      fullWidth
+                      sx={fieldSx}
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <CalendarMonthIcon fontSize="small" color="primary" />
+                          </InputAdornment>
+                        )
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={6}>
+                    <TextField
+                      label={t('subscriptions.form.renewal', 'Renewal')}
+                      type="date"
+                      value={form.renewalDate}
+                      onChange={handleFormChange('renewalDate')}
+                      fullWidth
+                      sx={fieldSx}
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <CalendarMonthIcon fontSize="small" color="primary" />
+                          </InputAdornment>
+                        )
+                      }}
+                    />
+                  </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6} md={6}>
-                  <TextField
-                    label={t('subscriptions.form.renewal', 'Renewal')}
-                    type="date"
-                    value={form.renewalDate}
-                    onChange={handleFormChange('renewalDate')}
-                    fullWidth
-                    sx={fieldSx}
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <CalendarMonthIcon fontSize="small" color="primary" />
-                        </InputAdornment>
-                      )
-                    }}
-                  />
-                </Grid>
-              </Grid>
+              </Stack>
             </SectionCard>
 
             <SectionCard

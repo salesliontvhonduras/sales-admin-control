@@ -191,6 +191,29 @@ function statusColor(status) {
   return 'default';
 }
 
+function formatMovementType(movementType, language) {
+  const normalized = String(movementType || '').toUpperCase();
+  const labels =
+    language === 'en'
+      ? {
+          MANUAL_TOP_UP: 'Manual top-up',
+          MANUAL_ADJUSTMENT: 'Manual adjustment',
+          CREDIT_REQUEST_APPROVAL: 'Credit request approval',
+          SUBSCRIPTION_CONSUMPTION: 'New subscription',
+          SUBSCRIPTION_RENEWAL_CONSUMPTION: 'Subscription renewal',
+          MARKETING_CAMPAIGN_CONSUMPTION: 'Marketing campaign'
+        }
+      : {
+          MANUAL_TOP_UP: 'Recarga manual',
+          MANUAL_ADJUSTMENT: 'Ajuste manual',
+          CREDIT_REQUEST_APPROVAL: 'Aprobación de solicitud',
+          SUBSCRIPTION_CONSUMPTION: 'Nueva suscripción',
+          SUBSCRIPTION_RENEWAL_CONSUMPTION: 'Renovación de suscripción',
+          MARKETING_CAMPAIGN_CONSUMPTION: 'Campaña de marketing'
+        };
+  return labels[normalized] || movementType || '-';
+}
+
 function createCreditPurchaseCode() {
   return `CR-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
@@ -543,6 +566,29 @@ export default function ResellerWalletLionTv() {
             </Alert>
           ) : null}
 
+          <Alert severity="info" icon={<BoltOutlinedIcon />}>
+            <Stack spacing={0.5}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                {language === 'en' ? 'Current credit rules' : 'Reglas actuales de crédito'}
+              </Typography>
+              <Typography variant="body2">
+                {language === 'en'
+                  ? 'New subscriptions consume the package credits defined in officialCredits.'
+                  : 'Las nuevas suscripciones consumen los créditos del paquete definidos en officialCredits.'}
+              </Typography>
+              <Typography variant="body2">
+                {language === 'en'
+                  ? 'Real renewals consume the same package credits again when the billing cycle is extended.'
+                  : 'Las renovaciones reales vuelven a consumir los mismos créditos del paquete cuando se extiende el ciclo de billing.'}
+              </Typography>
+              <Typography variant="body2">
+                {language === 'en'
+                  ? 'Each queued marketing campaign consumes 1 credit. Demos remain free in this phase.'
+                  : 'Cada campaña de marketing puesta en cola consume 1 crédito. Las demos siguen gratis en esta fase.'}
+              </Typography>
+            </Stack>
+          </Alert>
+
           <Grid container spacing={gridSpacing}>
             <Grid item xs={12}>
               <SectionHeader
@@ -879,7 +925,11 @@ export default function ResellerWalletLionTv() {
                           <TableRow hover key={row.id}>
                             <TableCell>{formatDateTime(row.createdAt, locale)}</TableCell>
                             <TableCell>
-                              <Chip size="small" color={Number(row.creditsDelta) >= 0 ? 'success' : 'warning'} label={row.movementType || '-'} />
+                              <Chip
+                                size="small"
+                                color={Number(row.creditsDelta) >= 0 ? 'success' : 'warning'}
+                                label={formatMovementType(row.movementType, language)}
+                              />
                             </TableCell>
                             <TableCell sx={{ fontWeight: 700, color: Number(row.creditsDelta) >= 0 ? 'success.main' : 'warning.main' }}>
                               {Number(row.creditsDelta) > 0 ? '+' : ''}

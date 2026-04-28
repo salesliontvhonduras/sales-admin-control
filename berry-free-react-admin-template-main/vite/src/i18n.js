@@ -1371,6 +1371,9 @@ const resources = {
           EMERGENCY: 'EMERGENCY'
         },
         paid: { paid: 'Paid', pending: 'Pending' },
+        labels: {
+          requiresSubscriptionLink: 'Requires subscription link'
+        },
         messages: {
           subscriptionsLoadError: 'Could not load subscriptions.',
           linesLoadError: 'Could not load lines.',
@@ -1419,7 +1422,10 @@ const resources = {
           subscriptionNone: 'No related subscription',
           subscriptionSelectCustomer: 'Select a customer first.',
           subscriptionHelper: 'Optional relation to one customer subscription.',
+          subscriptionRandomHelper: 'External licenses may stay without a subscription link.',
+          subscriptionRequiredHelper: 'Managed licenses must stay linked to one customer subscription.',
           subscriptionEmpty: 'This customer has no subscriptions available.',
+          customerLocked: 'Use transfer to change the customer of an existing license.',
           paid: 'Payment status',
           paidHelper: 'Track if this license was already paid',
           loadingApps: 'Loading apps...',
@@ -1430,6 +1436,7 @@ const resources = {
           appLegacyHelper: 'This license uses an inactive app from the catalog. Choose an active app to replace it.'
         },
         server: {
+          required: 'Select server before continuing.',
           updated: 'Server updated.',
           error: 'Could not change server.',
           removeTitle: 'Remove all playlists',
@@ -1437,10 +1444,15 @@ const resources = {
           removeSubmit: 'Remove playlists',
           removeSuccess: 'All playlists removed from device.',
           removeError: 'Could not remove playlists from device.',
-          removeRequired: 'Device MAC is required.',
+          removeRequired: 'License id is required.',
           removeNotAvailable: 'This action is not available yet in backend.'
         },
         transfer: {
+          subscription: 'Destination subscription',
+          subscriptionSelectCustomer: 'Select the new customer first.',
+          subscriptionHelper: 'Choose the subscription that will own this managed license.',
+          subscriptionEmpty: 'This customer has no subscriptions available.',
+          required: 'Select customer, type and destination subscription when required.',
           error: 'Could not transfer license.'
         }
       },
@@ -5379,6 +5391,9 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           EMERGENCY: 'EMERGENCIA'
         },
         paid: { paid: 'Pagada', pending: 'Pendiente' },
+        labels: {
+          requiresSubscriptionLink: 'Requiere vínculo con suscripción'
+        },
         messages: {
           subscriptionsLoadError: 'No se pudieron cargar suscripciones.',
           linesLoadError: 'No se pudieron cargar líneas.',
@@ -5427,7 +5442,10 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           subscriptionNone: 'Sin suscripción relacionada',
           subscriptionSelectCustomer: 'Selecciona primero un cliente.',
           subscriptionHelper: 'Relación opcional con una suscripción del cliente.',
+          subscriptionRandomHelper: 'Las licencias externas pueden mantenerse sin vínculo con suscripción.',
+          subscriptionRequiredHelper: 'Las licencias administradas deben quedar vinculadas a una suscripción del cliente.',
           subscriptionEmpty: 'Este cliente no tiene suscripciones disponibles.',
+          customerLocked: 'Usa trasladar para cambiar el cliente de una licencia existente.',
           paid: 'Estado de pago',
           paidHelper: 'Indica si esta licencia ya fue pagada',
           loadingApps: 'Cargando apps...',
@@ -5438,6 +5456,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           appLegacyHelper: 'Esta licencia usa una app inactiva del catálogo. Elige una app activa para reemplazarla.'
         },
         server: {
+          required: 'Selecciona el servidor antes de continuar.',
           updated: 'Servidor actualizado.',
           error: 'No se pudo cambiar el servidor.',
           removeTitle: 'Quitar todas las playlists',
@@ -5445,10 +5464,15 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           removeSubmit: 'Quitar playlists',
           removeSuccess: 'Se quitaron todas las playlists del dispositivo.',
           removeError: 'No se pudieron quitar las playlists del dispositivo.',
-          removeRequired: 'La MAC del dispositivo es requerida.',
+          removeRequired: 'El id de la licencia es requerido.',
           removeNotAvailable: 'Esta acción aún no está disponible en backend.'
         },
         transfer: {
+          subscription: 'Suscripción destino',
+          subscriptionSelectCustomer: 'Selecciona primero el nuevo cliente.',
+          subscriptionHelper: 'Elige la suscripción que será dueña de esta licencia administrada.',
+          subscriptionEmpty: 'Este cliente no tiene suscripciones disponibles.',
+          required: 'Selecciona cliente, tipo y la suscripción destino cuando aplique.',
           error: 'No se pudo trasladar.'
         }
       },

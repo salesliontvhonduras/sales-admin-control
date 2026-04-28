@@ -93,6 +93,17 @@ const commonChannels = ['', 'WEB', 'SOCIAL_MEDIA', 'REFERRAL', 'GOOGLE', 'WHATSA
 const IMPORTABLE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
 const BLOCKED_IMPORTED_EMAILS = new Set(['nomail@gmail.com', 'notiene@gmail.com']);
 
+function isEnglishLocale(i18n) {
+  return String(i18n?.resolvedLanguage || i18n?.language || 'es')
+    .toLowerCase()
+    .startsWith('en');
+}
+
+function isInsufficientCreditsError(error) {
+  const message = String(error?.response?.data?.message || error?.message || '').toLowerCase();
+  return message.includes('saldo de créditos insuficiente') || message.includes('insufficient credits');
+}
+
 function createEmptyAudience() {
   return {
     customerSelection: {
@@ -832,9 +843,10 @@ function CampaignDetailDialog({ open, onClose, campaign }) {
 }
 
 function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, editingCampaignId, onSaved }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
+  const language = isEnglishLocale(i18n) ? 'en' : 'es';
   const [activeStep, setActiveStep] = useState(0);
   const [savingDraft, setSavingDraft] = useState(false);
   const [sending, setSending] = useState(false);
@@ -1145,7 +1157,12 @@ function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, edit
       onSaved?.();
       onClose();
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || t('emailCampaigns.messages.queueError', { defaultValue: 'Unable to queue campaign.' }), {
+      const message = isInsufficientCreditsError(error)
+        ? language === 'en'
+          ? 'This campaign needs at least 1 available credit before it can be queued. Top up the reseller wallet and try again.'
+          : 'Esta campaña necesita al menos 1 crédito disponible antes de ponerse en cola. Recarga el wallet reseller y vuelve a intentarlo.'
+        : error?.response?.data?.message || t('emailCampaigns.messages.queueError', { defaultValue: 'Unable to queue campaign.' });
+      enqueueSnackbar(message, {
         variant: 'error'
       });
     } finally {
@@ -1545,6 +1562,11 @@ function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, edit
                       {t('emailCampaigns.actions.sendTest', { defaultValue: 'Send test email' })}
                     </Button>
                   </ResponsiveActionBar>
+                  <Alert severity="info">
+                    {language === 'en'
+                      ? 'Queueing or scheduling this campaign consumes 1 credit from the reseller wallet. Saving drafts and sending test emails do not consume credits.'
+                      : 'Poner en cola o programar esta campaña consume 1 crédito del wallet reseller. Guardar borradores y enviar correos de prueba no consume créditos.'}
+                  </Alert>
                 </Stack>
               )}
             </Stack>
@@ -1632,10 +1654,11 @@ function CampaignRowActions({ row, onEdit, onView, onQueue, onCancel }) {
 }
 
 export default function EmailCampaignsLionTv() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const language = isEnglishLocale(i18n) ? 'en' : 'es';
 
   const [templates, setTemplates] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
@@ -1735,13 +1758,22 @@ export default function EmailCampaignsLionTv() {
   };
 
   const handleQueue = async (row) => {
-    if (!window.confirm(t('emailCampaigns.messages.queueConfirm', { defaultValue: `Queue campaign ${row.name}?` }))) return;
+    const confirmMessage =
+      language === 'en'
+        ? `Queue campaign ${row.name}? This action consumes 1 credit.`
+        : `¿Deseas poner en cola la campaña ${row.name}? Esta acción consume 1 crédito.`;
+    if (!window.confirm(confirmMessage)) return;
     try {
       await queueEmailCampaign(row.campaignId);
       enqueueSnackbar(t('emailCampaigns.messages.queued', { defaultValue: 'Campaign queued for sending.' }), { variant: 'success' });
       setRefreshKey((value) => value + 1);
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || t('emailCampaigns.messages.queueError', { defaultValue: 'Unable to queue campaign.' }), {
+      const message = isInsufficientCreditsError(error)
+        ? language === 'en'
+          ? 'This campaign needs at least 1 available credit before it can be queued. Top up the reseller wallet and try again.'
+          : 'Esta campaña necesita al menos 1 crédito disponible antes de ponerse en cola. Recarga el wallet reseller y vuelve a intentarlo.'
+        : error?.response?.data?.message || t('emailCampaigns.messages.queueError', { defaultValue: 'Unable to queue campaign.' });
+      enqueueSnackbar(message, {
         variant: 'error'
       });
     }

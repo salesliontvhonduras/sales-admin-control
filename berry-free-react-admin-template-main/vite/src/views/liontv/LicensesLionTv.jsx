@@ -85,10 +85,22 @@ function isRandomLicenseApp(value) {
   return String(value || '').trim().toUpperCase() === UNKNOWN_RANDOM_APP;
 }
 
+function isManagedLicenseRecord(record = {}) {
+  return Boolean(record) && !Boolean(record?.randomLicense) && !isRandomLicenseApp(record?.app);
+}
+
+function hasSubscriptionLink(record = {}) {
+  return Boolean(record?.subscriptionId);
+}
+
+function requiresSubscriptionLink(record = {}) {
+  return isManagedLicenseRecord(record) && !hasSubscriptionLink(record);
+}
+
 function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onHistory, onDelete, t }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
-  const supportsRemoteActions = !isRandomLicenseApp(row?.app);
+  const supportsRemoteActions = isManagedLicenseRecord(row) && hasSubscriptionLink(row);
   return (
     <>
       <IconButton
@@ -128,28 +140,30 @@ function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onHi
           <SwapHorizIcon fontSize="small" style={{ marginRight: 8, color: '#6d4c41' }} />
           {t('licenses.actions.transfer', 'Transfer')}
         </MenuItem>
-        {supportsRemoteActions ? (
-          <MenuItem
-            onClick={() => {
-              setAnchorEl(null);
+        <MenuItem
+          disabled={!supportsRemoteActions}
+          onClick={() => {
+            setAnchorEl(null);
+            if (supportsRemoteActions) {
               onServer?.(row);
-            }}
-          >
-            <AppsIcon fontSize="small" style={{ marginRight: 8, color: '#7b1fa2' }} />
-            {t('licenses.actions.server', 'Change server')}
-          </MenuItem>
-        ) : null}
-        {supportsRemoteActions ? (
-          <MenuItem
-            onClick={() => {
-              setAnchorEl(null);
+            }
+          }}
+        >
+          <AppsIcon fontSize="small" style={{ marginRight: 8, color: '#7b1fa2' }} />
+          {t('licenses.actions.server', 'Change server')}
+        </MenuItem>
+        <MenuItem
+          disabled={!supportsRemoteActions}
+          onClick={() => {
+            setAnchorEl(null);
+            if (supportsRemoteActions) {
               onRemovePlaylists?.(row);
-            }}
-          >
-            <PlaylistRemoveIcon fontSize="small" style={{ marginRight: 8, color: '#fb8c00' }} />
-            {t('licenses.actions.removePlaylists', 'Remove all playlists')}
-          </MenuItem>
-        ) : null}
+            }
+          }}
+        >
+          <PlaylistRemoveIcon fontSize="small" style={{ marginRight: 8, color: '#fb8c00' }} />
+          {t('licenses.actions.removePlaylists', 'Remove all playlists')}
+        </MenuItem>
         <MenuItem
           onClick={() => {
             setAnchorEl(null);
@@ -450,7 +464,13 @@ export default function LicensesLionTv() {
 
   const [openModal, setOpenModal] = useState(false);
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
-  const [openTransfer, setOpenTransfer] = useState({ open: false, row: null, toCustomerId: '', typeLicense: 'USED' });
+  const [openTransfer, setOpenTransfer] = useState({
+    open: false,
+    row: null,
+    toCustomerId: '',
+    destinationSubscriptionId: '',
+    typeLicense: 'USED'
+  });
 
   const [history, setHistory] = useState([]);
   const [historyOpen, setHistoryOpen] = useState({ open: false, row: null });
@@ -744,6 +764,14 @@ export default function LicensesLionTv() {
     [form.customerId, subscriptions]
   );
 
+  const transferCustomerSubscriptions = useMemo(
+    () =>
+      subscriptions
+        .filter((subscription) => idsMatch(subscription.customerId, openTransfer.toCustomerId))
+        .sort((a, b) => Number(b.id ?? 0) - Number(a.id ?? 0)),
+    [openTransfer.toCustomerId, subscriptions]
+  );
+
   const licenseAppLabelMap = useMemo(
     () => new Map(licenseApps.filter((item) => item.licenseAppCode).map((item) => [item.licenseAppCode, item.licenseAppName])),
     [licenseApps]
@@ -865,7 +893,8 @@ export default function LicensesLionTv() {
         ...prev,
         randomLicense: Boolean(value),
         app: value ? UNKNOWN_RANDOM_APP : isRandomLicenseApp(prev.app) ? defaultLicenseApp : prev.app,
-        macAddress: value ? '' : isRandomLicenseApp(prev.app) ? '' : prev.macAddress
+        macAddress: value ? '' : isRandomLicenseApp(prev.app) ? '' : prev.macAddress,
+        subscriptionId: value ? '' : prev.subscriptionId
       }));
       return;
     }
@@ -920,7 +949,14 @@ export default function LicensesLionTv() {
       enqueueSnackbar(t('licenses.messages.noActiveApps', 'No active apps available in the catalog.'), { variant: 'warning' });
       return;
     }
-    if (!form.name || !form.customerId || !form.status || !form.licensePeriod || !form.typeLicense || (!form.randomLicense && (!form.macAddress || !form.app))) {
+    if (
+      !form.name ||
+      !form.customerId ||
+      !form.status ||
+      !form.licensePeriod ||
+      !form.typeLicense ||
+      (!form.randomLicense && (!form.macAddress || !form.app || !form.subscriptionId))
+    ) {
       enqueueSnackbar(t('licenses.messages.required'), { variant: 'warning' });
       return;
     }
@@ -1004,10 +1040,14 @@ export default function LicensesLionTv() {
   };
 
   const handleTransfer = (row) => {
-    setOpenTransfer({ open: true, row, toCustomerId: '', typeLicense: 'USED' });
+    setOpenTransfer({ open: true, row, toCustomerId: '', destinationSubscriptionId: '', typeLicense: 'USED' });
   };
 
   const handleOpenServerChange = (row) => {
+    if (requiresSubscriptionLink(row)) {
+      enqueueSnackbar(t('licenses.labels.requiresSubscriptionLink', 'Requires subscription link'), { variant: 'warning' });
+      return;
+    }
     const customer = customers.find((c) => (c.customerId || c.id) === row.customerId);
     const country = countryFromPhone(customer?.customerPhone || customer?.customer_phone || '');
     const linkedSubscription = row.subscriptionId ? subscriptionMap[String(row.subscriptionId)] : null;
@@ -1029,24 +1069,11 @@ export default function LicensesLionTv() {
   };
 
   const handleOpenRemovePlaylists = (row) => {
+    if (requiresSubscriptionLink(row)) {
+      enqueueSnackbar(t('licenses.labels.requiresSubscriptionLink', 'Requires subscription link'), { variant: 'warning' });
+      return;
+    }
     setOpenRemovePlaylists({ open: true, row });
-  };
-
-  const handleSubscriptionSelect = (value) => {
-    const sub = subscriptions.find((s) => idsMatch(s.id || s.subscriptionId, value));
-    const nextSource = serverForm.lineSource === 'PLUS' && sub?.linePlusId ? 'PLUS' : 'MAIN';
-    const context = resolveServerLineContext(sub, nextSource);
-    setServerForm((prev) => ({
-      ...prev,
-      subscriptionId: value,
-      lineId: context.lineId,
-      linePlusId: context.linePlusId,
-      effectiveLineId: context.effectiveLineId,
-      lineSource: context.source,
-      provider: context.provider,
-      username: context.username,
-      password: context.password
-    }));
   };
 
   const handleLineSourceSelect = (value) => {
@@ -1066,36 +1093,29 @@ export default function LicensesLionTv() {
   };
 
   const handleServerSubmit = async () => {
-    const { serverKey, macAddress = openServerChange.row?.macAddress, subscriptionId, lineId, linePlusId, effectiveLineId, lineSource, provider, playlistName, username, password } = {
+    const { serverKey, lineSource, playlistName } = {
       ...serverForm,
-      macAddress: openServerChange.row?.macAddress
     };
-    if (!serverKey || !macAddress || !subscriptionId || !lineId) {
-      enqueueSnackbar(t('licenses.server.required', 'Select server and subscription (line).'), { variant: 'warning' });
+    const licenseId = openServerChange.row?.licenseId;
+    if (!licenseId || !serverKey) {
+      enqueueSnackbar(t('licenses.server.required', 'Select server before continuing.'), { variant: 'warning' });
       return;
     }
-    if (lineSource === 'PLUS' && (!linePlusId || !effectiveLineId || !username || !password || !provider)) {
+    if (lineSource === 'PLUS' && !selectedServerContext.valid) {
       enqueueSnackbar(
         t('licenses.server.plusMetadataRequired', 'Line plus metadata is incomplete. Check line plus, credentials, and provider before continuing.'),
         { variant: 'warning' }
       );
-      return;
+    return;
     }
     setSending(true);
     try {
       const res = await lionTvApi.post(
-        '/licenses/v1/change-server',
+        `/licenses/v1/${licenseId}/change-server`,
         {
           serverKey,
-          macAddress,
-          subscriptionId: Number(subscriptionId),
-          lineId,
-          linePlusId,
           lineSource,
-          provider,
-          playlistName,
-          username,
-          password
+          playlistName
         },
         { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
       );
@@ -1112,17 +1132,17 @@ export default function LicensesLionTv() {
   };
 
   const confirmRemovePlaylists = async () => {
-    const macAddress = openRemovePlaylists.row?.macAddress;
-    if (!macAddress) {
-      enqueueSnackbar(t('licenses.server.removeRequired', 'Device MAC is required.'), { variant: 'warning' });
+    const licenseId = openRemovePlaylists.row?.licenseId;
+    if (!licenseId) {
+      enqueueSnackbar(t('licenses.server.removeRequired', 'License id is required.'), { variant: 'warning' });
       return;
     }
 
     setSending(true);
     try {
       const res = await lionTvApi.post(
-        '/licenses/v1/change-server',
-        { serverKey: 'remove-all-device-playlists', macAddress, lineId: '' },
+        `/licenses/v1/${licenseId}/remove-playlists`,
+        {},
         { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
       );
       const msg =
@@ -1145,17 +1165,17 @@ export default function LicensesLionTv() {
   };
 
   const handleRemovePlaylistsDirect = async () => {
-    const macAddress = openServerChange.row?.macAddress;
-    if (!macAddress) {
-      enqueueSnackbar(t('licenses.server.removeRequired', 'Device MAC is required.'), { variant: 'warning' });
+    const licenseId = openServerChange.row?.licenseId;
+    if (!licenseId) {
+      enqueueSnackbar(t('licenses.server.removeRequired', 'License id is required.'), { variant: 'warning' });
       return;
     }
 
     setSending(true);
     try {
       const res = await lionTvApi.post(
-        '/licenses/v1/change-server',
-        { serverKey: 'remove-all-device-playlists', macAddress, lineId: '' },
+        `/licenses/v1/${licenseId}/remove-playlists`,
+        {},
         { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
       );
       const msg =
@@ -1178,8 +1198,9 @@ export default function LicensesLionTv() {
   };
 
   const submitTransfer = async () => {
-    const { row, toCustomerId, typeLicense } = openTransfer;
-    if (!row?.licenseId || !toCustomerId || !typeLicense) {
+    const { row, toCustomerId, destinationSubscriptionId, typeLicense } = openTransfer;
+    const managedLicense = isManagedLicenseRecord(row);
+    if (!row?.licenseId || !toCustomerId || !typeLicense || (managedLicense && !destinationSubscriptionId)) {
       enqueueSnackbar(t('licenses.transfer.required', 'Select customer and type.'), { variant: 'warning' });
       return;
     }
@@ -1187,11 +1208,15 @@ export default function LicensesLionTv() {
     try {
       await lionTvApi.post(
         `/licenses/v1/${row.licenseId}/transfer`,
-        { toCustomerId: Number(toCustomerId), typeLicense },
+        {
+          toCustomerId: Number(toCustomerId),
+          destinationSubscriptionId: managedLicense ? Number(destinationSubscriptionId) : null,
+          typeLicense
+        },
         { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
       );
       enqueueSnackbar(t('licenses.transfer.done', 'License transferred.'), { variant: 'success' });
-      setOpenTransfer({ open: false, row: null, toCustomerId: '', typeLicense: 'USED' });
+      setOpenTransfer({ open: false, row: null, toCustomerId: '', destinationSubscriptionId: '', typeLicense: 'USED' });
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
@@ -1462,7 +1487,16 @@ export default function LicensesLionTv() {
                     chips={[
                       <LicenseStatusChip key="status" status={row.status} />,
                       <LicensePaidChip key="paid" isPaid={row.isPaid} t={t} />,
-                      <Chip key="app" size="small" variant="outlined" label={getLicenseAppLabel(row.app)} />
+                      <Chip key="app" size="small" variant="outlined" label={getLicenseAppLabel(row.app)} />,
+                      requiresSubscriptionLink(row) ? (
+                        <Chip
+                          key="subscription-warning"
+                          size="small"
+                          color="warning"
+                          variant="outlined"
+                          label={t('licenses.labels.requiresSubscriptionLink', 'Requires subscription link')}
+                        />
+                      ) : null
                     ]}
                     actions={
                       <ResponsiveActionBar>
@@ -1495,7 +1529,9 @@ export default function LicensesLionTv() {
                                   ? `Line ${subscriptionMap[String(row.subscriptionId)]?.lineId}`
                                   : '-')
                               }`
-                            : '-'
+                            : requiresSubscriptionLink(row)
+                              ? t('licenses.labels.requiresSubscriptionLink', 'Requires subscription link')
+                              : '-'
                         },
                         { label: t('licenses.headers.period'), value: row.licensePeriod || '-' }
                       ]}
@@ -1604,6 +1640,13 @@ export default function LicensesLionTv() {
                                   : '-')}
                             </Typography>
                           </Stack>
+                        ) : requiresSubscriptionLink(row) ? (
+                          <Chip
+                            size="small"
+                            color="warning"
+                            variant="outlined"
+                            label={t('licenses.labels.requiresSubscriptionLink', 'Requires subscription link')}
+                          />
                         ) : (
                           '-'
                         )}
@@ -1875,7 +1918,7 @@ export default function LicensesLionTv() {
                 </Grid>
 
                 <Grid item xs={12} sm={3}>
-                  <FormControl fullWidth required sx={fieldSx} disabled={customersLoading}>
+                  <FormControl fullWidth required sx={fieldSx} disabled={customersLoading || Boolean(form.licenseId)}>
                     <InputLabel>{t('licenses.form.customer', 'Customer')}</InputLabel>
                     <Select
                       value={form.customerId}
@@ -1897,7 +1940,9 @@ export default function LicensesLionTv() {
                       ))}
                     </Select>
                     <FormHelperText>
-                      {customersLoading
+                      {form.licenseId
+                        ? t('licenses.form.customerLocked', 'Use transfer to change the customer of an existing license.')
+                        : customersLoading
                         ? t('licenses.form.loadingCustomers', 'Loading customers...')
                         : t('licenses.form.customerHelper', 'Customer linked to this license')}
                     </FormHelperText>
@@ -1905,7 +1950,7 @@ export default function LicensesLionTv() {
                 </Grid>
 
                 <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth sx={fieldSx} disabled={!form.customerId}>
+                  <FormControl fullWidth required={!form.randomLicense} sx={fieldSx} disabled={!form.customerId}>
                     <InputLabel>{t('licenses.form.subscription', 'Subscription')}</InputLabel>
                     <Select
                       value={form.subscriptionId}
@@ -1917,9 +1962,11 @@ export default function LicensesLionTv() {
                         </InputAdornment>
                       }
                     >
-                      <MenuItem value="">
-                        <em>{t('licenses.form.subscriptionNone', 'No related subscription')}</em>
-                      </MenuItem>
+                      {form.randomLicense ? (
+                        <MenuItem value="">
+                          <em>{t('licenses.form.subscriptionNone', 'No related subscription')}</em>
+                        </MenuItem>
+                      ) : null}
                       {customerSubscriptions.map((subscription) => (
                         <MenuItem key={subscription.id} value={subscription.id}>
                           {formatSubscriptionLabel(subscription)}
@@ -1929,8 +1976,10 @@ export default function LicensesLionTv() {
                     <FormHelperText>
                       {!form.customerId
                         ? t('licenses.form.subscriptionSelectCustomer', 'Select a customer first.')
+                        : form.randomLicense
+                          ? t('licenses.form.subscriptionRandomHelper', 'External licenses may stay without a subscription link.')
                         : customerSubscriptions.length
-                          ? t('licenses.form.subscriptionHelper', 'Optional relation to one customer subscription.')
+                          ? t('licenses.form.subscriptionRequiredHelper', 'Managed licenses must stay linked to one customer subscription.')
                           : t('licenses.form.subscriptionEmpty', 'This customer has no subscriptions available.')}
                     </FormHelperText>
                   </FormControl>
@@ -2223,32 +2272,6 @@ export default function LicensesLionTv() {
               <FormHelperText>{t('licenses.server.helper', 'Select target server')}</FormHelperText>
             </FormControl>
 
-            <FormControl fullWidth sx={fieldSx}>
-              <InputLabel>{t('licenses.server.subscription', 'Subscription')}</InputLabel>
-              <Select
-                value={serverForm.subscriptionId}
-                label={t('licenses.server.subscription', 'Subscription')}
-                onChange={(e) => handleSubscriptionSelect(e.target.value)}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <LinkIcon fontSize="small" color="secondary" />
-                  </InputAdornment>
-                }
-              >
-                <MenuItem value="">
-                  <em>{t('licenses.form.select', 'Select')}</em>
-                </MenuItem>
-                {subscriptions
-                  .filter((s) => idsMatch(s.customerId, openServerChange.row?.customerId))
-                  .map((s) => (
-                    <MenuItem key={s.id} value={s.id}>
-                      {formatSubscriptionLabel(s)}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>{t('licenses.server.subscriptionHelper', 'Filter by customer subscriptions')}</FormHelperText>
-            </FormControl>
-
             {selectedServerSubscription ? (
               <FormControl fullWidth sx={fieldSx}>
                 <InputLabel>{t('licenses.server.lineSource', 'Line source')}</InputLabel>
@@ -2269,27 +2292,6 @@ export default function LicensesLionTv() {
                 </FormHelperText>
               </FormControl>
             ) : null}
-
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label={t('licenses.server.username', 'Username')}
-                  value={serverForm.username}
-                  onChange={(e) => setServerForm((p) => ({ ...p, username: e.target.value }))}
-                  fullWidth
-                  sx={fieldSx}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label={t('licenses.server.password', 'Password')}
-                  value={serverForm.password}
-                  onChange={(e) => setServerForm((p) => ({ ...p, password: e.target.value }))}
-                  fullWidth
-                  sx={fieldSx}
-                />
-              </Grid>
-            </Grid>
 
             <TextField
               label={t('licenses.server.playlist', 'Playlist name')}
@@ -2397,12 +2399,14 @@ export default function LicensesLionTv() {
       {/* TRANSFER */}
       <Dialog
         open={openTransfer.open}
-        onClose={() => setOpenTransfer({ open: false, row: null, toCustomerId: '', typeLicense: 'USED' })}
+        onClose={() => setOpenTransfer({ open: false, row: null, toCustomerId: '', destinationSubscriptionId: '', typeLicense: 'USED' })}
         fullWidth
         maxWidth="sm"
         fullScreen={isMobile}
       >
-        <DialogTitleWithClose onClose={() => setOpenTransfer({ open: false, row: null, toCustomerId: '', typeLicense: 'USED' })}>
+        <DialogTitleWithClose
+          onClose={() => setOpenTransfer({ open: false, row: null, toCustomerId: '', destinationSubscriptionId: '', typeLicense: 'USED' })}
+        >
           {t('licenses.transfer.title', 'Transfer license')}
         </DialogTitleWithClose>
         <DialogContent dividers>
@@ -2416,7 +2420,7 @@ export default function LicensesLionTv() {
               <Select
                 value={openTransfer.toCustomerId}
                 label={t('licenses.transfer.newCustomer', 'New customer')}
-                onChange={(e) => setOpenTransfer((p) => ({ ...p, toCustomerId: e.target.value }))}
+                onChange={(e) => setOpenTransfer((p) => ({ ...p, toCustomerId: e.target.value, destinationSubscriptionId: '' }))}
               >
                 <MenuItem value="">
                   <em>{t('licenses.form.select', 'Select')}</em>
@@ -2433,6 +2437,33 @@ export default function LicensesLionTv() {
                   : t('licenses.transfer.helperCustomer', 'New license owner')}
               </FormHelperText>
             </FormControl>
+
+            {isManagedLicenseRecord(openTransfer.row) ? (
+              <FormControl fullWidth sx={fieldSx} disabled={!openTransfer.toCustomerId}>
+                <InputLabel>{t('licenses.transfer.subscription', 'Destination subscription')}</InputLabel>
+                <Select
+                  value={openTransfer.destinationSubscriptionId}
+                  label={t('licenses.transfer.subscription', 'Destination subscription')}
+                  onChange={(e) => setOpenTransfer((p) => ({ ...p, destinationSubscriptionId: e.target.value }))}
+                >
+                  <MenuItem value="">
+                    <em>{t('licenses.form.select', 'Select')}</em>
+                  </MenuItem>
+                  {transferCustomerSubscriptions.map((subscription) => (
+                    <MenuItem key={subscription.id} value={subscription.id}>
+                      {formatSubscriptionLabel(subscription)}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>
+                  {!openTransfer.toCustomerId
+                    ? t('licenses.transfer.subscriptionSelectCustomer', 'Select the new customer first.')
+                    : transferCustomerSubscriptions.length
+                      ? t('licenses.transfer.subscriptionHelper', 'Choose the subscription that will own this managed license.')
+                      : t('licenses.transfer.subscriptionEmpty', 'This customer has no subscriptions available.')}
+                </FormHelperText>
+              </FormControl>
+            ) : null}
 
             <FormControl fullWidth sx={fieldSx}>
               <InputLabel>{t('licenses.transfer.type', 'Type')}</InputLabel>
@@ -2452,7 +2483,10 @@ export default function LicensesLionTv() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenTransfer({ open: false, row: null, toCustomerId: '', typeLicense: 'USED' })} disabled={sending}>
+          <Button
+            onClick={() => setOpenTransfer({ open: false, row: null, toCustomerId: '', destinationSubscriptionId: '', typeLicense: 'USED' })}
+            disabled={sending}
+          >
             {t('actions.cancel', 'Cancel')}
           </Button>
           <Button variant="contained" onClick={submitTransfer} disabled={sending}>
