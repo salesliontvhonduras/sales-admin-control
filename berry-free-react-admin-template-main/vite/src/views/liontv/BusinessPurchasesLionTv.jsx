@@ -234,6 +234,10 @@ function formatDateTimeInput(value) {
   return local.toISOString().slice(0, 16);
 }
 
+function isCreditRequestPurchase(row) {
+  return String(row?.category || '').toUpperCase() === 'CREDITS' && String(row?.purchaseType || '').toUpperCase() === 'LION_TV_CREDITS';
+}
+
 function StatusChip({ status }) {
   const { t } = useTranslation();
   const color = statusColors[status] || 'default';
@@ -489,9 +493,10 @@ export default function BusinessPurchasesLionTv() {
   }, [loadBusinessPurchases, refreshKey]);
 
   const filteredRows = useMemo(() => {
-    if (!search && !statusFilter && !categoryFilter && !purchaseTypeFilter) return rows;
+    const operationalRows = rows.filter((row) => !isCreditRequestPurchase(row));
+    if (!search && !statusFilter && !categoryFilter && !purchaseTypeFilter) return operationalRows;
     const term = search.toLowerCase();
-    return rows.filter((row) => {
+    return operationalRows.filter((row) => {
       if (statusFilter && (row.status || '').toUpperCase() !== statusFilter.toUpperCase()) return false;
       if (categoryFilter && (row.category || '').toUpperCase() !== categoryFilter.toUpperCase()) return false;
       if (purchaseTypeFilter && (row.purchaseType || '').toUpperCase() !== purchaseTypeFilter.toUpperCase()) return false;
@@ -519,12 +524,12 @@ export default function BusinessPurchasesLionTv() {
 
   const summary = useMemo(
     () => ({
-      total: rows.length,
-      paid: rows.filter((r) => r.status === 'PAID').length,
-      pending: rows.filter((r) => r.status === 'PENDING').length,
-      recurring: rows.filter((r) => r.isRecurring).length,
+      total: rows.filter((r) => !isCreditRequestPurchase(r)).length,
+      paid: rows.filter((r) => !isCreditRequestPurchase(r) && r.status === 'PAID').length,
+      pending: rows.filter((r) => !isCreditRequestPurchase(r) && r.status === 'PENDING').length,
+      recurring: rows.filter((r) => !isCreditRequestPurchase(r) && r.isRecurring).length,
       pendingCreditRequests: rows.filter((r) => r.status === 'PENDING' && r.category === 'CREDITS' && r.purchaseType === 'LION_TV_CREDITS').length,
-      totalAmount: rows.reduce((acc, row) => acc + toSafeNumber(row.totalAmount), 0)
+      totalAmount: rows.filter((r) => !isCreditRequestPurchase(r)).reduce((acc, row) => acc + toSafeNumber(row.totalAmount), 0)
     }),
     [rows]
   );

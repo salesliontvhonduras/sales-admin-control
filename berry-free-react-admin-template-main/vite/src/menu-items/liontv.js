@@ -176,6 +176,15 @@ const liontv = {
           url: '/liontv/business-purchases',
           breadcrumbs: true,
           permission: { any: ['LIONTV_BUSINESS_PURCHASES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+        },
+        {
+          id: 'liontv-credit-requests',
+          title: 'menu.creditRequests',
+          type: 'item',
+          url: '/liontv/credit-requests',
+          resellerVisible: false,
+          breadcrumbs: true,
+          permission: { any: ['ROLE_ADMIN', 'ADMIN'] }
         }
       ]
     },

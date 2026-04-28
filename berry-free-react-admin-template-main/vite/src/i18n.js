@@ -34,6 +34,7 @@ const resources = {
         subscriptions: 'Subscriptions',
         invoices: 'Invoices',
         businessPurchases: 'Business Purchases',
+        creditRequests: 'Credit Requests',
         customers: 'Customers',
         potentialCustomers: 'Potential Customers',
         referrals: 'Referral Leads',
@@ -434,6 +435,71 @@ const resources = {
             YEARLY: 'Yearly',
             WEEKLY: 'Weekly'
           }
+        }
+      },
+      creditRequests: {
+        subtitle:
+          'Approve reseller credit requests from one screen and automatically credit the wallet of the reseller who created the request.',
+        loading: 'Loading reseller credit requests...',
+        helper:
+          'Approving a request marks it as paid and credits the wallet of the reseller who created it. Approval is idempotent and will not duplicate credits.',
+        filters: {
+          search: 'Search by reseller, code, note or request name',
+          status: 'Status',
+          allStatuses: 'All statuses'
+        },
+        kpi: {
+          total: 'Visible requests',
+          totalHelper: 'Requests that match the current admin filters.',
+          pending: 'Pending',
+          pendingHelper: 'Requests still waiting for approval.',
+          approved: 'Approved',
+          approvedHelper: 'Requests already credited to reseller wallets.',
+          credits: 'Credits requested',
+          creditsHelper: 'Total credits represented by the visible requests.'
+        },
+        headers: {
+          request: 'Request',
+          reseller: 'Reseller',
+          credits: 'Credits',
+          created: 'Created',
+          status: 'Status',
+          notes: 'Notes',
+          actions: 'Actions'
+        },
+        status: {
+          pending: 'Pending',
+          paid: 'Approved',
+          cancelled: 'Cancelled'
+        },
+        labels: {
+          fallbackName: 'Credit request',
+          alreadyApproved: 'Already approved',
+          noAction: 'No action'
+        },
+        actions: {
+          approve: 'Approve',
+          approving: 'Approving...',
+          confirmApprove: 'Approve and credit'
+        },
+        dialog: {
+          title: 'Approve credit request',
+          helper: 'This action will mark the request as approved and credit the reseller wallet automatically.',
+          reseller: 'Reseller: {{username}}',
+          credits: 'Credits: {{credits}}',
+          requestCode: 'Request code: {{code}}',
+          notes: 'Notes: {{notes}}'
+        },
+        empty: {
+          title: 'No credit requests found',
+          description: 'Try another status or wait for new reseller requests.'
+        },
+        messages: {
+          approved: '{{credits}} credits were approved and credited to {{username}}.'
+        },
+        errors: {
+          load: 'Could not load credit requests.',
+          approve: 'Could not approve this credit request.'
         }
       },
       managedAccounts: {
@@ -3819,6 +3885,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         subscriptions: 'Suscripciones',
         invoices: 'Facturas',
         businessPurchases: 'Compras negocio',
+        creditRequests: 'Solicitudes de créditos',
         customers: 'Clientes',
         potentialCustomers: 'Prospectos',
         referrals: 'Leads por Referidos',
@@ -4218,6 +4285,71 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             YEARLY: 'Anual',
             WEEKLY: 'Semanal'
           }
+        }
+      },
+      creditRequests: {
+        subtitle:
+          'Aprueba solicitudes de créditos reseller desde una sola pantalla y acredita automáticamente el wallet del reseller que creó la solicitud.',
+        loading: 'Cargando solicitudes de créditos reseller...',
+        helper:
+          'Aprobar una solicitud la marca como pagada y acredita el wallet del reseller que la creó. La aprobación es idempotente y no duplica créditos.',
+        filters: {
+          search: 'Buscar por reseller, código, nota o nombre de la solicitud',
+          status: 'Estado',
+          allStatuses: 'Todos los estados'
+        },
+        kpi: {
+          total: 'Solicitudes visibles',
+          totalHelper: 'Solicitudes que coinciden con los filtros actuales de administración.',
+          pending: 'Pendientes',
+          pendingHelper: 'Solicitudes que todavía esperan aprobación.',
+          approved: 'Aprobadas',
+          approvedHelper: 'Solicitudes ya acreditadas a wallets reseller.',
+          credits: 'Créditos solicitados',
+          creditsHelper: 'Total de créditos representados por las solicitudes visibles.'
+        },
+        headers: {
+          request: 'Solicitud',
+          reseller: 'Reseller',
+          credits: 'Créditos',
+          created: 'Creada',
+          status: 'Estado',
+          notes: 'Notas',
+          actions: 'Acciones'
+        },
+        status: {
+          pending: 'Pendiente',
+          paid: 'Aprobada',
+          cancelled: 'Cancelada'
+        },
+        labels: {
+          fallbackName: 'Solicitud de créditos',
+          alreadyApproved: 'Ya aprobada',
+          noAction: 'Sin acción'
+        },
+        actions: {
+          approve: 'Aprobar',
+          approving: 'Aprobando...',
+          confirmApprove: 'Aprobar y acreditar'
+        },
+        dialog: {
+          title: 'Aprobar solicitud de créditos',
+          helper: 'Esta acción marcará la solicitud como aprobada y acreditará automáticamente el wallet del reseller.',
+          reseller: 'Reseller: {{username}}',
+          credits: 'Créditos: {{credits}}',
+          requestCode: 'Código de solicitud: {{code}}',
+          notes: 'Notas: {{notes}}'
+        },
+        empty: {
+          title: 'No se encontraron solicitudes de créditos',
+          description: 'Prueba otro estado o espera nuevas solicitudes reseller.'
+        },
+        messages: {
+          approved: 'Se aprobaron {{credits}} créditos y quedaron acreditados a {{username}}.'
+        },
+        errors: {
+          load: 'No se pudieron cargar las solicitudes de créditos.',
+          approve: 'No se pudo aprobar esta solicitud de créditos.'
         }
       },
       managedAccounts: {
