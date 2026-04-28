@@ -1,5 +1,6 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { lionTvProfessionalTranslations } from './locales/liontvProfessionalTranslations';
 
 const resources = {
   en: {
@@ -7322,6 +7323,27 @@ const missingWordDictionary = {
     id: 'id'
   }
 };
+
+const mergeTranslations = (target, source) => {
+  if (!source || typeof source !== 'object') return target;
+
+  Object.entries(source).forEach(([key, value]) => {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      if (!target[key] || typeof target[key] !== 'object' || Array.isArray(target[key])) {
+        target[key] = {};
+      }
+      mergeTranslations(target[key], value);
+      return;
+    }
+
+    target[key] = value;
+  });
+
+  return target;
+};
+
+mergeTranslations(resources.en.translation, lionTvProfessionalTranslations.en);
+mergeTranslations(resources.es.translation, lionTvProfessionalTranslations.es);
 
 const interpolationCandidateKeys = new Set([
   'count',

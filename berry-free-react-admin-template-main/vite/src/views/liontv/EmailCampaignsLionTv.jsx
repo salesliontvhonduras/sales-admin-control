@@ -1059,6 +1059,7 @@ function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, edit
       if (missingRequired.length) {
         enqueueSnackbar(
           t('emailCampaigns.messages.missingManualVariables', {
+            items: missingRequired.join(', '),
             defaultValue: `Complete required variables: ${missingRequired.join(', ')}`
           }),
           { variant: 'warning' }
@@ -1360,6 +1361,8 @@ function CampaignWizardDialog({ open, onClose, templates, refreshTemplates, edit
                   {selectedTemplate && (
                     <Alert severity="info">
                       {t('emailCampaigns.form.templateHint', {
+                        name: selectedTemplate.name,
+                        code: selectedTemplate.code,
                         defaultValue: `Selected template: ${selectedTemplate.name} (${selectedTemplate.code}).`
                       })}
                     </Alert>
@@ -1780,7 +1783,15 @@ export default function EmailCampaignsLionTv() {
   };
 
   const handleCancelCampaign = async (row) => {
-    if (!window.confirm(t('emailCampaigns.messages.cancelConfirm', { defaultValue: `Cancel campaign ${row.name}?` }))) return;
+    if (
+      !window.confirm(
+        t('emailCampaigns.messages.cancelConfirm', {
+          name: row.name,
+          defaultValue: `Cancel campaign ${row.name}?`
+        })
+      )
+    )
+      return;
     try {
       await cancelEmailCampaign(row.campaignId);
       enqueueSnackbar(t('emailCampaigns.messages.cancelled', { defaultValue: 'Campaign cancelled.' }), { variant: 'success' });

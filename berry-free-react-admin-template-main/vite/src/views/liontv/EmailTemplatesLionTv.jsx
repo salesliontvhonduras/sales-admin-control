@@ -459,7 +459,14 @@ export default function EmailTemplatesLionTv() {
   };
 
   const handleDelete = async (row) => {
-    if (!window.confirm(t('emailTemplates.messages.deleteConfirm', { defaultValue: `Delete template ${row.name}?` }))) {
+    if (
+      !window.confirm(
+        t('emailTemplates.messages.deleteConfirm', {
+          name: row.name,
+          defaultValue: `Delete template ${row.name}?`
+        })
+      )
+    ) {
       return;
     }
     try {

@@ -227,7 +227,6 @@ const liontv = {
           title: 'menu.contentAutomation',
           type: 'item',
           url: '/liontv/content-automation',
-          resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
         }

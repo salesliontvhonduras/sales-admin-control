@@ -207,9 +207,7 @@ const MainRoutes = {
           path: '/liontv/content-automation',
           element: protectPage(
             { any: ['LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_ADMIN', 'ADMIN'] },
-            <ContentAutomationLionTv />,
-            '/liontv/dashboard',
-            true
+            <ContentAutomationLionTv />
           )
         },
         {
