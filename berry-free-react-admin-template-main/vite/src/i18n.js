@@ -1486,6 +1486,8 @@ const resources = {
         server: {
           required: 'Select server before continuing.',
           updated: 'Server updated.',
+          bobApp: 'App',
+          bobSessionRequired: 'Authenticate Bob Player before changing server.',
           bobTitle: 'Create or update Bob playlist',
           bobHelper:
             'This action uses the authenticated Bob session on this license to create or update the remote playlist with the line and server you select below.',
@@ -5569,6 +5571,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         server: {
           required: 'Selecciona el servidor antes de continuar.',
           updated: 'Servidor actualizado.',
+          bobApp: 'App',
+          bobSessionRequired: 'Autentica Bob Player antes de cambiar el servidor.',
           bobTitle: 'Crear o actualizar playlist Bob',
           bobHelper:
             'Esta acción usa la sesión Bob autenticada en esta licencia para crear o actualizar la playlist remota con la línea y el servidor que selecciones abajo.',

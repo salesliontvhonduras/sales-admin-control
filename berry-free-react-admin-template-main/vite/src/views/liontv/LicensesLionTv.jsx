@@ -484,6 +484,10 @@ function bobSessionLabel(status, t) {
   return t('licenses.bob.session.notConfigured', 'Not configured');
 }
 
+function isBobSessionReady(status) {
+  return String(status || '').trim().toUpperCase() === 'READY';
+}
+
 export default function LicensesLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { accessToken } = useAuth();
@@ -1188,6 +1192,10 @@ export default function LicensesLionTv() {
       );
     return;
     }
+    if (isBobLicenseRecord(openServerChange.row) && !isBobSessionReady(openServerChange.row?.bobSessionStatus)) {
+      enqueueSnackbar(t('licenses.server.bobSessionRequired', 'Authenticate Bob Player before changing server.'), { variant: 'warning' });
+      return;
+    }
     setSending(true);
     try {
       const res = await lionTvApi.post(
@@ -1220,6 +1228,10 @@ export default function LicensesLionTv() {
     const licenseId = openRemovePlaylists.row?.licenseId;
     if (!licenseId) {
       enqueueSnackbar(t('licenses.server.removeRequired', 'License id is required.'), { variant: 'warning' });
+      return;
+    }
+    if (isBobLicenseRecord(openRemovePlaylists.row) && !isBobSessionReady(openRemovePlaylists.row?.bobSessionStatus)) {
+      enqueueSnackbar(t('licenses.server.bobSessionRequired', 'Authenticate Bob Player before changing server.'), { variant: 'warning' });
       return;
     }
 
@@ -1256,6 +1268,10 @@ export default function LicensesLionTv() {
     const licenseId = openServerChange.row?.licenseId;
     if (!licenseId) {
       enqueueSnackbar(t('licenses.server.removeRequired', 'License id is required.'), { variant: 'warning' });
+      return;
+    }
+    if (isBobLicenseRecord(openServerChange.row) && !isBobSessionReady(openServerChange.row?.bobSessionStatus)) {
+      enqueueSnackbar(t('licenses.server.bobSessionRequired', 'Authenticate Bob Player before changing server.'), { variant: 'warning' });
       return;
     }
 
@@ -1546,6 +1562,8 @@ export default function LicensesLionTv() {
 
   const isBobServerChange = isBobLicenseRecord(openServerChange.row);
   const isBobRemoveDialog = isBobLicenseRecord(openRemovePlaylists.row);
+  const bobServerChangeReady = !isBobServerChange || isBobSessionReady(openServerChange.row?.bobSessionStatus);
+  const bobRemoveReady = !isBobRemoveDialog || isBobSessionReady(openRemovePlaylists.row?.bobSessionStatus);
   const selectedBobPlaylist = useMemo(
     () => bobSyncDialog.playlists.find((playlist) => playlist.playlistId === bobSyncDialog.selectedPlaylistId) || null,
     [bobSyncDialog.playlists, bobSyncDialog.selectedPlaylistId]
@@ -2640,18 +2658,11 @@ export default function LicensesLionTv() {
         fullScreen={isMobile}
       >
         <DialogTitleWithClose onClose={() => setOpenServerChange({ open: false, row: null })}>
-          {isBobServerChange ? t('licenses.server.bobTitle', 'Create or update Bob playlist') : t('licenses.server.title', 'Change server')}
+          {t('licenses.server.title', 'Change server')}
         </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2}>
-            <Typography variant="body2" color="text.secondary">
-              {isBobServerChange
-                ? t(
-                    'licenses.server.bobHelper',
-                    'This action uses the authenticated Bob session on this license to create or update the remote playlist with the line and server you select below.'
-                  )
-                : t('licenses.server.helper', 'Select target server')}
-            </Typography>
+            <Typography variant="body2" color="text.secondary">{t('licenses.server.helper', 'Select target server')}</Typography>
             <Typography variant="body2">
               {t('licenses.server.mac', 'Mac')}: <strong>{openServerChange.row?.macAddress}</strong>
             </Typography>
@@ -2662,12 +2673,28 @@ export default function LicensesLionTv() {
               {t('licenses.server.country', 'Country (phone)')}: <strong>{serverForm.country}</strong>
             </Typography>
             {isBobServerChange ? (
-              <Alert severity={openServerChange.row?.bobSessionStatus === 'READY' ? 'info' : 'warning'}>
-                {`${t('licenses.bob.session.title', 'Bob session')}: ${bobSessionLabel(openServerChange.row?.bobSessionStatus, t)}. ${
-                  openServerChange.row?.remotePlaylistId
-                    ? `${t('licenses.bob.remotePlaylist', 'Remote playlist')}: ${openServerChange.row.remotePlaylistId}`
-                    : t('licenses.server.bobNoRemotePlaylist', 'No remote playlist is linked yet. Saving will create one.')
-                }`}
+              <Alert
+                severity={bobServerChangeReady ? 'info' : 'warning'}
+                action={
+                  !bobServerChangeReady ? (
+                    <Button color="inherit" size="small" onClick={() => openServerChange.row && openBobAuth(openServerChange.row)}>
+                      {t('licenses.actions.authenticateBob', 'Authenticate Bob Player')}
+                    </Button>
+                  ) : null
+                }
+              >
+                <Stack spacing={0.5}>
+                  <Typography variant="subtitle2">{`${t('licenses.server.bobApp', 'App')}: Bob Player`}</Typography>
+                  <Typography variant="body2">{`${t('licenses.bob.session.title', 'Bob session')}: ${bobSessionLabel(openServerChange.row?.bobSessionStatus, t)}`}</Typography>
+                  <Typography variant="body2">
+                    {openServerChange.row?.remotePlaylistId
+                      ? `${t('licenses.bob.remotePlaylist', 'Remote playlist')}: ${openServerChange.row.remotePlaylistId}`
+                      : t('licenses.server.bobNoRemotePlaylist', 'No remote playlist is linked yet. Saving will create one.')}
+                  </Typography>
+                  {!bobServerChangeReady ? (
+                    <Typography variant="body2">{t('licenses.server.bobSessionRequired', 'Authenticate Bob Player before changing server.')}</Typography>
+                  ) : null}
+                </Stack>
               </Alert>
             ) : null}
 
@@ -2771,24 +2798,14 @@ export default function LicensesLionTv() {
           <Button color="warning" variant="outlined" onClick={handleRemovePlaylistsDirect} disabled={sending}>
             <Stack direction="row" spacing={0.75} alignItems="center">
               <PlaylistRemoveIcon fontSize="small" />
-              <span>
-                {sending
-                  ? t('actions.sending', 'Sending...')
-                  : isBobServerChange
-                    ? t('licenses.server.removeBobSubmit', 'Remove all Bob playlists')
-                    : t('licenses.server.removeSubmit', 'Remove playlists')}
-              </span>
+              <span>{sending ? t('actions.sending', 'Sending...') : t('licenses.server.removeSubmit', 'Remove playlists')}</span>
             </Stack>
           </Button>
           <Button onClick={() => setOpenServerChange({ open: false, row: null })}>
             {t('actions.cancel', 'Cancel')}
           </Button>
-          <Button variant="contained" onClick={handleServerSubmit} disabled={sending}>
-            {sending
-              ? t('actions.sending', 'Sending...')
-              : isBobServerChange
-                ? t('licenses.server.bobSubmit', 'Save Bob playlist')
-                : t('licenses.server.submit', 'Change server')}
+          <Button variant="contained" onClick={handleServerSubmit} disabled={sending || !bobServerChangeReady}>
+            {sending ? t('actions.sending', 'Sending...') : t('licenses.server.submit', 'Change server')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -2802,10 +2819,30 @@ export default function LicensesLionTv() {
         fullScreen={isMobile}
       >
         <DialogTitleWithClose onClose={() => setOpenRemovePlaylists({ open: false, row: null })}>
-          {isBobRemoveDialog ? t('licenses.server.removeBobTitle', 'Remove all Bob playlists') : t('licenses.server.removeTitle', 'Remove all playlists')}
+          {t('licenses.server.removeTitle', 'Remove all playlists')}
         </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={1.5}>
+            {isBobRemoveDialog ? (
+              <Alert
+                severity={bobRemoveReady ? 'warning' : 'error'}
+                action={
+                  !bobRemoveReady ? (
+                    <Button color="inherit" size="small" onClick={() => openRemovePlaylists.row && openBobAuth(openRemovePlaylists.row)}>
+                      {t('licenses.actions.authenticateBob', 'Authenticate Bob Player')}
+                    </Button>
+                  ) : null
+                }
+              >
+                <Stack spacing={0.5}>
+                  <Typography variant="subtitle2">{`${t('licenses.server.bobApp', 'App')}: Bob Player`}</Typography>
+                  <Typography variant="body2">{`${t('licenses.bob.session.title', 'Bob session')}: ${bobSessionLabel(openRemovePlaylists.row?.bobSessionStatus, t)}`}</Typography>
+                  {!bobRemoveReady ? (
+                    <Typography variant="body2">{t('licenses.server.bobSessionRequired', 'Authenticate Bob Player before changing server.')}</Typography>
+                  ) : null}
+                </Stack>
+              </Alert>
+            ) : null}
             <Typography variant="body2">
               {isBobRemoveDialog
                 ? t(
@@ -2827,12 +2864,8 @@ export default function LicensesLionTv() {
           <Button onClick={() => setOpenRemovePlaylists({ open: false, row: null })} disabled={sending}>
             {t('actions.cancel', 'Cancel')}
           </Button>
-          <Button onClick={confirmRemovePlaylists} color="warning" variant="contained" disabled={sending}>
-            {sending
-              ? t('actions.sending', 'Sending...')
-              : isBobRemoveDialog
-                ? t('licenses.server.removeBobSubmit', 'Remove all Bob playlists')
-                : t('licenses.server.removeSubmit', 'Remove playlists')}
+          <Button onClick={confirmRemovePlaylists} color="warning" variant="contained" disabled={sending || !bobRemoveReady}>
+            {sending ? t('actions.sending', 'Sending...') : t('licenses.server.removeSubmit', 'Remove playlists')}
           </Button>
         </DialogActions>
       </Dialog>
