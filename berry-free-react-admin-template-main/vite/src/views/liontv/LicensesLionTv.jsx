@@ -103,6 +103,14 @@ function isBobLicenseRecord(record = {}) {
   return String(record?.app || '').trim().toUpperCase() === 'BOB_PLAYER';
 }
 
+function isNineXtreamLicenseRecord(record = {}) {
+  return String(record?.app || '').trim().toUpperCase() === 'NINEXTREAM';
+}
+
+function supportsSpainAutoServerOption(record = {}) {
+  return !isBobLicenseRecord(record) && !isNineXtreamLicenseRecord(record);
+}
+
 function hasSubscriptionLink(record = {}) {
   return Boolean(record?.subscriptionId);
 }
@@ -976,6 +984,17 @@ export default function LicensesLionTv() {
     const start = page * rowsPerPage;
     return filteredRows.slice(start, start + rowsPerPage);
   }, [filteredRows, page, rowsPerPage]);
+
+  const availableServerOptions = useMemo(
+    () =>
+      serverOptions.filter((option) => {
+        if (supportsSpainAutoServerOption(openServerChange.row)) {
+          return true;
+        }
+        return option.value !== 'es-all-auto';
+      }),
+    [openServerChange.row, serverOptions]
+  );
 
   const visibleBobLicenseIds = useMemo(
     () => paginatedRows.filter((row) => isBobLicenseRecord(row)).map((row) => row.licenseId).filter(Boolean),
@@ -2851,7 +2870,7 @@ export default function LicensesLionTv() {
                   </InputAdornment>
                 }
               >
-                {serverOptions.map((s) => (
+                {availableServerOptions.map((s) => (
                   <MenuItem key={s.value} value={s.value}>
                     {s.label}
                   </MenuItem>
