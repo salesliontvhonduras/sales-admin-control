@@ -39,3 +39,21 @@ export async function getLicenseBobSessionStatus(licenseId, accessToken, config 
   });
   return response?.data?.data || response?.data;
 }
+
+export async function listLicenseBobPlaylists(licenseId, accessToken, config = {}) {
+  const response = await lionTvApi.get(`/licenses/v1/${licenseId}/bob/playlists`, {
+    headers: headers(accessToken),
+    skipAuthRedirect: true,
+    ...config
+  });
+  return response?.data?.data || response?.data || [];
+}
+
+export async function syncLicenseBobPlaylist(licenseId, payload, accessToken, config = {}) {
+  const response = await lionTvApi.post(`/licenses/v1/${licenseId}/bob/sync-playlist`, payload, {
+    headers: headers(accessToken),
+    skipAuthRedirect: true,
+    ...config
+  });
+  return response?.data?.data || response?.data;
+}

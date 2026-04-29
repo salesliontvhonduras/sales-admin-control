@@ -1359,6 +1359,7 @@ const resources = {
         search: 'Search (MAC, device key, customer, subscription, status)',
         actions: {
           authenticateBob: 'Authenticate Bob Player',
+          syncBobPlaylist: 'Sync Bob playlist',
           refreshCaptcha: 'Refresh captcha',
           clearBobSession: 'Clear session',
           completeBobLogin: 'Complete login',
@@ -1397,10 +1398,24 @@ const resources = {
           captchaAnswer: 'Captcha',
           lastRefreshed: 'Last refreshed',
           remotePlaylist: 'Remote playlist',
+          sync: {
+            title: 'Sync Bob playlist',
+            helper:
+              'Select one playlist already stored on this Bob device to link it with the current license. The system will keep that remote playlist id for future updates and automatic removal.',
+            selectLabel: 'Remote playlist',
+            selectHelper: 'Pick the exact remote playlist that belongs to this license.',
+            loading: 'Loading playlists from Bob Player...',
+            empty: 'No playlists were found on this Bob device.',
+            remoteId: 'Remote id'
+          },
           messages: {
             startError: 'Could not start Bob Player authentication.',
             completeError: 'Could not complete Bob Player authentication.',
             clearError: 'Could not clear Bob Player session.',
+            listError: 'Could not load Bob Player playlists.',
+            syncError: 'Could not sync Bob playlist.',
+            syncSuccess: 'Bob playlist linked to this license.',
+            syncRequired: 'Select one Bob playlist before continuing.',
             success: 'Bob Player session authenticated successfully.',
             cleared: 'Bob Player session cleared.',
             captchaRequired: 'Enter the captcha before continuing.',
@@ -1471,9 +1486,20 @@ const resources = {
         server: {
           required: 'Select server before continuing.',
           updated: 'Server updated.',
+          bobTitle: 'Create or update Bob playlist',
+          bobHelper:
+            'This action uses the authenticated Bob session on this license to create or update the remote playlist with the line and server you select below.',
+          bobNoRemotePlaylist: 'No remote playlist is linked yet. Saving will create one.',
+          bobServerHelper: 'This server choice defines the M3U URL that Bob Player will save on the device.',
+          bobSubmit: 'Save Bob playlist',
+          bobError: 'Could not save Bob playlist.',
           error: 'Could not change server.',
           removeTitle: 'Remove all playlists',
           removeBody: 'This will remove every playlist from this device.',
+          removeBobTitle: 'Remove all Bob playlists',
+          removeBobBody: 'This will remove every playlist currently saved on this authenticated Bob Player device, not only the playlist linked to this license.',
+          removeBobSubmit: 'Remove all Bob playlists',
+          removeBobError: 'Could not remove Bob playlists from this device.',
           removeSubmit: 'Remove playlists',
           removeSuccess: 'All playlists removed from device.',
           removeError: 'Could not remove playlists from device.',
@@ -5416,6 +5442,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         search: 'Buscar (MAC, device key, cliente, suscripción, estado)',
         actions: {
           authenticateBob: 'Autenticar Bob Player',
+          syncBobPlaylist: 'Sincronizar playlist Bob',
           refreshCaptcha: 'Refrescar captcha',
           clearBobSession: 'Limpiar sesión',
           completeBobLogin: 'Completar login',
@@ -5454,10 +5481,24 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           captchaAnswer: 'Captcha',
           lastRefreshed: 'Última actualización',
           remotePlaylist: 'Playlist remota',
+          sync: {
+            title: 'Sincronizar playlist Bob',
+            helper:
+              'Selecciona una playlist que ya exista en este dispositivo Bob para vincularla con la licencia actual. El sistema guardará ese id remoto para futuras actualizaciones y bajas automáticas.',
+            selectLabel: 'Playlist remota',
+            selectHelper: 'Elige la playlist remota exacta que pertenece a esta licencia.',
+            loading: 'Cargando playlists desde Bob Player...',
+            empty: 'No se encontraron playlists en este dispositivo Bob.',
+            remoteId: 'Id remoto'
+          },
           messages: {
             startError: 'No se pudo iniciar la autenticación de Bob Player.',
             completeError: 'No se pudo completar la autenticación de Bob Player.',
             clearError: 'No se pudo limpiar la sesión de Bob Player.',
+            listError: 'No se pudieron cargar las playlists de Bob Player.',
+            syncError: 'No se pudo sincronizar la playlist Bob.',
+            syncSuccess: 'La playlist Bob quedó vinculada a esta licencia.',
+            syncRequired: 'Selecciona una playlist Bob antes de continuar.',
             success: 'La sesión de Bob Player quedó autenticada correctamente.',
             cleared: 'La sesión de Bob Player fue limpiada.',
             captchaRequired: 'Escribe el captcha antes de continuar.',
@@ -5528,9 +5569,21 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         server: {
           required: 'Selecciona el servidor antes de continuar.',
           updated: 'Servidor actualizado.',
+          bobTitle: 'Crear o actualizar playlist Bob',
+          bobHelper:
+            'Esta acción usa la sesión Bob autenticada en esta licencia para crear o actualizar la playlist remota con la línea y el servidor que selecciones abajo.',
+          bobNoRemotePlaylist: 'Todavía no hay una playlist remota vinculada. Guardar creará una nueva.',
+          bobServerHelper: 'Esta selección define la URL M3U que Bob Player guardará en el dispositivo.',
+          bobSubmit: 'Guardar playlist Bob',
+          bobError: 'No se pudo guardar la playlist Bob.',
           error: 'No se pudo cambiar el servidor.',
           removeTitle: 'Quitar todas las playlists',
           removeBody: 'Esta acción eliminará todas las playlists de este dispositivo.',
+          removeBobTitle: 'Quitar todas las playlists Bob',
+          removeBobBody:
+            'Esta acción eliminará todas las playlists guardadas en este dispositivo Bob autenticado, no solo la playlist vinculada a esta licencia.',
+          removeBobSubmit: 'Quitar todas las playlists Bob',
+          removeBobError: 'No se pudieron quitar las playlists Bob de este dispositivo.',
           removeSubmit: 'Quitar playlists',
           removeSuccess: 'Se quitaron todas las playlists del dispositivo.',
           removeError: 'No se pudieron quitar las playlists del dispositivo.',

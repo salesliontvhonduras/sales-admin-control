@@ -83,7 +83,9 @@ import { lionTvApi } from 'utils/api';
 import {
   clearLicenseBobSession,
   completeLicenseBobCaptcha,
-  startLicenseBobCaptcha
+  listLicenseBobPlaylists,
+  startLicenseBobCaptcha,
+  syncLicenseBobPlaylist
 } from 'api/liontv-license-bob';
 
 const UNKNOWN_RANDOM_APP = 'UNKNOWN_RANDOM';
@@ -108,11 +110,12 @@ function requiresSubscriptionLink(record = {}) {
   return isManagedLicenseRecord(record) && !hasSubscriptionLink(record);
 }
 
-function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onHistory, onDelete, onBobAuth, t }) {
+function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onHistory, onDelete, onBobAuth, onBobSync, t }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const supportsRemoteActions = isManagedLicenseRecord(row) && hasSubscriptionLink(row);
   const supportsBobAuth = isBobLicenseRecord(row);
+  const supportsBobSync = supportsBobAuth && hasSubscriptionLink(row);
   return (
     <>
       <IconButton
@@ -152,6 +155,17 @@ function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onHi
           >
             <VpnKeyOutlinedIcon fontSize="small" style={{ marginRight: 8, color: '#ef6c00' }} />
             {t('licenses.actions.authenticateBob', 'Authenticate Bob Player')}
+          </MenuItem>
+        ) : null}
+        {supportsBobSync ? (
+          <MenuItem
+            onClick={() => {
+              setAnchorEl(null);
+              onBobSync?.(row);
+            }}
+          >
+            <LinkIcon fontSize="small" style={{ marginRight: 8, color: '#00897b' }} />
+            {t('licenses.actions.syncBobPlaylist', 'Sync Bob playlist')}
           </MenuItem>
         ) : null}
         <MenuItem
@@ -526,6 +540,13 @@ export default function LicensesLionTv() {
   const [historyOpen, setHistoryOpen] = useState({ open: false, row: null });
   const [openServerChange, setOpenServerChange] = useState({ open: false, row: null });
   const [openRemovePlaylists, setOpenRemovePlaylists] = useState({ open: false, row: null });
+  const [bobSyncDialog, setBobSyncDialog] = useState({
+    open: false,
+    row: null,
+    playlists: [],
+    selectedPlaylistId: '',
+    loading: false
+  });
   const [bobAuthDialog, setBobAuthDialog] = useState({
     open: false,
     row: null,
@@ -1181,9 +1202,14 @@ export default function LicensesLionTv() {
       const msg = res?.data?.data?.message || res?.data?.message || t('licenses.server.updated');
       enqueueSnackbar(msg, { variant: 'success' });
       setOpenServerChange({ open: false, row: null });
+      setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
-        enqueueSnackbar(err?.response?.data?.message || err.message || t('licenses.server.error'), { variant: 'error' });
+        const isBob = isBobLicenseRecord(openServerChange.row);
+        enqueueSnackbar(
+          err?.response?.data?.message || err.message || (isBob ? t('licenses.server.bobError', 'Could not save Bob playlist.') : t('licenses.server.error')),
+          { variant: 'error' }
+        );
       }
     } finally {
       setSending(false);
@@ -1212,10 +1238,13 @@ export default function LicensesLionTv() {
     } catch (err) {
       if (!handleUnauthorized(err)) {
         const status = err?.response?.status;
+        const isBob = isBobLicenseRecord(openRemovePlaylists.row);
         const fallback =
           status === 404
             ? t('licenses.server.removeNotAvailable', 'This action is not available yet in backend.')
-            : t('licenses.server.removeError', 'Could not remove playlists from device.');
+            : isBob
+              ? t('licenses.server.removeBobError', 'Could not remove Bob playlists from this device.')
+              : t('licenses.server.removeError', 'Could not remove playlists from device.');
         enqueueSnackbar(err?.response?.data?.message || err.message || fallback, { variant: 'error' });
       }
     } finally {
@@ -1245,10 +1274,13 @@ export default function LicensesLionTv() {
     } catch (err) {
       if (!handleUnauthorized(err)) {
         const status = err?.response?.status;
+        const isBob = isBobLicenseRecord(openServerChange.row);
         const fallback =
           status === 404
             ? t('licenses.server.removeNotAvailable', 'This action is not available yet in backend.')
-            : t('licenses.server.removeError', 'Could not remove playlists from device.');
+            : isBob
+              ? t('licenses.server.removeBobError', 'Could not remove Bob playlists from this device.')
+              : t('licenses.server.removeError', 'Could not remove playlists from device.');
         enqueueSnackbar(err?.response?.data?.message || err.message || fallback, { variant: 'error' });
       }
     } finally {
@@ -1312,6 +1344,16 @@ export default function LicensesLionTv() {
     });
   };
 
+  const closeBobSync = () => {
+    setBobSyncDialog({
+      open: false,
+      row: null,
+      playlists: [],
+      selectedPlaylistId: '',
+      loading: false
+    });
+  };
+
   const openBobAuth = async (row) => {
     if (!row?.licenseId) return;
     setBobAuthDialog({
@@ -1339,6 +1381,33 @@ export default function LicensesLionTv() {
         });
       }
       closeBobAuth();
+    }
+  };
+
+  const openBobSync = async (row) => {
+    if (!row?.licenseId) return;
+    setBobSyncDialog({
+      open: true,
+      row,
+      playlists: [],
+      selectedPlaylistId: row.remotePlaylistId || '',
+      loading: true
+    });
+    try {
+      const playlists = await listLicenseBobPlaylists(row.licenseId, accessToken);
+      setBobSyncDialog((prev) => ({
+        ...prev,
+        playlists: Array.isArray(playlists) ? playlists : [],
+        selectedPlaylistId: row.remotePlaylistId || (Array.isArray(playlists) && playlists[0]?.playlistId) || '',
+        loading: false
+      }));
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('licenses.bob.messages.listError', 'Could not load Bob Player playlists.'), {
+          variant: 'error'
+        });
+      }
+      closeBobSync();
     }
   };
 
@@ -1402,6 +1471,33 @@ export default function LicensesLionTv() {
     }
   };
 
+  const handleConfirmBobSync = async () => {
+    const licenseId = bobSyncDialog.row?.licenseId;
+    if (!licenseId || !bobSyncDialog.selectedPlaylistId) {
+      enqueueSnackbar(t('licenses.bob.messages.syncRequired', 'Select one Bob playlist before continuing.'), { variant: 'warning' });
+      return;
+    }
+
+    setBobSyncDialog((prev) => ({ ...prev, loading: true }));
+    try {
+      await syncLicenseBobPlaylist(
+        licenseId,
+        { playlistId: bobSyncDialog.selectedPlaylistId },
+        accessToken
+      );
+      enqueueSnackbar(t('licenses.bob.messages.syncSuccess', 'Bob playlist linked to this license.'), { variant: 'success' });
+      closeBobSync();
+      setRefreshKey((value) => value + 1);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('licenses.bob.messages.syncError', 'Could not sync Bob playlist.'), {
+          variant: 'error'
+        });
+      }
+      setBobSyncDialog((prev) => ({ ...prev, loading: false }));
+    }
+  };
+
   const selectedServerSubscription = useMemo(
     () => (serverForm.subscriptionId ? subscriptionMap[String(serverForm.subscriptionId)] ?? null : null),
     [serverForm.subscriptionId, subscriptionMap]
@@ -1447,6 +1543,13 @@ export default function LicensesLionTv() {
       };
     });
   }, [openServerChange.open, selectedServerContext, selectedServerSubscription]);
+
+  const isBobServerChange = isBobLicenseRecord(openServerChange.row);
+  const isBobRemoveDialog = isBobLicenseRecord(openRemovePlaylists.row);
+  const selectedBobPlaylist = useMemo(
+    () => bobSyncDialog.playlists.find((playlist) => playlist.playlistId === bobSyncDialog.selectedPlaylistId) || null,
+    [bobSyncDialog.playlists, bobSyncDialog.selectedPlaylistId]
+  );
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, mx: 'auto' }}>
@@ -1683,6 +1786,7 @@ export default function LicensesLionTv() {
                           onHistory={openHistory}
                           onDelete={handleDelete}
                           onBobAuth={openBobAuth}
+                          onBobSync={openBobSync}
                         />
                       </ResponsiveActionBar>
                     }
@@ -1888,6 +1992,7 @@ export default function LicensesLionTv() {
                           onHistory={openHistory}
                           onDelete={handleDelete}
                           onBobAuth={openBobAuth}
+                          onBobSync={openBobSync}
                         />
                       </TableCell>
                     </TableRow>
@@ -2535,10 +2640,18 @@ export default function LicensesLionTv() {
         fullScreen={isMobile}
       >
         <DialogTitleWithClose onClose={() => setOpenServerChange({ open: false, row: null })}>
-          {t('licenses.server.title', 'Change server')}
+          {isBobServerChange ? t('licenses.server.bobTitle', 'Create or update Bob playlist') : t('licenses.server.title', 'Change server')}
         </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2}>
+            <Typography variant="body2" color="text.secondary">
+              {isBobServerChange
+                ? t(
+                    'licenses.server.bobHelper',
+                    'This action uses the authenticated Bob session on this license to create or update the remote playlist with the line and server you select below.'
+                  )
+                : t('licenses.server.helper', 'Select target server')}
+            </Typography>
             <Typography variant="body2">
               {t('licenses.server.mac', 'Mac')}: <strong>{openServerChange.row?.macAddress}</strong>
             </Typography>
@@ -2548,6 +2661,15 @@ export default function LicensesLionTv() {
             <Typography variant="body2">
               {t('licenses.server.country', 'Country (phone)')}: <strong>{serverForm.country}</strong>
             </Typography>
+            {isBobServerChange ? (
+              <Alert severity={openServerChange.row?.bobSessionStatus === 'READY' ? 'info' : 'warning'}>
+                {`${t('licenses.bob.session.title', 'Bob session')}: ${bobSessionLabel(openServerChange.row?.bobSessionStatus, t)}. ${
+                  openServerChange.row?.remotePlaylistId
+                    ? `${t('licenses.bob.remotePlaylist', 'Remote playlist')}: ${openServerChange.row.remotePlaylistId}`
+                    : t('licenses.server.bobNoRemotePlaylist', 'No remote playlist is linked yet. Saving will create one.')
+                }`}
+              </Alert>
+            ) : null}
 
             <Box
               sx={(theme) => ({
@@ -2593,7 +2715,11 @@ export default function LicensesLionTv() {
                   </MenuItem>
                 ))}
               </Select>
-              <FormHelperText>{t('licenses.server.helper', 'Select target server')}</FormHelperText>
+              <FormHelperText>
+                {isBobServerChange
+                  ? t('licenses.server.bobServerHelper', 'This server choice defines the M3U URL that Bob Player will save on the device.')
+                  : t('licenses.server.helper', 'Select target server')}
+              </FormHelperText>
             </FormControl>
 
             {selectedServerSubscription ? (
@@ -2645,14 +2771,24 @@ export default function LicensesLionTv() {
           <Button color="warning" variant="outlined" onClick={handleRemovePlaylistsDirect} disabled={sending}>
             <Stack direction="row" spacing={0.75} alignItems="center">
               <PlaylistRemoveIcon fontSize="small" />
-              <span>{sending ? t('actions.sending', 'Sending...') : t('licenses.server.removeSubmit', 'Remove playlists')}</span>
+              <span>
+                {sending
+                  ? t('actions.sending', 'Sending...')
+                  : isBobServerChange
+                    ? t('licenses.server.removeBobSubmit', 'Remove all Bob playlists')
+                    : t('licenses.server.removeSubmit', 'Remove playlists')}
+              </span>
             </Stack>
           </Button>
           <Button onClick={() => setOpenServerChange({ open: false, row: null })}>
             {t('actions.cancel', 'Cancel')}
           </Button>
           <Button variant="contained" onClick={handleServerSubmit} disabled={sending}>
-            {sending ? t('actions.sending', 'Sending...') : t('licenses.server.submit', 'Change server')}
+            {sending
+              ? t('actions.sending', 'Sending...')
+              : isBobServerChange
+                ? t('licenses.server.bobSubmit', 'Save Bob playlist')
+                : t('licenses.server.submit', 'Change server')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -2666,12 +2802,17 @@ export default function LicensesLionTv() {
         fullScreen={isMobile}
       >
         <DialogTitleWithClose onClose={() => setOpenRemovePlaylists({ open: false, row: null })}>
-          {t('licenses.server.removeTitle', 'Remove all playlists')}
+          {isBobRemoveDialog ? t('licenses.server.removeBobTitle', 'Remove all Bob playlists') : t('licenses.server.removeTitle', 'Remove all playlists')}
         </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={1.5}>
             <Typography variant="body2">
-              {t('licenses.server.removeBody', 'This will remove every playlist from this device.')}
+              {isBobRemoveDialog
+                ? t(
+                    'licenses.server.removeBobBody',
+                    'This will remove every playlist currently saved on this authenticated Bob Player device, not only the playlist linked to this license.'
+                  )
+                : t('licenses.server.removeBody', 'This will remove every playlist from this device.')}
             </Typography>
             <Typography variant="body2">
               {t('licenses.server.mac', 'Mac')}: <strong>{openRemovePlaylists.row?.macAddress || '-'}</strong>
@@ -2687,8 +2828,108 @@ export default function LicensesLionTv() {
             {t('actions.cancel', 'Cancel')}
           </Button>
           <Button onClick={confirmRemovePlaylists} color="warning" variant="contained" disabled={sending}>
-            {sending ? t('actions.sending', 'Sending...') : t('licenses.server.removeSubmit', 'Remove playlists')}
+            {sending
+              ? t('actions.sending', 'Sending...')
+              : isBobRemoveDialog
+                ? t('licenses.server.removeBobSubmit', 'Remove all Bob playlists')
+                : t('licenses.server.removeSubmit', 'Remove playlists')}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={bobSyncDialog.open} onClose={closeBobSync} fullWidth maxWidth="sm" fullScreen={isMobile}>
+        <DialogTitleWithClose onClose={closeBobSync}>
+          {t('licenses.bob.sync.title', 'Sync Bob playlist')}
+        </DialogTitleWithClose>
+        <DialogContent dividers>
+          <Stack spacing={2}>
+            <Typography variant="body2" color="text.secondary">
+              {t(
+                'licenses.bob.sync.helper',
+                'Select one playlist already stored on this Bob device to link it with the current license. The system will keep that remote playlist id for future updates and automatic removal.'
+              )}
+            </Typography>
+            <Grid container spacing={1.5}>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth disabled label={t('licenses.form.mac', 'Mac Address')} value={bobSyncDialog.row?.macAddress || '-'} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  disabled
+                  label={t('licenses.bob.session.title', 'Bob session')}
+                  value={bobSessionLabel(bobSyncDialog.row?.bobSessionStatus, t)}
+                />
+              </Grid>
+            </Grid>
+
+            <FormControl fullWidth sx={fieldSx} disabled={bobSyncDialog.loading || bobSyncDialog.playlists.length === 0}>
+              <InputLabel>{t('licenses.bob.sync.selectLabel', 'Remote playlist')}</InputLabel>
+              <Select
+                value={bobSyncDialog.selectedPlaylistId}
+                label={t('licenses.bob.sync.selectLabel', 'Remote playlist')}
+                onChange={(event) => setBobSyncDialog((prev) => ({ ...prev, selectedPlaylistId: event.target.value }))}
+              >
+                {bobSyncDialog.playlists.map((playlist) => (
+                  <MenuItem key={playlist.playlistId} value={playlist.playlistId}>
+                    {playlist.playlistName || playlist.playlistId}
+                  </MenuItem>
+                ))}
+              </Select>
+              <FormHelperText>
+                {bobSyncDialog.loading
+                  ? t('licenses.bob.sync.loading', 'Loading playlists from Bob Player...')
+                  : bobSyncDialog.playlists.length === 0
+                    ? t('licenses.bob.sync.empty', 'No playlists were found on this Bob device.')
+                    : t('licenses.bob.sync.selectHelper', 'Pick the exact remote playlist that belongs to this license.')}
+              </FormHelperText>
+            </FormControl>
+
+            {selectedBobPlaylist ? (
+              <Box
+                sx={(theme) => ({
+                  p: 2,
+                  borderRadius: 2.5,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  bgcolor: theme.palette.mode === 'dark' ? 'background.default' : 'grey.50'
+                })}
+              >
+                <Stack spacing={0.75}>
+                  <Typography variant="subtitle2">{selectedBobPlaylist.playlistName || selectedBobPlaylist.playlistId}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {selectedBobPlaylist.url || '-'}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {`${t('licenses.bob.sync.remoteId', 'Remote id')}: ${selectedBobPlaylist.playlistId}`}
+                  </Typography>
+                </Stack>
+              </Box>
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <ResponsiveActionBar>
+            <Button onClick={closeBobSync} disabled={bobSyncDialog.loading}>
+              {t('actions.cancel', 'Cancel')}
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={() => bobSyncDialog.row && openBobSync(bobSyncDialog.row)}
+              disabled={bobSyncDialog.loading}
+            >
+              {t('actions.refresh', 'Refresh')}
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<LinkIcon fontSize="small" />}
+              onClick={handleConfirmBobSync}
+              disabled={bobSyncDialog.loading || !bobSyncDialog.selectedPlaylistId}
+            >
+              {bobSyncDialog.loading ? t('actions.sending', 'Sending...') : t('licenses.actions.syncBobPlaylist', 'Sync Bob playlist')}
+            </Button>
+          </ResponsiveActionBar>
         </DialogActions>
       </Dialog>
 
