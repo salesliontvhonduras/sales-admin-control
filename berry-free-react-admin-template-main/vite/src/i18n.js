@@ -1486,6 +1486,9 @@ const resources = {
         server: {
           required: 'Select server before continuing.',
           updated: 'Server updated.',
+          targetApp: 'Target app',
+          contextHelper: 'Target app is fixed by the license. Choose the technical source server used to build the M3U below.',
+          sourceServerHelper: 'Choose the technical source server used to build the M3U.',
           bobApp: 'App',
           bobSessionRequired: 'Authenticate Bob Player before changing server.',
           bobTitle: 'Create or update Bob playlist',
@@ -5571,6 +5574,9 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         server: {
           required: 'Selecciona el servidor antes de continuar.',
           updated: 'Servidor actualizado.',
+          targetApp: 'App destino',
+          contextHelper: 'La app destino queda fijada por la licencia. Debajo selecciona el servidor técnico de origen que se usará para construir la M3U.',
+          sourceServerHelper: 'Selecciona el servidor técnico de origen que se usará para construir la M3U.',
           bobApp: 'App',
           bobSessionRequired: 'Autentica Bob Player antes de cambiar el servidor.',
           bobTitle: 'Crear o actualizar playlist Bob',

@@ -2662,7 +2662,12 @@ export default function LicensesLionTv() {
         </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2}>
-            <Typography variant="body2" color="text.secondary">{t('licenses.server.helper', 'Select target server')}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {t(
+                'licenses.server.contextHelper',
+                'Target app is fixed by the license. Choose the technical source server used to build the M3U below.'
+              )}
+            </Typography>
             <Typography variant="body2">
               {t('licenses.server.mac', 'Mac')}: <strong>{openServerChange.row?.macAddress}</strong>
             </Typography>
@@ -2672,6 +2677,13 @@ export default function LicensesLionTv() {
             <Typography variant="body2">
               {t('licenses.server.country', 'Country (phone)')}: <strong>{serverForm.country}</strong>
             </Typography>
+            <TextField
+              fullWidth
+              disabled
+              label={t('licenses.server.targetApp', 'Target app')}
+              value={getLicenseAppLabel(openServerChange.row?.app)}
+              sx={fieldSx}
+            />
             {isBobServerChange ? (
               <Alert
                 severity={bobServerChangeReady ? 'info' : 'warning'}
@@ -2684,7 +2696,6 @@ export default function LicensesLionTv() {
                 }
               >
                 <Stack spacing={0.5}>
-                  <Typography variant="subtitle2">{`${t('licenses.server.bobApp', 'App')}: Bob Player`}</Typography>
                   <Typography variant="body2">{`${t('licenses.bob.session.title', 'Bob session')}: ${bobSessionLabel(openServerChange.row?.bobSessionStatus, t)}`}</Typography>
                   <Typography variant="body2">
                     {openServerChange.row?.remotePlaylistId
@@ -2745,7 +2756,7 @@ export default function LicensesLionTv() {
               <FormHelperText>
                 {isBobServerChange
                   ? t('licenses.server.bobServerHelper', 'This server choice defines the M3U URL that Bob Player will save on the device.')
-                  : t('licenses.server.helper', 'Select target server')}
+                  : t('licenses.server.sourceServerHelper', 'Choose the technical source server used to build the M3U.')}
               </FormHelperText>
             </FormControl>
 
@@ -2857,6 +2868,9 @@ export default function LicensesLionTv() {
             <Typography variant="body2">
               {t('licenses.server.customer', 'Customer')}:{' '}
               <strong>{customerNameMap[openRemovePlaylists.row?.customerId] || '-'}</strong>
+            </Typography>
+            <Typography variant="body2">
+              {t('licenses.server.targetApp', 'Target app')}: <strong>{getLicenseAppLabel(openRemovePlaylists.row?.app)}</strong>
             </Typography>
           </Stack>
         </DialogContent>
