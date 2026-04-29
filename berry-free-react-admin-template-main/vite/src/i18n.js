@@ -1385,6 +1385,7 @@ const resources = {
             title: 'Bob session',
             ready: 'Ready',
             captchaRequired: 'Captcha required',
+            expired: 'Expired',
             authBlocked: 'Auth blocked',
             invalid: 'Invalid session',
             notConfigured: 'Not configured'
@@ -1418,6 +1419,7 @@ const resources = {
             syncRequired: 'Select one Bob playlist before continuing.',
             success: 'Bob Player session authenticated successfully.',
             cleared: 'Bob Player session cleared.',
+            statusError: 'Could not validate Bob Player session status.',
             captchaRequired: 'Enter the captcha before continuing.',
             captchaUnavailable: 'Captcha preview unavailable. Refresh the challenge.'
           }
@@ -5473,6 +5475,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             title: 'Sesión Bob',
             ready: 'Lista',
             captchaRequired: 'Captcha requerido',
+            expired: 'Expirada',
             authBlocked: 'Autenticación bloqueada',
             invalid: 'Sesión inválida',
             notConfigured: 'No configurada'
@@ -5506,6 +5509,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             syncRequired: 'Selecciona una playlist Bob antes de continuar.',
             success: 'La sesión de Bob Player quedó autenticada correctamente.',
             cleared: 'La sesión de Bob Player fue limpiada.',
+            statusError: 'No se pudo validar el estado de la sesión de Bob Player.',
             captchaRequired: 'Escribe el captcha antes de continuar.',
             captchaUnavailable: 'La vista previa del captcha no está disponible. Refresca el challenge.'
           }

@@ -91,8 +91,19 @@ function bobSessionChipColor(status) {
   const normalized = String(status || '').toUpperCase();
   if (normalized === 'READY') return 'success';
   if (normalized === 'CAPTCHA_REQUIRED') return 'warning';
+  if (normalized === 'EXPIRED') return 'error';
   if (normalized === 'AUTH_BLOCKED' || normalized === 'INVALID') return 'error';
   return 'default';
+}
+
+function bobSessionChipLabel(status, t) {
+  const normalized = String(status || '').toUpperCase();
+  if (normalized === 'READY') return t('licenses.bob.session.ready', 'Ready');
+  if (normalized === 'CAPTCHA_REQUIRED') return t('licenses.bob.session.captchaRequired', 'Captcha required');
+  if (normalized === 'EXPIRED') return t('licenses.bob.session.expired', 'Expired');
+  if (normalized === 'AUTH_BLOCKED') return t('licenses.bob.session.authBlocked', 'Auth blocked');
+  if (normalized === 'INVALID') return t('licenses.bob.session.invalid', 'Invalid session');
+  return normalized || 'N/A';
 }
 
 function CycleCard({ title, cycle, stale, loading, onRun, runLabel, disabled }) {
@@ -790,7 +801,7 @@ export default function SubscriptionExpirationLionTv() {
                                 size="small"
                                 color={bobSessionChipColor(license.sessionStatus)}
                                 variant="outlined"
-                                label={`${t('subscriptionExpiration.drawer.sessionStatus', 'Session')}: ${license.sessionStatus || 'N/A'}`}
+                                label={`${t('subscriptionExpiration.drawer.sessionStatus', 'Session')}: ${bobSessionChipLabel(license.sessionStatus, t)}`}
                               />
                             ) : null}
                             {license.provider === 'BOB_PLAYER' ? (

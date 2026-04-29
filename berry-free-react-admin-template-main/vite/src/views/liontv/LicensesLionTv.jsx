@@ -83,6 +83,7 @@ import { lionTvApi } from 'utils/api';
 import {
   clearLicenseBobSession,
   completeLicenseBobCaptcha,
+  getLicenseBobSessionStatus,
   listLicenseBobPlaylists,
   startLicenseBobCaptcha,
   syncLicenseBobPlaylist
@@ -471,6 +472,7 @@ function bobSessionColor(status) {
   const normalized = String(status || '').trim().toUpperCase();
   if (normalized === 'READY') return 'success';
   if (normalized === 'CAPTCHA_REQUIRED') return 'warning';
+  if (normalized === 'EXPIRED') return 'error';
   if (normalized === 'AUTH_BLOCKED' || normalized === 'INVALID') return 'error';
   return 'default';
 }
@@ -479,6 +481,7 @@ function bobSessionLabel(status, t) {
   const normalized = String(status || '').trim().toUpperCase();
   if (normalized === 'READY') return t('licenses.bob.session.ready', 'Ready');
   if (normalized === 'CAPTCHA_REQUIRED') return t('licenses.bob.session.captchaRequired', 'Captcha required');
+  if (normalized === 'EXPIRED') return t('licenses.bob.session.expired', 'Expired');
   if (normalized === 'AUTH_BLOCKED') return t('licenses.bob.session.authBlocked', 'Auth blocked');
   if (normalized === 'INVALID') return t('licenses.bob.session.invalid', 'Invalid session');
   return t('licenses.bob.session.notConfigured', 'Not configured');
@@ -581,6 +584,52 @@ export default function LicensesLionTv() {
     const status = err?.response?.status || err?.request?.status;
     return status === 401;
   };
+
+  const applyBobSessionStatus = useCallback((licenseId, session) => {
+    if (!licenseId || !session) return;
+
+    const patch = {
+      bobSessionStatus: session.sessionStatus ?? '',
+      bobSessionRefreshedAt: session.sessionRefreshedAt ?? null,
+      bobLastAuthError: session.lastAuthError ?? '',
+      remotePlaylistId: session.remotePlaylistId ?? ''
+    };
+
+    setRows((prev) => prev.map((row) => (row.licenseId === licenseId ? { ...row, ...patch } : row)));
+    setOpenServerChange((prev) => (prev.row?.licenseId === licenseId ? { ...prev, row: { ...prev.row, ...patch } } : prev));
+    setOpenRemovePlaylists((prev) => (prev.row?.licenseId === licenseId ? { ...prev, row: { ...prev.row, ...patch } } : prev));
+    setBobSyncDialog((prev) => (prev.row?.licenseId === licenseId ? { ...prev, row: { ...prev.row, ...patch } } : prev));
+    setBobAuthDialog((prev) => {
+      if (prev.row?.licenseId !== licenseId) {
+        return prev;
+      }
+      return {
+        ...prev,
+        row: { ...prev.row, ...patch },
+        session: prev.session ? { ...prev.session, ...session } : prev.session
+      };
+    });
+  }, []);
+
+  const refreshBobSessionStatus = useCallback(
+    async (licenseId, { silent = false } = {}) => {
+      if (!accessToken || !licenseId) return null;
+      try {
+        const session = await getLicenseBobSessionStatus(licenseId, accessToken);
+        applyBobSessionStatus(licenseId, session);
+        return session;
+      } catch (err) {
+        if (!handleUnauthorized(err) && !silent) {
+          enqueueSnackbar(
+            err?.response?.data?.message || err.message || t('licenses.bob.messages.statusError', 'Could not validate Bob Player session status.'),
+            { variant: 'error' }
+          );
+        }
+        return null;
+      }
+    },
+    [accessToken, applyBobSessionStatus, enqueueSnackbar, t]
+  );
 
   const countryFromPhone = (phone) => {
     if (!phone) return 'N/D';
@@ -928,10 +977,38 @@ export default function LicensesLionTv() {
     return filteredRows.slice(start, start + rowsPerPage);
   }, [filteredRows, page, rowsPerPage]);
 
+  const visibleBobLicenseIds = useMemo(
+    () => paginatedRows.filter((row) => isBobLicenseRecord(row)).map((row) => row.licenseId).filter(Boolean),
+    [paginatedRows]
+  );
+
   useEffect(() => {
     const maxPage = Math.max(0, Math.ceil(filteredRows.length / rowsPerPage) - 1);
     if (page > maxPage) setPage(0);
   }, [filteredRows.length, page, rowsPerPage]);
+
+  useEffect(() => {
+    if (!accessToken || visibleBobLicenseIds.length === 0) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    const runValidation = async () => {
+      for (const licenseId of visibleBobLicenseIds) {
+        if (cancelled) break;
+        await refreshBobSessionStatus(licenseId, { silent: true });
+      }
+    };
+
+    const timer = setTimeout(runValidation, 0);
+    const intervalId = setInterval(runValidation, 60000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      clearInterval(intervalId);
+    };
+  }, [accessToken, refreshBobSessionStatus, refreshKey, visibleBobLicenseIds.join('|')]);
 
   const computeExpireDate = (period) => {
     const today = new Date();
@@ -1150,6 +1227,9 @@ export default function LicensesLionTv() {
       playlistName: 'Lion Tv Premium'
     });
     setOpenServerChange({ open: true, row });
+    if (isBobLicenseRecord(row) && row.licenseId) {
+      void refreshBobSessionStatus(row.licenseId, { silent: true });
+    }
   };
 
   const handleOpenRemovePlaylists = (row) => {
@@ -1158,6 +1238,9 @@ export default function LicensesLionTv() {
       return;
     }
     setOpenRemovePlaylists({ open: true, row });
+    if (isBobLicenseRecord(row) && row.licenseId) {
+      void refreshBobSessionStatus(row.licenseId, { silent: true });
+    }
   };
 
   const handleLineSourceSelect = (value) => {
@@ -1214,6 +1297,9 @@ export default function LicensesLionTv() {
     } catch (err) {
       if (!handleUnauthorized(err)) {
         const isBob = isBobLicenseRecord(openServerChange.row);
+        if (isBob && licenseId) {
+          void refreshBobSessionStatus(licenseId, { silent: true });
+        }
         enqueueSnackbar(
           err?.response?.data?.message || err.message || (isBob ? t('licenses.server.bobError', 'Could not save Bob playlist.') : t('licenses.server.error')),
           { variant: 'error' }
@@ -1251,6 +1337,9 @@ export default function LicensesLionTv() {
       if (!handleUnauthorized(err)) {
         const status = err?.response?.status;
         const isBob = isBobLicenseRecord(openRemovePlaylists.row);
+        if (isBob && licenseId) {
+          void refreshBobSessionStatus(licenseId, { silent: true });
+        }
         const fallback =
           status === 404
             ? t('licenses.server.removeNotAvailable', 'This action is not available yet in backend.')
@@ -1291,6 +1380,9 @@ export default function LicensesLionTv() {
       if (!handleUnauthorized(err)) {
         const status = err?.response?.status;
         const isBob = isBobLicenseRecord(openServerChange.row);
+        if (isBob && licenseId) {
+          void refreshBobSessionStatus(licenseId, { silent: true });
+        }
         const fallback =
           status === 404
             ? t('licenses.server.removeNotAvailable', 'This action is not available yet in backend.')
@@ -1383,6 +1475,7 @@ export default function LicensesLionTv() {
     });
     try {
       const response = await startLicenseBobCaptcha(row.licenseId, accessToken);
+      applyBobSessionStatus(row.licenseId, response);
       setBobAuthDialog((prev) => ({
         ...prev,
         challengeId: response.challengeId || '',
@@ -1402,6 +1495,14 @@ export default function LicensesLionTv() {
 
   const openBobSync = async (row) => {
     if (!row?.licenseId) return;
+    const liveSession = await refreshBobSessionStatus(row.licenseId, { silent: true });
+    if (liveSession && !isBobSessionReady(liveSession.sessionStatus)) {
+      enqueueSnackbar(
+        liveSession.lastAuthError || t('licenses.server.bobSessionRequired', 'Authenticate Bob Player before changing server.'),
+        { variant: 'warning' }
+      );
+      return;
+    }
     setBobSyncDialog({
       open: true,
       row,
@@ -1444,6 +1545,7 @@ export default function LicensesLionTv() {
         },
         accessToken
       );
+      applyBobSessionStatus(licenseId, response);
       enqueueSnackbar(t('licenses.bob.messages.success', 'Bob Player session authenticated successfully.'), { variant: 'success' });
       setBobAuthDialog((prev) => ({
         ...prev,
@@ -1469,6 +1571,7 @@ export default function LicensesLionTv() {
     setBobAuthDialog((prev) => ({ ...prev, loading: true }));
     try {
       const response = await clearLicenseBobSession(licenseId, accessToken);
+      applyBobSessionStatus(licenseId, response);
       enqueueSnackbar(t('licenses.bob.messages.cleared', 'Bob Player session cleared.'), { variant: 'success' });
       setBobAuthDialog((prev) => ({
         ...prev,
@@ -1496,11 +1599,12 @@ export default function LicensesLionTv() {
 
     setBobSyncDialog((prev) => ({ ...prev, loading: true }));
     try {
-      await syncLicenseBobPlaylist(
+      const response = await syncLicenseBobPlaylist(
         licenseId,
         { playlistId: bobSyncDialog.selectedPlaylistId },
         accessToken
       );
+      applyBobSessionStatus(licenseId, response);
       enqueueSnackbar(t('licenses.bob.messages.syncSuccess', 'Bob playlist linked to this license.'), { variant: 'success' });
       closeBobSync();
       setRefreshKey((value) => value + 1);
