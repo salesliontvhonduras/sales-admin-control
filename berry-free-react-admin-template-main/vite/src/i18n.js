@@ -510,7 +510,7 @@ const resources = {
         }
       },
       contentAutomation: {
-        subtitle: 'Review the three daily sports posts, validate the SAFE copy, and publish only after manual approval.',
+        subtitle: 'Review the four daily sports posts, validate the SAFE copy, and publish only after manual approval.',
         loading: 'Loading content automation review console...',
         safeMode: 'SAFE mode',
         safeModeOff: 'SAFE mode disabled',
@@ -554,14 +554,15 @@ const resources = {
         events: {
           title: 'Tomorrow events',
           subtitle:
-            'Real fixtures detected for tomorrow in Honduras time. The slot cards below use this distribution to build the review content.',
+            'Real fixtures detected for tomorrow in Honduras time. The cards below use the slot distribution plus the full-day pool to build the review content.',
           count: '{{count}} real events',
-          emptySlot: 'No featured events were detected in this slot.'
+          emptySlot: 'No featured events were detected in this block.'
         },
         slotsReviewTitle: 'Daily slot review',
         slotsReviewSubtitle:
           'Each slot keeps one professional review card with the final status, sanitized copy and image preview.',
         slots: {
+          all_day: 'All day',
           morning: 'Morning',
           afternoon: 'Afternoon',
           night: 'Night'
@@ -599,11 +600,14 @@ const resources = {
           loading: 'Loading selectable events...',
           subtitle:
             'Choose up to 5 real events for this slot. The system will regenerate the image and captions using exactly this editorial selection.',
+          subtitleAllDay:
+            'Choose up to 5 real events from the full day. The system will regenerate the image and captions using exactly this editorial selection.',
           selectedCount: '{{count}} selected',
           limit: 'Maximum 5 events in the image',
           manual: 'Manual selection currently active',
           automatic: 'Automatic featured selection is currently active',
           empty: 'No real events are available for this slot yet. Generate or import events first.',
+          emptyAllDay: 'No real events are available for this day yet. Generate or import events first.',
           fallbackLeague: 'Sporting event'
         },
         previewDialog: {
@@ -623,7 +627,7 @@ const resources = {
           publishDescription: 'This will send the slot through the configured publishing flow and mark it as published.'
         },
         empty: {
-          tomorrow: 'No slot posts were generated for tomorrow yet. Use "Generate tomorrow" to build the review set.',
+          tomorrow: 'No daily posts were generated for tomorrow yet. Use "Generate tomorrow" to build the review set.',
           history: 'No posts were stored for this date yet. Select another day or generate this specific review batch.'
         },
         status: {
@@ -634,7 +638,7 @@ const resources = {
           FAILED: 'Failed'
         },
         messages: {
-          generated: '{{count}} slot posts were refreshed for {{date}}.',
+          generated: '{{count}} posts were refreshed for {{date}}.',
           eventsSelectionSaved: 'The post was regenerated with your selected events.',
           eventsSelectionReset: 'The slot returned to the automatic featured selection.',
           imageRegenerated: 'The preview image was regenerated successfully.',
@@ -2119,6 +2123,14 @@ const resources = {
       },
       loyalty: {
         title: 'Loyalty',
+        movementTypes: {
+          EARN: 'Earned points',
+          REVERSAL: 'Earn reversal',
+          REDEEM: 'Points redeemed',
+          REDEEM_REVERSAL: 'Redeem reversal',
+          MANUAL_ADJUSTMENT: 'Manual adjustment',
+          INACTIVE_RESET: 'Inactive reset'
+        },
         actions: {
           config: 'Configuration',
           ledger: 'Ledger',
@@ -4594,7 +4606,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         }
       },
       contentAutomation: {
-        subtitle: 'Revisa los tres posts deportivos del día, valida el copy SAFE y publica solo después de la aprobación manual.',
+        subtitle: 'Revisa los cuatro posts deportivos del día, valida el copy SAFE y publica solo después de la aprobación manual.',
         loading: 'Cargando consola de revisión de automatización de contenido...',
         safeMode: 'Modo SAFE',
         safeModeOff: 'Modo SAFE desactivado',
@@ -4638,14 +4650,15 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         events: {
           title: 'Eventos de mañana',
           subtitle:
-            'Partidos reales detectados para mañana en horario de Honduras. Las cards por slot usan esta distribución para construir el contenido de revisión.',
+            'Partidos reales detectados para mañana en horario de Honduras. Las cards de abajo usan la distribución por slot más el pool completo del día para construir el contenido de revisión.',
           count: '{{count}} eventos reales',
-          emptySlot: 'No se detectaron eventos destacados para este slot.'
+          emptySlot: 'No se detectaron eventos destacados para este bloque.'
         },
         slotsReviewTitle: 'Revisión diaria por slot',
         slotsReviewSubtitle:
           'Cada slot mantiene una card profesional con el estado final, el copy sanitizado y la imagen generada.',
         slots: {
+          all_day: 'Todo el día',
           morning: 'Mañana',
           afternoon: 'Tarde',
           night: 'Noche'
@@ -4683,11 +4696,14 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           loading: 'Cargando eventos seleccionables...',
           subtitle:
             'Elige hasta 5 eventos reales para este slot. El sistema regenerará la imagen y los captions usando exactamente esta selección editorial.',
+          subtitleAllDay:
+            'Elige hasta 5 eventos reales de todo el día. El sistema regenerará la imagen y los captions usando exactamente esta selección editorial.',
           selectedCount: '{{count}} seleccionados',
           limit: 'Máximo 5 eventos en la imagen',
           manual: 'La selección manual está activa actualmente',
           automatic: 'La selección automática destacada está activa actualmente',
           empty: 'Todavía no hay eventos reales disponibles para este slot. Primero genera o importa eventos.',
+          emptyAllDay: 'Todavía no hay eventos reales disponibles para este día. Primero genera o importa eventos.',
           fallbackLeague: 'Evento deportivo'
         },
         previewDialog: {
@@ -4707,7 +4723,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           publishDescription: 'Esto enviará el slot al flujo de publicación configurado y lo marcará como publicado.'
         },
         empty: {
-          tomorrow: 'Todavía no se generaron posts para mañana. Usa "Generar mañana" para construir el set de revisión.',
+          tomorrow: 'Todavía no se generaron posts del día para mañana. Usa "Generar mañana" para construir el set de revisión.',
           history: 'No hay posts almacenados para esta fecha. Selecciona otro día o genera este lote específico.'
         },
         status: {
@@ -4718,7 +4734,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           FAILED: 'Fallido'
         },
         messages: {
-          generated: 'Se refrescaron {{count}} posts por slot para {{date}}.',
+          generated: 'Se refrescaron {{count}} posts para {{date}}.',
           eventsSelectionSaved: 'El post se regeneró con tus eventos seleccionados.',
           eventsSelectionReset: 'El slot volvió a la selección automática destacada.',
           imageRegenerated: 'La imagen de vista previa se regeneró correctamente.',
@@ -6210,6 +6226,14 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
       },
       loyalty: {
         title: 'Lealtad',
+        movementTypes: {
+          EARN: 'Puntos generados',
+          REVERSAL: 'Reverso de acumulacion',
+          REDEEM: 'Puntos canjeados',
+          REDEEM_REVERSAL: 'Reverso de canje',
+          MANUAL_ADJUSTMENT: 'Ajuste manual',
+          INACTIVE_RESET: 'Reset por inactividad'
+        },
         actions: {
           config: 'Configuración',
           ledger: 'Historial',

@@ -117,6 +117,12 @@ function formatDateTime(value) {
   return d.toLocaleString('es-HN');
 }
 
+function formatLoyaltyMovementType(value, t) {
+  const normalized = String(value || '').trim().toUpperCase();
+  if (!normalized) return '-';
+  return t(`loyalty.movementTypes.${normalized}`, { defaultValue: normalized.replaceAll('_', ' ') });
+}
+
 function formatCurrency(value) {
   const n = Number(value) || 0;
   return n.toLocaleString('es-HN', { style: 'currency', currency: 'HNL', minimumFractionDigits: 2 });
@@ -1376,7 +1382,7 @@ export default function CustomerCrmLionTv() {
                               >
                                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between">
                                   <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                                    {entry.movementType || '-'} ·{' '}
+                                    {formatLoyaltyMovementType(entry.movementType, t)} ·{' '}
                                     {t('crm.engagement.movement', {
                                       sign: entry.pointsDelta > 0 ? '+' : '',
                                       value: entry.pointsDelta || 0

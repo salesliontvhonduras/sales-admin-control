@@ -67,6 +67,12 @@ function formatDateTime(value) {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString('es-HN');
 }
 
+function formatLoyaltyMovementType(value, t) {
+  const normalized = String(value || '').trim().toUpperCase();
+  if (!normalized) return '-';
+  return t(`loyalty.movementTypes.${normalized}`, { defaultValue: normalized.replaceAll('_', ' ') });
+}
+
 export default function LoyaltyLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation();
@@ -454,7 +460,7 @@ export default function LoyaltyLionTv() {
                   {ledgerDialog.data.map((entry) => (
                     <TableRow key={entry.id}>
                       <TableCell>{formatDateTime(entry.createdAt)}</TableCell>
-                      <TableCell>{entry.movementType || '-'}</TableCell>
+                      <TableCell>{formatLoyaltyMovementType(entry.movementType, t)}</TableCell>
                       <TableCell>
                         {entry.sourceType || '-'}
                         {entry.sourceId ? ` #${entry.sourceId}` : ''}

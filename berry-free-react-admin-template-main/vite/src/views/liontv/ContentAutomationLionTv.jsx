@@ -64,7 +64,7 @@ import { gridSpacing } from 'store/constant';
 import { withAlpha } from 'utils/colorUtils';
 import { hasPermissionExact } from 'utils/rbac';
 
-const SLOT_ORDER = ['MORNING', 'AFTERNOON', 'NIGHT'];
+const SLOT_ORDER = ['ALL_DAY', 'MORNING', 'AFTERNOON', 'NIGHT'];
 const URL_PATTERN = /(https?:\/\/|www\.)/i;
 const BRANDING_MODE_GENERIC = 'GENERIC';
 const BRANDING_MODE_RESELLER = 'RESELLER';
@@ -133,6 +133,8 @@ function toIsoDateInTimeZone(timeZone, dayOffset = 0) {
 
 function slotTone(slot) {
   switch (slot) {
+    case 'ALL_DAY':
+      return 'info';
     case 'MORNING':
       return 'warning';
     case 'AFTERNOON':
@@ -146,6 +148,8 @@ function slotTone(slot) {
 
 function slotIcon(slot) {
   switch (slot) {
+    case 'ALL_DAY':
+      return TodayOutlinedIcon;
     case 'MORNING':
       return WbSunnyOutlinedIcon;
     case 'AFTERNOON':
@@ -293,7 +297,7 @@ function EventStrip({ slot, title, events, locale, t }) {
               {events.slice(0, 3).map((event) => (
                 <Box key={`${event.externalId || event.id}-${event.eventTime}`}>
                   <Typography variant="body2" sx={{ fontWeight: 700, ...clampText(1) }}>
-                    {event.homeTeam} vs {event.awayTeam}
+                    {formatEventLabel(event)}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     {event.leagueName || '-'} · {formatEventTime(event.eventTime, locale)}
@@ -303,7 +307,7 @@ function EventStrip({ slot, title, events, locale, t }) {
             </Stack>
           ) : (
             <Typography variant="body2" color="text.secondary">
-              {t('contentAutomation.events.emptySlot', 'No featured events were detected in this slot.')}
+              {t('contentAutomation.events.emptySlot', 'No featured events were detected in this block.')}
             </Typography>
           )}
         </Stack>
@@ -838,7 +842,7 @@ export default function ContentAutomationLionTv() {
         t('contentAutomation.messages.generated', {
           date: payload?.targetDate || selectedDate,
           count: Array.isArray(payload?.posts) ? payload.posts.length : 0,
-          defaultValue: '{{count}} slot posts were refreshed for {{date}}.'
+          defaultValue: '{{count}} posts were refreshed for {{date}}.'
         }),
         { variant: 'success' }
       );
@@ -1133,7 +1137,7 @@ export default function ContentAutomationLionTv() {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           {t(
             'contentAutomation.subtitle',
-            'Review the three daily sports posts, validate the SAFE copy, and publish only after manual approval.'
+            'Review the four daily sports posts, validate the SAFE copy, and publish only after manual approval.'
           )}
         </Typography>
 
@@ -1297,7 +1301,7 @@ export default function ContentAutomationLionTv() {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {t(
               'contentAutomation.events.subtitle',
-              'Real fixtures detected for tomorrow in Honduras time. The slot cards below use this distribution to build the review content.'
+              'Real fixtures detected for tomorrow in Honduras time. The cards below use the slot distribution plus the full-day pool to build the review content.'
             )}
           </Typography>
 
@@ -1308,13 +1312,13 @@ export default function ContentAutomationLionTv() {
           ) : null}
 
           {eventsLoading ? (
-            <ResponsiveMetricGrid columns={{ xs: 1, md: 3 }} gap={gridSpacing}>
+            <ResponsiveMetricGrid columns={{ xs: 1, md: 2, xl: 4 }} gap={gridSpacing}>
               {SLOT_ORDER.map((slot) => (
                 <Skeleton key={slot} variant="rectangular" height={180} sx={{ borderRadius: 3 }} />
               ))}
             </ResponsiveMetricGrid>
           ) : (
-            <ResponsiveMetricGrid columns={{ xs: 1, md: 3 }} gap={gridSpacing}>
+            <ResponsiveMetricGrid columns={{ xs: 1, md: 2, xl: 4 }} gap={gridSpacing}>
               {SLOT_ORDER.map((slot) => (
                 <EventStrip
                   key={slot}
@@ -1337,7 +1341,7 @@ export default function ContentAutomationLionTv() {
               isTomorrowSelected
                 ? t(
                     'contentAutomation.empty.tomorrow',
-                    'No slot posts were generated for tomorrow yet. Use "Generate tomorrow" to build the review set.'
+                    'No daily posts were generated for tomorrow yet. Use "Generate tomorrow" to build the review set.'
                   )
                 : t(
                     'contentAutomation.empty.history',
@@ -1362,7 +1366,7 @@ export default function ContentAutomationLionTv() {
           </Alert>
         ) : null}
 
-        <ResponsiveMetricGrid columns={{ xs: 1, xl: 3 }} gap={gridSpacing}>
+        <ResponsiveMetricGrid columns={{ xs: 1, md: 2, xl: 4 }} gap={gridSpacing}>
           {SLOT_ORDER.map((slot) => {
             const post = postsBySlot[slot];
             return (
@@ -1424,10 +1428,15 @@ export default function ContentAutomationLionTv() {
           ) : (
             <Stack spacing={2}>
               <Typography variant="body2" color="text.secondary">
-                {t(
-                  'contentAutomation.selectionDialog.subtitle',
-                  'Choose up to 5 real events for this slot. The system will regenerate the image and captions using exactly this editorial selection.'
-                )}
+                {selectionDialog.post?.slot === 'ALL_DAY'
+                  ? t(
+                      'contentAutomation.selectionDialog.subtitleAllDay',
+                      'Choose up to 5 real events from the full day. The system will regenerate the image and captions using exactly this editorial selection.'
+                    )
+                  : t(
+                      'contentAutomation.selectionDialog.subtitle',
+                      'Choose up to 5 real events for this slot. The system will regenerate the image and captions using exactly this editorial selection.'
+                    )}
               </Typography>
 
               <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
@@ -1466,10 +1475,17 @@ export default function ContentAutomationLionTv() {
 
               {!selectionDialog.events.length ? (
                 <PageEmptyState
-                  message={t(
-                    'contentAutomation.selectionDialog.empty',
-                    'No real events are available for this slot yet. Generate or import events first.'
-                  )}
+                  message={
+                    selectionDialog.post?.slot === 'ALL_DAY'
+                      ? t(
+                          'contentAutomation.selectionDialog.emptyAllDay',
+                          'No real events are available for this day yet. Generate or import events first.'
+                        )
+                      : t(
+                          'contentAutomation.selectionDialog.empty',
+                          'No real events are available for this slot yet. Generate or import events first.'
+                        )
+                  }
                 />
               ) : (
                 <Stack spacing={1.25}>
