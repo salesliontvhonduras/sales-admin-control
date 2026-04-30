@@ -4,6 +4,7 @@ import useAuth from 'hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 
 import Box from '@mui/material/Box';
+import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -62,6 +63,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
+import CurrencyBitcoinIcon from '@mui/icons-material/CurrencyBitcoin';
 
 import MainCard from 'ui-component/cards/MainCard';
 import LionMetricCard from 'ui-component/cards/LionMetricCard';
@@ -90,6 +92,7 @@ const paymentMethodIcons = {
   Ecommerce: ShoppingCartIcon,
   'Link pago': LinkIcon,
   'Debito Automatico': AutorenewIcon,
+  Cryptocurrency: CurrencyBitcoinIcon,
   'Loyalty Points': AutoAwesomeIcon
 };
 const paymentMethodColors = {
@@ -98,8 +101,24 @@ const paymentMethodColors = {
   Ecommerce: 'secondary.main',
   'Link pago': 'info.main',
   'Debito Automatico': 'warning.main',
+  Cryptocurrency: 'secondary.main',
   'Loyalty Points': 'secondary.main'
 };
+const LOYALTY_EXCLUDED_PACKAGE_NAMES = new Set([
+  'SMART ONE IPTV',
+  'VIVO PLAYER',
+  'CREDITOS VIVO PLAYER',
+  'CREDITOS LION TV PREMIUM',
+  'PERFIL PLUS +',
+  'IBO PRO PLAYER',
+  '9XTREAM PLAYER',
+  'SPOTIFY PERFIL',
+  'NETFLIX PERFIL',
+  'NETFLIX FULL',
+  'YOUTUBE PERFIL',
+  'AMAZON PRIME PERFIL',
+  'DISNEY PLUS PREMIUM PERFIL'
+]);
 
 const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
@@ -267,6 +286,13 @@ function normalizeInvoice(item = {}) {
   };
 }
 
+function normalizePackageName(value) {
+  return String(value || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toUpperCase();
+}
+
 const createDefaultForm = () => {
   const today = new Date();
   today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
@@ -345,6 +371,8 @@ export default function InvoicesLionTv() {
           return t('invoices.form.paymentMethods.link');
         case 'Debito Automatico':
           return t('invoices.form.paymentMethods.debit');
+        case 'Cryptocurrency':
+          return t('invoices.form.paymentMethods.cryptocurrency', 'Cryptocurrency');
         case 'Loyalty Points':
           return t('invoices.form.paymentMethods.loyalty', 'Loyalty points');
         default:
@@ -361,6 +389,7 @@ export default function InvoicesLionTv() {
       { value: 'Ecommerce', label: t('invoices.form.paymentMethods.ecommerce') },
       { value: 'Link pago', label: t('invoices.form.paymentMethods.link') },
       { value: 'Debito Automatico', label: t('invoices.form.paymentMethods.debit') },
+      { value: 'Cryptocurrency', label: t('invoices.form.paymentMethods.cryptocurrency', 'Cryptocurrency') },
       { value: 'Loyalty Points', label: t('invoices.form.paymentMethods.loyalty', 'Loyalty points') }
     ],
     [t]
@@ -559,6 +588,16 @@ export default function InvoicesLionTv() {
     const customerId = Number(form.customerId || 0);
     return customerId ? loyaltyByCustomerId[customerId] || null : null;
   }, [form.customerId, loyaltyByCustomerId]);
+
+  const selectedPackage = useMemo(
+    () => packages.find((pkg) => Number(pkg?.packageId ?? pkg?.id) === Number(form.packageId || 0)) || null,
+    [form.packageId, packages]
+  );
+
+  const selectedPackageAccumulatesLoyalty = useMemo(() => {
+    if (!selectedPackage) return true;
+    return !LOYALTY_EXCLUDED_PACKAGE_NAMES.has(normalizePackageName(selectedPackage.name));
+  }, [selectedPackage]);
 
   const loyaltyPointsRequested = useMemo(() => {
     const parsed = Number(form.loyaltyPointsUsed || 0);
@@ -1559,6 +1598,14 @@ export default function InvoicesLionTv() {
             </FormSection>
 
             <FormSection title={t('invoices.form.sections.loyalty', 'Loyalty')} helper={t('invoices.form.sections.loyaltyHelper', 'Consulta el saldo y aplica puntos en la misma factura.')}>
+              {!selectedPackageAccumulatesLoyalty && selectedPackage ? (
+                <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
+                  {t(
+                    'invoices.form.loyalty.noEarnForPackage',
+                    'This package does not accumulate loyalty points when the invoice is paid.'
+                  )}
+                </Alert>
+              ) : null}
               <Grid container spacing={2}>
                 <Grid item xs={12} md={4}>
                   <Box

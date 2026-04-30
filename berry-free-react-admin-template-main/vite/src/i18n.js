@@ -226,6 +226,7 @@ const resources = {
             pointsToUse: 'Points to use',
             redeemedAmount: 'Redeemed amount',
             selectCustomerFirst: 'Select a customer first.',
+            noEarnForPackage: 'This package does not accumulate loyalty points when the invoice is paid.',
             exceeded: 'Requested points exceed the available balance.',
             maxAvailable: 'Available for this invoice: {{count}} pts',
             conversion: '{{points}} point(s) = L {{amount}}',
@@ -258,6 +259,7 @@ const resources = {
             ecommerce: 'Ecommerce',
             link: 'Payment link',
             debit: 'Automatic debit',
+            cryptocurrency: 'Cryptocurrency',
             loyalty: 'Loyalty points'
           }
         },
@@ -4322,6 +4324,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             pointsToUse: 'Puntos a usar',
             redeemedAmount: 'Monto canjeado',
             selectCustomerFirst: 'Selecciona primero un cliente.',
+            noEarnForPackage: 'Este paquete no acumula puntos de lealtad cuando la factura queda pagada.',
             exceeded: 'Los puntos solicitados superan el saldo disponible.',
             maxAvailable: 'Disponible para esta factura: {{count}} pts',
             conversion: '{{points}} punto(s) = L {{amount}}',
@@ -4354,6 +4357,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             ecommerce: 'Ecommerce',
             link: 'Link de pago',
             debit: 'Débito automático',
+            cryptocurrency: 'Criptomoneda',
             loyalty: 'Puntos de lealtad'
           }
         },
