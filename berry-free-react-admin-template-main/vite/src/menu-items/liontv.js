@@ -229,6 +229,14 @@ const liontv = {
           url: '/liontv/content-automation',
           breadcrumbs: true,
           permission: { any: ['LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
+        },
+        {
+          id: 'liontv-movies-series-posts',
+          title: 'menu.moviesSeriesPosts',
+          type: 'item',
+          url: '/liontv/movies-series-posts',
+          breadcrumbs: true,
+          permission: { any: ['LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
         }
       ]
     },

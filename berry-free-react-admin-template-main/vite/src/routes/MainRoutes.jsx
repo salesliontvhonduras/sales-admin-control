@@ -18,6 +18,7 @@ const ReferralLeadsLionTv = Loadable(lazy(() => import('views/liontv/ReferralLea
 const EmailTemplatesLionTv = Loadable(lazy(() => import('views/liontv/EmailTemplatesLionTv')));
 const EmailCampaignsLionTv = Loadable(lazy(() => import('views/liontv/EmailCampaignsLionTv')));
 const ContentAutomationLionTv = Loadable(lazy(() => import('views/liontv/ContentAutomationLionTv')));
+const VodPostsLionTv = Loadable(lazy(() => import('views/liontv/VodPostsLionTv')));
 const PaymentCommitmentsLionTv = Loadable(lazy(() => import('views/liontv/PaymentCommitmentsLionTv')));
 const MoviesFeedLionTv = Loadable(lazy(() => import('views/liontv/MoviesFeedLionTv')));
 const SeriesFeedLionTv = Loadable(lazy(() => import('views/liontv/SeriesFeedLionTv')));
@@ -208,6 +209,13 @@ const MainRoutes = {
           element: protectPage(
             { any: ['LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_ADMIN', 'ADMIN'] },
             <ContentAutomationLionTv />
+          )
+        },
+        {
+          path: '/liontv/movies-series-posts',
+          element: protectPage(
+            { any: ['LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_ADMIN', 'ADMIN'] },
+            <VodPostsLionTv />
           )
         },
         {

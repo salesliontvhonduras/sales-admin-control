@@ -9,6 +9,9 @@ export const lionTvProfessionalTranslations = {
       sendEmail: 'Send email',
       view: 'View'
     },
+    menu: {
+      moviesSeriesPosts: 'Movies & Series Posts'
+    },
     common: {
       all: 'All',
       back: 'Back',
@@ -471,6 +474,151 @@ export const lionTvProfessionalTranslations = {
         noResults: 'No results match the current query.',
         noTodayDue: 'There are no urgent items due today.',
         partialData: 'Some widgets are still syncing. Results may be partial.'
+      }
+    },
+    vodPosts: {
+      title: 'Movies & Series Posts',
+      subtitle: 'Manual VOD drafts with preview, approval and publishing flow.',
+      intro:
+        'Build premium VOD posts from the latest active movies or series feed, choose the visual layout and publish with the same editorial flow used by sports automation.',
+      loading: 'Loading VOD publishing console...',
+      contentTypes: {
+        movie: 'Movies',
+        series: 'Series'
+      },
+      layouts: {
+        single: 'Single',
+        grid: 'Grid',
+        hero_stack: 'Hero Stack'
+      },
+      layoutHints: {
+        single: 'One title with dominant poster and premium CTA.',
+        grid: 'A premium poster mosaic for 2 to 6 selected titles.',
+        hero_stack: 'One main title with a stacked set of supporting titles.'
+      },
+      branding: {
+        modeGeneric: 'Generic watermark',
+        modeReseller: 'Reseller watermark',
+        resellerLabel: 'Reseller',
+        resellerPlaceholder: 'Search by username',
+        resellerConfigured: 'Support phone ready: {{phone}}',
+        resellerMissing: 'Support phone pending configuration',
+        errors: {
+          resellerRequired: 'Select a reseller before generating branded VOD content.',
+          supportMissing: 'The selected reseller does not have a support phone configured in Support Center.',
+          lookup: 'Could not load reseller support profiles.'
+        }
+      },
+      safeMode: 'SAFE mode',
+      safeModeOff: 'SAFE mode disabled',
+      safeModeLocked: 'SAFE mode is enabled for this draft',
+      safeModeUnlocked: 'SAFE mode is disabled for this draft',
+      kpis: {
+        catalogItems: 'Catalog titles',
+        catalogItemsHelper: 'Available titles in the latest active feed.',
+        drafts: 'Drafts',
+        draftsHelper: 'Recent posts stored for this content type.',
+        approved: 'Approved',
+        approvedHelper: 'Drafts already validated and ready to publish.',
+        published: 'Published',
+        publishedHelper: 'Drafts already sent to the publishing flow.'
+      },
+      composer: {
+        title: 'VOD composer',
+        contentType: 'Content type',
+        layoutMode: 'Layout mode',
+        branding: 'Branding',
+        selectionCounter: '{{selected}} selected · required {{min}}-{{max}}',
+        editing: 'Editing draft #{{id}} · changes regenerate the image and captions from the new snapshot.',
+        createHint: 'Select titles, choose the layout and create a premium draft preview.'
+      },
+      catalog: {
+        search: 'Search title',
+        searchPlaceholder: 'Title, year or genre',
+        selected: 'Selected',
+        posterFallback: 'Poster pending',
+        feedSnapshot: 'Active feed #{{id}} · Updated {{date}}'
+      },
+      posts: {
+        title: 'Recent VOD drafts',
+        loading: 'Loading VOD drafts...',
+        untitled: 'VOD draft',
+        selectedItems: 'selected titles',
+        reseller: 'Reseller: {{username}}',
+        feed: 'Feed #{{id}}',
+        captionPending: 'Generate captions to complete the publishing copy.',
+        updatedAt: 'Updated {{date}}'
+      },
+      previewDialog: {
+        title: 'Rendered image preview',
+        loading: 'Loading rendered image...',
+        alt: 'Generated VOD post'
+      },
+      safePreviewDialog: {
+        title: 'SAFE preview',
+        loading: 'Loading SAFE preview...',
+        helper: 'Use this view to confirm the sanitized caption before approving or publishing the VOD post.',
+        caption: 'Sanitized caption',
+        phone: 'Support {{phone}}'
+      },
+      validation: {
+        single: 'Select exactly 1 title.',
+        grid: 'Select between 2 and 6 titles.',
+        hero_stack: 'Select between 2 and 5 titles.'
+      },
+      status: {
+        generated: 'Generated',
+        approved: 'Approved',
+        published: 'Published',
+        failed: 'Failed',
+        draft: 'Draft'
+      },
+      actions: {
+        createDraft: 'Create draft',
+        updateSelection: 'Update selection',
+        saving: 'Saving...',
+        cancelEdit: 'Cancel edit',
+        previewImage: 'Preview image',
+        safePreview: 'Safe preview',
+        editSelection: 'Edit selection',
+        regenerateImage: 'Regenerate image',
+        regeneratingImage: 'Regenerating...',
+        regenerateCaptions: 'Regenerate captions',
+        regeneratingCaptions: 'Regenerating...',
+        approve: 'Approve',
+        approving: 'Approving...',
+        publish: 'Publish',
+        publishing: 'Publishing...'
+      },
+      messages: {
+        created: 'The VOD draft was created successfully.',
+        selectionUpdated: 'The VOD draft was updated with your selected titles.',
+        imageRegenerated: 'The preview image was regenerated successfully.',
+        captionsRegenerated: 'The captions were regenerated successfully.',
+        approved: 'The VOD draft is now approved.',
+        published: 'The VOD draft was published successfully.'
+      },
+      warnings: {
+        missingTitles:
+          '{{count}} selected title(s) no longer exist in the active feed. Keep this draft for preview/publish or replace the selection to refresh it.'
+      },
+      errors: {
+        loadCatalog: 'Could not load the active catalog feed.',
+        loadPosts: 'Could not load existing VOD drafts.',
+        create: 'Could not create the VOD draft.',
+        updateSelection: 'Could not update the selected titles for this draft.',
+        previewImage: 'Preview image is not available yet.',
+        safePreview: 'Could not load the SAFE preview.',
+        regenerateImage: 'Could not regenerate the image.',
+        regenerateCaptions: 'Could not regenerate the captions.',
+        approve: 'Could not approve this VOD draft.',
+        publish: 'Could not publish this VOD draft.',
+        selectionLimit: 'This layout supports up to {{count}} titles.'
+      },
+      empty: {
+        search: 'No titles match the current search.',
+        catalog: 'The active feed does not contain publishable titles yet.',
+        posts: 'No VOD drafts have been created for this content type yet.'
       }
     },
     licenses: {
@@ -1117,6 +1265,9 @@ export const lionTvProfessionalTranslations = {
       sendEmail: 'Enviar correo',
       view: 'Ver'
     },
+    menu: {
+      moviesSeriesPosts: 'Posts de Películas y Series'
+    },
     common: {
       all: 'Todos',
       back: 'Atrás',
@@ -1579,6 +1730,151 @@ export const lionTvProfessionalTranslations = {
         noResults: 'No hay resultados con la consulta actual.',
         noTodayDue: 'No hay elementos urgentes que venzan hoy.',
         partialData: 'Algunos widgets siguen sincronizando. Los resultados podrían ser parciales.'
+      }
+    },
+    vodPosts: {
+      title: 'Posts de Películas y Series',
+      subtitle: 'Borradores manuales VOD con preview, aprobación y publicación.',
+      intro:
+        'Construye posts premium VOD desde el último feed activo de películas o series, elige el layout visual y publícalos con el mismo flujo editorial usado en sports automation.',
+      loading: 'Cargando consola de publicación VOD...',
+      contentTypes: {
+        movie: 'Películas',
+        series: 'Series'
+      },
+      layouts: {
+        single: 'Single',
+        grid: 'Grid',
+        hero_stack: 'Hero Stack'
+      },
+      layoutHints: {
+        single: 'Un solo título con portada dominante y CTA premium.',
+        grid: 'Un mosaico premium de posters para 2 a 6 títulos seleccionados.',
+        hero_stack: 'Un título principal con secundarios apilados.'
+      },
+      branding: {
+        modeGeneric: 'Marca de agua genérica',
+        modeReseller: 'Marca de agua reseller',
+        resellerLabel: 'Reseller',
+        resellerPlaceholder: 'Buscar por username',
+        resellerConfigured: 'Teléfono de soporte listo: {{phone}}',
+        resellerMissing: 'Falta configurar el teléfono de soporte',
+        errors: {
+          resellerRequired: 'Selecciona un reseller antes de generar contenido VOD con branding.',
+          supportMissing: 'El reseller seleccionado no tiene teléfono de soporte configurado en Support Center.',
+          lookup: 'No se pudieron cargar los perfiles de soporte reseller.'
+        }
+      },
+      safeMode: 'SAFE mode',
+      safeModeOff: 'SAFE mode desactivado',
+      safeModeLocked: 'SAFE mode está activo para este borrador',
+      safeModeUnlocked: 'SAFE mode está desactivado para este borrador',
+      kpis: {
+        catalogItems: 'Títulos del catálogo',
+        catalogItemsHelper: 'Títulos disponibles en el último feed activo.',
+        drafts: 'Borradores',
+        draftsHelper: 'Posts recientes guardados para este tipo de contenido.',
+        approved: 'Aprobados',
+        approvedHelper: 'Borradores ya validados y listos para publicar.',
+        published: 'Publicados',
+        publishedHelper: 'Borradores ya enviados al flujo de publicación.'
+      },
+      composer: {
+        title: 'Composer VOD',
+        contentType: 'Tipo de contenido',
+        layoutMode: 'Modo visual',
+        branding: 'Branding',
+        selectionCounter: '{{selected}} seleccionados · requerido {{min}}-{{max}}',
+        editing: 'Editando borrador #{{id}} · los cambios regeneran la imagen y los captions desde el nuevo snapshot.',
+        createHint: 'Selecciona títulos, define el layout y crea un preview premium.'
+      },
+      catalog: {
+        search: 'Buscar título',
+        searchPlaceholder: 'Título, año o género',
+        selected: 'Seleccionado',
+        posterFallback: 'Poster pendiente',
+        feedSnapshot: 'Feed activo #{{id}} · Actualizado {{date}}'
+      },
+      posts: {
+        title: 'Borradores VOD recientes',
+        loading: 'Cargando borradores VOD...',
+        untitled: 'Borrador VOD',
+        selectedItems: 'títulos seleccionados',
+        reseller: 'Reseller: {{username}}',
+        feed: 'Feed #{{id}}',
+        captionPending: 'Genera captions para completar el copy de publicación.',
+        updatedAt: 'Actualizado {{date}}'
+      },
+      previewDialog: {
+        title: 'Preview de imagen renderizada',
+        loading: 'Cargando imagen renderizada...',
+        alt: 'Post VOD generado'
+      },
+      safePreviewDialog: {
+        title: 'SAFE preview',
+        loading: 'Cargando SAFE preview...',
+        helper: 'Usa esta vista para confirmar el caption sanitizado antes de aprobar o publicar el post VOD.',
+        caption: 'Caption sanitizado',
+        phone: 'Soporte {{phone}}'
+      },
+      validation: {
+        single: 'Selecciona exactamente 1 título.',
+        grid: 'Selecciona entre 2 y 6 títulos.',
+        hero_stack: 'Selecciona entre 2 y 5 títulos.'
+      },
+      status: {
+        generated: 'Generado',
+        approved: 'Aprobado',
+        published: 'Publicado',
+        failed: 'Fallido',
+        draft: 'Borrador'
+      },
+      actions: {
+        createDraft: 'Crear borrador',
+        updateSelection: 'Actualizar selección',
+        saving: 'Guardando...',
+        cancelEdit: 'Cancelar edición',
+        previewImage: 'Preview image',
+        safePreview: 'Safe preview',
+        editSelection: 'Editar selección',
+        regenerateImage: 'Regenerate image',
+        regeneratingImage: 'Regenerando...',
+        regenerateCaptions: 'Regenerate captions',
+        regeneratingCaptions: 'Regenerando...',
+        approve: 'Aprobar',
+        approving: 'Aprobando...',
+        publish: 'Publicar',
+        publishing: 'Publicando...'
+      },
+      messages: {
+        created: 'El borrador VOD fue creado correctamente.',
+        selectionUpdated: 'El borrador VOD fue actualizado con los títulos seleccionados.',
+        imageRegenerated: 'La imagen preview fue regenerada correctamente.',
+        captionsRegenerated: 'Los captions fueron regenerados correctamente.',
+        approved: 'El borrador VOD quedó aprobado.',
+        published: 'El borrador VOD fue publicado correctamente.'
+      },
+      warnings: {
+        missingTitles:
+          '{{count}} título(s) seleccionados ya no existen en el feed activo. Puedes mantener este borrador para preview/publish o reemplazar la selección para refrescarlo.'
+      },
+      errors: {
+        loadCatalog: 'No se pudo cargar el feed activo del catálogo.',
+        loadPosts: 'No se pudieron cargar los borradores VOD existentes.',
+        create: 'No se pudo crear el borrador VOD.',
+        updateSelection: 'No se pudieron actualizar los títulos seleccionados de este borrador.',
+        previewImage: 'La imagen preview todavía no está disponible.',
+        safePreview: 'No se pudo cargar el SAFE preview.',
+        regenerateImage: 'No se pudo regenerar la imagen.',
+        regenerateCaptions: 'No se pudieron regenerar los captions.',
+        approve: 'No se pudo aprobar este borrador VOD.',
+        publish: 'No se pudo publicar este borrador VOD.',
+        selectionLimit: 'Este layout soporta hasta {{count}} títulos.'
+      },
+      empty: {
+        search: 'No hay títulos que coincidan con la búsqueda actual.',
+        catalog: 'El feed activo no contiene títulos publicables todavía.',
+        posts: 'Todavía no se han creado borradores VOD para este tipo de contenido.'
       }
     },
     licenses: {
