@@ -878,6 +878,14 @@ export default function ContentAutomationLionTv() {
     t
   ]);
 
+  const currentBrandingPayload = useMemo(() => {
+    const normalizedMode = String(brandingMode || BRANDING_MODE_GENERIC).toUpperCase();
+    return {
+      brandingMode: normalizedMode,
+      resellerUsername: normalizedMode === BRANDING_MODE_RESELLER ? selectedReseller?.username || null : null
+    };
+  }, [brandingMode, selectedReseller?.username]);
+
   const handleAction = useCallback(
     async (post, actionKey, request, successMessageKey, fallbackMessage) => {
       if (!post?.id) return;
@@ -1013,7 +1021,7 @@ export default function ContentAutomationLionTv() {
       const updatedPost = await updateContentAutomationPostSelectedEvents(
         selectionDialog.post.id,
         selectionDialog.selectedEventIds,
-        { skipAuthRedirect: true }
+        { skipAuthRedirect: true, brandingPayload: currentBrandingPayload }
       );
       updatePost(updatedPost);
       enqueueSnackbar(
@@ -1030,14 +1038,15 @@ export default function ContentAutomationLionTv() {
           t('contentAutomation.errors.saveSelectedEvents', 'Could not apply the selected events to this post.')
       }));
     }
-  }, [closeSelectionDialog, enqueueSnackbar, selectionDialog.post?.id, selectionDialog.selectedEventIds, t, updatePost]);
+  }, [closeSelectionDialog, currentBrandingPayload, enqueueSnackbar, selectionDialog.post?.id, selectionDialog.selectedEventIds, t, updatePost]);
 
   const handleResetSelectedEvents = useCallback(async () => {
     if (!selectionDialog.post?.id) return;
     setSelectionDialog((prev) => ({ ...prev, saving: true, error: '' }));
     try {
       const updatedPost = await updateContentAutomationPostSelectedEvents(selectionDialog.post.id, [], {
-        skipAuthRedirect: true
+        skipAuthRedirect: true,
+        brandingPayload: currentBrandingPayload
       });
       updatePost(updatedPost);
       enqueueSnackbar(
@@ -1054,7 +1063,7 @@ export default function ContentAutomationLionTv() {
           t('contentAutomation.errors.resetSelectedEvents', 'Could not restore the automatic event selection.')
       }));
     }
-  }, [closeSelectionDialog, enqueueSnackbar, selectionDialog.post?.id, t, updatePost]);
+  }, [closeSelectionDialog, currentBrandingPayload, enqueueSnackbar, selectionDialog.post?.id, t, updatePost]);
 
   const confirmPrimaryLabel = useMemo(() => {
     if (confirmDialog.type === 'approve') return t('contentAutomation.actions.confirmApprove', 'Approve post');
@@ -1390,7 +1399,10 @@ export default function ContentAutomationLionTv() {
                   handleAction(
                     selectedPost,
                     'image',
-                    (postId) => regenerateContentAutomationImage(postId, { skipAuthRedirect: true }),
+                    (postId) => regenerateContentAutomationImage(postId, {
+                      skipAuthRedirect: true,
+                      brandingPayload: currentBrandingPayload
+                    }),
                     'contentAutomation.messages.imageRegenerated',
                     t('contentAutomation.messages.imageRegenerated', 'The preview image was regenerated successfully.')
                   )
@@ -1399,7 +1411,10 @@ export default function ContentAutomationLionTv() {
                   handleAction(
                     selectedPost,
                     'captions',
-                    (postId) => regenerateContentAutomationCaptions(postId, { skipAuthRedirect: true }),
+                    (postId) => regenerateContentAutomationCaptions(postId, {
+                      skipAuthRedirect: true,
+                      brandingPayload: currentBrandingPayload
+                    }),
                     'contentAutomation.messages.captionsRegenerated',
                     t('contentAutomation.messages.captionsRegenerated', 'The captions were regenerated successfully.')
                   )

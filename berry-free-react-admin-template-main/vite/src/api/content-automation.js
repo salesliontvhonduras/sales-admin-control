@@ -50,12 +50,24 @@ export async function publishContentAutomationPost(postId, config = {}) {
 }
 
 export async function regenerateContentAutomationImage(postId, config = {}) {
-  const response = await contentAutomationApi.post(`/api/content-automation/posts/${postId}/regenerate-image`, null, config);
+  const payload =
+    config && Object.prototype.hasOwnProperty.call(config, 'brandingPayload')
+      ? config.brandingPayload
+      : null;
+  const requestConfig = { ...config };
+  delete requestConfig.brandingPayload;
+  const response = await contentAutomationApi.post(`/api/content-automation/posts/${postId}/regenerate-image`, payload, requestConfig);
   return unwrap(response);
 }
 
 export async function regenerateContentAutomationCaptions(postId, config = {}) {
-  const response = await contentAutomationApi.post(`/api/content-automation/posts/${postId}/regenerate-captions`, null, config);
+  const payload =
+    config && Object.prototype.hasOwnProperty.call(config, 'brandingPayload')
+      ? config.brandingPayload
+      : null;
+  const requestConfig = { ...config };
+  delete requestConfig.brandingPayload;
+  const response = await contentAutomationApi.post(`/api/content-automation/posts/${postId}/regenerate-captions`, payload, requestConfig);
   return unwrap(response);
 }
 
@@ -78,10 +90,20 @@ export async function getContentAutomationPostEvents(postId, config = {}) {
 }
 
 export async function updateContentAutomationPostSelectedEvents(postId, eventIds, config = {}) {
+  const payload =
+    config && Object.prototype.hasOwnProperty.call(config, 'brandingPayload')
+      ? config.brandingPayload
+      : null;
+  const requestConfig = { ...config };
+  delete requestConfig.brandingPayload;
   const response = await contentAutomationApi.post(
     `/api/content-automation/posts/${postId}/selected-events`,
-    { eventIds: Array.isArray(eventIds) ? eventIds : [] },
-    config
+    {
+      eventIds: Array.isArray(eventIds) ? eventIds : [],
+      brandingMode: payload?.brandingMode || null,
+      resellerUsername: payload?.resellerUsername || null
+    },
+    requestConfig
   );
   return unwrap(response);
 }
