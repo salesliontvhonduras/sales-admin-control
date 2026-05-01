@@ -65,6 +65,8 @@ const BRANDING_MODE_RESELLER = 'RESELLER';
 const CONTENT_TYPES = ['MOVIE', 'SERIES'];
 const LAYOUT_MODES = ['SINGLE', 'GRID', 'HERO_STACK'];
 const CATALOG_PAGE_SIZE = 24;
+const CATEGORY_OPTION_ALL = '__ALL__';
+const CATEGORY_OPTION_UNCATEGORIZED = '__UNCATEGORIZED__';
 
 const LAYOUT_RULES = {
   SINGLE: { min: 1, max: 1 },
@@ -79,6 +81,11 @@ function clampText(lines = 2) {
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden'
   };
+}
+
+function normalizeCategoryValue(value) {
+  const normalized = String(value || '').trim();
+  return normalized || CATEGORY_OPTION_UNCATEGORIZED;
 }
 
 function formatDateTime(value, locale = 'es-HN') {
@@ -500,6 +507,7 @@ export default function VodPostsLionTv() {
   const [safeModeEnabled, setSafeModeEnabled] = useState(true);
   const [selectedItemIds, setSelectedItemIds] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(CATEGORY_OPTION_ALL);
   const [editingPost, setEditingPost] = useState(null);
 
   const [catalogLoading, setCatalogLoading] = useState(true);
@@ -587,7 +595,7 @@ export default function VodPostsLionTv() {
 
   useEffect(() => {
     setCatalogPage(1);
-  }, [contentType, searchTerm]);
+  }, [contentType, searchTerm, selectedCategory]);
 
   useEffect(() => {
     if (!resellerBrandingEnabled) {
@@ -648,17 +656,53 @@ export default function VodPostsLionTv() {
 
   const catalogItems = useMemo(() => (Array.isArray(catalogPayload?.items) ? catalogPayload.items : []), [catalogPayload]);
 
+  const categoryOptions = useMemo(() => {
+    const values = new Set();
+    catalogItems.forEach((item) => {
+      values.add(normalizeCategoryValue(item?.genreLabel));
+    });
+    const sortedValues = Array.from(values).sort((left, right) => {
+      if (left === CATEGORY_OPTION_UNCATEGORIZED) return 1;
+      if (right === CATEGORY_OPTION_UNCATEGORIZED) return -1;
+      return left.localeCompare(right);
+    });
+    return [
+      {
+        value: CATEGORY_OPTION_ALL,
+        label: t('vodPosts.catalog.categoryAll', 'All categories')
+      },
+      ...sortedValues.map((value) => ({
+        value,
+        label:
+          value === CATEGORY_OPTION_UNCATEGORIZED
+            ? t('vodPosts.catalog.categoryUncategorized', 'Uncategorized')
+            : value
+      }))
+    ];
+  }, [catalogItems, t]);
+
+  useEffect(() => {
+    if (selectedCategory === CATEGORY_OPTION_ALL) return;
+    const stillAvailable = categoryOptions.some((option) => option.value === selectedCategory);
+    if (!stillAvailable) {
+      setSelectedCategory(CATEGORY_OPTION_ALL);
+    }
+  }, [categoryOptions, selectedCategory]);
+
   const filteredCatalogItems = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
-    if (!query) return catalogItems;
     return catalogItems.filter((item) => {
+      const matchesCategory =
+        selectedCategory === CATEGORY_OPTION_ALL || normalizeCategoryValue(item?.genreLabel) === selectedCategory;
+      if (!matchesCategory) return false;
+      if (!query) return true;
       const haystack = [item?.title, item?.year, item?.genreLabel, ...(item?.metaBadges || [])]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
       return haystack.includes(query);
     });
-  }, [catalogItems, searchTerm]);
+  }, [catalogItems, searchTerm, selectedCategory]);
 
   const catalogPageCount = useMemo(
     () => Math.max(1, Math.ceil(filteredCatalogItems.length / CATALOG_PAGE_SIZE)),
@@ -693,6 +737,28 @@ export default function VodPostsLionTv() {
   const selectionTooLow = selectionCount < layoutRule.min;
   const selectionTooHigh = selectionCount > layoutRule.max;
   const selectionValid = !selectionTooLow && !selectionTooHigh;
+  const selectedCategoryOption =
+    categoryOptions.find((option) => option.value === selectedCategory) ||
+    categoryOptions[0] || {
+      value: CATEGORY_OPTION_ALL,
+      label: t('vodPosts.catalog.categoryAll', 'All categories')
+    };
+  const hasActiveCatalogFilters = Boolean(searchTerm.trim()) || selectedCategory !== CATEGORY_OPTION_ALL;
+  const activeCatalogFilterSummary = useMemo(() => {
+    const filters = [];
+    if (searchTerm.trim()) {
+      filters.push(t('vodPosts.catalog.activeFilterSearch', 'Search'));
+    }
+    if (selectedCategory !== CATEGORY_OPTION_ALL) {
+      filters.push(
+        t('vodPosts.catalog.activeFilterCategory', {
+          defaultValue: 'Category: {{category}}',
+          category: selectedCategoryOption.label
+        })
+      );
+    }
+    return filters.join(' · ');
+  }, [searchTerm, selectedCategory, selectedCategoryOption.label, t]);
 
   const stats = useMemo(() => {
     const rows = postsPayload?.posts || [];
@@ -1279,6 +1345,21 @@ export default function VodPostsLionTv() {
                 placeholder={t('vodPosts.catalog.searchPlaceholder', 'Title, year or genre')}
                 fullWidth
               />
+              <Autocomplete
+                options={categoryOptions}
+                value={selectedCategoryOption}
+                onChange={(_, option) => setSelectedCategory(option?.value || CATEGORY_OPTION_ALL)}
+                isOptionEqualToValue={(option, value) => option?.value === value?.value}
+                getOptionLabel={(option) => option?.label || ''}
+                sx={{ minWidth: { xs: '100%', md: 260 } }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={t('vodPosts.catalog.category', 'Category')}
+                    placeholder={t('vodPosts.catalog.categoryAll', 'All categories')}
+                  />
+                )}
+              />
               <Chip
                 color={selectionValid ? 'success' : 'warning'}
                 label={t('vodPosts.composer.selectionCounter', {
@@ -1297,6 +1378,16 @@ export default function VodPostsLionTv() {
                   count: filteredCatalogItems.length
                 })}
               />
+              {hasActiveCatalogFilters ? (
+                <Chip
+                  variant="outlined"
+                  color="info"
+                  label={t('vodPosts.catalog.activeFilters', {
+                    defaultValue: 'Filters · {{summary}}',
+                    summary: activeCatalogFilterSummary
+                  })}
+                />
+              ) : null}
               {editingPost ? (
                 <Button variant="text" color="inherit" onClick={clearComposer}>
                   {t('vodPosts.actions.cancelEdit', 'Cancel edit')}
@@ -1388,7 +1479,9 @@ export default function VodPostsLionTv() {
               <PageEmptyState
                 message={
                   catalogItems.length
-                    ? t('vodPosts.empty.search', 'No titles match the current search.')
+                    ? hasActiveCatalogFilters
+                      ? t('vodPosts.empty.filtered', 'No titles match the current filters.')
+                      : t('vodPosts.empty.search', 'No titles match the current search.')
                     : t('vodPosts.empty.catalog', 'The active feed does not contain publishable titles yet.')
                 }
               />

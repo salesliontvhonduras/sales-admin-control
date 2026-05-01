@@ -535,11 +535,17 @@ export const lionTvProfessionalTranslations = {
       catalog: {
         search: 'Search title',
         searchPlaceholder: 'Title, year or genre',
+        category: 'Category',
+        categoryAll: 'All categories',
+        categoryUncategorized: 'Uncategorized',
         selected: 'Selected',
         posterFallback: 'Poster pending',
         feedSnapshot: 'Active feed #{{id}} · Updated {{date}}',
         pageSummary: 'Page {{page}} of {{pages}} · {{count}} visible',
-        selectionPersistence: 'Selections stay active across pages. You can mark titles here and continue selecting on the next pages.'
+        selectionPersistence: 'Selections stay active across pages. You can mark titles here and continue selecting on the next pages.',
+        activeFilters: 'Filters · {{summary}}',
+        activeFilterSearch: 'Search',
+        activeFilterCategory: 'Category: {{category}}'
       },
       posts: {
         title: 'Recent VOD drafts',
@@ -619,6 +625,7 @@ export const lionTvProfessionalTranslations = {
       },
       empty: {
         search: 'No titles match the current search.',
+        filtered: 'No titles match the current filters.',
         catalog: 'The active feed does not contain publishable titles yet.',
         posts: 'No VOD drafts have been created for this content type yet.'
       }
@@ -1793,11 +1800,17 @@ export const lionTvProfessionalTranslations = {
       catalog: {
         search: 'Buscar título',
         searchPlaceholder: 'Título, año o género',
+        category: 'Categoría',
+        categoryAll: 'Todas las categorías',
+        categoryUncategorized: 'Sin categoría',
         selected: 'Seleccionado',
         posterFallback: 'Poster pendiente',
         feedSnapshot: 'Feed activo #{{id}} · Actualizado {{date}}',
         pageSummary: 'Página {{page}} de {{pages}} · {{count}} visibles',
-        selectionPersistence: 'La selección se mantiene entre páginas. Puedes marcar títulos aquí y seguir seleccionando en las páginas siguientes.'
+        selectionPersistence: 'La selección se mantiene entre páginas. Puedes marcar títulos aquí y seguir seleccionando en las páginas siguientes.',
+        activeFilters: 'Filtros · {{summary}}',
+        activeFilterSearch: 'Búsqueda',
+        activeFilterCategory: 'Categoría: {{category}}'
       },
       posts: {
         title: 'Borradores VOD recientes',
@@ -1877,6 +1890,7 @@ export const lionTvProfessionalTranslations = {
       },
       empty: {
         search: 'No hay títulos que coincidan con la búsqueda actual.',
+        filtered: 'No hay títulos que coincidan con los filtros actuales.',
         catalog: 'El feed activo no contiene títulos publicables todavía.',
         posts: 'Todavía no se han creado borradores VOD para este tipo de contenido.'
       }
