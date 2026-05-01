@@ -537,7 +537,9 @@ export const lionTvProfessionalTranslations = {
         searchPlaceholder: 'Title, year or genre',
         selected: 'Selected',
         posterFallback: 'Poster pending',
-        feedSnapshot: 'Active feed #{{id}} · Updated {{date}}'
+        feedSnapshot: 'Active feed #{{id}} · Updated {{date}}',
+        pageSummary: 'Page {{page}} of {{pages}} · {{count}} visible',
+        selectionPersistence: 'Selections stay active across pages. You can mark titles here and continue selecting on the next pages.'
       },
       posts: {
         title: 'Recent VOD drafts',
@@ -1793,7 +1795,9 @@ export const lionTvProfessionalTranslations = {
         searchPlaceholder: 'Título, año o género',
         selected: 'Seleccionado',
         posterFallback: 'Poster pendiente',
-        feedSnapshot: 'Feed activo #{{id}} · Actualizado {{date}}'
+        feedSnapshot: 'Feed activo #{{id}} · Actualizado {{date}}',
+        pageSummary: 'Página {{page}} de {{pages}} · {{count}} visibles',
+        selectionPersistence: 'La selección se mantiene entre páginas. Puedes marcar títulos aquí y seguir seleccionando en las páginas siguientes.'
       },
       posts: {
         title: 'Borradores VOD recientes',

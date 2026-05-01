@@ -17,6 +17,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Pagination from '@mui/material/Pagination';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
@@ -63,6 +64,7 @@ const BRANDING_MODE_GENERIC = 'GENERIC';
 const BRANDING_MODE_RESELLER = 'RESELLER';
 const CONTENT_TYPES = ['MOVIE', 'SERIES'];
 const LAYOUT_MODES = ['SINGLE', 'GRID', 'HERO_STACK'];
+const CATALOG_PAGE_SIZE = 24;
 
 const LAYOUT_RULES = {
   SINGLE: { min: 1, max: 1 },
@@ -510,6 +512,7 @@ export default function VodPostsLionTv() {
 
   const [savingComposer, setSavingComposer] = useState(false);
   const [busyActions, setBusyActions] = useState({});
+  const [catalogPage, setCatalogPage] = useState(1);
 
   const [resellerOptions, setResellerOptions] = useState([]);
   const [resellerSearchInput, setResellerSearchInput] = useState('');
@@ -583,6 +586,10 @@ export default function VodPostsLionTv() {
   }, [loadCatalog, loadPosts]);
 
   useEffect(() => {
+    setCatalogPage(1);
+  }, [contentType, searchTerm]);
+
+  useEffect(() => {
     if (!resellerBrandingEnabled) {
       setResellerSelectionError('');
       return;
@@ -652,6 +659,20 @@ export default function VodPostsLionTv() {
       return haystack.includes(query);
     });
   }, [catalogItems, searchTerm]);
+
+  const catalogPageCount = useMemo(
+    () => Math.max(1, Math.ceil(filteredCatalogItems.length / CATALOG_PAGE_SIZE)),
+    [filteredCatalogItems.length]
+  );
+
+  useEffect(() => {
+    setCatalogPage((prev) => Math.min(prev, catalogPageCount));
+  }, [catalogPageCount]);
+
+  const paginatedCatalogItems = useMemo(() => {
+    const start = (catalogPage - 1) * CATALOG_PAGE_SIZE;
+    return filteredCatalogItems.slice(start, start + CATALOG_PAGE_SIZE);
+  }, [catalogPage, filteredCatalogItems]);
 
   const catalogIndex = useMemo(() => {
     const map = new Map();
@@ -1267,6 +1288,15 @@ export default function VodPostsLionTv() {
                   max: layoutRule.max
                 })}
               />
+              <Chip
+                variant="outlined"
+                label={t('vodPosts.catalog.pageSummary', {
+                  defaultValue: 'Page {{page}} of {{pages}} · {{count}} visible',
+                  page: catalogPage,
+                  pages: catalogPageCount,
+                  count: filteredCatalogItems.length
+                })}
+              />
               {editingPost ? (
                 <Button variant="text" color="inherit" onClick={clearComposer}>
                   {t('vodPosts.actions.cancelEdit', 'Cancel edit')}
@@ -1293,33 +1323,67 @@ export default function VodPostsLionTv() {
                 ))}
               </Box>
             ) : filteredCatalogItems.length ? (
-              <Box
-                sx={{
-                  display: 'grid',
-                  gap: 2,
-                  gridTemplateColumns: {
-                    xs: 'repeat(2, minmax(0, 1fr))',
-                    md: 'repeat(3, minmax(0, 1fr))',
-                    xl: 'repeat(6, minmax(0, 1fr))'
-                  }
-                }}
-              >
-                {filteredCatalogItems.map((item) => {
-                  const selected = selectedItemIds.includes(item.itemId);
-                  const disabled = !selected && selectedItemIds.length >= layoutRule.max;
-                  return (
-                    <CatalogPosterCard
-                      key={item.itemId}
-                      item={item}
-                      selected={selected}
-                      disabled={disabled}
-                      onToggle={() => handleToggleItem(item.itemId)}
-                      contentType={contentType}
-                      t={t}
+              <Stack spacing={2}>
+                {catalogPageCount > 1 ? (
+                  <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1.25} alignItems={{ xs: 'stretch', md: 'center' }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {t(
+                        'vodPosts.catalog.selectionPersistence',
+                        'Selections stay active across pages. You can mark titles here and continue selecting on the next pages.'
+                      )}
+                    </Typography>
+                    <Pagination
+                      color="primary"
+                      page={catalogPage}
+                      count={catalogPageCount}
+                      onChange={(_, value) => setCatalogPage(value)}
+                      shape="rounded"
+                      siblingCount={0}
+                      boundaryCount={1}
                     />
-                  );
-                })}
-              </Box>
+                  </Stack>
+                ) : null}
+
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gap: 2,
+                    gridTemplateColumns: {
+                      xs: 'repeat(2, minmax(0, 1fr))',
+                      md: 'repeat(3, minmax(0, 1fr))',
+                      xl: 'repeat(6, minmax(0, 1fr))'
+                    }
+                  }}
+                >
+                  {paginatedCatalogItems.map((item) => {
+                    const selected = selectedItemIds.includes(item.itemId);
+                    const disabled = !selected && selectedItemIds.length >= layoutRule.max;
+                    return (
+                      <CatalogPosterCard
+                        key={item.itemId}
+                        item={item}
+                        selected={selected}
+                        disabled={disabled}
+                        onToggle={() => handleToggleItem(item.itemId)}
+                        contentType={contentType}
+                        t={t}
+                      />
+                    );
+                  })}
+                </Box>
+
+                {catalogPageCount > 1 ? (
+                  <Stack direction="row" justifyContent="center">
+                    <Pagination
+                      color="primary"
+                      page={catalogPage}
+                      count={catalogPageCount}
+                      onChange={(_, value) => setCatalogPage(value)}
+                      shape="rounded"
+                    />
+                  </Stack>
+                ) : null}
+              </Stack>
             ) : (
               <PageEmptyState
                 message={
