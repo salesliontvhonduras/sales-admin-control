@@ -32,7 +32,7 @@ const liontv = {
   id: 'liontv',
   title: 'menu.liontv',
   type: 'group',
-  permission: { any: ['LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+  permission: { any: ['LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
   children: [
     {
       id: 'liontv-overview',
@@ -40,7 +40,7 @@ const liontv = {
       caption: 'menu.liontvOverviewCaption',
       type: 'collapse',
       icon: icons.IconDashboard,
-      permission: { any: ['LIONTV_DASHBOARD_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+      permission: { any: ['LIONTV_DASHBOARD_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
       children: [
         {
           id: 'liontv-dashboard',
@@ -48,7 +48,7 @@ const liontv = {
           type: 'item',
           url: '/liontv/dashboard',
           breadcrumbs: true,
-          permission: { any: ['LIONTV_DASHBOARD_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+          permission: { any: ['LIONTV_DASHBOARD_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] }
         },
         {
           id: 'liontv-reseller-wallet',
@@ -57,7 +57,16 @@ const liontv = {
           url: '/liontv/reseller-wallet',
           resellerOnly: true,
           breadcrumbs: true,
-          permission: { any: ['LIONTV_RESELLER_WALLET_VIEW', 'ROLE_LIONTV_RESELLER_WALLET_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
+          permission: {
+            any: [
+              'LIONTV_RESELLER_WALLET_VIEW',
+              'ROLE_LIONTV_RESELLER_WALLET_VIEW',
+              'ROLE_ADMIN',
+              'ADMIN',
+              'ROLE_LIONTV_RESELLER_OWNER',
+              'LIONTV_RESELLER_OWNER'
+            ]
+          }
         },
         {
           id: 'liontv-reseller-support',
@@ -202,7 +211,9 @@ const liontv = {
           'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW',
           'LIONTV_MARKETING_VIEW',
           'LIONTV_VIEW',
-          'ROLE_LIONTV_VIEW'
+          'ROLE_LIONTV_VIEW',
+          'ROLE_LIONTV_RESELLER_OWNER',
+          'LIONTV_RESELLER_OWNER'
         ]
       },
       children: [
@@ -228,7 +239,16 @@ const liontv = {
           type: 'item',
           url: '/liontv/content-automation',
           breadcrumbs: true,
-          permission: { any: ['LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
+          permission: {
+            any: [
+              'LIONTV_CONTENT_AUTOMATION_VIEW',
+              'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW',
+              'ROLE_ADMIN',
+              'ADMIN',
+              'ROLE_LIONTV_RESELLER_OWNER',
+              'LIONTV_RESELLER_OWNER'
+            ]
+          }
         },
         {
           id: 'liontv-movies-series-posts',
@@ -236,7 +256,16 @@ const liontv = {
           type: 'item',
           url: '/liontv/movies-series-posts',
           breadcrumbs: true,
-          permission: { any: ['LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
+          permission: {
+            any: [
+              'LIONTV_CONTENT_AUTOMATION_VIEW',
+              'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW',
+              'ROLE_ADMIN',
+              'ADMIN',
+              'ROLE_LIONTV_RESELLER_OWNER',
+              'LIONTV_RESELLER_OWNER'
+            ]
+          }
         }
       ]
     },

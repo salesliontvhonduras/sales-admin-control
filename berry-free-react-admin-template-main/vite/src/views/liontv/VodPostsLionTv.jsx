@@ -55,7 +55,7 @@ import {
   regenerateVodPostImage,
   updateVodPostSelection
 } from 'api/vod-posts';
-import { getAdminResellerSupportProfile, searchAdminResellerSupportProfiles } from 'api/liontv-reseller-wallet';
+import { getAdminResellerSupportProfile, getResellerSupportProfile, searchAdminResellerSupportProfiles } from 'api/liontv-reseller-wallet';
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { PageEmptyState, PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
@@ -502,17 +502,42 @@ export default function VodPostsLionTv() {
   const { user, accessToken } = useAuth();
 
   const canGenerate = hasPermissionExact(user, {
-    any: ['LIONTV_CONTENT_AUTOMATION_GENERATE', 'ROLE_LIONTV_CONTENT_AUTOMATION_GENERATE', 'ROLE_ADMIN', 'ADMIN']
+    any: [
+      'LIONTV_CONTENT_AUTOMATION_GENERATE',
+      'ROLE_LIONTV_CONTENT_AUTOMATION_GENERATE',
+      'ROLE_ADMIN',
+      'ADMIN',
+      'ROLE_LIONTV_RESELLER_OWNER',
+      'LIONTV_RESELLER_OWNER'
+    ]
   });
   const canApprove = hasPermissionExact(user, {
-    any: ['LIONTV_CONTENT_AUTOMATION_APPROVE', 'ROLE_LIONTV_CONTENT_AUTOMATION_APPROVE', 'ROLE_ADMIN', 'ADMIN']
+    any: [
+      'LIONTV_CONTENT_AUTOMATION_APPROVE',
+      'ROLE_LIONTV_CONTENT_AUTOMATION_APPROVE',
+      'ROLE_ADMIN',
+      'ADMIN',
+      'ROLE_LIONTV_RESELLER_OWNER',
+      'LIONTV_RESELLER_OWNER'
+    ]
   });
   const canPublish = hasPermissionExact(user, {
-    any: ['LIONTV_CONTENT_AUTOMATION_PUBLISH', 'ROLE_LIONTV_CONTENT_AUTOMATION_PUBLISH', 'ROLE_ADMIN', 'ADMIN']
+    any: [
+      'LIONTV_CONTENT_AUTOMATION_PUBLISH',
+      'ROLE_LIONTV_CONTENT_AUTOMATION_PUBLISH',
+      'ROLE_ADMIN',
+      'ADMIN',
+      'ROLE_LIONTV_RESELLER_OWNER',
+      'LIONTV_RESELLER_OWNER'
+    ]
   });
   const isAdminUser = hasPermissionExact(user, {
     any: ['ROLE_ADMIN', 'ADMIN']
   });
+  const isResellerOwner = hasPermissionExact(user, {
+    any: ['ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER']
+  });
+  const canManageBranding = isAdminUser || isResellerOwner;
 
   const [contentType, setContentType] = useState('MOVIE');
   const [layoutMode, setLayoutMode] = useState('GRID');
@@ -545,7 +570,7 @@ export default function VodPostsLionTv() {
   const [safePreviewDialog, setSafePreviewDialog] = useState({ open: false, post: null, data: null, loading: false, error: '' });
   const [deleteDialog, setDeleteDialog] = useState({ open: false, post: null });
 
-  const resellerBrandingEnabled = isAdminUser && brandingMode === BRANDING_MODE_RESELLER;
+  const resellerBrandingEnabled = canManageBranding && brandingMode === BRANDING_MODE_RESELLER;
   const selectedResellerReady = Boolean(selectedReseller?.username && selectedReseller?.ready);
 
   useEffect(() => {
@@ -667,6 +692,40 @@ export default function VodPostsLionTv() {
       window.clearTimeout(timer);
     };
   }, [accessToken, isAdminUser, resellerBrandingEnabled, resellerSearchInput, t]);
+
+  useEffect(() => {
+    if (!accessToken || !isResellerOwner || isAdminUser || !resellerBrandingEnabled) {
+      return undefined;
+    }
+
+    let active = true;
+
+    async function loadOwnSupportProfile() {
+      setResellerLookupLoading(true);
+      try {
+        const payload = await getResellerSupportProfile({ skipAuthRedirect: true });
+        if (!active) return;
+        const normalized = normalizeSupportProfile(payload);
+        setSelectedReseller(normalized);
+        setResellerOptions(normalized ? [normalized] : []);
+      } catch (apiError) {
+        if (!active) return;
+        setSelectedReseller(null);
+        setResellerOptions([]);
+        setResellerSelectionError(
+          apiError?.response?.data?.message || t('vodPosts.branding.errors.lookup', 'Could not load reseller support profiles.')
+        );
+      } finally {
+        if (active) setResellerLookupLoading(false);
+      }
+    }
+
+    loadOwnSupportProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [accessToken, isAdminUser, isResellerOwner, resellerBrandingEnabled, t]);
 
   const catalogItems = useMemo(() => (Array.isArray(catalogPayload?.items) ? catalogPayload.items : []), [catalogPayload]);
 
@@ -1333,7 +1392,7 @@ export default function VodPostsLionTv() {
                 <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: '0.12em' }}>
                   {t('vodPosts.composer.branding', 'Branding')}
                 </Typography>
-                {isAdminUser ? (
+                {canManageBranding ? (
                   <ToggleButtonGroup
                     value={brandingMode}
                     exclusive
@@ -1371,33 +1430,51 @@ export default function VodPostsLionTv() {
             </Box>
 
             {resellerBrandingEnabled ? (
-              <Autocomplete
-                options={resellerOptions}
-                value={selectedReseller}
-                loading={resellerLookupLoading}
-                inputValue={resellerSearchInput}
-                onInputChange={(_, value) => setResellerSearchInput(value)}
-                onChange={(_, value) => setSelectedReseller(value)}
-                getOptionLabel={(option) => resellerOptionLabel(option)}
-                isOptionEqualToValue={(option, value) => option?.username === value?.username}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label={t('vodPosts.branding.resellerLabel', 'Reseller')}
-                    placeholder={t('vodPosts.branding.resellerPlaceholder', 'Search by username')}
-                    error={Boolean(resellerSelectionError)}
-                    helperText={
-                      resellerSelectionError ||
-                      (selectedReseller?.ready
-                        ? t('vodPosts.branding.resellerConfigured', {
-                            defaultValue: 'Support phone ready: {{phone}}',
-                            phone: selectedReseller.supportPhone
-                          })
-                        : t('vodPosts.branding.resellerMissing', 'Support phone pending configuration'))
-                    }
-                  />
-                )}
-              />
+              isAdminUser ? (
+                <Autocomplete
+                  options={resellerOptions}
+                  value={selectedReseller}
+                  loading={resellerLookupLoading}
+                  inputValue={resellerSearchInput}
+                  onInputChange={(_, value) => setResellerSearchInput(value)}
+                  onChange={(_, value) => setSelectedReseller(value)}
+                  getOptionLabel={(option) => resellerOptionLabel(option)}
+                  isOptionEqualToValue={(option, value) => option?.username === value?.username}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={t('vodPosts.branding.resellerLabel', 'Reseller')}
+                      placeholder={t('vodPosts.branding.resellerPlaceholder', 'Search by username')}
+                      error={Boolean(resellerSelectionError)}
+                      helperText={
+                        resellerSelectionError ||
+                        (selectedReseller?.ready
+                          ? t('vodPosts.branding.resellerConfigured', {
+                              defaultValue: 'Support phone ready: {{phone}}',
+                              phone: selectedReseller.supportPhone
+                            })
+                          : t('vodPosts.branding.resellerMissing', 'Support phone pending configuration'))
+                      }
+                    />
+                  )}
+                />
+              ) : (
+                <TextField
+                  label={t('vodPosts.branding.resellerLabel', 'Reseller')}
+                  value={selectedReseller?.username || '-'}
+                  InputProps={{ readOnly: true }}
+                  error={Boolean(resellerSelectionError) || (resellerBrandingEnabled && !selectedResellerReady)}
+                  helperText={
+                    resellerSelectionError ||
+                    (selectedResellerReady
+                      ? t('vodPosts.branding.selfConfigured', {
+                          defaultValue: 'Your Support Center phone {{phone}} will be used in the poster.',
+                          phone: selectedReseller?.supportPhone
+                        })
+                      : t('vodPosts.branding.selfMissing', 'Configure your Support Center phone before using reseller branding.'))
+                  }
+                />
+              )
             ) : null}
 
             {missingSelectedCount > 0 ? (

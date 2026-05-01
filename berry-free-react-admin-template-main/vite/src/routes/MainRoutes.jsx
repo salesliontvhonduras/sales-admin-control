@@ -78,7 +78,10 @@ const MainRoutes = {
         },
         {
           path: '/liontv/dashboard',
-          element: protectPage({ any: ['LIONTV_DASHBOARD_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <LionTvDashboard />)
+          element: protectPage(
+            { any: ['LIONTV_DASHBOARD_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            <LionTvDashboard />
+          )
         },
         {
           path: '/liontv/demos',
@@ -207,14 +210,32 @@ const MainRoutes = {
         {
           path: '/liontv/content-automation',
           element: protectPage(
-            { any: ['LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_ADMIN', 'ADMIN'] },
+            {
+              any: [
+                'LIONTV_CONTENT_AUTOMATION_VIEW',
+                'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW',
+                'ROLE_ADMIN',
+                'ADMIN',
+                'ROLE_LIONTV_RESELLER_OWNER',
+                'LIONTV_RESELLER_OWNER'
+              ]
+            },
             <ContentAutomationLionTv />
           )
         },
         {
           path: '/liontv/movies-series-posts',
           element: protectPage(
-            { any: ['LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW', 'ROLE_ADMIN', 'ADMIN'] },
+            {
+              any: [
+                'LIONTV_CONTENT_AUTOMATION_VIEW',
+                'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW',
+                'ROLE_ADMIN',
+                'ADMIN',
+                'ROLE_LIONTV_RESELLER_OWNER',
+                'LIONTV_RESELLER_OWNER'
+              ]
+            },
             <VodPostsLionTv />
           )
         },
@@ -259,7 +280,16 @@ const MainRoutes = {
         {
           path: '/liontv/reseller-wallet',
           element: protectPage(
-            { any: ['LIONTV_RESELLER_WALLET_VIEW', 'ROLE_LIONTV_RESELLER_WALLET_VIEW', 'ROLE_ADMIN', 'ADMIN'] },
+            {
+              any: [
+                'LIONTV_RESELLER_WALLET_VIEW',
+                'ROLE_LIONTV_RESELLER_WALLET_VIEW',
+                'ROLE_ADMIN',
+                'ADMIN',
+                'ROLE_LIONTV_RESELLER_OWNER',
+                'LIONTV_RESELLER_OWNER'
+              ]
+            },
             <ResellerWalletLionTv />
           )
         },

@@ -53,7 +53,7 @@ import {
   regenerateContentAutomationImage,
   updateContentAutomationPostSelectedEvents
 } from 'api/content-automation';
-import { getAdminResellerSupportProfile, searchAdminResellerSupportProfiles } from 'api/liontv-reseller-wallet';
+import { getAdminResellerSupportProfile, getResellerSupportProfile, searchAdminResellerSupportProfiles } from 'api/liontv-reseller-wallet';
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import { PageEmptyState, PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
@@ -582,17 +582,42 @@ export default function ContentAutomationLionTv() {
   const [confirmDialog, setConfirmDialog] = useState({ open: false, type: '', post: null });
 
   const canGenerate = hasPermissionExact(user, {
-    any: ['LIONTV_CONTENT_AUTOMATION_GENERATE', 'ROLE_LIONTV_CONTENT_AUTOMATION_GENERATE', 'ROLE_ADMIN', 'ADMIN']
+    any: [
+      'LIONTV_CONTENT_AUTOMATION_GENERATE',
+      'ROLE_LIONTV_CONTENT_AUTOMATION_GENERATE',
+      'ROLE_ADMIN',
+      'ADMIN',
+      'ROLE_LIONTV_RESELLER_OWNER',
+      'LIONTV_RESELLER_OWNER'
+    ]
   });
   const canApprove = hasPermissionExact(user, {
-    any: ['LIONTV_CONTENT_AUTOMATION_APPROVE', 'ROLE_LIONTV_CONTENT_AUTOMATION_APPROVE', 'ROLE_ADMIN', 'ADMIN']
+    any: [
+      'LIONTV_CONTENT_AUTOMATION_APPROVE',
+      'ROLE_LIONTV_CONTENT_AUTOMATION_APPROVE',
+      'ROLE_ADMIN',
+      'ADMIN',
+      'ROLE_LIONTV_RESELLER_OWNER',
+      'LIONTV_RESELLER_OWNER'
+    ]
   });
   const canPublish = hasPermissionExact(user, {
-    any: ['LIONTV_CONTENT_AUTOMATION_PUBLISH', 'ROLE_LIONTV_CONTENT_AUTOMATION_PUBLISH', 'ROLE_ADMIN', 'ADMIN']
+    any: [
+      'LIONTV_CONTENT_AUTOMATION_PUBLISH',
+      'ROLE_LIONTV_CONTENT_AUTOMATION_PUBLISH',
+      'ROLE_ADMIN',
+      'ADMIN',
+      'ROLE_LIONTV_RESELLER_OWNER',
+      'LIONTV_RESELLER_OWNER'
+    ]
   });
   const isAdminUser = hasPermissionExact(user, {
     any: ['ROLE_ADMIN', 'ADMIN']
   });
+  const isResellerOwner = hasPermissionExact(user, {
+    any: ['ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER']
+  });
+  const canManageBranding = isAdminUser || isResellerOwner;
 
   const isTomorrowSelected = selectedDate === tomorrowIso;
   const hasPosts = Array.isArray(postsPayload?.posts) && postsPayload.posts.length > 0;
@@ -602,7 +627,7 @@ export default function ContentAutomationLionTv() {
   const [resellerLookupLoading, setResellerLookupLoading] = useState(false);
   const [selectedReseller, setSelectedReseller] = useState(null);
   const [resellerSelectionError, setResellerSelectionError] = useState('');
-  const resellerBrandingEnabled = isAdminUser && brandingMode === BRANDING_MODE_RESELLER;
+  const resellerBrandingEnabled = canManageBranding && brandingMode === BRANDING_MODE_RESELLER;
   const selectedResellerReady = Boolean(selectedReseller?.username && selectedReseller?.configured && selectedReseller?.supportPhone);
 
   useEffect(() => {
@@ -665,6 +690,43 @@ export default function ContentAutomationLionTv() {
       window.clearTimeout(timer);
     };
   }, [accessToken, isAdminUser, resellerBrandingEnabled, resellerSearchInput, t]);
+
+  useEffect(() => {
+    if (!accessToken || !isResellerOwner || isAdminUser || !resellerBrandingEnabled) {
+      return undefined;
+    }
+
+    let active = true;
+
+    async function loadOwnSupportProfile() {
+      setResellerLookupLoading(true);
+      try {
+        const payload = await getResellerSupportProfile({ skipAuthRedirect: true });
+        if (!active) return;
+        const normalized = normalizeSupportProfile(payload);
+        setSelectedReseller(normalized);
+        setResellerOptions(normalized ? [normalized] : []);
+      } catch (apiError) {
+        if (!active) return;
+        setSelectedReseller(null);
+        setResellerOptions([]);
+        setResellerSelectionError(
+          apiError?.response?.data?.message ||
+            t('contentAutomation.branding.errors.lookup', 'Could not load reseller support profiles.')
+        );
+      } finally {
+        if (active) {
+          setResellerLookupLoading(false);
+        }
+      }
+    }
+
+    loadOwnSupportProfile();
+
+    return () => {
+      active = false;
+    };
+  }, [accessToken, isAdminUser, isResellerOwner, resellerBrandingEnabled, t]);
 
   const loadPosts = useCallback(
     async ({ silent = false } = {}) => {
@@ -1158,7 +1220,7 @@ export default function ContentAutomationLionTv() {
             onChange={(event) => setSelectedDate(event.target.value)}
             InputLabelProps={{ shrink: true }}
           />
-          {isAdminUser ? (
+          {canManageBranding ? (
             <ToggleButtonGroup
               exclusive
               size="small"
@@ -1230,6 +1292,27 @@ export default function ContentAutomationLionTv() {
               sx={{ minWidth: { xs: '100%', md: 320 } }}
             />
           ) : null}
+          {!isAdminUser && isResellerOwner && resellerBrandingEnabled ? (
+            <TextField
+              label={t('contentAutomation.branding.resellerLabel', 'Reseller')}
+              value={selectedReseller?.username || '-'}
+              InputProps={{ readOnly: true }}
+              helperText={
+                resellerSelectionError ||
+                (selectedResellerReady
+                  ? t('contentAutomation.branding.selfConfigured', {
+                      phone: selectedReseller?.supportPhone,
+                      defaultValue: 'Your Support Center phone {{phone}} will be used in the poster.'
+                    })
+                  : t(
+                      'contentAutomation.branding.selfMissing',
+                      'Configure your Support Center phone before using reseller branding.'
+                    ))
+              }
+              error={Boolean(resellerSelectionError) || (resellerBrandingEnabled && !selectedResellerReady)}
+              sx={{ minWidth: { xs: '100%', md: 320 } }}
+            />
+          ) : null}
           <Alert severity="info" variant="outlined" sx={{ flex: 1 }}>
             {isTomorrowSelected
               ? t(
@@ -1243,21 +1326,31 @@ export default function ContentAutomationLionTv() {
           </Alert>
         </ResponsiveFilters>
 
-        {isAdminUser ? (
+        {canManageBranding ? (
           <Stack spacing={1.25} sx={{ mb: 2 }}>
             <Alert severity={resellerBrandingEnabled ? (selectedResellerReady ? 'success' : 'warning') : 'info'} variant="outlined">
               {resellerBrandingEnabled
                 ? selectedResellerReady
-                  ? t('contentAutomation.branding.previewReady', {
-                      username: selectedReseller?.username,
-                      phone: selectedReseller?.supportPhone,
-                      defaultValue: 'The poster watermark will use {{phone}} for reseller {{username}}.'
-                    })
+                  ? isAdminUser
+                    ? t('contentAutomation.branding.previewReady', {
+                        username: selectedReseller?.username,
+                        phone: selectedReseller?.supportPhone,
+                        defaultValue: 'The poster watermark will use {{phone}} for reseller {{username}}.'
+                      })
+                    : t('contentAutomation.branding.selfReady', {
+                        phone: selectedReseller?.supportPhone,
+                        defaultValue: 'The poster watermark will use your Support Center phone {{phone}}.'
+                      })
                   : resellerSelectionError ||
-                    t(
-                      'contentAutomation.branding.previewMissing',
-                      'Choose a reseller with a configured support phone to generate branded content.'
-                    )
+                    (isAdminUser
+                      ? t(
+                          'contentAutomation.branding.previewMissing',
+                          'Choose a reseller with a configured support phone to generate branded content.'
+                        )
+                      : t(
+                          'contentAutomation.branding.selfPending',
+                          'Your Support Center phone must be configured before using reseller branding.'
+                        ))
                 : t(
                     'contentAutomation.branding.previewGeneric',
                     'The poster watermark will stay on the generic Lion TV brand for this generation batch.'
