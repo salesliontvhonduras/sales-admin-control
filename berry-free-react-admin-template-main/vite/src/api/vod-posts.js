@@ -83,3 +83,8 @@ export async function publishVodPost(postId, config = {}) {
   const response = await contentAutomationApi.post(`/api/vod-posts/${postId}/publish`, null, config);
   return unwrap(response);
 }
+
+export async function deleteVodPost(postId, config = {}) {
+  const response = await contentAutomationApi.delete(`/api/vod-posts/${postId}`, config);
+  return unwrap(response);
+}

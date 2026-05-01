@@ -586,6 +586,8 @@ export const lionTvProfessionalTranslations = {
         updateSelection: 'Update selection',
         saving: 'Saving...',
         cancelEdit: 'Cancel edit',
+        deleteDraft: 'Delete draft',
+        deleting: 'Deleting...',
         previewImage: 'Preview image',
         safePreview: 'Safe preview',
         editSelection: 'Edit selection',
@@ -600,6 +602,7 @@ export const lionTvProfessionalTranslations = {
       },
       messages: {
         created: 'The VOD draft was created successfully.',
+        deleted: 'The VOD draft was deleted successfully.',
         selectionUpdated: 'The VOD draft was updated with your selected titles.',
         imageRegenerated: 'The preview image was regenerated successfully.',
         captionsRegenerated: 'The captions were regenerated successfully.',
@@ -614,6 +617,7 @@ export const lionTvProfessionalTranslations = {
         loadCatalog: 'Could not load the active catalog feed.',
         loadPosts: 'Could not load existing VOD drafts.',
         create: 'Could not create the VOD draft.',
+        delete: 'Could not delete this VOD draft.',
         updateSelection: 'Could not update the selected titles for this draft.',
         previewImage: 'Preview image is not available yet.',
         safePreview: 'Could not load the SAFE preview.',
@@ -622,6 +626,11 @@ export const lionTvProfessionalTranslations = {
         approve: 'Could not approve this VOD draft.',
         publish: 'Could not publish this VOD draft.',
         selectionLimit: 'This layout supports up to {{count}} titles.'
+      },
+      delete: {
+        title: 'Delete VOD draft',
+        body: 'Delete "{{title}}"? This action removes the draft and its generated preview image.',
+        publishedBlocked: 'Published posts cannot be deleted from this module.'
       },
       empty: {
         search: 'No titles match the current search.',
@@ -1851,6 +1860,8 @@ export const lionTvProfessionalTranslations = {
         updateSelection: 'Actualizar selección',
         saving: 'Guardando...',
         cancelEdit: 'Cancelar edición',
+        deleteDraft: 'Eliminar borrador',
+        deleting: 'Eliminando...',
         previewImage: 'Preview image',
         safePreview: 'Safe preview',
         editSelection: 'Editar selección',
@@ -1865,6 +1876,7 @@ export const lionTvProfessionalTranslations = {
       },
       messages: {
         created: 'El borrador VOD fue creado correctamente.',
+        deleted: 'El borrador VOD fue eliminado correctamente.',
         selectionUpdated: 'El borrador VOD fue actualizado con los títulos seleccionados.',
         imageRegenerated: 'La imagen preview fue regenerada correctamente.',
         captionsRegenerated: 'Los captions fueron regenerados correctamente.',
@@ -1879,6 +1891,7 @@ export const lionTvProfessionalTranslations = {
         loadCatalog: 'No se pudo cargar el feed activo del catálogo.',
         loadPosts: 'No se pudieron cargar los borradores VOD existentes.',
         create: 'No se pudo crear el borrador VOD.',
+        delete: 'No se pudo eliminar este borrador VOD.',
         updateSelection: 'No se pudieron actualizar los títulos seleccionados de este borrador.',
         previewImage: 'La imagen preview todavía no está disponible.',
         safePreview: 'No se pudo cargar el SAFE preview.',
@@ -1887,6 +1900,11 @@ export const lionTvProfessionalTranslations = {
         approve: 'No se pudo aprobar este borrador VOD.',
         publish: 'No se pudo publicar este borrador VOD.',
         selectionLimit: 'Este layout soporta hasta {{count}} títulos.'
+      },
+      delete: {
+        title: 'Eliminar borrador VOD',
+        body: '¿Eliminar "{{title}}"? Esta acción borra el borrador y su imagen preview generada.',
+        publishedBlocked: 'Los posts publicados no se pueden eliminar desde este módulo.'
       },
       empty: {
         search: 'No hay títulos que coincidan con la búsqueda actual.',

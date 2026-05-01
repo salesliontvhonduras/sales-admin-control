@@ -29,6 +29,7 @@ import { alpha } from '@mui/material/styles';
 
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import ImageSearchOutlinedIcon from '@mui/icons-material/ImageSearchOutlined';
 import LocalMoviesOutlinedIcon from '@mui/icons-material/LocalMoviesOutlined';
 import PublishedWithChangesOutlinedIcon from '@mui/icons-material/PublishedWithChangesOutlined';
@@ -44,6 +45,7 @@ import CropPortraitOutlinedIcon from '@mui/icons-material/CropPortraitOutlined';
 import {
   approveVodPost,
   createVodPost,
+  deleteVodPost,
   getVodPostPreviewImageBlob,
   getVodPostSafePreview,
   getVodPosts,
@@ -305,6 +307,7 @@ function VodPostCard({
   canPublish,
   busyState,
   onEditSelection,
+  onDelete,
   onPreviewImage,
   onSafePreview,
   onRegenerateImage,
@@ -436,6 +439,16 @@ function VodPostCard({
             </Button>
             <Button
               size="small"
+              color="error"
+              variant="outlined"
+              startIcon={<DeleteOutlineOutlinedIcon />}
+              onClick={onDelete}
+              disabled={!canGenerate || post?.status === 'PUBLISHED' || busyState?.delete}
+            >
+              {busyState?.delete ? t('vodPosts.actions.deleting', 'Deleting...') : t('vodPosts.actions.deleteDraft', 'Delete draft')}
+            </Button>
+            <Button
+              size="small"
               variant="outlined"
               startIcon={<RefreshOutlinedIcon />}
               onClick={onRegenerateImage}
@@ -530,6 +543,7 @@ export default function VodPostsLionTv() {
 
   const [previewDialog, setPreviewDialog] = useState({ open: false, post: null, url: '', loading: false, error: '' });
   const [safePreviewDialog, setSafePreviewDialog] = useState({ open: false, post: null, data: null, loading: false, error: '' });
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, post: null });
 
   const resellerBrandingEnabled = isAdminUser && brandingMode === BRANDING_MODE_RESELLER;
   const selectedResellerReady = Boolean(selectedReseller?.username && selectedReseller?.ready);
@@ -830,6 +844,14 @@ export default function VodPostsLionTv() {
     [hydrateResellerSelection]
   );
 
+  const handleOpenDeleteDialog = useCallback((post) => {
+    setDeleteDialog({ open: true, post });
+  }, []);
+
+  const handleCloseDeleteDialog = useCallback(() => {
+    setDeleteDialog({ open: false, post: null });
+  }, []);
+
   const handleToggleItem = useCallback(
     (itemId) => {
       setSelectedItemIds((prev) => {
@@ -865,6 +887,17 @@ export default function VodPostsLionTv() {
       }
       const next = [...existing];
       next[index] = updatedPost;
+      return {
+        total: next.length,
+        posts: next
+      };
+    });
+  }, []);
+
+  const removePostFromList = useCallback((postId) => {
+    setPostsPayload((prev) => {
+      const existing = Array.isArray(prev?.posts) ? prev.posts : [];
+      const next = existing.filter((item) => item.id !== postId);
       return {
         total: next.length,
         posts: next
@@ -1098,6 +1131,46 @@ export default function VodPostsLionTv() {
     },
     [enqueueSnackbar, runPostAction, t]
   );
+
+  const handleDeletePost = useCallback(async () => {
+    const post = deleteDialog.post;
+    if (!post?.id) return;
+    setBusyForPost(post.id, 'delete', true);
+    try {
+      await deleteVodPost(post.id, { skipAuthRedirect: true });
+      removePostFromList(post.id);
+      if (editingPost?.id === post.id) {
+        clearComposer();
+      }
+      if (previewDialog.post?.id === post.id) {
+        closePreviewDialog();
+      }
+      if (safePreviewDialog.post?.id === post.id) {
+        closeSafePreviewDialog();
+      }
+      handleCloseDeleteDialog();
+      enqueueSnackbar(t('vodPosts.messages.deleted', 'The VOD draft was deleted successfully.'), { variant: 'success' });
+    } catch (apiError) {
+      enqueueSnackbar(apiError?.response?.data?.message || t('vodPosts.errors.delete', 'Could not delete this VOD draft.'), {
+        variant: 'error'
+      });
+    } finally {
+      setBusyForPost(post.id, 'delete', false);
+    }
+  }, [
+    clearComposer,
+    closePreviewDialog,
+    closeSafePreviewDialog,
+    deleteDialog.post,
+    editingPost?.id,
+    enqueueSnackbar,
+    handleCloseDeleteDialog,
+    previewDialog.post?.id,
+    removePostFromList,
+    safePreviewDialog.post?.id,
+    setBusyForPost,
+    t
+  ]);
 
   const catalogHeadline = useMemo(() => {
     if (!catalogPayload?.sourceFeedId) return null;
@@ -1545,6 +1618,7 @@ export default function VodPostsLionTv() {
                   canPublish={canPublish}
                   busyState={busyActions[post.id] || {}}
                   onEditSelection={() => handleEditSelection(post)}
+                  onDelete={() => handleOpenDeleteDialog(post)}
                   onPreviewImage={() => handlePreviewImage(post)}
                   onSafePreview={() => handleSafePreview(post)}
                   onRegenerateImage={() => handleRegenerateImage(post)}
@@ -1660,6 +1734,41 @@ export default function VodPostsLionTv() {
         </DialogContent>
         <DialogActions>
           <Button onClick={closeSafePreviewDialog}>{t('common.close', 'Close')}</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deleteDialog.open} onClose={handleCloseDeleteDialog} fullWidth maxWidth="sm">
+        <DialogTitleWithClose onClose={handleCloseDeleteDialog}>
+          {t('vodPosts.delete.title', 'Delete VOD draft')}
+        </DialogTitleWithClose>
+        <DialogContent dividers>
+          <Stack spacing={2}>
+            <Typography variant="body1">
+              {t('vodPosts.delete.body', {
+                defaultValue: 'Delete "{{title}}"? This action removes the draft and its generated preview image.',
+                title: deleteDialog.post?.title || t('vodPosts.posts.untitled', 'VOD draft')
+              })}
+            </Typography>
+            {deleteDialog.post?.status === 'PUBLISHED' ? (
+              <Alert severity="warning" variant="outlined">
+                {t('vodPosts.delete.publishedBlocked', 'Published posts cannot be deleted from this module.')}
+              </Alert>
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog}>{t('common.close', 'Close')}</Button>
+          <Button
+            color="error"
+            variant="contained"
+            startIcon={<DeleteOutlineOutlinedIcon />}
+            onClick={handleDeletePost}
+            disabled={!deleteDialog.post?.id || deleteDialog.post?.status === 'PUBLISHED' || busyActions[deleteDialog.post?.id]?.delete}
+          >
+            {busyActions[deleteDialog.post?.id]?.delete
+              ? t('vodPosts.actions.deleting', 'Deleting...')
+              : t('vodPosts.actions.deleteDraft', 'Delete draft')}
+          </Button>
         </DialogActions>
       </Dialog>
     </>
