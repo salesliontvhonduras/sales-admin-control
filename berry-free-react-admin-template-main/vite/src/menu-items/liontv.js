@@ -75,7 +75,16 @@ const liontv = {
           url: '/liontv/support',
           resellerOnly: true,
           breadcrumbs: true,
-          permission: { any: ['LIONTV_RESELLER_SUPPORT_VIEW', 'ROLE_LIONTV_RESELLER_SUPPORT_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
+          permission: {
+            any: [
+              'LIONTV_RESELLER_SUPPORT_VIEW',
+              'ROLE_LIONTV_RESELLER_SUPPORT_VIEW',
+              'ROLE_ADMIN',
+              'ADMIN',
+              'ROLE_LIONTV_RESELLER_OWNER',
+              'LIONTV_RESELLER_OWNER'
+            ]
+          }
         }
       ]
     },
@@ -275,7 +284,7 @@ const liontv = {
       caption: 'menu.liontvOperationsCaption',
       type: 'collapse',
       icon: icons.IconRouter,
-      permission: { any: ['LIONTV_TECH_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+      permission: { any: ['LIONTV_TECH_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
       children: [
         {
           id: 'liontv-lines',
@@ -315,9 +324,8 @@ const liontv = {
           title: 'menu.managedAccounts',
           type: 'item',
           url: '/liontv/managed-accounts',
-          resellerVisible: false,
           breadcrumbs: true,
-          permission: { any: ['LIONTV_MANAGED_ACCOUNTS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+          permission: { any: ['LIONTV_MANAGED_ACCOUNTS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] }
         },
         {
           id: 'liontv-subscription-expiration',

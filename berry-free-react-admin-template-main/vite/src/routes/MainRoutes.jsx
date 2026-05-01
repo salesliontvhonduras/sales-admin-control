@@ -176,10 +176,8 @@ const MainRoutes = {
         {
           path: '/liontv/managed-accounts',
           element: protectPage(
-            { any: ['LIONTV_MANAGED_ACCOUNTS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
-            <ManagedAccountsLionTv />,
-            '/liontv/dashboard',
-            true
+            { any: ['LIONTV_MANAGED_ACCOUNTS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            <ManagedAccountsLionTv />
           )
         },
         {
@@ -296,7 +294,16 @@ const MainRoutes = {
         {
           path: '/liontv/support',
           element: protectPage(
-            { any: ['LIONTV_RESELLER_SUPPORT_VIEW', 'ROLE_LIONTV_RESELLER_SUPPORT_VIEW', 'ROLE_ADMIN', 'ADMIN'] },
+            {
+              any: [
+                'LIONTV_RESELLER_SUPPORT_VIEW',
+                'ROLE_LIONTV_RESELLER_SUPPORT_VIEW',
+                'ROLE_ADMIN',
+                'ADMIN',
+                'ROLE_LIONTV_RESELLER_OWNER',
+                'LIONTV_RESELLER_OWNER'
+              ]
+            },
             <ResellerSupportLionTv />
           )
         },

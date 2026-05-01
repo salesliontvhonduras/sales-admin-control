@@ -53,6 +53,7 @@ import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
+import { hasPermissionExact, isResellerConsoleUser } from 'utils/rbac';
 
 const providerStatusOptions = ['ACTIVE', 'INACTIVE'];
 const accountStatusOptions = ['ACTIVE', 'SUSPENDED', 'EXPIRED', 'PENDING', 'CANCELLED'];
@@ -349,13 +350,16 @@ function MetricCard({ title, value, helper, color = 'primary', icon }) {
 export default function ManagedAccountsLionTv() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { accessToken } = useAuth();
+  const { accessToken, user, lionTvViewMode } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const { t, i18n } = useTranslation();
   const dateLocale = useMemo(
     () => (String(i18n.resolvedLanguage || i18n.language || '').toLowerCase().startsWith('es') ? 'es-HN' : 'en-US'),
     [i18n.language, i18n.resolvedLanguage]
   );
+  const isResellerOwner = hasPermissionExact(user, { any: ['ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] });
+  const isResellerScopedView = isResellerOwner && isResellerConsoleUser(user, lionTvViewMode);
+  const canManageAccounts = !isResellerScopedView;
 
   const [tab, setTab] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -457,6 +461,10 @@ export default function ManagedAccountsLionTv() {
 
     setLoading(true);
     try {
+      if (isResellerScopedView) {
+        await loadAccounts();
+        return;
+      }
       if (tab === 0) {
         await Promise.all([loadProviders(), loadAccounts(), loadCustomers(), loadEvents()]);
       }
@@ -477,11 +485,17 @@ export default function ManagedAccountsLionTv() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, tab, loadProviders, loadAccounts, loadCustomers, loadEvents, loadReports, onError, t]);
+  }, [accessToken, isResellerScopedView, tab, loadProviders, loadAccounts, loadCustomers, loadEvents, loadReports, onError, t]);
 
   useEffect(() => {
     reload();
   }, [reload]);
+
+  useEffect(() => {
+    if (isResellerScopedView && tab > 1) {
+      setTab(0);
+    }
+  }, [isResellerScopedView, tab]);
 
   useEffect(() => {
     setAccountPage(0);
@@ -641,6 +655,23 @@ export default function ManagedAccountsLionTv() {
     providers.forEach((provider) => map.set(provider.id, provider));
     return map;
   }, [providers]);
+
+  const accountProviderOptions = useMemo(() => {
+    if (!isResellerScopedView) return providers;
+
+    return Array.from(
+      accounts.reduce((map, row) => {
+        const id = row.providerId;
+        if (!id || map.has(id)) return map;
+        map.set(id, {
+          id,
+          code: row.providerCode || String(id),
+          name: row.providerName || ''
+        });
+        return map;
+      }, new Map())
+    ).map(([, value]) => value);
+  }, [accounts, isResellerScopedView, providers]);
 
   const filteredProviders = useMemo(() => {
     const needle = providerSearch.trim().toLowerCase();
@@ -826,13 +857,23 @@ export default function ManagedAccountsLionTv() {
                     count: accountMetrics.distributionOn
                   })}
                 />
-                <Chip
-                  variant="outlined"
-                  color="info"
-                  icon={<EmailOutlinedIcon />}
-                  label={t('managedAccounts.hero.chips.inbound', { defaultValue: 'Inbound events: {{count}}', count: eventMetrics.total })}
-                />
+                {!isResellerScopedView ? (
+                  <Chip
+                    variant="outlined"
+                    color="info"
+                    icon={<EmailOutlinedIcon />}
+                    label={t('managedAccounts.hero.chips.inbound', { defaultValue: 'Inbound events: {{count}}', count: eventMetrics.total })}
+                  />
+                ) : null}
               </Stack>
+              {isResellerScopedView ? (
+                <Alert severity="info" variant="outlined">
+                  {t(
+                    'managedAccounts.resellerScopeInfo',
+                    'This view is scoped to the managed accounts linked to your authenticated reseller user.'
+                  )}
+                </Alert>
+              ) : null}
             </Stack>
           </CardContent>
         </Card>
@@ -840,9 +881,9 @@ export default function ManagedAccountsLionTv() {
         <Tabs value={tab} onChange={(_, next) => setTab(next)} variant="scrollable" scrollButtons="auto" sx={tabsSx}>
           <Tab label={t('managedAccounts.tabs.overview', 'Overview')} />
           <Tab label={t('managedAccounts.tabs.accounts', 'Managed Accounts')} />
-          <Tab label={t('managedAccounts.tabs.providers', 'Providers')} />
-          <Tab label={t('managedAccounts.tabs.inbound', 'Inbound')} />
-          <Tab label={t('managedAccounts.tabs.reports', 'Reports')} />
+          {!isResellerScopedView ? <Tab label={t('managedAccounts.tabs.providers', 'Providers')} /> : null}
+          {!isResellerScopedView ? <Tab label={t('managedAccounts.tabs.inbound', 'Inbound')} /> : null}
+          {!isResellerScopedView ? <Tab label={t('managedAccounts.tabs.reports', 'Reports')} /> : null}
         </Tabs>
 
         {loading ? <LinearProgress /> : null}
@@ -955,20 +996,41 @@ export default function ManagedAccountsLionTv() {
 
             <Grid item xs={12} md={4}>
               <Stack spacing={2}>
-                <MetricCard
-                  title={t('managedAccounts.metrics.inboundDistributed', 'Inbound Distributed')}
-                  value={eventMetrics.distributed}
-                  helper={t('managedAccounts.metrics.failedCount', { defaultValue: 'Failed: {{count}}', count: eventMetrics.failed })}
-                  icon={<MarkEmailReadOutlinedIcon />}
-                  color="success"
-                />
-                <MetricCard
-                  title={t('managedAccounts.metrics.inboundUnresolved', 'Inbound Unresolved')}
-                  value={eventMetrics.unresolved}
-                  helper={t('managedAccounts.metrics.inboundUnresolvedHelper', 'Without resolved alias')}
-                  icon={<ReportProblemOutlinedIcon />}
-                  color="warning"
-                />
+                {isResellerScopedView ? (
+                  <>
+                    <MetricCard
+                      title={t('managedAccounts.metrics.distributionOn', 'Distribution ON')}
+                      value={accountMetrics.distributionOn}
+                      helper={t('managedAccounts.metrics.distributionOnHelper', 'Accounts currently enabled for distribution')}
+                      icon={<MarkEmailReadOutlinedIcon />}
+                      color="success"
+                    />
+                    <MetricCard
+                      title={t('managedAccounts.metrics.dueIn7', 'Due in 7 Days')}
+                      value={accountMetrics.dueIn7}
+                      helper={t('managedAccounts.metrics.dueIn7Helper', 'Accounts that need follow-up soon')}
+                      icon={<ReportProblemOutlinedIcon />}
+                      color="warning"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <MetricCard
+                      title={t('managedAccounts.metrics.inboundDistributed', 'Inbound Distributed')}
+                      value={eventMetrics.distributed}
+                      helper={t('managedAccounts.metrics.failedCount', { defaultValue: 'Failed: {{count}}', count: eventMetrics.failed })}
+                      icon={<MarkEmailReadOutlinedIcon />}
+                      color="success"
+                    />
+                    <MetricCard
+                      title={t('managedAccounts.metrics.inboundUnresolved', 'Inbound Unresolved')}
+                      value={eventMetrics.unresolved}
+                      helper={t('managedAccounts.metrics.inboundUnresolvedHelper', 'Without resolved alias')}
+                      icon={<ReportProblemOutlinedIcon />}
+                      color="warning"
+                    />
+                  </>
+                )}
                 <MetricCard
                   title={t('managedAccounts.metrics.dueIn30', 'Due in 30 Days')}
                   value={accountMetrics.dueIn30}
@@ -1033,7 +1095,7 @@ export default function ManagedAccountsLionTv() {
                         onChange={(event) => setAccountProviderFilter(event.target.value)}
                       >
                         <MenuItem value="ALL">{t('managedAccounts.options.all', 'All')}</MenuItem>
-                        {providers.map((p) => (
+                        {accountProviderOptions.map((p) => (
                           <MenuItem key={p.id} value={String(p.id)}>
                             {p.code} - {p.name}
                           </MenuItem>
@@ -1073,24 +1135,26 @@ export default function ManagedAccountsLionTv() {
                         <MenuItem value="OFF">{t('managedAccounts.options.off', 'OFF')}</MenuItem>
                       </TextField>
                     </Grid>
-                    <Grid item xs={12} md={0.5}>
-                      <Stack direction="row" justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
-                        <Button
-                          variant="contained"
-                          startIcon={<AddCircleOutlineIcon />}
-                          onClick={() => {
-                            setAccountForm({
-                              ...defaultAccountForm,
-                              providerId: providers[0]?.id || '',
-                              customerId: customers[0]?.customerId || ''
-                            });
-                            setAccountModalOpen(true);
-                          }}
-                        >
-                          {t('managedAccounts.actions.newAccount', 'New')}
-                        </Button>
-                      </Stack>
-                    </Grid>
+                    {canManageAccounts ? (
+                      <Grid item xs={12} md={0.5}>
+                        <Stack direction="row" justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
+                          <Button
+                            variant="contained"
+                            startIcon={<AddCircleOutlineIcon />}
+                            onClick={() => {
+                              setAccountForm({
+                                ...defaultAccountForm,
+                                providerId: providers[0]?.id || '',
+                                customerId: customers[0]?.customerId || ''
+                              });
+                              setAccountModalOpen(true);
+                            }}
+                          >
+                            {t('managedAccounts.actions.newAccount', 'New')}
+                          </Button>
+                        </Stack>
+                      </Grid>
+                    ) : null}
                   </Grid>
                 </CardContent>
               </Card>
@@ -1111,7 +1175,7 @@ export default function ManagedAccountsLionTv() {
                       <TableCell>{t('managedAccounts.table.status', 'Status')}</TableCell>
                       <TableCell>{t('managedAccounts.table.distribution', 'Distribution')}</TableCell>
                       <TableCell>{t('managedAccounts.table.createdBy', 'Created by')}</TableCell>
-                      <TableCell>{t('managedAccounts.table.actions', 'Actions')}</TableCell>
+                      {canManageAccounts ? <TableCell>{t('managedAccounts.table.actions', 'Actions')}</TableCell> : null}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -1164,6 +1228,7 @@ export default function ManagedAccountsLionTv() {
                               control={
                                 <Switch
                                   checked={Boolean(row.allowDistribution)}
+                                  disabled={!canManageAccounts}
                                   onChange={(_, checked) => patchDistribution(row.id, checked)}
                                 />
                               }
@@ -1171,44 +1236,48 @@ export default function ManagedAccountsLionTv() {
                             />
                           </TableCell>
                           <TableCell>{row.createdBy || '-'}</TableCell>
-                          <TableCell>
-                            <Stack spacing={1}>
-                              <Button
-                                size="small"
-                                onClick={() => {
-                                  setAccountForm({
-                                    ...row,
-                                    providerId: row.providerId,
-                                    customerId: row.customerId || '',
-                                    expirationDate: row.expirationDate || '',
-                                    renewalDate: row.renewalDate || ''
-                                  });
-                                  setAccountModalOpen(true);
-                                }}
-                              >
-                                {t('actions.edit', 'Edit')}
-                              </Button>
-                              <TextField
-                                select
-                                size="small"
-                                value={row.accountStatus || 'ACTIVE'}
-                                onChange={(event) => patchAccountStatus(row.id, event.target.value)}
-                                sx={(theme) => ({ ...fieldSx(theme), minWidth: 140 })}
-                              >
-                                {accountStatusOptions.map((it) => (
-                                  <MenuItem key={it} value={it}>
-                                    {t(`managedAccounts.statusValues.${it}`, it)}
-                                  </MenuItem>
-                                ))}
-                              </TextField>
-                            </Stack>
-                          </TableCell>
+                          {canManageAccounts ? (
+                            <TableCell>
+                              <Stack spacing={1}>
+                                <Button
+                                  size="small"
+                                  onClick={() => {
+                                    setAccountForm({
+                                      ...row,
+                                      providerId: row.providerId,
+                                      customerId: row.customerId || '',
+                                      expirationDate: row.expirationDate || '',
+                                      renewalDate: row.renewalDate || ''
+                                    });
+                                    setAccountModalOpen(true);
+                                  }}
+                                >
+                                  {t('actions.edit', 'Edit')}
+                                </Button>
+                                <TextField
+                                  select
+                                  size="small"
+                                  value={row.accountStatus || 'ACTIVE'}
+                                  onChange={(event) => patchAccountStatus(row.id, event.target.value)}
+                                  sx={(theme) => ({ ...fieldSx(theme), minWidth: 140 })}
+                                >
+                                  {accountStatusOptions.map((it) => (
+                                    <MenuItem key={it} value={it}>
+                                      {t(`managedAccounts.statusValues.${it}`, it)}
+                                    </MenuItem>
+                                  ))}
+                                </TextField>
+                              </Stack>
+                            </TableCell>
+                          ) : null}
                         </TableRow>
                       );
                     })}
                     {!pagedAccounts.length ? (
                       <TableRow>
-                        <TableCell colSpan={11}>{t('managedAccounts.empty.noAccounts', 'No accounts for selected filters')}</TableCell>
+                        <TableCell colSpan={canManageAccounts ? 11 : 10}>
+                          {t('managedAccounts.empty.noAccounts', 'No accounts for selected filters')}
+                        </TableCell>
                       </TableRow>
                     ) : null}
                   </TableBody>
@@ -1231,7 +1300,7 @@ export default function ManagedAccountsLionTv() {
           </Grid>
         ) : null}
 
-        {tab === 2 ? (
+        {!isResellerScopedView && tab === 2 ? (
           <Grid container spacing={gridSpacing}>
             <Grid item xs={12}>
               <Card sx={(theme) => panelCardSx(theme)}>
@@ -1356,7 +1425,7 @@ export default function ManagedAccountsLionTv() {
           </Grid>
         ) : null}
 
-        {tab === 3 ? (
+        {!isResellerScopedView && tab === 3 ? (
           <Grid container spacing={gridSpacing}>
             <Grid item xs={12} md={4.5}>
               <Card sx={(theme) => panelCardSx(theme)}>
@@ -1597,7 +1666,7 @@ export default function ManagedAccountsLionTv() {
           </Grid>
         ) : null}
 
-        {tab === 4 ? (
+        {!isResellerScopedView && tab === 4 ? (
           <Grid container spacing={gridSpacing}>
             <Grid item xs={12} sm={12} md={6} lg={3}>
               <MetricCard title={t('managedAccounts.metrics.inboundTotal', 'Inbound Total')} value={inboundSummary?.total || 0} icon={<EmailOutlinedIcon />} color="info" />
