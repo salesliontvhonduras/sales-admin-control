@@ -45,6 +45,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
+import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { lionTvApi } from 'utils/api';
 import { withAlpha } from 'utils/colorUtils';
@@ -1422,16 +1423,22 @@ export default function SubscriptionSharingLionTv() {
           />
         }
       >
-        <Box
-          sx={(muiTheme) => ({
-            p: 2,
-            borderRadius: 2.5,
-            border: '1px solid',
-            borderColor: withAlpha(muiTheme.vars?.palette?.divider || muiTheme.palette.divider, 0.95),
-            backgroundColor: muiTheme.vars?.palette?.surface?.sunken || muiTheme.palette.background.default
-          })}
-        >
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.25}>
+        <Stack spacing={1.5}>
+          <ResponsiveFilters
+            paperSx={(muiTheme) => ({
+              borderRadius: 2.5,
+              borderColor: withAlpha(muiTheme.vars?.palette?.divider || muiTheme.palette.divider, 0.95),
+              backgroundColor: muiTheme.vars?.palette?.surface?.sunken || muiTheme.palette.background.default,
+              backgroundImage: 'none',
+              boxShadow: 'none'
+            })}
+            sx={{
+              flexWrap: 'wrap',
+              '& > *': {
+                minWidth: 0
+              }
+            }}
+          >
             <TextField
               fullWidth
               size="small"
@@ -1445,8 +1452,12 @@ export default function SubscriptionSharingLionTv() {
                   </InputAdornment>
                 )
               }}
+              sx={{
+                flex: { xs: '1 1 100%', md: '1 1 320px' },
+                minWidth: { xs: '100%', md: 280 }
+              }}
             />
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 200 } }}>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 200 }, flex: { md: '0 1 200px' } }}>
               <InputLabel>{t('subscriptionSharing.filters.status', 'Sharing role')}</InputLabel>
               <Select value={statusFilter} label={t('subscriptionSharing.filters.status', 'Sharing role')} onChange={(e) => setStatusFilter(e.target.value)}>
                 <MenuItem value="ALL">{t('subscriptionSharing.filters.options.all', 'All')}</MenuItem>
@@ -1455,7 +1466,7 @@ export default function SubscriptionSharingLionTv() {
                 <MenuItem value="NONE">{t('subscriptionSharing.filters.options.none', 'None')}</MenuItem>
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 200 } }}>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 200 }, flex: { md: '0 1 200px' } }}>
               <InputLabel>{t('subscriptionSharing.filters.eligible', 'Eligible')}</InputLabel>
               <Select
                 value={eligibleFilter}
@@ -1467,7 +1478,7 @@ export default function SubscriptionSharingLionTv() {
                 <MenuItem value="NO">{t('subscriptionSharing.filters.eligibleOptions.no', 'No')}</MenuItem>
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 210 } }}>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 210 }, flex: { md: '0 1 210px' } }}>
               <InputLabel>{t('subscriptionSharing.filters.riskBucket', 'Risk bucket')}</InputLabel>
               <Select
                 value={riskBucketFilter}
@@ -1483,7 +1494,7 @@ export default function SubscriptionSharingLionTv() {
                 <MenuItem value="UNKNOWN">{t('subscriptionSharing.risk.unknown', 'No renewal date')}</MenuItem>
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 190 } }}>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 190 }, flex: { md: '0 1 190px' } }}>
               <InputLabel>{t('subscriptionSharing.filters.atRiskOnly', 'At risk')}</InputLabel>
               <Select value={atRiskFilter} label={t('subscriptionSharing.filters.atRiskOnly', 'At risk')} onChange={(e) => setAtRiskFilter(e.target.value)}>
                 <MenuItem value="ALL">{t('subscriptionSharing.filters.atRiskOptions.all', 'All')}</MenuItem>
@@ -1491,7 +1502,7 @@ export default function SubscriptionSharingLionTv() {
                 <MenuItem value="NO">{t('subscriptionSharing.filters.atRiskOptions.no', 'No')}</MenuItem>
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 170 } }}>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 170 }, flex: { md: '0 1 170px' } }}>
               <InputLabel>{t('subscriptionSharing.filters.renewalDay', 'Renewal day')}</InputLabel>
               <Select
                 value={renewalDayFilter}
@@ -1506,7 +1517,7 @@ export default function SubscriptionSharingLionTv() {
                 ))}
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 170 } }}>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 170 }, flex: { md: '0 1 170px' } }}>
               <InputLabel>{t('subscriptionSharing.filters.ownRenewalDay', 'Own renewal day')}</InputLabel>
               <Select
                 value={ownRenewalDayFilter}
@@ -1521,7 +1532,7 @@ export default function SubscriptionSharingLionTv() {
                 ))}
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 180 } }}>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 180 }, flex: { md: '0 1 180px' } }}>
               <InputLabel>{t('subscriptionSharing.filters.misalignedOnly', 'Misaligned')}</InputLabel>
               <Select
                 value={misalignedFilter}
@@ -1532,7 +1543,7 @@ export default function SubscriptionSharingLionTv() {
                 <MenuItem value="YES">{t('subscriptionSharing.filters.misalignedOptions.yes', 'Misaligned only')}</MenuItem>
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 210 } }}>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 210 }, flex: { md: '0 1 210px' } }}>
               <InputLabel>{t('subscriptionSharing.filters.recommendedMoves', 'Recommended moves')}</InputLabel>
               <Select
                 value={recommendationFilter}
@@ -1543,7 +1554,7 @@ export default function SubscriptionSharingLionTv() {
                 <MenuItem value="YES">{t('subscriptionSharing.filters.recommendationOptions.yes', 'Recommended only')}</MenuItem>
               </Select>
             </FormControl>
-          </Stack>
+          </ResponsiveFilters>
 
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'stretch', md: 'center' }} sx={{ mt: 1.5 }}>
             <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
@@ -1587,7 +1598,7 @@ export default function SubscriptionSharingLionTv() {
               )}
             </Alert>
           ) : null}
-        </Box>
+        </Stack>
       </MainCard>
 
       <MainCard content={false}>

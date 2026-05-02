@@ -26,17 +26,25 @@ export default function ResponsiveFilters({ children, sx = {}, paperSx = {}, ...
         direction={{ xs: 'column', md: 'row' }}
         spacing={1.25}
         useFlexGap
-        alignItems={{ xs: 'stretch', md: 'center' }}
+        flexWrap={{ xs: 'nowrap', md: 'wrap' }}
+        alignItems={{ xs: 'stretch', md: 'flex-start' }}
         sx={{
           width: '100%',
           minWidth: 0,
-          '& .MuiFormControl-root, & .MuiTextField-root': {
+          '& > *': {
+            minWidth: 0,
+            maxWidth: '100%'
+          },
+          '& .MuiFormControl-root, & .MuiTextField-root, & .MuiAutocomplete-root': {
             width: { xs: '100%', md: 'auto' }
           },
           '& .MuiFormControl-root': {
-            minWidth: { xs: 0, md: 170 }
+            minWidth: { xs: 0, md: 170 },
+            maxWidth: '100%',
+            flexShrink: 1
           },
-          '& .MuiInputBase-root': {
+          '& .MuiInputBase-root, & .MuiAutocomplete-root .MuiInputBase-root': {
+            minWidth: 0,
             minHeight: 46
           },
           '& .MuiInputLabel-root': {
@@ -47,6 +55,7 @@ export default function ResponsiveFilters({ children, sx = {}, paperSx = {}, ...
           },
           '& .MuiButton-root': {
             width: { xs: '100%', md: 'auto' },
+            maxWidth: '100%',
             minHeight: 46,
             textTransform: 'none'
           },
