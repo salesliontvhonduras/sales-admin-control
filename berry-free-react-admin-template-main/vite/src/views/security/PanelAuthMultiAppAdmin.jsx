@@ -188,7 +188,6 @@ export default function PanelAuthMultiAppAdmin() {
     }
 
     const payload = {
-      username: isResellerScopedView ? null : form.username.trim(),
       provider: form.provider,
       usernamePanel: form.usernamePanel.trim(),
       password: form.password || null,
@@ -196,6 +195,10 @@ export default function PanelAuthMultiAppAdmin() {
       cmsBaseUrl: form.cmsBaseUrl || null,
       active: Boolean(form.active)
     };
+
+    if (!isResellerScopedView) {
+      payload.username = form.username.trim();
+    }
 
     setSaving(true);
     try {
