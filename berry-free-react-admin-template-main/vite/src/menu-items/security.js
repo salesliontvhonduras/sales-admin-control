@@ -10,8 +10,9 @@ const security = {
   id: 'security',
   title: 'menu.security',
   type: 'group',
-  resellerVisible: false,
-  permission: { any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] },
+  permission: {
+    any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER']
+  },
   children: [
     {
       id: 'security-user-access',
@@ -31,7 +32,9 @@ const security = {
       url: '/admin/panel-auths',
       icon: icons.IconKey,
       breadcrumbs: true,
-      permission: { any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
+      permission: {
+        any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER']
+      }
     },
     {
       id: 'security-catalogs',

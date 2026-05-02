@@ -356,10 +356,6 @@ const MainRoutes = {
               element: <UserAccessAdmin />
             },
             {
-              path: '/admin/panel-auths',
-              element: <PanelAuthMultiAppAdmin />
-            },
-            {
               path: '/admin/catalogs/banks',
               element: <BanksCatalogAdmin />
             },
@@ -378,6 +374,28 @@ const MainRoutes = {
             {
               path: '/admin/catalogs/packages',
               element: <PackagesCatalogAdmin />
+            }
+          ]
+        },
+        {
+          element: (
+            <RequirePermission
+              permission={{
+                any: [
+                  'USER_MANAGEMENT_VIEW',
+                  'ROLE_USER_MANAGEMENT_VIEW',
+                  'ROLE_ADMIN',
+                  'ADMIN',
+                  'ROLE_LIONTV_RESELLER_OWNER',
+                  'LIONTV_RESELLER_OWNER'
+                ]
+              }}
+            />
+          ),
+          children: [
+            {
+              path: '/admin/panel-auths',
+              element: <PanelAuthMultiAppAdmin />
             }
           ]
         }

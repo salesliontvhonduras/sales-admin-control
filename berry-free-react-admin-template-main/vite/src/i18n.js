@@ -2469,6 +2469,7 @@ const resources = {
         messages: {
           apiMissing: 'Panel integrations require the Lion TV and panel credential API routes to be configured in this environment.',
           requiredFields: 'Complete user, provider and panel user.',
+          requiredFieldsReseller: 'Complete provider and panel user.',
           passwordRequired: 'Password is required when creating an integration.',
           loadError: 'Could not load panel integrations.',
           created: 'Integration created successfully.',
@@ -2477,7 +2478,8 @@ const resources = {
           saveError: 'Could not save integration.',
           deleteError: 'Could not delete integration.',
           statusUpdated: 'Status updated successfully.',
-          statusError: 'Could not update status.'
+          statusError: 'Could not update status.',
+          resellerScope: 'This module is scoped to your reseller account. You can only see and manage your own panel integrations.'
         },
         metrics: {
           total: 'Integrations',
@@ -6574,6 +6576,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         messages: {
           apiMissing: 'Las integraciones de panel requieren que las rutas Lion TV y credenciales de panel estén configuradas en este entorno.',
           requiredFields: 'Completa usuario, proveedor y usuario de panel.',
+          requiredFieldsReseller: 'Completa proveedor y usuario de panel.',
           passwordRequired: 'El password es obligatorio al crear una integración.',
           loadError: 'No se pudieron cargar las integraciones de panel.',
           created: 'Integración creada correctamente.',
@@ -6582,7 +6585,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           saveError: 'No se pudo guardar la integración.',
           deleteError: 'No se pudo eliminar la integración.',
           statusUpdated: 'Estado actualizado correctamente.',
-          statusError: 'No se pudo actualizar el estado.'
+          statusError: 'No se pudo actualizar el estado.',
+          resellerScope: 'Este módulo está limitado a tu cuenta reseller. Solo puedes ver y administrar tus propias integraciones de panel.'
         },
         metrics: {
           total: 'Integraciones',

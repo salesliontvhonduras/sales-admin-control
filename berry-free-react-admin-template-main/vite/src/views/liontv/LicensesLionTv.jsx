@@ -90,9 +90,25 @@ import {
 } from 'api/liontv-license-bob';
 
 const UNKNOWN_RANDOM_APP = 'UNKNOWN_RANDOM';
+const LICENSE_APP_IPTV_4K_SMARTERS = 'IPTV_4K_SMARTERS';
+
+function normalizeManagedLicenseAppCode(value) {
+  const normalized = String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, '_');
+
+  if (normalized === '9XTREAM' || normalized === '_9XTREAM' || normalized === '9XTREAM4K' || normalized === '_9XTREAM4K') {
+    return 'NINEXTREAM';
+  }
+  if (normalized === 'IPTV_4K_SMARTERS' || normalized === 'IPTV4KSMARTERS') {
+    return LICENSE_APP_IPTV_4K_SMARTERS;
+  }
+  return normalized;
+}
 
 function isRandomLicenseApp(value) {
-  return String(value || '').trim().toUpperCase() === UNKNOWN_RANDOM_APP;
+  return normalizeManagedLicenseAppCode(value) === UNKNOWN_RANDOM_APP;
 }
 
 function isManagedLicenseRecord(record = {}) {
@@ -100,11 +116,12 @@ function isManagedLicenseRecord(record = {}) {
 }
 
 function isBobLicenseRecord(record = {}) {
-  return String(record?.app || '').trim().toUpperCase() === 'BOB_PLAYER';
+  return normalizeManagedLicenseAppCode(record?.app) === 'BOB_PLAYER';
 }
 
 function isNineXtreamLicenseRecord(record = {}) {
-  return String(record?.app || '').trim().toUpperCase() === 'NINEXTREAM';
+  const normalized = normalizeManagedLicenseAppCode(record?.app);
+  return normalized === 'NINEXTREAM' || normalized === LICENSE_APP_IPTV_4K_SMARTERS;
 }
 
 function supportsSpainAutoServerOption(record = {}) {
@@ -276,7 +293,10 @@ const LEGACY_LICENSE_APP_LABELS = Object.freeze({
   SMART_ONE: 'Smart One',
   IBO_PRO: 'IboPro Player',
   BOB_PLAYER: 'Bob Player',
+  '9XTREAM4K': '9xtream4k',
   NINEXTREAM: '9xtream4k',
+  IPTV_4K_SMARTERS: 'IPTV 4K SMARTERS',
+  'IPTV 4K SMARTERS': 'IPTV 4K SMARTERS',
   UNKNOWN_RANDOM: 'Unknown / external app'
 });
 
@@ -924,7 +944,8 @@ export default function LicensesLionTv() {
       if (isRandomLicenseApp(value)) {
         return t('licenses.form.randomAppLabel', 'Unknown / external app');
       }
-      return licenseAppLabelMap.get(value) || LEGACY_LICENSE_APP_LABELS[value] || value;
+      const normalizedValue = normalizeManagedLicenseAppCode(value);
+      return licenseAppLabelMap.get(value) || licenseAppLabelMap.get(normalizedValue) || LEGACY_LICENSE_APP_LABELS[value] || LEGACY_LICENSE_APP_LABELS[normalizedValue] || value;
     },
     [licenseAppLabelMap, t]
   );

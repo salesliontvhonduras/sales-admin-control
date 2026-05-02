@@ -27,6 +27,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { IconEdit, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
+import useAuth from 'hooks/useAuth';
 import MainCard from 'ui-component/cards/MainCard';
 import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import LionMetricCard from 'ui-component/cards/LionMetricCard';
@@ -36,6 +37,7 @@ import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveListSection from 'ui-component/responsive/ResponsiveListSection';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
+import { hasPermissionExact } from 'utils/rbac';
 import {
   createPanelAuth,
   deletePanelAuth,
@@ -67,8 +69,16 @@ function formatDateTime(value) {
 export default function PanelAuthMultiAppAdmin() {
   const { t } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
+  const { user } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isGlobalPanelAuthManager = hasPermissionExact(user, {
+    any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN']
+  });
+  const isResellerOwner = hasPermissionExact(user, {
+    any: ['ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER']
+  });
+  const isResellerScopedView = isResellerOwner && !isGlobalPanelAuthManager;
   const apiConfigured = useMemo(() => {
     if (import.meta.env.VITE_API_VIVO_PLAYER) return true;
     const lionTv = import.meta.env.VITE_API_LIONTV;
@@ -114,7 +124,7 @@ export default function PanelAuthMultiAppAdmin() {
       const payload = await listPanelAuths({
         index: page,
         size: rowsPerPage,
-        username: filterUsername || undefined,
+        username: isResellerScopedView ? undefined : filterUsername || undefined,
         provider: filterProvider || undefined,
         active: statusFilterValue
       });
@@ -129,7 +139,7 @@ export default function PanelAuthMultiAppAdmin() {
     } finally {
       setLoading(false);
     }
-  }, [apiConfigured, enqueueSnackbar, filterProvider, filterUsername, page, rowsPerPage, statusFilterValue, t]);
+  }, [apiConfigured, enqueueSnackbar, filterProvider, filterUsername, isResellerScopedView, page, rowsPerPage, statusFilterValue, t]);
 
   useEffect(() => {
     fetchRows();
@@ -162,8 +172,14 @@ export default function PanelAuthMultiAppAdmin() {
   };
 
   const onSubmit = async () => {
-    if (!form.username || !form.provider || !form.usernamePanel) {
-      enqueueSnackbar(t('panelAuthAdmin.messages.requiredFields'), { variant: 'warning' });
+    if ((!isResellerScopedView && !form.username) || !form.provider || !form.usernamePanel) {
+      enqueueSnackbar(
+        t(
+          isResellerScopedView ? 'panelAuthAdmin.messages.requiredFieldsReseller' : 'panelAuthAdmin.messages.requiredFields',
+          isResellerScopedView ? 'Complete provider and panel user.' : 'Complete user, provider and panel user.'
+        ),
+        { variant: 'warning' }
+      );
       return;
     }
     if (!editingId && !form.password) {
@@ -172,7 +188,7 @@ export default function PanelAuthMultiAppAdmin() {
     }
 
     const payload = {
-      username: form.username.trim(),
+      username: isResellerScopedView ? null : form.username.trim(),
       provider: form.provider,
       usernamePanel: form.usernamePanel.trim(),
       password: form.password || null,
@@ -287,6 +303,14 @@ export default function PanelAuthMultiAppAdmin() {
           </Typography>
 
           {!apiConfigured ? <Alert severity="warning">{t('panelAuthAdmin.messages.apiMissing')}</Alert> : null}
+          {isResellerScopedView ? (
+            <Alert severity="info" variant="outlined">
+              {t(
+                'panelAuthAdmin.messages.resellerScope',
+                'This module is scoped to your reseller account. You can only see and manage your own panel integrations.'
+              )}
+            </Alert>
+          ) : null}
 
           <ResponsiveFilters
             sx={{
@@ -294,16 +318,18 @@ export default function PanelAuthMultiAppAdmin() {
               '& .filter-select': { minWidth: { md: 190 } }
             }}
           >
-            <TextField
-              className="filter-username"
-              fullWidth
-              label={t('panelAuthAdmin.filters.username')}
-              value={filterUsername}
-              onChange={(event) => {
-                setPage(0);
-                setFilterUsername(event.target.value);
-              }}
-            />
+            {!isResellerScopedView ? (
+              <TextField
+                className="filter-username"
+                fullWidth
+                label={t('panelAuthAdmin.filters.username')}
+                value={filterUsername}
+                onChange={(event) => {
+                  setPage(0);
+                  setFilterUsername(event.target.value);
+                }}
+              />
+            ) : null}
             <TextField
               className="filter-select"
               fullWidth
@@ -483,12 +509,14 @@ export default function PanelAuthMultiAppAdmin() {
         </DialogTitleWithClose>
         <DialogContent dividers>
           <Stack spacing={2}>
-            <TextField
-              label={t('panelAuthAdmin.form.username')}
-              value={form.username}
-              onChange={(event) => setForm((prev) => ({ ...prev, username: event.target.value }))}
-              fullWidth
-            />
+            {!isResellerScopedView ? (
+              <TextField
+                label={t('panelAuthAdmin.form.username')}
+                value={form.username}
+                onChange={(event) => setForm((prev) => ({ ...prev, username: event.target.value }))}
+                fullWidth
+              />
+            ) : null}
             <TextField
               select
               label={t('panelAuthAdmin.form.provider')}
