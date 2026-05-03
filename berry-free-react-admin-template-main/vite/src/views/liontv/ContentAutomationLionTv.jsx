@@ -68,6 +68,7 @@ const SLOT_ORDER = ['ALL_DAY', 'MORNING', 'AFTERNOON', 'NIGHT'];
 const URL_PATTERN = /(https?:\/\/|www\.)/i;
 const BRANDING_MODE_GENERIC = 'GENERIC';
 const BRANDING_MODE_RESELLER = 'RESELLER';
+const SELECTION_SPORT_ORDER = ['SOCCER', 'BASKETBALL', 'AMERICAN_FOOTBALL', 'BASEBALL', 'MOTORSPORT', 'TENNIS', 'OTHER'];
 
 function formatDateTime(value, locale = 'es-HN') {
   if (!value) return '-';
@@ -93,6 +94,32 @@ function formatEventLabel(event = {}) {
   const home = event?.homeTeam || '-';
   const away = event?.awayTeam || '';
   return away ? `${home} vs ${away}` : home;
+}
+
+function normalizeSelectionSportKey(value) {
+  const normalized = String(value || '').trim().toUpperCase();
+  if (!normalized) return 'OTHER';
+  if (SELECTION_SPORT_ORDER.includes(normalized)) return normalized;
+  return 'OTHER';
+}
+
+function selectionSportLabel(sportKey, t) {
+  switch (normalizeSelectionSportKey(sportKey)) {
+    case 'SOCCER':
+      return t('contentAutomation.selectionDialog.sports.SOCCER', 'Fútbol');
+    case 'BASKETBALL':
+      return t('contentAutomation.selectionDialog.sports.BASKETBALL', 'NBA / Basketball');
+    case 'AMERICAN_FOOTBALL':
+      return t('contentAutomation.selectionDialog.sports.AMERICAN_FOOTBALL', 'NFL');
+    case 'BASEBALL':
+      return t('contentAutomation.selectionDialog.sports.BASEBALL', 'MLB');
+    case 'MOTORSPORT':
+      return t('contentAutomation.selectionDialog.sports.MOTORSPORT', 'F1');
+    case 'TENNIS':
+      return t('contentAutomation.selectionDialog.sports.TENNIS', 'Tennis');
+    default:
+      return t('contentAutomation.selectionDialog.sports.OTHER', 'Other sports');
+  }
 }
 
 function normalizeSupportProfile(profile) {
@@ -331,6 +358,7 @@ function SlotPostCard({
   onPreview,
   onSafePreview,
   onSelectEvents,
+  onClearSelections,
   onRegenerateImage,
   onRegenerateCaptions,
   onApprove,
@@ -346,6 +374,7 @@ function SlotPostCard({
   const canApprovePost = hasPost && status === 'GENERATED' && canApprove;
   const canPublishPost = hasPost && status === 'APPROVED' && canPublish;
   const actionDisabled = Object.values(busyAction || {}).some(Boolean);
+  const canClearSelections = hasPost && canGenerate && !actionDisabled && Boolean(post?.manualEventSelectionEnabled || Number(post?.selectedEventCount || 0) > 0);
 
   return (
     <Card sx={(theme) => ({ ...slotSurface(theme, slot), height: '100%' })}>
@@ -508,6 +537,15 @@ function SlotPostCard({
             </Button>
             <Button
               variant="outlined"
+              color="warning"
+              startIcon={<RefreshOutlinedIcon />}
+              onClick={() => onClearSelections(post)}
+              disabled={!canClearSelections}
+            >
+              {t('contentAutomation.actions.clearSelections', 'Clear selections')}
+            </Button>
+            <Button
+              variant="outlined"
               startIcon={<RefreshOutlinedIcon />}
               onClick={() => onRegenerateImage(post)}
               disabled={!hasPost || !canGenerate || actionDisabled}
@@ -577,7 +615,9 @@ export default function ContentAutomationLionTv() {
     error: '',
     events: [],
     selectedEventIds: [],
-    manualEventSelectionEnabled: false
+    manualEventSelectionEnabled: false,
+    searchTerm: '',
+    sportFilter: 'ALL'
   });
   const [confirmDialog, setConfirmDialog] = useState({ open: false, type: '', post: null });
 
@@ -993,6 +1033,63 @@ export default function ContentAutomationLionTv() {
     return !URL_PATTERN.test(safeDialog.data.caption);
   }, [safeDialog]);
 
+  const selectionSportOptions = useMemo(() => {
+    const counts = new Map();
+    (selectionDialog.events || []).forEach((event) => {
+      const key = normalizeSelectionSportKey(event?.sport);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    return ['ALL', ...SELECTION_SPORT_ORDER.filter((key) => counts.has(key))].map((key) => ({
+      key,
+      count: key === 'ALL' ? (selectionDialog.events || []).length : counts.get(key) || 0,
+      label:
+        key === 'ALL'
+          ? t('contentAutomation.selectionDialog.allCategories', 'All categories')
+          : selectionSportLabel(key, t)
+    }));
+  }, [selectionDialog.events, t]);
+
+  const filteredSelectionEvents = useMemo(() => {
+    const search = String(selectionDialog.searchTerm || '').trim().toLowerCase();
+    return (selectionDialog.events || [])
+      .filter((event) => {
+        const sportKey = normalizeSelectionSportKey(event?.sport);
+        if (selectionDialog.sportFilter && selectionDialog.sportFilter !== 'ALL' && sportKey !== selectionDialog.sportFilter) {
+          return false;
+        }
+        if (!search) return true;
+        const sportLabel = selectionSportLabel(sportKey, t).toLowerCase();
+        const haystack = [event?.homeTeam, event?.awayTeam, event?.leagueName, sportLabel]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(search);
+      })
+      .sort((left, right) => {
+        const leftTime = left?.eventTime ? new Date(left.eventTime).getTime() : 0;
+        const rightTime = right?.eventTime ? new Date(right.eventTime).getTime() : 0;
+        return leftTime - rightTime;
+      });
+  }, [selectionDialog.events, selectionDialog.searchTerm, selectionDialog.sportFilter, t]);
+
+  const groupedSelectionEvents = useMemo(() => {
+    const grouped = new Map();
+    filteredSelectionEvents.forEach((event) => {
+      const key = normalizeSelectionSportKey(event?.sport);
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+      grouped.get(key).push(event);
+    });
+    return SELECTION_SPORT_ORDER.filter((key) => grouped.has(key)).map((key) => ({
+      key,
+      label: selectionSportLabel(key, t),
+      events: grouped.get(key) || []
+    }));
+  }, [filteredSelectionEvents, t]);
+
+  const selectionFiltersActive = Boolean(String(selectionDialog.searchTerm || '').trim()) || selectionDialog.sportFilter !== 'ALL';
+
   const closeSelectionDialog = useCallback(() => {
     setSelectionDialog({
       open: false,
@@ -1002,7 +1099,9 @@ export default function ContentAutomationLionTv() {
       error: '',
       events: [],
       selectedEventIds: [],
-      manualEventSelectionEnabled: false
+      manualEventSelectionEnabled: false,
+      searchTerm: '',
+      sportFilter: 'ALL'
     });
   }, []);
 
@@ -1017,7 +1116,9 @@ export default function ContentAutomationLionTv() {
         error: '',
         events: [],
         selectedEventIds: [],
-        manualEventSelectionEnabled: false
+        manualEventSelectionEnabled: false,
+        searchTerm: '',
+        sportFilter: 'ALL'
       });
       try {
         const payload = await getContentAutomationPostEvents(post.id, { skipAuthRedirect: true });
@@ -1029,7 +1130,9 @@ export default function ContentAutomationLionTv() {
           error: '',
           events: Array.isArray(payload?.events) ? payload.events : [],
           selectedEventIds: Array.isArray(payload?.selectedEventIds) ? payload.selectedEventIds : [],
-          manualEventSelectionEnabled: Boolean(payload?.manualEventSelectionEnabled)
+          manualEventSelectionEnabled: Boolean(payload?.manualEventSelectionEnabled),
+          searchTerm: '',
+          sportFilter: 'ALL'
         });
       } catch (apiError) {
         setSelectionDialog({
@@ -1042,7 +1145,9 @@ export default function ContentAutomationLionTv() {
             t('contentAutomation.errors.loadSelectableEvents', 'Could not load the available events for this slot.'),
           events: [],
           selectedEventIds: [],
-          manualEventSelectionEnabled: false
+          manualEventSelectionEnabled: false,
+          searchTerm: '',
+          sportFilter: 'ALL'
         });
       }
     },
@@ -1102,30 +1207,56 @@ export default function ContentAutomationLionTv() {
     }
   }, [closeSelectionDialog, currentBrandingPayload, enqueueSnackbar, selectionDialog.post?.id, selectionDialog.selectedEventIds, t, updatePost]);
 
+  const clearSelectedEventsForPost = useCallback(
+    async (post, { closeDialog = false } = {}) => {
+      if (!post?.id) return;
+      const applyDialogState = closeDialog
+        ? (updater) => setSelectionDialog((prev) => (prev.post?.id === post.id ? updater(prev) : prev))
+        : null;
+
+      if (applyDialogState) {
+        applyDialogState((prev) => ({ ...prev, saving: true, error: '' }));
+      } else {
+        setBusyForPost(post.id, 'clearSelections', true);
+        setInlineErrors((prev) => ({ ...prev, [post.slot]: '' }));
+      }
+
+      try {
+        const updatedPost = await updateContentAutomationPostSelectedEvents(post.id, [], {
+          skipAuthRedirect: true,
+          brandingPayload: currentBrandingPayload
+        });
+        updatePost(updatedPost);
+        enqueueSnackbar(
+          t('contentAutomation.messages.eventsSelectionReset', 'The slot returned to the automatic featured selection.'),
+          { variant: 'success' }
+        );
+        if (closeDialog) {
+          closeSelectionDialog();
+        }
+      } catch (apiError) {
+        const message =
+          apiError?.response?.data?.message ||
+          t('contentAutomation.errors.resetSelectedEvents', 'Could not restore the automatic event selection.');
+        if (applyDialogState) {
+          applyDialogState((prev) => ({ ...prev, saving: false, error: message }));
+        } else {
+          setInlineErrors((prev) => ({ ...prev, [post.slot]: message }));
+          enqueueSnackbar(message, { variant: 'error' });
+        }
+      } finally {
+        if (!closeDialog) {
+          setBusyForPost(post.id, 'clearSelections', false);
+        }
+      }
+    },
+    [closeSelectionDialog, currentBrandingPayload, enqueueSnackbar, setBusyForPost, t, updatePost]
+  );
+
   const handleResetSelectedEvents = useCallback(async () => {
     if (!selectionDialog.post?.id) return;
-    setSelectionDialog((prev) => ({ ...prev, saving: true, error: '' }));
-    try {
-      const updatedPost = await updateContentAutomationPostSelectedEvents(selectionDialog.post.id, [], {
-        skipAuthRedirect: true,
-        brandingPayload: currentBrandingPayload
-      });
-      updatePost(updatedPost);
-      enqueueSnackbar(
-        t('contentAutomation.messages.eventsSelectionReset', 'The slot returned to the automatic featured selection.'),
-        { variant: 'success' }
-      );
-      closeSelectionDialog();
-    } catch (apiError) {
-      setSelectionDialog((prev) => ({
-        ...prev,
-        saving: false,
-        error:
-          apiError?.response?.data?.message ||
-          t('contentAutomation.errors.resetSelectedEvents', 'Could not restore the automatic event selection.')
-      }));
-    }
-  }, [closeSelectionDialog, currentBrandingPayload, enqueueSnackbar, selectionDialog.post?.id, t, updatePost]);
+    await clearSelectedEventsForPost(selectionDialog.post, { closeDialog: true });
+  }, [clearSelectedEventsForPost, selectionDialog.post]);
 
   const confirmPrimaryLabel = useMemo(() => {
     if (confirmDialog.type === 'approve') return t('contentAutomation.actions.confirmApprove', 'Approve post');
@@ -1488,6 +1619,7 @@ export default function ContentAutomationLionTv() {
                 onPreview={(selectedPost) => setPreviewDialog({ open: true, post: selectedPost })}
                 onSafePreview={openSafePreview}
                 onSelectEvents={(selectedPost) => openSelectionDialog(selectedPost)}
+                onClearSelections={(selectedPost) => clearSelectedEventsForPost(selectedPost)}
                 onRegenerateImage={(selectedPost) =>
                   handleAction(
                     selectedPost,
@@ -1575,6 +1707,45 @@ export default function ContentAutomationLionTv() {
                 )}
               </Stack>
 
+              {!!selectionDialog.events.length ? (
+                <Stack spacing={1.5}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={selectionDialog.searchTerm}
+                    onChange={(event) =>
+                      setSelectionDialog((prev) => ({
+                        ...prev,
+                        searchTerm: event.target.value
+                      }))
+                    }
+                    placeholder={t('contentAutomation.selectionDialog.searchPlaceholder', 'Search events, leagues or teams')}
+                    label={t('contentAutomation.selectionDialog.searchLabel', 'Search events')}
+                  />
+
+                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                    {selectionSportOptions.map((option) => {
+                      const active = selectionDialog.sportFilter === option.key;
+                      return (
+                        <Chip
+                          key={option.key}
+                          clickable
+                          color={active ? 'primary' : 'default'}
+                          variant={active ? 'filled' : 'outlined'}
+                          label={`${option.label} (${option.count})`}
+                          onClick={() =>
+                            setSelectionDialog((prev) => ({
+                              ...prev,
+                              sportFilter: option.key
+                            }))
+                          }
+                        />
+                      );
+                    })}
+                  </Stack>
+                </Stack>
+              ) : null}
+
               {selectionDialog.error ? (
                 <Alert severity="error" variant="outlined">
                   {selectionDialog.error}
@@ -1595,53 +1766,89 @@ export default function ContentAutomationLionTv() {
                         )
                   }
                 />
+              ) : !groupedSelectionEvents.length ? (
+                <PageEmptyState
+                  message={t(
+                    'contentAutomation.selectionDialog.noMatch',
+                    'No events match the current filters.'
+                  )}
+                />
               ) : (
-                <Stack spacing={1.25}>
-                  {selectionDialog.events.map((event) => {
-                    const checked = selectionDialog.selectedEventIds.includes(event.id);
-                    const limitReached = selectionDialog.selectedEventIds.length >= 5 && !checked;
-                    return (
-                      <Box
-                        key={`${event.id}-${event.eventTime}`}
-                        sx={(theme) => ({
-                          borderRadius: 3,
-                          border: '1px solid',
-                          borderColor: checked
-                            ? withAlpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.42 : 0.24)
-                            : 'divider',
-                          background:
-                            checked
-                              ? theme.palette.mode === 'dark'
-                                ? `linear-gradient(165deg, ${withAlpha(theme.vars?.palette?.surface?.card || theme.palette.background.paper, 0.98)} 0%, ${withAlpha(theme.palette.primary.main, 0.14)} 100%)`
-                                : `linear-gradient(165deg, ${theme.vars?.palette?.surface?.card || theme.palette.background.paper} 0%, ${withAlpha(theme.palette.primary.light, 0.16)} 100%)`
-                              : theme.vars?.palette?.surface?.card || theme.palette.background.paper
-                        })}
-                      >
-                        <FormControlLabel
-                          sx={{ m: 0, alignItems: 'flex-start', width: '100%', px: 2, py: 1.5 }}
-                          control={
-                            <Checkbox
-                              checked={checked}
-                              disabled={limitReached || selectionDialog.saving}
-                              onChange={() => toggleSelectedEvent(event.id)}
-                            />
-                          }
-                          label={
-                            <Stack spacing={0.5} sx={{ pt: 0.5 }}>
-                              <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
-                                {formatEventLabel(event)}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {(event.leagueName || t('contentAutomation.selectionDialog.fallbackLeague', 'Sporting event')) +
-                                  ' · ' +
-                                  formatEventTime(event.eventTime, locale)}
-                              </Typography>
-                            </Stack>
-                          }
+                <Stack spacing={1.5}>
+                  {selectionFiltersActive ? (
+                    <Typography variant="caption" color="text.secondary">
+                      {t('contentAutomation.selectionDialog.filtersSummary', {
+                        count: filteredSelectionEvents.length,
+                        defaultValue: '{{count}} events match the active filters.'
+                      })}
+                    </Typography>
+                  ) : null}
+
+                  {groupedSelectionEvents.map((group) => (
+                    <Stack key={group.key} spacing={1}>
+                      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1} useFlexGap flexWrap="wrap">
+                        <Typography variant="subtitle2" sx={{ fontWeight: 900, letterSpacing: '0.08em' }}>
+                          {group.label}
+                        </Typography>
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          label={t('contentAutomation.selectionDialog.groupCount', {
+                            count: group.events.length,
+                            defaultValue: '{{count}} events'
+                          })}
                         />
-                      </Box>
-                    );
-                  })}
+                      </Stack>
+
+                      <Stack spacing={1.1}>
+                        {group.events.map((event) => {
+                          const checked = selectionDialog.selectedEventIds.includes(event.id);
+                          const limitReached = selectionDialog.selectedEventIds.length >= 5 && !checked;
+                          return (
+                            <Box
+                              key={`${event.id}-${event.eventTime}`}
+                              sx={(theme) => ({
+                                borderRadius: 3,
+                                border: '1px solid',
+                                borderColor: checked
+                                  ? withAlpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.42 : 0.24)
+                                  : 'divider',
+                                background:
+                                  checked
+                                    ? theme.palette.mode === 'dark'
+                                      ? `linear-gradient(165deg, ${withAlpha(theme.vars?.palette?.surface?.card || theme.palette.background.paper, 0.98)} 0%, ${withAlpha(theme.palette.primary.main, 0.14)} 100%)`
+                                      : `linear-gradient(165deg, ${theme.vars?.palette?.surface?.card || theme.palette.background.paper} 0%, ${withAlpha(theme.palette.primary.light, 0.16)} 100%)`
+                                    : theme.vars?.palette?.surface?.card || theme.palette.background.paper
+                              })}
+                            >
+                              <FormControlLabel
+                                sx={{ m: 0, alignItems: 'flex-start', width: '100%', px: 2, py: 1.5 }}
+                                control={
+                                  <Checkbox
+                                    checked={checked}
+                                    disabled={limitReached || selectionDialog.saving}
+                                    onChange={() => toggleSelectedEvent(event.id)}
+                                  />
+                                }
+                                label={
+                                  <Stack spacing={0.5} sx={{ pt: 0.5, minWidth: 0 }}>
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                                      {formatEventLabel(event)}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                      {(event.leagueName || t('contentAutomation.selectionDialog.fallbackLeague', 'Sporting event')) +
+                                        ' · ' +
+                                        formatEventTime(event.eventTime, locale)}
+                                    </Typography>
+                                  </Stack>
+                                }
+                              />
+                            </Box>
+                          );
+                        })}
+                      </Stack>
+                    </Stack>
+                  ))}
                 </Stack>
               )}
             </Stack>
@@ -1655,9 +1862,14 @@ export default function ContentAutomationLionTv() {
             variant="outlined"
             color="inherit"
             onClick={handleResetSelectedEvents}
-            disabled={selectionDialog.loading || selectionDialog.saving || !selectionDialog.events.length}
+            disabled={
+              selectionDialog.loading ||
+              selectionDialog.saving ||
+              !selectionDialog.events.length ||
+              (!selectionDialog.manualEventSelectionEnabled && !selectionDialog.selectedEventIds.length)
+            }
           >
-            {t('contentAutomation.actions.useAutomaticSelection', 'Use automatic selection')}
+            {t('contentAutomation.actions.clearSelections', 'Clear selections')}
           </Button>
           <Button
             variant="contained"

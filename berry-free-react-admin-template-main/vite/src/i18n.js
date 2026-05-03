@@ -587,6 +587,7 @@ const resources = {
           previewImage: 'Preview image',
           safePreview: 'Safe preview',
           selectEvents: 'Select events',
+          clearSelections: 'Clear selections',
           useAutomaticSelection: 'Use automatic selection',
           applySelectedEvents: 'Apply selected events',
           applyingSelection: 'Applying selection...',
@@ -604,13 +605,28 @@ const resources = {
             'Choose up to 5 real events for this slot. The system will regenerate the image and captions using exactly this editorial selection.',
           subtitleAllDay:
             'Choose up to 5 real events from the full day. The system will regenerate the image and captions using exactly this editorial selection.',
+          searchLabel: 'Search events',
+          searchPlaceholder: 'Search events, leagues or teams',
+          allCategories: 'All categories',
           selectedCount: '{{count}} selected',
           limit: 'Maximum 5 events in the image',
           manual: 'Manual selection currently active',
           automatic: 'Automatic featured selection is currently active',
           empty: 'No real events are available for this slot yet. Generate or import events first.',
           emptyAllDay: 'No real events are available for this day yet. Generate or import events first.',
-          fallbackLeague: 'Sporting event'
+          fallbackLeague: 'Sporting event',
+          noMatch: 'No events match the current filters.',
+          filtersSummary: '{{count}} events match the active filters.',
+          groupCount: '{{count}} events',
+          sports: {
+            SOCCER: 'Fútbol',
+            BASKETBALL: 'NBA / Basketball',
+            AMERICAN_FOOTBALL: 'NFL',
+            BASEBALL: 'MLB',
+            MOTORSPORT: 'F1',
+            TENNIS: 'Tennis',
+            OTHER: 'Other sports'
+          }
         },
         previewDialog: {
           title: 'Rendered image preview'
@@ -4687,6 +4703,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           previewImage: 'Ver imagen',
           safePreview: 'Vista SAFE',
           selectEvents: 'Seleccionar eventos',
+          clearSelections: 'Limpiar selecciones',
           useAutomaticSelection: 'Usar selección automática',
           applySelectedEvents: 'Aplicar eventos seleccionados',
           applyingSelection: 'Aplicando selección...',
@@ -4704,13 +4721,28 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             'Elige hasta 5 eventos reales para este slot. El sistema regenerará la imagen y los captions usando exactamente esta selección editorial.',
           subtitleAllDay:
             'Elige hasta 5 eventos reales de todo el día. El sistema regenerará la imagen y los captions usando exactamente esta selección editorial.',
+          searchLabel: 'Buscar eventos',
+          searchPlaceholder: 'Busca eventos, ligas o equipos',
+          allCategories: 'Todas las categorías',
           selectedCount: '{{count}} seleccionados',
           limit: 'Máximo 5 eventos en la imagen',
           manual: 'La selección manual está activa actualmente',
           automatic: 'La selección automática destacada está activa actualmente',
           empty: 'Todavía no hay eventos reales disponibles para este slot. Primero genera o importa eventos.',
           emptyAllDay: 'Todavía no hay eventos reales disponibles para este día. Primero genera o importa eventos.',
-          fallbackLeague: 'Evento deportivo'
+          fallbackLeague: 'Evento deportivo',
+          noMatch: 'No hay eventos que coincidan con los filtros actuales.',
+          filtersSummary: '{{count}} eventos coinciden con los filtros activos.',
+          groupCount: '{{count}} eventos',
+          sports: {
+            SOCCER: 'Fútbol',
+            BASKETBALL: 'NBA / Basketball',
+            AMERICAN_FOOTBALL: 'NFL',
+            BASEBALL: 'MLB',
+            MOTORSPORT: 'F1',
+            TENNIS: 'Tennis',
+            OTHER: 'Otros deportes'
+          }
         },
         previewDialog: {
           title: 'Vista previa de la imagen renderizada'
