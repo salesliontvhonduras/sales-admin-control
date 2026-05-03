@@ -51,13 +51,14 @@ import {
   enqueueSubscriptionExpiration,
   getSubscriptionExpirationJobDetail,
   listSubscriptionExpirationJobs,
+  markSubscriptionExpirationJobReviewed,
   retrySubscriptionExpirationJob,
   runSubscriptionExpirationDetector,
   runSubscriptionExpirationWorker,
   useSubscriptionExpirationOverview
 } from 'api/liontv-subscription-expiration';
 
-const STATUS_OPTIONS = ['ATTENTION', 'PENDING', 'RETRY', 'MANUAL_PENDING', 'FAILED', 'COMPLETED', 'SKIPPED', 'IN_PROGRESS'];
+const STATUS_OPTIONS = ['ATTENTION', 'PENDING', 'RETRY', 'MANUAL_PENDING', 'MANUAL_REVIEWED', 'FAILED', 'COMPLETED', 'SKIPPED', 'IN_PROGRESS'];
 const ATTENTION_STATUSES = new Set(['RETRY', 'MANUAL_PENDING', 'FAILED']);
 
 function formatDateTime(value) {
@@ -75,6 +76,7 @@ function formatDate(value) {
 function statusColor(status) {
   const normalized = String(status || '').toUpperCase();
   if (normalized === 'COMPLETED') return 'success';
+  if (normalized === 'MANUAL_REVIEWED') return 'success';
   if (normalized === 'FAILED') return 'error';
   if (normalized === 'MANUAL_PENDING') return 'warning';
   if (normalized === 'RETRY') return 'info';
@@ -190,6 +192,10 @@ function CycleCard({ title, cycle, stale, loading, onRun, runLabel, disabled }) 
 
 function JobStatusChip({ status }) {
   return <Chip size="small" color={statusColor(status)} label={String(status || '-').toUpperCase()} sx={{ fontWeight: 700 }} />;
+}
+
+function isManualPendingJob(status) {
+  return String(status || '').toUpperCase() === 'MANUAL_PENDING';
 }
 
 export default function SubscriptionExpirationLionTv() {
@@ -316,6 +322,17 @@ export default function SubscriptionExpirationLionTv() {
         `retry:${jobId}`,
         () => retrySubscriptionExpirationJob(jobId),
         t('subscriptionExpiration.actions.retrySuccess', 'Job reintentado correctamente.')
+      );
+    },
+    [runAction, t]
+  );
+
+  const handleMarkReviewed = useCallback(
+    async (jobId) => {
+      await runAction(
+        `review:${jobId}`,
+        () => markSubscriptionExpirationJobReviewed(jobId),
+        t('subscriptionExpiration.actions.markReviewedSuccess', 'Alerta marcada como revisada.')
       );
     },
     [runAction, t]
@@ -635,6 +652,17 @@ export default function SubscriptionExpirationLionTv() {
                             <Button size="small" startIcon={<VisibilityOutlinedIcon />} onClick={() => openDetail(job.jobId)}>
                               {t('actions.view', 'View')}
                             </Button>
+                            {isManualPendingJob(job.status) ? (
+                              <Button
+                                size="small"
+                                color="success"
+                                startIcon={<CheckCircleOutlineIcon />}
+                                onClick={() => handleMarkReviewed(job.jobId)}
+                                disabled={!canOperate || Boolean(actionKey)}
+                              >
+                                {t('subscriptionExpiration.actions.markReviewed', 'Mark reviewed')}
+                              </Button>
+                            ) : null}
                             <Button
                               size="small"
                               color="warning"
@@ -682,6 +710,17 @@ export default function SubscriptionExpirationLionTv() {
                               <Button size="small" startIcon={<VisibilityOutlinedIcon />} onClick={() => openDetail(job.jobId)}>
                                 {t('actions.view', 'View')}
                               </Button>
+                              {isManualPendingJob(job.status) ? (
+                                <Button
+                                  size="small"
+                                  color="success"
+                                  startIcon={<CheckCircleOutlineIcon />}
+                                  onClick={() => handleMarkReviewed(job.jobId)}
+                                  disabled={!canOperate || Boolean(actionKey)}
+                                >
+                                  {t('subscriptionExpiration.actions.markReviewed', 'Mark reviewed')}
+                                </Button>
+                              ) : null}
                               <Button
                                 size="small"
                                 color="warning"
@@ -885,6 +924,18 @@ export default function SubscriptionExpirationLionTv() {
               </Card>
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                {isManualPendingJob(detail.job?.status) ? (
+                  <Button
+                    variant="contained"
+                    color="success"
+                    startIcon={actionKey === `review:${detail.job?.jobId}` ? <CircularProgress size={14} color="inherit" /> : <CheckCircleOutlineIcon />}
+                    onClick={() => handleMarkReviewed(detail.job?.jobId)}
+                    disabled={!canOperate || !detail.job?.jobId || Boolean(actionKey)}
+                    sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700 }}
+                  >
+                    {t('subscriptionExpiration.actions.markReviewed', 'Mark reviewed')}
+                  </Button>
+                ) : null}
                 <Button
                   variant="contained"
                   color="warning"

@@ -46,6 +46,13 @@ export async function retrySubscriptionExpirationJob(jobId) {
   return unwrap(response);
 }
 
+export async function markSubscriptionExpirationJobReviewed(jobId) {
+  const response = await lionTvApi.post(`/subscription-expiration/v1/jobs/${jobId}/mark-reviewed`, null, {
+    skipAuthRedirect: true
+  });
+  return unwrap(response);
+}
+
 export async function runSubscriptionExpirationDetector() {
   const response = await lionTvApi.post('/subscription-expiration/v1/detector/run', null, {
     skipAuthRedirect: true
