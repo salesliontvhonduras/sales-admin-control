@@ -676,7 +676,9 @@ export default function CustomersLionTv() {
           today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
           return { ...prev, [field]: value, closeDate: today.toISOString().slice(0, 10) };
         }
-        // if goes back to ACTIVE, keep closeDate as-is (could clear if desired)
+        if (value === 'ACTIVE') {
+          return { ...prev, [field]: value, closeDate: '' };
+        }
         return { ...prev, [field]: value };
       }
       return { ...prev, [field]: value };
@@ -695,7 +697,7 @@ export default function CustomersLionTv() {
       customerFullname: form.customerFullname,
       gender: form.gender,
       openingDate: form.openingDate || null,
-      closeDate: form.closeDate || null,
+      closeDate: form.customerStatus === 'ACTIVE' ? null : form.closeDate || null,
       isReferered: Boolean(form.isReferered),
       refererBy: form.refererBy,
       customerPhone: form.customerPhone,
@@ -756,7 +758,7 @@ export default function CustomersLionTv() {
       customerFullname: form.customerFullname,
       gender: form.gender,
       openingDate: form.openingDate || null,
-      closeDate: form.closeDate || null,
+      closeDate: form.customerStatus === 'ACTIVE' ? null : form.closeDate || null,
       isReferered: Boolean(form.isReferered),
       refererBy: form.refererBy,
       customerPhone: form.customerPhone,
@@ -1500,6 +1502,7 @@ export default function CustomersLionTv() {
                     type="date"
                     value={form.closeDate}
                     onChange={handleFormChange('closeDate')}
+                    disabled={form.customerStatus === 'ACTIVE'}
                     fullWidth
                     sx={fieldSx}
                     InputLabelProps={{ shrink: true }}
@@ -1861,6 +1864,7 @@ export default function CustomersLionTv() {
                     type="date"
                     value={form.closeDate}
                     onChange={handleFormChange('closeDate')}
+                    disabled={form.customerStatus === 'ACTIVE'}
                     fullWidth
                     sx={fieldSx}
                     InputLabelProps={{ shrink: true }}
