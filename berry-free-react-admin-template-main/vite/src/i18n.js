@@ -173,7 +173,7 @@ const resources = {
           paid: 'Status: PAID {{count}}',
           pending: 'Status: PENDING {{count}}'
         },
-        filters: { status: 'Status', all: 'All' },
+        filters: { status: 'Status', customer: 'Customer', all: 'All', allCustomers: 'All customers' },
         search: 'Search (id, customer, status, method)',
         edit: 'Edit invoice',
         dialogSubtitle: 'Enter payment and assignment data.',

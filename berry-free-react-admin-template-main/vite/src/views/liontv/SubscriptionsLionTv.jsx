@@ -872,8 +872,6 @@ export default function SubscriptionsLionTv() {
     setForm((prev) => ({
       ...prev,
       lineId: value,
-      startDate: found ? formatDateInput(found.created_at || found.createdAt) || prev.startDate : prev.startDate,
-      renewalDate: found ? formatDateInput(found.exp_date || found.expDate) || prev.renewalDate : prev.renewalDate,
       packageId: found?.package_id ?? found?.packageId ?? prev.packageId
     }));
   };

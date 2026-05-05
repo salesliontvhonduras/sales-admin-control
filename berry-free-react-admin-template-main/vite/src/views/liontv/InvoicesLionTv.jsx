@@ -331,6 +331,7 @@ export default function InvoicesLionTv() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [customerFilter, setCustomerFilter] = useState('');
 
   const [openModal, setOpenModal] = useState(false);
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
@@ -630,10 +631,11 @@ export default function InvoicesLionTv() {
   const loyaltyAmountExceeded = invoiceNetAfterLoyalty < 0;
 
   const filteredRows = useMemo(() => {
-    if (!search && !statusFilter) return rows;
+    if (!search && !statusFilter && !customerFilter) return rows;
     const term = search.toLowerCase();
     return rows.filter((row) => {
       if (statusFilter && (row.status || '').toUpperCase() !== statusFilter.toUpperCase()) return false;
+      if (customerFilter && String(row.customerId ?? '') !== String(customerFilter)) return false;
       return (
         String(row.invoiceId || '').toLowerCase().includes(term) ||
         String(row.customerId || '').toLowerCase().includes(term) ||
@@ -643,7 +645,7 @@ export default function InvoicesLionTv() {
         (row.paymentMethod || '').toLowerCase().includes(term)
       );
     });
-  }, [rows, search, statusFilter]);
+  }, [rows, search, statusFilter, customerFilter]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -914,7 +916,7 @@ export default function InvoicesLionTv() {
         secondary={
           <ResponsiveFilters
             paperSx={{
-              width: { xs: '100%', sm: 560 }
+              width: { xs: '100%', sm: 860 }
             }}
           >
             <TextField
@@ -968,6 +970,47 @@ export default function InvoicesLionTv() {
                     {statusLabel(s)}
                   </MenuItem>
                 ))}
+              </Select>
+            </FormControl>
+            <FormControl
+              size="small"
+              sx={{
+                minWidth: 220,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  backgroundColor: 'background.paper'
+                }
+              }}
+              disabled={customersLoading}
+            >
+              <InputLabel>{t('invoices.filters.customer', 'Customer')}</InputLabel>
+              <Select
+                value={customerFilter}
+                label={t('invoices.filters.customer', 'Customer')}
+                onChange={(e) => setCustomerFilter(e.target.value)}
+                renderValue={(val) => {
+                  if (!val) return t('invoices.filters.allCustomers', 'All customers');
+                  const found = customers.find((customer) => String(customer.customerId || customer.id) === String(val));
+                  return found?.customerFullname || found?.fullName || found?.username || found?.customerMail || t('invoices.filters.customer', 'Customer');
+                }}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <PersonAddAlt1Icon fontSize="small" />
+                  </InputAdornment>
+                }
+              >
+                <MenuItem value="">
+                  <em>{t('invoices.filters.allCustomers', 'All customers')}</em>
+                </MenuItem>
+                {(customers || []).map((customer) => {
+                  const customerId = customer.customerId || customer.id;
+                  const customerLabel = customer.customerFullname || customer.fullName || customer.username || customer.customerMail || customerId;
+                  return (
+                    <MenuItem key={customerId} value={String(customerId)}>
+                      {customerLabel}
+                    </MenuItem>
+                  );
+                })}
               </Select>
             </FormControl>
           </ResponsiveFilters>
