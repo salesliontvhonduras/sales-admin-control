@@ -367,6 +367,12 @@ function hasActiveExpiredLine(row, lineMetaById, todayMs) {
   return meta.expDate.getTime() < todayMs;
 }
 
+function resolveConfiguredLineExpiration(row, lineMetaById) {
+  const key = String(row?.lineId ?? '');
+  const meta = lineMetaById[key];
+  return meta?.expDate ? formatDate(meta.expDate) : '-';
+}
+
 function getSubscriptionRowKey(row = {}) {
   const subscriptionId = row.subscriptionId ?? row.id ?? null;
   if (subscriptionId !== null && subscriptionId !== undefined && subscriptionId !== '') return String(subscriptionId);
@@ -868,11 +874,9 @@ export default function SubscriptionsLionTv() {
 
   const handleLineChange = (event) => {
     const value = event.target.value;
-    const found = lines.find((l) => (l.id ?? l.lineId) === value);
     setForm((prev) => ({
       ...prev,
-      lineId: value,
-      packageId: found?.package_id ?? found?.packageId ?? prev.packageId
+      lineId: value
     }));
   };
 
@@ -1518,6 +1522,10 @@ export default function SubscriptionsLionTv() {
                             value: lineNameMap[String(row.linePlusId ?? '')] || row.linePlusId || '-'
                           },
                           {
+                            label: t('subscriptions.headers.lineExpiration', 'Line expiration'),
+                            value: resolveConfiguredLineExpiration(row, lineMetaById)
+                          },
+                          {
                             label: t('subscriptions.headers.package'),
                             value: row.packageName || packageMap[String(row.packageId ?? '')]?.name || row.packageId || '-'
                           },
@@ -1550,6 +1558,7 @@ export default function SubscriptionsLionTv() {
                     <TableCell>{t('subscriptions.headers.customer')}</TableCell>
                     <TableCell>{t('subscriptions.headers.line')}</TableCell>
                     <TableCell>{t('subscriptions.headers.linePlus', 'Line plus')}</TableCell>
+                    <TableCell>{t('subscriptions.headers.lineExpiration', 'Line expiration')}</TableCell>
                     <TableCell>{t('subscriptions.headers.package')}</TableCell>
                     <TableCell>{t('subscriptions.headers.provider', 'Provider')}</TableCell>
                     <TableCell>{t('subscriptions.headers.status')}</TableCell>
@@ -1564,7 +1573,7 @@ export default function SubscriptionsLionTv() {
                   {loading &&
                     Array.from({ length: 4 }).map((_, idx) => (
                       <TableRow key={`sub-skel-${idx}`}>
-                        {Array.from({ length: 12 }).map((__, cidx) => (
+                        {Array.from({ length: 13 }).map((__, cidx) => (
                           <TableCell key={cidx}>
                             <Skeleton variant="text" />
                           </TableCell>
@@ -1624,6 +1633,12 @@ export default function SubscriptionsLionTv() {
                             <Typography variant="body2">
                               {lineNameMap[String(row.linePlusId ?? '')] || row.linePlusId || '-'}
                             </Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Stack direction="row" spacing={0.5} alignItems="center">
+                            <CalendarMonthIcon fontSize="small" color="secondary" />
+                            <Typography variant="body2">{resolveConfiguredLineExpiration(row, lineMetaById)}</Typography>
                           </Stack>
                         </TableCell>
                         <TableCell>
