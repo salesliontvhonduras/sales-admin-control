@@ -94,7 +94,7 @@ const liontv = {
       caption: 'menu.liontvCommercialCaption',
       type: 'collapse',
       icon: icons.IconUsers,
-      permission: { any: ['LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+      permission: { any: ['LIONTV_CRM_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
       children: [
         {
           id: 'liontv-customers',
@@ -102,7 +102,7 @@ const liontv = {
           type: 'item',
           url: '/liontv/customers',
           breadcrumbs: true,
-          permission: { any: ['LIONTV_CUSTOMERS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+          permission: { any: ['LIONTV_CUSTOMERS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] }
         },
         {
           id: 'liontv-potential-customers',
@@ -161,7 +161,7 @@ const liontv = {
           type: 'item',
           url: '/liontv/subscriptions',
           breadcrumbs: true,
-          permission: { any: ['LIONTV_SUBSCRIPTIONS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+          permission: { any: ['LIONTV_SUBSCRIPTIONS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] }
         },
         {
           id: 'liontv-subscription-sharing',
@@ -177,7 +177,7 @@ const liontv = {
           type: 'item',
           url: '/liontv/invoices',
           breadcrumbs: true,
-          permission: { any: ['LIONTV_INVOICES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+          permission: { any: ['LIONTV_INVOICES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] }
         },
         {
           id: 'liontv-payment-commitments',
@@ -292,7 +292,7 @@ const liontv = {
           type: 'item',
           url: '/liontv/lines',
           breadcrumbs: true,
-          permission: { any: ['LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+          permission: { any: ['LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] }
         },
         {
           id: 'liontv-plus-lines',
@@ -317,7 +317,7 @@ const liontv = {
           type: 'item',
           url: '/liontv/licenses',
           breadcrumbs: true,
-          permission: { any: ['LIONTV_LICENSES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }
+          permission: { any: ['LIONTV_LICENSES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] }
         },
         {
           id: 'liontv-managed-accounts',

@@ -92,7 +92,10 @@ const MainRoutes = {
         },
         {
           path: '/liontv/customers',
-          element: protectPage({ any: ['LIONTV_CUSTOMERS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <CustomersLionTv />)
+          element: protectPage(
+            { any: ['LIONTV_CUSTOMERS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            <CustomersLionTv />
+          )
         },
         {
           path: '/liontv/potential-customers',
@@ -239,7 +242,10 @@ const MainRoutes = {
         },
         {
           path: '/liontv/subscriptions',
-          element: protectPage({ any: ['LIONTV_SUBSCRIPTIONS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <SubscriptionsLionTv />)
+          element: protectPage(
+            { any: ['LIONTV_SUBSCRIPTIONS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            <SubscriptionsLionTv />
+          )
         },
         {
           path: '/liontv/vip-customers',
@@ -273,7 +279,10 @@ const MainRoutes = {
         },
         {
           path: '/liontv/invoices',
-          element: protectPage({ any: ['LIONTV_INVOICES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <InvoicesLionTv />)
+          element: protectPage(
+            { any: ['LIONTV_INVOICES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            <InvoicesLionTv />
+          )
         },
         {
           path: '/liontv/reseller-wallet',
@@ -320,11 +329,18 @@ const MainRoutes = {
         },
         {
           path: '/liontv/licenses',
-          element: protectPage({ any: ['LIONTV_LICENSES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <LicensesLionTv />)
+          element: protectPage(
+            { any: ['LIONTV_LICENSES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            <LicensesLionTv />
+          )
         },
         {
           path: '/liontv/lines',
-          element: protectPage({ any: ['LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] }, <LinesLionTv />, '/liontv/dashboard')
+          element: protectPage(
+            { any: ['LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            <LinesLionTv />,
+            '/liontv/dashboard'
+          )
         },
         {
           path: '/liontv/plus-lines',
