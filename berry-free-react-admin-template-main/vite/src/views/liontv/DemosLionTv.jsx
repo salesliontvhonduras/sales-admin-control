@@ -1220,7 +1220,7 @@ export default function DemosLionTv() {
                     label={t('demos.form.macAddress', 'MAC Address')}
                     value={form.macAddress}
                     onChange={handleMacChange}
-                    placeholder={t('demos.form.macPlaceholder', 'aa:bb:cc:dd:ee:ff')}
+                    placeholder={t('demos.form.macPlaceholder', 'aa:bb:cc:dd:ee[:ff]')}
                     fullWidth
                     sx={fieldSx}
                     InputProps={{

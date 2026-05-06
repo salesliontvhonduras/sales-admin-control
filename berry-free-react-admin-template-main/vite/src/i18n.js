@@ -1456,7 +1456,7 @@ const resources = {
           appsLoadError: 'Could not load license apps.',
           noActiveApps: 'No active apps available in the catalog.',
           required: 'Complete required fields.',
-          invalidMac: 'Invalid MAC format. Use AA:BB:CC:DD:EE:FF.',
+          invalidMac: 'Invalid MAC format. Use AA:BB:CC:DD:EE or AA:BB:CC:DD:EE:FF.',
           created: 'License created.',
           updated: 'License updated.',
           deleted: 'License deleted.',
@@ -1483,8 +1483,8 @@ const resources = {
         },
         form: {
           mac: 'Mac Address',
-          macPlaceholder: 'AA:BB:CC:DD:EE:FF',
-          macHelper: 'Format: AA:BB:CC:DD:EE:FF',
+          macPlaceholder: 'AA:BB:CC:DD:EE[:FF]',
+          macHelper: 'Format: AA:BB:CC:DD:EE or AA:BB:CC:DD:EE:FF',
           randomLicense: 'Unknown / external app',
           randomLicenseHelper: 'Use this when the customer uses their own app and you only need to keep the license slot occupied.',
           randomMacHelper: 'The system will generate a synthetic MAC to reserve this license.',
@@ -1572,7 +1572,7 @@ const resources = {
         infoSubtitle: 'Fill required fields; dates are assigned by backend.',
         form: {
           macAddress: 'MAC Address',
-          macPlaceholder: 'aa:bb:cc:dd:ee:ff'
+          macPlaceholder: 'aa:bb:cc:dd:ee[:ff]'
         },
         table: { empty: 'No demos found.', loading: 'Loading...' }
       },
@@ -5579,7 +5579,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           appsLoadError: 'No se pudieron cargar las apps de licencias.',
           noActiveApps: 'No hay apps activas disponibles en el catálogo.',
           required: 'Completa los campos requeridos.',
-          invalidMac: 'Formato MAC inválido. Usa AA:BB:CC:DD:EE:FF.',
+          invalidMac: 'Formato MAC inválido. Usa AA:BB:CC:DD:EE o AA:BB:CC:DD:EE:FF.',
           created: 'Licencia creada.',
           updated: 'Licencia actualizada.',
           deleted: 'Licencia eliminada.',
@@ -5606,8 +5606,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         },
         form: {
           mac: 'Mac Address',
-          macPlaceholder: 'AA:BB:CC:DD:EE:FF',
-          macHelper: 'Formato: AA:BB:CC:DD:EE:FF',
+          macPlaceholder: 'AA:BB:CC:DD:EE[:FF]',
+          macHelper: 'Formato: AA:BB:CC:DD:EE o AA:BB:CC:DD:EE:FF',
           randomLicense: 'App externa / desconocida',
           randomLicenseHelper: 'Úsalo cuando el cliente maneja su propia app y solo necesitas mantener ocupado el cupo de la licencia.',
           randomMacHelper: 'El sistema generará una MAC sintética para reservar esta licencia.',
@@ -5696,7 +5696,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         infoSubtitle: 'Completa los campos requeridos; las fechas se asignan automáticamente.',
         form: {
           macAddress: 'MAC Address',
-          macPlaceholder: 'aa:bb:cc:dd:ee:ff'
+          macPlaceholder: 'aa:bb:cc:dd:ee[:ff]'
         },
         table: { empty: 'No hay demos registradas.', loading: 'Cargando...' }
       },

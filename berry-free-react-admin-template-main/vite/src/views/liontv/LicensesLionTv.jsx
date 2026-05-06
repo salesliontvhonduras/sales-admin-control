@@ -258,7 +258,7 @@ const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
   '& .MuiInputLabel-root': { fontWeight: 500 }
 };
-const MAC_ADDRESS_REGEX = /^[0-9a-f]{2}(:[0-9a-f]{2}){5}$/;
+const MAC_ADDRESS_REGEX = /^[0-9a-f]{2}(:[0-9a-f]{2}){4,5}$/;
 
 function maskMacAddressInput(value) {
   const hex = String(value ?? '')
