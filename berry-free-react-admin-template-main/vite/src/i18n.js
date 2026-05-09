@@ -541,6 +541,67 @@ const resources = {
             supportMissing: 'The selected reseller does not have a support phone configured in Support Center.'
           }
         },
+        teamLogos: {
+          title: 'Team logo catalog',
+          subtitle:
+            'Configure manual team logos by sport and name. These overrides apply the next time you generate or regenerate the post image.',
+          priority: 'Priority order: manual catalog, provider event logo, automatic TheSportsDB lookup, then fallback badge.',
+          loading: 'Loading team logo catalog...',
+          empty: 'No team logos match the current filters yet.',
+          summary: {
+            total: '{{count}} catalog logos'
+          },
+          filters: {
+            search: 'Search team',
+            searchPlaceholder: 'Search by team name',
+            sport: 'Sport',
+            status: 'Status',
+            allSports: 'All sports',
+            allStatuses: 'All',
+            enabled: 'Enabled',
+            disabled: 'Disabled'
+          },
+          table: {
+            logo: 'Logo',
+            team: 'Team',
+            sport: 'Sport',
+            url: 'URL',
+            status: 'Status',
+            updatedAt: 'Updated',
+            actions: 'Actions'
+          },
+          actions: {
+            new: 'New logo'
+          },
+          dialog: {
+            createTitle: 'New team logo',
+            editTitle: 'Edit team logo',
+            subtitle:
+              'Use the exact team name you expect from the event feed. This override applies on the next image generation.',
+            sport: 'Sport',
+            teamName: 'Team name',
+            logoUrl: 'Logo URL',
+            logoHelper: 'Use a direct http:// or https:// image URL.',
+            enabled: 'Enabled'
+          },
+          delete: {
+            title: 'Delete team logo',
+            body:
+              'This will remove the manual override and the system will fall back to provider, automatic lookup, or the generated badge.'
+          },
+          messages: {
+            created: 'The team logo was created successfully.',
+            updated: 'The team logo was updated successfully.',
+            deleted: 'The team logo was deleted successfully.'
+          },
+          errors: {
+            load: 'Could not load the team logo catalog.',
+            save: 'Could not save the team logo.',
+            delete: 'Could not delete the team logo.',
+            required: 'Sport, team name and logo URL are required.',
+            invalidUrl: 'Use a valid http:// or https:// image URL.'
+          }
+        },
         kpis: {
           posts: 'Posts',
           postsHelper: 'Posts currently loaded for the selected review date.',
@@ -4656,6 +4717,68 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             lookup: 'No se pudieron cargar los perfiles de soporte reseller.',
             resellerRequired: 'Selecciona un reseller para generar contenido branded.',
             supportMissing: 'El reseller seleccionado no tiene teléfono de soporte configurado en Support Center.'
+          }
+        },
+        teamLogos: {
+          title: 'Catálogo de logos de equipos',
+          subtitle:
+            'Configura logos manuales por deporte y nombre del equipo. Estos overrides se aplican la próxima vez que generes o regeneres la imagen del post.',
+          priority:
+            'Orden de prioridad: catálogo manual, logo del evento/proveedor, búsqueda automática en TheSportsDB y luego badge fallback.',
+          loading: 'Cargando catálogo de logos...',
+          empty: 'Todavía no hay logos que coincidan con los filtros actuales.',
+          summary: {
+            total: '{{count}} logos en catálogo'
+          },
+          filters: {
+            search: 'Buscar equipo',
+            searchPlaceholder: 'Buscar por nombre del equipo',
+            sport: 'Deporte',
+            status: 'Estado',
+            allSports: 'Todos los deportes',
+            allStatuses: 'Todos',
+            enabled: 'Activo',
+            disabled: 'Inactivo'
+          },
+          table: {
+            logo: 'Logo',
+            team: 'Equipo',
+            sport: 'Deporte',
+            url: 'URL',
+            status: 'Estado',
+            updatedAt: 'Actualizado',
+            actions: 'Acciones'
+          },
+          actions: {
+            new: 'Nuevo logo'
+          },
+          dialog: {
+            createTitle: 'Nuevo logo de equipo',
+            editTitle: 'Editar logo de equipo',
+            subtitle:
+              'Usa el nombre exacto del equipo como esperas verlo en el feed de eventos. Este override se aplicará en la próxima regeneración de imagen.',
+            sport: 'Deporte',
+            teamName: 'Nombre del equipo',
+            logoUrl: 'URL del logo',
+            logoHelper: 'Usa una URL directa de imagen con http:// o https://.',
+            enabled: 'Activo'
+          },
+          delete: {
+            title: 'Eliminar logo de equipo',
+            body:
+              'Esto quitará el override manual y el sistema volverá a usar el proveedor, la búsqueda automática o el badge generado.'
+          },
+          messages: {
+            created: 'El logo del equipo se creó correctamente.',
+            updated: 'El logo del equipo se actualizó correctamente.',
+            deleted: 'El logo del equipo se eliminó correctamente.'
+          },
+          errors: {
+            load: 'No se pudo cargar el catálogo de logos.',
+            save: 'No se pudo guardar el logo del equipo.',
+            delete: 'No se pudo eliminar el logo del equipo.',
+            required: 'Deporte, nombre del equipo y URL del logo son obligatorios.',
+            invalidUrl: 'Usa una URL de imagen válida con http:// o https://.'
           }
         },
         kpis: {

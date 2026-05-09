@@ -107,3 +107,31 @@ export async function updateContentAutomationPostSelectedEvents(postId, eventIds
   );
   return unwrap(response);
 }
+
+export async function getContentAutomationTeamLogos(filters = {}, config = {}) {
+  const response = await contentAutomationApi.get('/api/content-automation/team-logos', {
+    ...config,
+    params: {
+      ...(config?.params || {}),
+      ...(filters?.search ? { search: filters.search } : {}),
+      ...(filters?.sport ? { sport: filters.sport } : {}),
+      ...(typeof filters?.enabled === 'boolean' ? { enabled: filters.enabled } : {})
+    }
+  });
+  return unwrap(response);
+}
+
+export async function createContentAutomationTeamLogo(payload, config = {}) {
+  const response = await contentAutomationApi.post('/api/content-automation/team-logos', payload, config);
+  return unwrap(response);
+}
+
+export async function updateContentAutomationTeamLogo(id, payload, config = {}) {
+  const response = await contentAutomationApi.put(`/api/content-automation/team-logos/${id}`, payload, config);
+  return unwrap(response);
+}
+
+export async function deleteContentAutomationTeamLogo(id, config = {}) {
+  const response = await contentAutomationApi.delete(`/api/content-automation/team-logos/${id}`, config);
+  return unwrap(response);
+}

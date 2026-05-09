@@ -17,16 +17,28 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import IconButton from '@mui/material/IconButton';
+import MenuItem from '@mui/material/MenuItem';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { alpha } from '@mui/material/styles';
 
+import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ErrorOutlineOutlinedIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import ImageSearchOutlinedIcon from '@mui/icons-material/ImageSearchOutlined';
 import PublishedWithChangesOutlinedIcon from '@mui/icons-material/PublishedWithChangesOutlined';
@@ -42,15 +54,19 @@ import NightsStayOutlinedIcon from '@mui/icons-material/NightsStayOutlined';
 
 import {
   approveContentAutomationPost,
+  createContentAutomationTeamLogo,
+  deleteContentAutomationTeamLogo,
   generateContentAutomationByDate,
   getContentAutomationPostsByDate,
   getContentAutomationPostEvents,
   getContentAutomationPreviewImageBlob,
   getContentAutomationSafePreview,
+  getContentAutomationTeamLogos,
   getContentAutomationTomorrowEvents,
   publishContentAutomationPost,
   regenerateContentAutomationCaptions,
   regenerateContentAutomationImage,
+  updateContentAutomationTeamLogo,
   updateContentAutomationPostSelectedEvents
 } from 'api/content-automation';
 import { getAdminResellerSupportProfile, getResellerSupportProfile, searchAdminResellerSupportProfiles } from 'api/liontv-reseller-wallet';
@@ -66,9 +82,11 @@ import { hasPermissionExact } from 'utils/rbac';
 
 const SLOT_ORDER = ['ALL_DAY', 'MORNING', 'AFTERNOON', 'NIGHT'];
 const URL_PATTERN = /(https?:\/\/|www\.)/i;
+const HTTP_URL_PATTERN = /^https?:\/\/.+/i;
 const BRANDING_MODE_GENERIC = 'GENERIC';
 const BRANDING_MODE_RESELLER = 'RESELLER';
 const SELECTION_SPORT_ORDER = ['SOCCER', 'BASKETBALL', 'AMERICAN_FOOTBALL', 'BASEBALL', 'MOTORSPORT', 'TENNIS', 'OTHER'];
+const TEAM_LOGO_SPORT_OPTIONS = SELECTION_SPORT_ORDER.filter((sportKey) => sportKey !== 'OTHER');
 
 function formatDateTime(value, locale = 'es-HN') {
   if (!value) return '-';
@@ -136,6 +154,15 @@ function resellerOptionLabel(option, t) {
   if (!option?.username) return '';
   if (!option?.supportPhone) return option.username;
   return `${option.username} · ${option.supportPhone}`;
+}
+
+function createEmptyTeamLogoForm() {
+  return {
+    sport: TEAM_LOGO_SPORT_OPTIONS[0] || 'SOCCER',
+    teamName: '',
+    logoUrl: '',
+    enabled: true
+  };
 }
 
 function toIsoDateInTimeZone(timeZone, dayOffset = 0) {
@@ -620,6 +647,21 @@ export default function ContentAutomationLionTv() {
     sportFilter: 'ALL'
   });
   const [confirmDialog, setConfirmDialog] = useState({ open: false, type: '', post: null });
+  const [teamLogoFilters, setTeamLogoFilters] = useState({ search: '', sport: 'ALL', enabled: 'ALL' });
+  const [teamLogoState, setTeamLogoState] = useState({ loading: false, error: '', items: [], total: 0 });
+  const [teamLogoDialog, setTeamLogoDialog] = useState({
+    open: false,
+    mode: 'create',
+    item: null,
+    saving: false,
+    error: '',
+    form: createEmptyTeamLogoForm()
+  });
+  const [teamLogoDeleteDialog, setTeamLogoDeleteDialog] = useState({
+    open: false,
+    item: null,
+    deleting: false
+  });
 
   const canGenerate = hasPermissionExact(user, {
     any: [
@@ -767,6 +809,180 @@ export default function ContentAutomationLionTv() {
       active = false;
     };
   }, [accessToken, isAdminUser, isResellerOwner, resellerBrandingEnabled, t]);
+
+  const loadTeamLogos = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!accessToken || !isAdminUser) {
+        return;
+      }
+      if (!silent) {
+        setTeamLogoState((prev) => ({ ...prev, loading: true, error: '' }));
+      } else {
+        setTeamLogoState((prev) => ({ ...prev, error: '' }));
+      }
+      try {
+        const payload = await getContentAutomationTeamLogos(
+          {
+            search: teamLogoFilters.search?.trim() || undefined,
+            sport: teamLogoFilters.sport !== 'ALL' ? teamLogoFilters.sport : undefined,
+            enabled:
+              teamLogoFilters.enabled === 'ALL'
+                ? undefined
+                : teamLogoFilters.enabled === 'ENABLED'
+          },
+          { skipAuthRedirect: true }
+        );
+        setTeamLogoState({
+          loading: false,
+          error: '',
+          total: Number(payload?.total || 0),
+          items: Array.isArray(payload?.items) ? payload.items : []
+        });
+      } catch (apiError) {
+        setTeamLogoState((prev) => ({
+          ...prev,
+          loading: false,
+          error:
+            apiError?.response?.data?.message ||
+            t('contentAutomation.teamLogos.errors.load', 'Could not load the team logo catalog.')
+        }));
+      }
+    },
+    [accessToken, isAdminUser, teamLogoFilters, t]
+  );
+
+  useEffect(() => {
+    if (!accessToken || !isAdminUser) {
+      return undefined;
+    }
+    const timer = window.setTimeout(() => {
+      loadTeamLogos({ silent: teamLogoState.items.length > 0 });
+    }, 200);
+    return () => window.clearTimeout(timer);
+  }, [accessToken, isAdminUser, loadTeamLogos, teamLogoState.items.length]);
+
+  const openCreateTeamLogoDialog = useCallback(() => {
+    setTeamLogoDialog({
+      open: true,
+      mode: 'create',
+      item: null,
+      saving: false,
+      error: '',
+      form: createEmptyTeamLogoForm()
+    });
+  }, []);
+
+  const openEditTeamLogoDialog = useCallback((item) => {
+    setTeamLogoDialog({
+      open: true,
+      mode: 'edit',
+      item,
+      saving: false,
+      error: '',
+      form: {
+        sport: item?.sport || TEAM_LOGO_SPORT_OPTIONS[0] || 'SOCCER',
+        teamName: item?.teamName || '',
+        logoUrl: item?.logoUrl || '',
+        enabled: Boolean(item?.enabled)
+      }
+    });
+  }, []);
+
+  const closeTeamLogoDialog = useCallback(() => {
+    if (teamLogoDialog.saving) return;
+    setTeamLogoDialog({
+      open: false,
+      mode: 'create',
+      item: null,
+      saving: false,
+      error: '',
+      form: createEmptyTeamLogoForm()
+    });
+  }, [teamLogoDialog.saving]);
+
+  const submitTeamLogoDialog = useCallback(async () => {
+    const payload = {
+      sport: String(teamLogoDialog.form?.sport || ''),
+      teamName: String(teamLogoDialog.form?.teamName || '').trim(),
+      logoUrl: String(teamLogoDialog.form?.logoUrl || '').trim(),
+      enabled: Boolean(teamLogoDialog.form?.enabled)
+    };
+
+    if (!payload.sport || !payload.teamName || !payload.logoUrl) {
+      setTeamLogoDialog((prev) => ({
+        ...prev,
+        error: t('contentAutomation.teamLogos.errors.required', 'Sport, team name and logo URL are required.')
+      }));
+      return;
+    }
+
+    if (!HTTP_URL_PATTERN.test(payload.logoUrl)) {
+      setTeamLogoDialog((prev) => ({
+        ...prev,
+        error: t('contentAutomation.teamLogos.errors.invalidUrl', 'Use a valid http:// or https:// image URL.')
+      }));
+      return;
+    }
+
+    setTeamLogoDialog((prev) => ({ ...prev, saving: true, error: '' }));
+    try {
+      if (teamLogoDialog.mode === 'edit' && teamLogoDialog.item?.id) {
+        await updateContentAutomationTeamLogo(teamLogoDialog.item.id, payload, { skipAuthRedirect: true });
+        enqueueSnackbar(
+          t('contentAutomation.teamLogos.messages.updated', 'The team logo was updated successfully.'),
+          { variant: 'success' }
+        );
+      } else {
+        await createContentAutomationTeamLogo(payload, { skipAuthRedirect: true });
+        enqueueSnackbar(
+          t('contentAutomation.teamLogos.messages.created', 'The team logo was created successfully.'),
+          { variant: 'success' }
+        );
+      }
+      closeTeamLogoDialog();
+      await loadTeamLogos({ silent: true });
+    } catch (apiError) {
+      setTeamLogoDialog((prev) => ({
+        ...prev,
+        saving: false,
+        error:
+          apiError?.response?.data?.message ||
+          t('contentAutomation.teamLogos.errors.save', 'Could not save the team logo.')
+      }));
+    }
+  }, [closeTeamLogoDialog, enqueueSnackbar, loadTeamLogos, t, teamLogoDialog]);
+
+  const confirmDeleteTeamLogo = useCallback((item) => {
+    setTeamLogoDeleteDialog({ open: true, item, deleting: false });
+  }, []);
+
+  const closeDeleteTeamLogoDialog = useCallback(() => {
+    if (teamLogoDeleteDialog.deleting) return;
+    setTeamLogoDeleteDialog({ open: false, item: null, deleting: false });
+  }, [teamLogoDeleteDialog.deleting]);
+
+  const handleDeleteTeamLogo = useCallback(async () => {
+    if (!teamLogoDeleteDialog.item?.id) {
+      return;
+    }
+    setTeamLogoDeleteDialog((prev) => ({ ...prev, deleting: true }));
+    try {
+      await deleteContentAutomationTeamLogo(teamLogoDeleteDialog.item.id, { skipAuthRedirect: true });
+      enqueueSnackbar(
+        t('contentAutomation.teamLogos.messages.deleted', 'The team logo was deleted successfully.'),
+        { variant: 'success' }
+      );
+      setTeamLogoDeleteDialog({ open: false, item: null, deleting: false });
+      await loadTeamLogos({ silent: true });
+    } catch (apiError) {
+      setTeamLogoDeleteDialog((prev) => ({ ...prev, deleting: false }));
+      enqueueSnackbar(
+        apiError?.response?.data?.message ||
+          t('contentAutomation.teamLogos.errors.delete', 'Could not delete the team logo.'),
+        { variant: 'error' }
+      );
+    }
+  }, [enqueueSnackbar, loadTeamLogos, t, teamLogoDeleteDialog.item]);
 
   const loadPosts = useCallback(
     async ({ silent = false } = {}) => {
@@ -1529,6 +1745,188 @@ export default function ContentAutomationLionTv() {
         </ResponsiveMetricGrid>
       </MainCard>
 
+      {isAdminUser ? (
+        <MainCard
+          title={t('contentAutomation.teamLogos.title', 'Team logo catalog')}
+          secondary={
+            <ResponsiveActionBar>
+              <Button variant="outlined" startIcon={<RefreshOutlinedIcon />} onClick={() => loadTeamLogos({ silent: false })}>
+                {t('actions.refresh', 'Refresh')}
+              </Button>
+              <Button variant="contained" startIcon={<AddOutlinedIcon />} onClick={openCreateTeamLogoDialog}>
+                {t('contentAutomation.teamLogos.actions.new', 'New logo')}
+              </Button>
+            </ResponsiveActionBar>
+          }
+        >
+          <Stack spacing={2}>
+            <Typography variant="body2" color="text.secondary">
+              {t(
+                'contentAutomation.teamLogos.subtitle',
+                'Configure manual team logos by sport and name. These overrides apply the next time you generate or regenerate the post image.'
+              )}
+            </Typography>
+
+            <Alert severity="info" variant="outlined">
+              {t(
+                'contentAutomation.teamLogos.priority',
+                'Priority order: manual catalog, provider event logo, automatic TheSportsDB lookup, then fallback badge.'
+              )}
+            </Alert>
+
+            <ResponsiveFilters paperSx={{ mb: 0 }}>
+              <TextField
+                label={t('contentAutomation.teamLogos.filters.search', 'Search team')}
+                value={teamLogoFilters.search}
+                onChange={(event) =>
+                  setTeamLogoFilters((prev) => ({
+                    ...prev,
+                    search: event.target.value
+                  }))
+                }
+                placeholder={t('contentAutomation.teamLogos.filters.searchPlaceholder', 'Search by team name')}
+              />
+              <TextField
+                select
+                label={t('contentAutomation.teamLogos.filters.sport', 'Sport')}
+                value={teamLogoFilters.sport}
+                onChange={(event) =>
+                  setTeamLogoFilters((prev) => ({
+                    ...prev,
+                    sport: event.target.value
+                  }))
+                }
+              >
+                <MenuItem value="ALL">{t('contentAutomation.teamLogos.filters.allSports', 'All sports')}</MenuItem>
+                {TEAM_LOGO_SPORT_OPTIONS.map((sportKey) => (
+                  <MenuItem key={sportKey} value={sportKey}>
+                    {selectionSportLabel(sportKey, t)}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                select
+                label={t('contentAutomation.teamLogos.filters.status', 'Status')}
+                value={teamLogoFilters.enabled}
+                onChange={(event) =>
+                  setTeamLogoFilters((prev) => ({
+                    ...prev,
+                    enabled: event.target.value
+                  }))
+                }
+              >
+                <MenuItem value="ALL">{t('contentAutomation.teamLogos.filters.allStatuses', 'All')}</MenuItem>
+                <MenuItem value="ENABLED">{t('contentAutomation.teamLogos.filters.enabled', 'Enabled')}</MenuItem>
+                <MenuItem value="DISABLED">{t('contentAutomation.teamLogos.filters.disabled', 'Disabled')}</MenuItem>
+              </TextField>
+            </ResponsiveFilters>
+
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+              <Chip
+                variant="outlined"
+                color="primary"
+                label={t('contentAutomation.teamLogos.summary.total', {
+                  count: teamLogoState.total,
+                  defaultValue: '{{count}} catalog logos'
+                })}
+              />
+            </Stack>
+
+            {teamLogoState.error ? (
+              <Alert severity="error" variant="outlined">
+                {teamLogoState.error}
+              </Alert>
+            ) : null}
+
+            {teamLogoState.loading ? (
+              <PageLoadingState label={t('contentAutomation.teamLogos.loading', 'Loading team logo catalog...')} />
+            ) : !teamLogoState.items.length ? (
+              <PageEmptyState
+                message={t(
+                  'contentAutomation.teamLogos.empty',
+                  'No team logos match the current filters yet.'
+                )}
+              />
+            ) : (
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>{t('contentAutomation.teamLogos.table.logo', 'Logo')}</TableCell>
+                      <TableCell>{t('contentAutomation.teamLogos.table.team', 'Team')}</TableCell>
+                      <TableCell>{t('contentAutomation.teamLogos.table.sport', 'Sport')}</TableCell>
+                      <TableCell>{t('contentAutomation.teamLogos.table.url', 'URL')}</TableCell>
+                      <TableCell>{t('contentAutomation.teamLogos.table.status', 'Status')}</TableCell>
+                      <TableCell>{t('contentAutomation.teamLogos.table.updatedAt', 'Updated')}</TableCell>
+                      <TableCell align="right">{t('contentAutomation.teamLogos.table.actions', 'Actions')}</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {teamLogoState.items.map((item) => (
+                      <TableRow key={item.id} hover>
+                        <TableCell sx={{ width: 88 }}>
+                          <Avatar
+                            variant="rounded"
+                            src={item.logoUrl}
+                            alt={item.teamName}
+                            sx={{
+                              width: 48,
+                              height: 48,
+                              borderRadius: 2,
+                              bgcolor: 'background.default',
+                              border: '1px solid',
+                              borderColor: 'divider'
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                            {item.teamName}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>{selectionSportLabel(item.sport, t)}</TableCell>
+                        <TableCell sx={{ maxWidth: 320 }}>
+                          <Typography variant="body2" color="text.secondary" sx={clampText(1)}>
+                            {item.logoUrl}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            size="small"
+                            color={item.enabled ? 'success' : 'default'}
+                            variant={item.enabled ? 'filled' : 'outlined'}
+                            label={
+                              item.enabled
+                                ? t('contentAutomation.teamLogos.filters.enabled', 'Enabled')
+                                : t('contentAutomation.teamLogos.filters.disabled', 'Disabled')
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>{formatDateTime(item.updatedAt, locale)}</TableCell>
+                        <TableCell align="right">
+                          <Stack direction="row" justifyContent="flex-end" spacing={0.5}>
+                            <Tooltip title={t('actions.edit', 'Edit')}>
+                              <IconButton color="primary" onClick={() => openEditTeamLogoDialog(item)}>
+                                <EditOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title={t('actions.delete', 'Delete')}>
+                              <IconButton color="error" onClick={() => confirmDeleteTeamLogo(item)}>
+                                <DeleteOutlineOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </Stack>
+        </MainCard>
+      ) : null}
+
       {isTomorrowSelected ? (
         <MainCard title={t('contentAutomation.events.title', 'Tomorrow events')} secondary={null}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -1652,6 +2050,148 @@ export default function ContentAutomationLionTv() {
           })}
         </ResponsiveMetricGrid>
       </MainCard>
+
+      <Dialog open={teamLogoDialog.open} onClose={closeTeamLogoDialog} fullWidth maxWidth="sm">
+        <DialogTitleWithClose onClose={closeTeamLogoDialog}>
+          {teamLogoDialog.mode === 'edit'
+            ? t('contentAutomation.teamLogos.dialog.editTitle', 'Edit team logo')
+            : t('contentAutomation.teamLogos.dialog.createTitle', 'New team logo')}
+        </DialogTitleWithClose>
+        <DialogContent dividers>
+          <Stack spacing={2}>
+            <Typography variant="body2" color="text.secondary">
+              {t(
+                'contentAutomation.teamLogos.dialog.subtitle',
+                'Use the exact team name you expect from the event feed. This override applies on the next image generation.'
+              )}
+            </Typography>
+
+            {teamLogoDialog.error ? (
+              <Alert severity="error" variant="outlined">
+                {teamLogoDialog.error}
+              </Alert>
+            ) : null}
+
+            <TextField
+              select
+              label={t('contentAutomation.teamLogos.dialog.sport', 'Sport')}
+              value={teamLogoDialog.form.sport}
+              onChange={(event) =>
+                setTeamLogoDialog((prev) => ({
+                  ...prev,
+                  form: {
+                    ...prev.form,
+                    sport: event.target.value
+                  }
+                }))
+              }
+            >
+              {TEAM_LOGO_SPORT_OPTIONS.map((sportKey) => (
+                <MenuItem key={sportKey} value={sportKey}>
+                  {selectionSportLabel(sportKey, t)}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              label={t('contentAutomation.teamLogos.dialog.teamName', 'Team name')}
+              value={teamLogoDialog.form.teamName}
+              onChange={(event) =>
+                setTeamLogoDialog((prev) => ({
+                  ...prev,
+                  form: {
+                    ...prev.form,
+                    teamName: event.target.value
+                  }
+                }))
+              }
+            />
+
+            <TextField
+              label={t('contentAutomation.teamLogos.dialog.logoUrl', 'Logo URL')}
+              value={teamLogoDialog.form.logoUrl}
+              onChange={(event) =>
+                setTeamLogoDialog((prev) => ({
+                  ...prev,
+                  form: {
+                    ...prev.form,
+                    logoUrl: event.target.value
+                  }
+                }))
+              }
+              placeholder="https://..."
+              helperText={t(
+                'contentAutomation.teamLogos.dialog.logoHelper',
+                'Use a direct http:// or https:// image URL.'
+              )}
+            />
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={Boolean(teamLogoDialog.form.enabled)}
+                  onChange={(event) =>
+                    setTeamLogoDialog((prev) => ({
+                      ...prev,
+                      form: {
+                        ...prev.form,
+                        enabled: event.target.checked
+                      }
+                    }))
+                  }
+                />
+              }
+              label={t('contentAutomation.teamLogos.dialog.enabled', 'Enabled')}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeTeamLogoDialog} disabled={teamLogoDialog.saving}>
+            {t('actions.cancel', 'Cancel')}
+          </Button>
+          <Button variant="contained" onClick={submitTeamLogoDialog} disabled={teamLogoDialog.saving}>
+            {teamLogoDialog.saving
+              ? t('actions.saving', 'Saving...')
+              : teamLogoDialog.mode === 'edit'
+                ? t('actions.save', 'Save')
+                : t('actions.create', 'Create')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={teamLogoDeleteDialog.open} onClose={closeDeleteTeamLogoDialog} fullWidth maxWidth="xs">
+        <DialogTitleWithClose onClose={closeDeleteTeamLogoDialog}>
+          {t('contentAutomation.teamLogos.delete.title', 'Delete team logo')}
+        </DialogTitleWithClose>
+        <DialogContent dividers>
+          <Stack spacing={1.5}>
+            <Typography variant="body2" color="text.secondary">
+              {t(
+                'contentAutomation.teamLogos.delete.body',
+                'This will remove the manual override and the system will fall back to provider, automatic lookup, or the generated badge.'
+              )}
+            </Typography>
+            {teamLogoDeleteDialog.item ? (
+              <Alert severity="warning" variant="outlined">
+                {teamLogoDeleteDialog.item.teamName} · {selectionSportLabel(teamLogoDeleteDialog.item.sport, t)}
+              </Alert>
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeDeleteTeamLogoDialog} disabled={teamLogoDeleteDialog.deleting}>
+            {t('actions.cancel', 'Cancel')}
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteTeamLogo}
+            disabled={teamLogoDeleteDialog.deleting}
+          >
+            {teamLogoDeleteDialog.deleting ? t('actions.deleting', 'Deleting...') : t('actions.delete', 'Delete')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={selectionDialog.open}
