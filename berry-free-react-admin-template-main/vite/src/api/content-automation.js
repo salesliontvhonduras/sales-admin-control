@@ -115,7 +115,9 @@ export async function getContentAutomationTeamLogos(filters = {}, config = {}) {
       ...(config?.params || {}),
       ...(filters?.search ? { search: filters.search } : {}),
       ...(filters?.sport ? { sport: filters.sport } : {}),
-      ...(typeof filters?.enabled === 'boolean' ? { enabled: filters.enabled } : {})
+      ...(typeof filters?.enabled === 'boolean' ? { enabled: filters.enabled } : {}),
+      ...(typeof filters?.page === 'number' ? { page: filters.page } : {}),
+      ...(typeof filters?.size === 'number' ? { size: filters.size } : {})
     }
   });
   return unwrap(response);

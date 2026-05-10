@@ -26,6 +26,7 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
+import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
@@ -87,6 +88,7 @@ const BRANDING_MODE_GENERIC = 'GENERIC';
 const BRANDING_MODE_RESELLER = 'RESELLER';
 const SELECTION_SPORT_ORDER = ['SOCCER', 'BASKETBALL', 'AMERICAN_FOOTBALL', 'BASEBALL', 'MOTORSPORT', 'TENNIS', 'OTHER'];
 const TEAM_LOGO_SPORT_OPTIONS = SELECTION_SPORT_ORDER.filter((sportKey) => sportKey !== 'OTHER');
+const TEAM_LOGO_ROWS_PER_PAGE_OPTIONS = [12, 24, 48];
 
 function formatDateTime(value, locale = 'es-HN') {
   if (!value) return '-';
@@ -648,7 +650,8 @@ export default function ContentAutomationLionTv() {
   });
   const [confirmDialog, setConfirmDialog] = useState({ open: false, type: '', post: null });
   const [teamLogoFilters, setTeamLogoFilters] = useState({ search: '', sport: 'ALL', enabled: 'ALL' });
-  const [teamLogoState, setTeamLogoState] = useState({ loading: false, error: '', items: [], total: 0 });
+  const [teamLogoPagination, setTeamLogoPagination] = useState({ page: 0, rowsPerPage: TEAM_LOGO_ROWS_PER_PAGE_OPTIONS[0] });
+  const [teamLogoState, setTeamLogoState] = useState({ loading: false, error: '', items: [], total: 0, totalPages: 0 });
   const [teamLogoDialog, setTeamLogoDialog] = useState({
     open: false,
     mode: 'create',
@@ -828,7 +831,9 @@ export default function ContentAutomationLionTv() {
             enabled:
               teamLogoFilters.enabled === 'ALL'
                 ? undefined
-                : teamLogoFilters.enabled === 'ENABLED'
+                : teamLogoFilters.enabled === 'ENABLED',
+            page: teamLogoPagination.page,
+            size: teamLogoPagination.rowsPerPage
           },
           { skipAuthRedirect: true }
         );
@@ -836,6 +841,7 @@ export default function ContentAutomationLionTv() {
           loading: false,
           error: '',
           total: Number(payload?.total || 0),
+          totalPages: Number(payload?.totalPages || 0),
           items: Array.isArray(payload?.items) ? payload.items : []
         });
       } catch (apiError) {
@@ -848,7 +854,7 @@ export default function ContentAutomationLionTv() {
         }));
       }
     },
-    [accessToken, isAdminUser, teamLogoFilters, t]
+    [accessToken, isAdminUser, teamLogoFilters, teamLogoPagination.page, teamLogoPagination.rowsPerPage, t]
   );
 
   useEffect(() => {
@@ -860,6 +866,16 @@ export default function ContentAutomationLionTv() {
     }, 200);
     return () => window.clearTimeout(timer);
   }, [accessToken, isAdminUser, loadTeamLogos, teamLogoState.items.length]);
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil((teamLogoState.total || 0) / teamLogoPagination.rowsPerPage) - 1);
+    if (teamLogoPagination.page > maxPage) {
+      setTeamLogoPagination((prev) => ({
+        ...prev,
+        page: maxPage
+      }));
+    }
+  }, [teamLogoPagination.page, teamLogoPagination.rowsPerPage, teamLogoState.total]);
 
   const openCreateTeamLogoDialog = useCallback(() => {
     setTeamLogoDialog({
@@ -952,6 +968,14 @@ export default function ContentAutomationLionTv() {
     }
   }, [closeTeamLogoDialog, enqueueSnackbar, loadTeamLogos, t, teamLogoDialog]);
 
+  const handleTeamLogoFilterChange = useCallback((field, value) => {
+    setTeamLogoFilters((prev) => ({
+      ...prev,
+      [field]: value
+    }));
+    setTeamLogoPagination((prev) => (prev.page === 0 ? prev : { ...prev, page: 0 }));
+  }, []);
+
   const confirmDeleteTeamLogo = useCallback((item) => {
     setTeamLogoDeleteDialog({ open: true, item, deleting: false });
   }, []);
@@ -973,7 +997,11 @@ export default function ContentAutomationLionTv() {
         { variant: 'success' }
       );
       setTeamLogoDeleteDialog({ open: false, item: null, deleting: false });
-      await loadTeamLogos({ silent: true });
+      if (teamLogoPagination.page > 0 && teamLogoState.items.length === 1) {
+        setTeamLogoPagination((prev) => ({ ...prev, page: Math.max(0, prev.page - 1) }));
+      } else {
+        await loadTeamLogos({ silent: true });
+      }
     } catch (apiError) {
       setTeamLogoDeleteDialog((prev) => ({ ...prev, deleting: false }));
       enqueueSnackbar(
@@ -982,7 +1010,7 @@ export default function ContentAutomationLionTv() {
         { variant: 'error' }
       );
     }
-  }, [enqueueSnackbar, loadTeamLogos, t, teamLogoDeleteDialog.item]);
+  }, [enqueueSnackbar, loadTeamLogos, t, teamLogoDeleteDialog.item, teamLogoPagination.page, teamLogoState.items.length]);
 
   const loadPosts = useCallback(
     async ({ silent = false } = {}) => {
@@ -1778,24 +1806,14 @@ export default function ContentAutomationLionTv() {
               <TextField
                 label={t('contentAutomation.teamLogos.filters.search', 'Search team')}
                 value={teamLogoFilters.search}
-                onChange={(event) =>
-                  setTeamLogoFilters((prev) => ({
-                    ...prev,
-                    search: event.target.value
-                  }))
-                }
+                onChange={(event) => handleTeamLogoFilterChange('search', event.target.value)}
                 placeholder={t('contentAutomation.teamLogos.filters.searchPlaceholder', 'Search by team name')}
               />
               <TextField
                 select
                 label={t('contentAutomation.teamLogos.filters.sport', 'Sport')}
                 value={teamLogoFilters.sport}
-                onChange={(event) =>
-                  setTeamLogoFilters((prev) => ({
-                    ...prev,
-                    sport: event.target.value
-                  }))
-                }
+                onChange={(event) => handleTeamLogoFilterChange('sport', event.target.value)}
               >
                 <MenuItem value="ALL">{t('contentAutomation.teamLogos.filters.allSports', 'All sports')}</MenuItem>
                 {TEAM_LOGO_SPORT_OPTIONS.map((sportKey) => (
@@ -1808,12 +1826,7 @@ export default function ContentAutomationLionTv() {
                 select
                 label={t('contentAutomation.teamLogos.filters.status', 'Status')}
                 value={teamLogoFilters.enabled}
-                onChange={(event) =>
-                  setTeamLogoFilters((prev) => ({
-                    ...prev,
-                    enabled: event.target.value
-                  }))
-                }
+                onChange={(event) => handleTeamLogoFilterChange('enabled', event.target.value)}
               >
                 <MenuItem value="ALL">{t('contentAutomation.teamLogos.filters.allStatuses', 'All')}</MenuItem>
                 <MenuItem value="ENABLED">{t('contentAutomation.teamLogos.filters.enabled', 'Enabled')}</MenuItem>
@@ -1848,80 +1861,103 @@ export default function ContentAutomationLionTv() {
                 )}
               />
             ) : (
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>{t('contentAutomation.teamLogos.table.logo', 'Logo')}</TableCell>
-                      <TableCell>{t('contentAutomation.teamLogos.table.team', 'Team')}</TableCell>
-                      <TableCell>{t('contentAutomation.teamLogos.table.sport', 'Sport')}</TableCell>
-                      <TableCell>{t('contentAutomation.teamLogos.table.url', 'URL')}</TableCell>
-                      <TableCell>{t('contentAutomation.teamLogos.table.status', 'Status')}</TableCell>
-                      <TableCell>{t('contentAutomation.teamLogos.table.updatedAt', 'Updated')}</TableCell>
-                      <TableCell align="right">{t('contentAutomation.teamLogos.table.actions', 'Actions')}</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {teamLogoState.items.map((item) => (
-                      <TableRow key={item.id} hover>
-                        <TableCell sx={{ width: 88 }}>
-                          <Avatar
-                            variant="rounded"
-                            src={item.logoUrl}
-                            alt={item.teamName}
-                            sx={{
-                              width: 48,
-                              height: 48,
-                              borderRadius: 2,
-                              bgcolor: 'background.default',
-                              border: '1px solid',
-                              borderColor: 'divider'
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
-                            {item.teamName}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>{selectionSportLabel(item.sport, t)}</TableCell>
-                        <TableCell sx={{ maxWidth: 320 }}>
-                          <Typography variant="body2" color="text.secondary" sx={clampText(1)}>
-                            {item.logoUrl}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            size="small"
-                            color={item.enabled ? 'success' : 'default'}
-                            variant={item.enabled ? 'filled' : 'outlined'}
-                            label={
-                              item.enabled
-                                ? t('contentAutomation.teamLogos.filters.enabled', 'Enabled')
-                                : t('contentAutomation.teamLogos.filters.disabled', 'Disabled')
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>{formatDateTime(item.updatedAt, locale)}</TableCell>
-                        <TableCell align="right">
-                          <Stack direction="row" justifyContent="flex-end" spacing={0.5}>
-                            <Tooltip title={t('actions.edit', 'Edit')}>
-                              <IconButton color="primary" onClick={() => openEditTeamLogoDialog(item)}>
-                                <EditOutlinedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title={t('actions.delete', 'Delete')}>
-                              <IconButton color="error" onClick={() => confirmDeleteTeamLogo(item)}>
-                                <DeleteOutlineOutlinedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </Stack>
-                        </TableCell>
+              <>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>{t('contentAutomation.teamLogos.table.logo', 'Logo')}</TableCell>
+                        <TableCell>{t('contentAutomation.teamLogos.table.team', 'Team')}</TableCell>
+                        <TableCell>{t('contentAutomation.teamLogos.table.sport', 'Sport')}</TableCell>
+                        <TableCell>{t('contentAutomation.teamLogos.table.url', 'URL')}</TableCell>
+                        <TableCell>{t('contentAutomation.teamLogos.table.status', 'Status')}</TableCell>
+                        <TableCell>{t('contentAutomation.teamLogos.table.updatedAt', 'Updated')}</TableCell>
+                        <TableCell align="right">{t('contentAutomation.teamLogos.table.actions', 'Actions')}</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {teamLogoState.items.map((item) => (
+                        <TableRow key={item.id} hover>
+                          <TableCell sx={{ width: 88 }}>
+                            <Avatar
+                              variant="rounded"
+                              src={item.logoUrl}
+                              alt={item.teamName}
+                              sx={{
+                                width: 48,
+                                height: 48,
+                                borderRadius: 2,
+                                bgcolor: 'background.default',
+                                border: '1px solid',
+                                borderColor: 'divider'
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                              {item.teamName}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>{selectionSportLabel(item.sport, t)}</TableCell>
+                          <TableCell sx={{ maxWidth: 320 }}>
+                            <Typography variant="body2" color="text.secondary" sx={clampText(1)}>
+                              {item.logoUrl}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              size="small"
+                              color={item.enabled ? 'success' : 'default'}
+                              variant={item.enabled ? 'filled' : 'outlined'}
+                              label={
+                                item.enabled
+                                  ? t('contentAutomation.teamLogos.filters.enabled', 'Enabled')
+                                  : t('contentAutomation.teamLogos.filters.disabled', 'Disabled')
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>{formatDateTime(item.updatedAt, locale)}</TableCell>
+                          <TableCell align="right">
+                            <Stack direction="row" justifyContent="flex-end" spacing={0.5}>
+                              <Tooltip title={t('actions.edit', 'Edit')}>
+                                <IconButton color="primary" onClick={() => openEditTeamLogoDialog(item)}>
+                                  <EditOutlinedIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title={t('actions.delete', 'Delete')}>
+                                <IconButton color="error" onClick={() => confirmDeleteTeamLogo(item)}>
+                                  <DeleteOutlineOutlinedIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <TablePagination
+                  component="div"
+                  count={teamLogoState.total}
+                  page={teamLogoPagination.page}
+                  onPageChange={(_event, newPage) =>
+                    setTeamLogoPagination((prev) => ({
+                      ...prev,
+                      page: newPage
+                    }))
+                  }
+                  rowsPerPage={teamLogoPagination.rowsPerPage}
+                  onRowsPerPageChange={(event) => {
+                    const nextSize = Number.parseInt(event.target.value, 10) || TEAM_LOGO_ROWS_PER_PAGE_OPTIONS[0];
+                    setTeamLogoPagination({
+                      page: 0,
+                      rowsPerPage: nextSize
+                    });
+                  }}
+                  rowsPerPageOptions={TEAM_LOGO_ROWS_PER_PAGE_OPTIONS}
+                  labelRowsPerPage={t('contentAutomation.teamLogos.pagination.rowsPerPage', 'Rows per page')}
+                />
+              </>
             )}
           </Stack>
         </MainCard>
