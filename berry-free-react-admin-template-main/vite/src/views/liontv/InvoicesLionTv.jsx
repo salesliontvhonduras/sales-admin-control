@@ -581,9 +581,24 @@ export default function InvoicesLionTv() {
   }, [customerNameMap, rows]);
 
   useEffect(() => {
-    if (!openModal || !form.customerId) return;
+    if (!openModal || !form.customerId || !loyaltyAvailableForInvoice) return;
     loadCustomerLoyalty(form.customerId);
-  }, [openModal, form.customerId, loadCustomerLoyalty]);
+  }, [openModal, form.customerId, loadCustomerLoyalty, loyaltyAvailableForInvoice]);
+
+  useEffect(() => {
+    if (loyaltyConfigLoading || loyaltyConfig?.active) return;
+    if (!form.loyaltyPointsUsed && !Number(form.loyaltyAmountRedeemed || 0)) return;
+    setForm((prev) => {
+      if (!prev.loyaltyPointsUsed && !Number(prev.loyaltyAmountRedeemed || 0)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        loyaltyPointsUsed: '',
+        loyaltyAmountRedeemed: 0
+      };
+    });
+  }, [form.loyaltyAmountRedeemed, form.loyaltyPointsUsed, loyaltyConfig?.active, loyaltyConfigLoading]);
 
   const selectedCustomerLoyalty = useMemo(() => {
     const customerId = Number(form.customerId || 0);
@@ -628,6 +643,7 @@ export default function InvoicesLionTv() {
 
   const loyaltyPointsExceeded = loyaltyPointsRequested > effectiveAvailablePoints;
   const loyaltyProgramInactive = Boolean(form.customerId) && !loyaltyConfigLoading && !loyaltyConfig?.active;
+  const loyaltyAvailableForInvoice = Boolean(form.customerId) && !loyaltyConfigLoading && Boolean(loyaltyConfig?.active);
   const loyaltyAmountExceeded = invoiceNetAfterLoyalty < 0;
 
   const filteredRows = useMemo(() => {
@@ -684,7 +700,7 @@ export default function InvoicesLionTv() {
         Number(prev.originalCustomerId) === Number(value) ? prev.loyaltyPointsUsed : '',
       loyaltyAmountRedeemed: 0
     }));
-    if (value) {
+    if (value && loyaltyAvailableForInvoice) {
       await loadCustomerLoyalty(value);
     }
   };
@@ -709,7 +725,7 @@ export default function InvoicesLionTv() {
       originalLoyaltyPointsUsed: Number(row.loyaltyPointsUsed ?? 0)
     });
     setOpenModal(true);
-    if (row.customerId) {
+    if (row.customerId && !loyaltyConfigLoading && loyaltyConfig?.active) {
       loadCustomerLoyalty(row.customerId);
     }
   };
