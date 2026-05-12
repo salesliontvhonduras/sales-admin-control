@@ -581,9 +581,9 @@ export default function InvoicesLionTv() {
   }, [customerNameMap, rows]);
 
   useEffect(() => {
-    if (!openModal || !form.customerId || !loyaltyAvailableForInvoice) return;
+    if (!openModal || !form.customerId || loyaltyConfigLoading || !loyaltyConfig?.active) return;
     loadCustomerLoyalty(form.customerId);
-  }, [openModal, form.customerId, loadCustomerLoyalty, loyaltyAvailableForInvoice]);
+  }, [openModal, form.customerId, loadCustomerLoyalty, loyaltyConfig?.active, loyaltyConfigLoading]);
 
   useEffect(() => {
     if (loyaltyConfigLoading || loyaltyConfig?.active) return;
