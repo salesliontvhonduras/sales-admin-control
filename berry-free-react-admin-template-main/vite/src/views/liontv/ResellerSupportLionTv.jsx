@@ -12,11 +12,9 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
 import LinearProgress from '@mui/material/LinearProgress';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
@@ -37,9 +35,7 @@ import MainCard from 'ui-component/cards/MainCard';
 import { PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
 import { gridSpacing } from 'store/constant';
 import { getResellerSupportProfile, updateResellerSupportProfile } from 'api/liontv-reseller-wallet';
-import { getEcommerceContactRoutingConfig, updateEcommerceContactRoutingConfig } from 'api/liontv-ecommerce-contact-routing';
 import { withAlpha } from 'utils/colorUtils';
-import { isAdminConsoleUser } from 'utils/rbac';
 
 function normalizeDigits(value = '') {
   return String(value).replace(/\D/g, '');
@@ -264,23 +260,14 @@ export default function ResellerSupportLionTv() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const { accessToken, user } = useAuth();
+  const { accessToken } = useAuth();
   const language = String(i18n?.resolvedLanguage || i18n?.language || 'es').toLowerCase().startsWith('en') ? 'en' : 'es';
-  const isAdminUser = useMemo(() => isAdminConsoleUser(user), [user]);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [routingSaving, setRoutingSaving] = useState(false);
   const [error, setError] = useState('');
-  const [routingError, setRoutingError] = useState('');
   const [supportProfile, setSupportProfile] = useState(null);
   const [supportPhone, setSupportPhone] = useState('');
-  const [routingConfig, setRoutingConfig] = useState(null);
-  const [routingForm, setRoutingForm] = useState({
-    enabled: true,
-    primaryPhone: '50488204404',
-    secondaryPhone: '50489240565'
-  });
 
   const supportCopy = useMemo(
     () =>
@@ -331,41 +318,16 @@ export default function ResellerSupportLionTv() {
     if (!accessToken) return;
     setLoading(true);
     setError('');
-    setRoutingError('');
     try {
       const payload = await getResellerSupportProfile({ skipAuthRedirect: true });
       setSupportProfile(payload);
       setSupportPhone(payload?.supportPhone || '');
-      if (isAdminUser) {
-        try {
-          const routingPayload = await getEcommerceContactRoutingConfig({ skipAuthRedirect: true });
-          setRoutingConfig(routingPayload);
-          setRoutingForm({
-            enabled: Boolean(routingPayload?.enabled),
-            primaryPhone: routingPayload?.primaryPhone || '50488204404',
-            secondaryPhone: routingPayload?.secondaryPhone || '50489240565'
-          });
-        } catch (routingLoadError) {
-          setRoutingConfig(null);
-          setRoutingForm({
-            enabled: true,
-            primaryPhone: '50488204404',
-            secondaryPhone: '50489240565'
-          });
-          setRoutingError(
-            routingLoadError?.response?.data?.message ||
-              t('resellerSupport.routing.errors.load', 'No se pudo cargar la configuración global del ecommerce.')
-          );
-        }
-      } else {
-        setRoutingConfig(null);
-      }
     } catch (err) {
       setError(err?.response?.data?.message || t('resellerSupport.errors.load', 'No se pudo cargar la configuración de soporte.'));
     } finally {
       setLoading(false);
     }
-  }, [accessToken, isAdminUser, t]);
+  }, [accessToken, t]);
 
   useEffect(() => {
     loadSupportProfile();
@@ -376,17 +338,6 @@ export default function ResellerSupportLionTv() {
   const previewWhatsappUrl = hasValidPhone ? `https://wa.me/${phoneDigits}` : supportProfile?.whatsappUrl || 'https://wa.me/50488204404';
   const dirty = phoneDigits !== normalizeDigits(supportProfile?.supportPhone || '');
   const supportHealth = supportProfile?.configured ? 100 : 38;
-  const routingEnabled = Boolean(routingForm.enabled);
-  const routingPrimaryDigits = useMemo(() => normalizeDigits(routingForm.primaryPhone), [routingForm.primaryPhone]);
-  const routingSecondaryDigits = useMemo(() => normalizeDigits(routingForm.secondaryPhone), [routingForm.secondaryPhone]);
-  const routingPrimaryValid = routingPrimaryDigits.length >= 8 && routingPrimaryDigits.length <= 15;
-  const routingSecondaryValid = !routingEnabled || (routingSecondaryDigits.length >= 8 && routingSecondaryDigits.length <= 15);
-  const routingPreviewUrl = `https://wa.me/${routingPrimaryValid ? routingPrimaryDigits : '50488204404'}`;
-  const routingDirty =
-    Boolean(isAdminUser) &&
-    (routingEnabled !== Boolean(routingConfig?.enabled) ||
-      routingPrimaryDigits !== normalizeDigits(routingConfig?.primaryPhone || '') ||
-      routingSecondaryDigits !== normalizeDigits(routingConfig?.secondaryPhone || ''));
 
   const handleSave = async () => {
     if (!hasValidPhone) {
@@ -419,55 +370,6 @@ export default function ResellerSupportLionTv() {
       });
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleRoutingSave = async () => {
-    if (!routingPrimaryValid) {
-      enqueueSnackbar(t('resellerSupport.routing.errors.invalidPrimary', 'Ingresa un Primary WhatsApp válido de 8 a 15 dígitos.'), {
-        variant: 'warning'
-      });
-      return;
-    }
-    if (!routingSecondaryValid) {
-      enqueueSnackbar(t('resellerSupport.routing.errors.invalidSecondary', 'Ingresa un Secondary WhatsApp válido de 8 a 15 dígitos.'), {
-        variant: 'warning'
-      });
-      return;
-    }
-
-    setRoutingSaving(true);
-    setRoutingError('');
-    try {
-      const payload = await updateEcommerceContactRoutingConfig(
-        {
-          enabled: routingEnabled,
-          primaryPhone: routingPrimaryDigits,
-          secondaryPhone: routingSecondaryDigits || null
-        },
-        { skipAuthRedirect: true }
-      );
-      setRoutingConfig(payload);
-      setRoutingForm({
-        enabled: Boolean(payload?.enabled),
-        primaryPhone: payload?.primaryPhone || '50488204404',
-        secondaryPhone: payload?.secondaryPhone || ''
-      });
-      enqueueSnackbar(
-        t(
-          'resellerSupport.routing.messages.saved',
-          'La rotación global de WhatsApp del ecommerce quedó guardada. Si falla el proxy o el routing está deshabilitado, el storefront caerá a 50488204404.'
-        ),
-        { variant: 'success' }
-      );
-    } catch (err) {
-      const message =
-        err?.response?.data?.message ||
-        t('resellerSupport.routing.errors.save', 'No se pudo guardar la configuración global del ecommerce.');
-      setRoutingError(message);
-      enqueueSnackbar(message, { variant: 'error' });
-    } finally {
-      setRoutingSaving(false);
     }
   };
 
@@ -750,181 +652,6 @@ export default function ResellerSupportLionTv() {
             </Card>
           </Grid>
         </Grid>
-
-        {isAdminUser ? (
-          <Grid container spacing={gridSpacing}>
-            <Grid item xs={12} lg={7}>
-              <Card
-                sx={(theme) => ({
-                  ...premiumSurface(theme, 'secondary'),
-                  borderRadius: 4
-                })}
-              >
-                <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
-                  <Stack spacing={2.5}>
-                    <SectionHeader
-                      eyebrow={language === 'en' ? 'Global ecommerce routing' : 'Routing global ecommerce'}
-                      title={language === 'en' ? 'Round robin for storefront WhatsApp CTAs' : 'Round robin para CTA WhatsApp del storefront'}
-                      description={
-                        language === 'en'
-                          ? 'New visitors rotate between two WhatsApp numbers and keep the same assignment for 24 hours. If you disable it or the public resolver fails, the storefront falls back to 50488204404.'
-                          : 'Los visitantes nuevos rotan entre dos números de WhatsApp y conservan la misma asignación por 24 horas. Si lo deshabilitas o falla el resolvedor público, el storefront cae a 50488204404.'
-                      }
-                      action={
-                        <Chip
-                          color={routingEnabled ? 'secondary' : 'default'}
-                          label={
-                            routingEnabled
-                              ? language === 'en'
-                                ? 'Round robin enabled'
-                                : 'Round robin activo'
-                              : language === 'en'
-                                ? 'Primary fallback only'
-                                : 'Solo fallback primary'
-                          }
-                        />
-                      }
-                    />
-
-                    {routingError ? <Alert severity="warning">{routingError}</Alert> : null}
-
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={routingEnabled}
-                          onChange={(event) =>
-                            setRoutingForm((prev) => ({
-                              ...prev,
-                              enabled: event.target.checked
-                            }))
-                          }
-                        />
-                      }
-                      label={
-                        routingEnabled
-                          ? language === 'en'
-                            ? 'Round robin enabled'
-                            : 'Round robin habilitado'
-                          : language === 'en'
-                            ? 'Round robin disabled'
-                            : 'Round robin deshabilitado'
-                      }
-                    />
-
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          label={language === 'en' ? 'Primary WhatsApp' : 'Primary WhatsApp'}
-                          value={routingForm.primaryPhone}
-                          onChange={(event) =>
-                            setRoutingForm((prev) => ({
-                              ...prev,
-                              primaryPhone: event.target.value
-                            }))
-                          }
-                          helperText={
-                            language === 'en'
-                              ? 'Mandatory. When routing is disabled or an error happens, this is the number the ecommerce will always use.'
-                              : 'Obligatorio. Cuando el routing está deshabilitado o ocurre un error, este será el número que siempre usará el ecommerce.'
-                          }
-                          placeholder="50488204404"
-                          inputProps={{ inputMode: 'numeric', maxLength: 18 }}
-                          sx={{ '& .MuiInputBase-root': { borderRadius: 3 } }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          label={language === 'en' ? 'Secondary WhatsApp' : 'Secondary WhatsApp'}
-                          value={routingForm.secondaryPhone}
-                          onChange={(event) =>
-                            setRoutingForm((prev) => ({
-                              ...prev,
-                              secondaryPhone: event.target.value
-                            }))
-                          }
-                          helperText={
-                            routingEnabled
-                              ? language === 'en'
-                                ? 'Required while round robin is enabled.'
-                                : 'Requerido mientras el round robin esté activo.'
-                              : language === 'en'
-                                ? 'Optional while disabled. The storefront will keep using primary only.'
-                                : 'Opcional mientras esté deshabilitado. El storefront seguirá usando solo el primary.'
-                          }
-                          placeholder="50489240565"
-                          inputProps={{ inputMode: 'numeric', maxLength: 18 }}
-                          sx={{ '& .MuiInputBase-root': { borderRadius: 3 } }}
-                        />
-                      </Grid>
-                    </Grid>
-
-                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                      <Button
-                        variant="contained"
-                        color="secondary"
-                        startIcon={<SaveOutlinedIcon />}
-                        onClick={handleRoutingSave}
-                        disabled={routingSaving || !routingDirty || !routingPrimaryValid || !routingSecondaryValid}
-                      >
-                        {routingSaving
-                          ? t('actions.saving', 'Saving...')
-                          : language === 'en'
-                            ? 'Save storefront routing'
-                            : 'Guardar routing storefront'}
-                      </Button>
-                      <Button variant="outlined" startIcon={<OpenInNewOutlinedIcon />} href={routingPreviewUrl} target="_blank" rel="noreferrer">
-                        {language === 'en' ? 'Open primary fallback' : 'Abrir fallback primary'}
-                      </Button>
-                    </Stack>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} lg={5}>
-              <Card sx={(theme) => ({ ...premiumSurface(theme, 'info'), borderRadius: 4, height: '100%' })}>
-                <CardContent sx={{ p: { xs: 2.5, md: 3 } }}>
-                  <Stack spacing={2}>
-                    <Stack direction="row" spacing={1.25} alignItems="center">
-                      <SupportAgentOutlinedIcon color="info" />
-                      <Typography variant="h5">
-                        {language === 'en' ? 'How storefront resolution behaves' : 'Cómo se resuelve en el storefront'}
-                      </Typography>
-                    </Stack>
-                    <Typography variant="body2" color="text.secondary">
-                      {language === 'en'
-                        ? 'Enabled: new visitors rotate globally and keep the same WhatsApp for 24 hours. Disabled or runtime error: everything falls back to 50488204404.'
-                        : 'Activo: los visitantes nuevos rotan de forma global y conservan el mismo WhatsApp por 24 horas. Deshabilitado o con error runtime: todo cae a 50488204404.'}
-                    </Typography>
-                    <Divider />
-                    <Stack spacing={1.25}>
-                      {[
-                        language === 'en'
-                          ? 'Applies to home, product, collection, demo, loyalty, referral, sticky CTA, header, footer and support banners.'
-                          : 'Aplica a home, product, collection, demo, loyalty, referidos, sticky CTA, header, footer y banners de soporte.',
-                        language === 'en'
-                          ? 'Each CTA preserves its own ?text message; only the destination WhatsApp number changes.'
-                          : 'Cada CTA conserva su propio ?text; solo cambia el número destino de WhatsApp.',
-                        language === 'en'
-                          ? 'If the proxy fails, the theme still renders fallback links to 50488204404.'
-                          : 'Si el proxy falla, el theme sigue renderizando enlaces fallback a 50488204404.'
-                      ].map((text) => (
-                        <Stack key={text} direction="row" spacing={1.25} alignItems="flex-start">
-                          <Chip size="small" color="info" label="RR" />
-                          <Typography variant="body2" color="text.secondary">
-                            {text}
-                          </Typography>
-                        </Stack>
-                      ))}
-                    </Stack>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        ) : null}
 
         <SectionHeader
           eyebrow={supportCopy.sections.actionsEyebrow}

@@ -85,6 +85,15 @@ const liontv = {
               'LIONTV_RESELLER_OWNER'
             ]
           }
+        },
+        {
+          id: 'liontv-ecommerce-contact-routing',
+          title: 'menu.ecommerceContactRouting',
+          type: 'item',
+          url: '/liontv/ecommerce-contact-routing',
+          resellerVisible: false,
+          breadcrumbs: true,
+          permission: { any: ['ROLE_ADMIN', 'ADMIN'] }
         }
       ]
     },
