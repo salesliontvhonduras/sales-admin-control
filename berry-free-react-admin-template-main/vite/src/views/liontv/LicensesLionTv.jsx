@@ -258,15 +258,15 @@ const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
   '& .MuiInputLabel-root': { fontWeight: 500 }
 };
-const MAC_ADDRESS_REGEX = /^[0-9a-f]{2}(:[0-9a-f]{2}){4,5}$/;
+const MAC_ADDRESS_REGEX = /^[a-z0-9]{2}(:[a-z0-9]{2}){5}$/;
 
 function maskMacAddressInput(value) {
-  const hex = String(value ?? '')
+  const normalized = String(value ?? '')
     .toLowerCase()
-    .replace(/[^0-9a-f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
     .slice(0, 12);
-  if (!hex) return '';
-  return hex.match(/.{1,2}/g)?.join(':') ?? '';
+  if (!normalized) return '';
+  return normalized.match(/.{1,2}/g)?.join(':') ?? '';
 }
 
 function isValidMacAddress(value) {
@@ -1163,7 +1163,9 @@ export default function LicensesLionTv() {
     }
     const normalizedMacAddress = maskMacAddressInput(form.macAddress);
     if (!form.randomLicense && !isValidMacAddress(normalizedMacAddress)) {
-      enqueueSnackbar(t('licenses.messages.invalidMac', 'Invalid MAC format. Use aa:bb:cc:dd:ee:ff.'), { variant: 'warning' });
+      enqueueSnackbar(t('licenses.messages.invalidMac', 'Invalid MAC format. Use aa:bb:cc:dd:ee:ff with letters a-z and digits 0-9.'), {
+        variant: 'warning'
+      });
       return;
     }
 
