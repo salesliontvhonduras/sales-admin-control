@@ -1027,7 +1027,8 @@ const resources = {
         },
         tabs: {
           clusters: 'Shared clusters',
-          capacity: 'Available spaces by day'
+          capacity: 'Available spaces by day',
+          oversold: 'Oversold subscriptions'
         },
         kpi: {
           totalSubscriptions: 'Total subscriptions',
@@ -1041,6 +1042,9 @@ const resources = {
           capacityLines: 'Lines with space',
           capacitySlots: '1-screen slots',
           pendingSetupCustomers: 'Pending setup',
+          oversoldSubscriptions: 'Oversold subscriptions',
+          excessLicenses: 'Excess licenses',
+          affectedCustomers: 'Affected customers',
           eligibleSubscriptions: 'Eligible',
           overdueClusters: 'Overdue hosts',
           criticalClusters: 'Critical hosts',
@@ -1159,6 +1163,39 @@ const resources = {
             helperNoDate: 'These standalone customers still need license setup, but their renewal date should be validated manually.'
           }
         },
+        oversold: {
+          title: 'Oversold subscriptions by package capacity',
+          subtitle: 'Detect subscriptions where the package contract allows fewer connections than the active linked licenses currently configured.',
+          listSubtitle: 'These subscriptions have more active linked licenses than the 1P..5P package token currently contracted.',
+          filtersSubtitle: 'This tab only uses the global search so you can inspect oversold subscriptions without mixing sharing eligibility filters.',
+          info: 'Oversale is calculated by comparing active linked licenses against the 1P..5P token detected in the package text.',
+          empty: 'No oversold subscriptions were found for the current search.',
+          summary: {
+            visible: 'Oversold: {{count}}',
+            excess: 'Excess licenses: {{count}}',
+            customers: 'Affected customers: {{count}}'
+          },
+          card: {
+            contractedConnections: 'Contracted connections',
+            activeLinkedLicenses: 'Active linked licenses',
+            oversoldLabel: 'Excess',
+            oversoldBy: 'Oversold by {{count}}',
+            capacityToken: 'Token: {{token}}',
+            renewalDate: 'Renewal: {{date}}',
+            customerId: 'Customer #{{id}}'
+          },
+          detail: {
+            title: 'Oversold detail',
+            subtitle: 'Subscription #{{subscriptionId}}',
+            subtitleFallback: 'Live oversale snapshot',
+            empty: 'No oversold detail available for this subscription.',
+            summaryTitle: 'Oversale summary',
+            affectedLicenseCount: 'Affected licenses',
+            licensesTitle: 'Operational linked licenses',
+            licensesCount: 'Licenses: {{count}}',
+            noLicenses: 'No operational linked licenses were found for this subscription.'
+          }
+        },
         role: {
           host: 'HOST',
           shared: 'SHARED',
@@ -1253,6 +1290,8 @@ const resources = {
           roleShared: 'Shared',
           roleCurrent: 'Role mode: {{role}}',
           roleHelp: 'Choose who should behave as host inside this shared line. Auto keeps the system decision.',
+          viewOversoldDetail: 'View oversale detail',
+          closeOversoldDetail: 'Close oversale detail',
           moveToDay: 'Move to day {{day}}',
           moveToHost: 'Move to host #{{id}}',
           moving: 'Moving...',
@@ -1336,6 +1375,8 @@ const resources = {
         },
         errors: {
           loadError: 'Could not load shared overview.',
+          loadOversold: 'Could not load oversold subscriptions.',
+          loadOversoldDetail: 'Could not load oversold detail.',
           loadDiagnostics: 'Could not load subscription diagnostics.',
           updateRole: 'Could not update sharing role preference.',
           moveSubscription: 'Could not move the shared subscription.'
@@ -5208,7 +5249,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         },
         tabs: {
           clusters: 'Clústeres shared',
-          capacity: 'Espacios disponibles por día'
+          capacity: 'Espacios disponibles por día',
+          oversold: 'Suscripciones sobrevendidas'
         },
         kpi: {
           totalSubscriptions: 'Suscripciones totales',
@@ -5222,6 +5264,9 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           capacityLines: 'Líneas con espacio',
           capacitySlots: 'Espacios de 1 pantalla',
           pendingSetupCustomers: 'Pendientes de configurar',
+          oversoldSubscriptions: 'Suscripciones sobrevendidas',
+          excessLicenses: 'Licencias excedentes',
+          affectedCustomers: 'Clientes afectados',
           eligibleSubscriptions: 'Elegibles',
           overdueClusters: 'Hosts vencidos',
           criticalClusters: 'Hosts críticos',
@@ -5341,6 +5386,39 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
             helperNoDate: 'Estos clientes independientes todavía necesitan configurar licencias, pero su fecha de renovación debe validarse manualmente.'
           }
         },
+        oversold: {
+          title: 'Suscripciones sobrevendidas por capacidad del paquete',
+          subtitle: 'Detecta suscripciones donde el paquete contratado permite menos conexiones que las licencias activas vinculadas actualmente.',
+          listSubtitle: 'Estas suscripciones tienen más licencias activas vinculadas que el token 1P..5P contratado en el texto del paquete.',
+          filtersSubtitle: 'Este tab solo usa la búsqueda global para revisar sobreventa sin mezclar filtros de elegibilidad shared.',
+          info: 'La sobreventa se calcula comparando las licencias activas vinculadas contra el token 1P..5P detectado en el texto del paquete.',
+          empty: 'No se encontraron suscripciones sobrevendidas para la búsqueda actual.',
+          summary: {
+            visible: 'Sobrevendidas: {{count}}',
+            excess: 'Licencias excedentes: {{count}}',
+            customers: 'Clientes afectados: {{count}}'
+          },
+          card: {
+            contractedConnections: 'Conexiones contratadas',
+            activeLinkedLicenses: 'Licencias activas vinculadas',
+            oversoldLabel: 'Exceso',
+            oversoldBy: 'Sobrevendida por {{count}}',
+            capacityToken: 'Token: {{token}}',
+            renewalDate: 'Renovación: {{date}}',
+            customerId: 'Cliente #{{id}}'
+          },
+          detail: {
+            title: 'Detalle de sobreventa',
+            subtitle: 'Suscripción #{{subscriptionId}}',
+            subtitleFallback: 'Snapshot de sobreventa en vivo',
+            empty: 'No hay detalle de sobreventa disponible para esta suscripción.',
+            summaryTitle: 'Resumen de sobreventa',
+            affectedLicenseCount: 'Licencias afectadas',
+            licensesTitle: 'Licencias operativas vinculadas',
+            licensesCount: 'Licencias: {{count}}',
+            noLicenses: 'No se encontraron licencias operativas vinculadas para esta suscripción.'
+          }
+        },
         role: {
           host: 'HOST',
           shared: 'SHARED',
@@ -5435,6 +5513,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           roleShared: 'Shared',
           roleCurrent: 'Modo de rol: {{role}}',
           roleHelp: 'Elige qué suscripción debe comportarse como host dentro de esta línea compartida. Auto mantiene la decisión del sistema.',
+          viewOversoldDetail: 'Ver detalle de sobreventa',
+          closeOversoldDetail: 'Cerrar detalle de sobreventa',
           moveToDay: 'Mover al día {{day}}',
           moveToHost: 'Mover al host #{{id}}',
           moving: 'Moviendo...',
@@ -5520,6 +5600,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         },
         errors: {
           loadError: 'No se pudo cargar el overview de suscripciones compartidas.',
+          loadOversold: 'No se pudo cargar la sobreventa de suscripciones.',
+          loadOversoldDetail: 'No se pudo cargar el detalle de sobreventa.',
           loadDiagnostics: 'No se pudo cargar el diagnóstico de la suscripción.',
           updateRole: 'No se pudo actualizar la preferencia de rol.',
           moveSubscription: 'No se pudo mover la suscripción shared.'
