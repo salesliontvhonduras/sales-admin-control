@@ -17,7 +17,6 @@ import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
 import Tooltip from '@mui/material/Tooltip';
@@ -29,7 +28,6 @@ import FormControl from '@mui/material/FormControl';
 // duplicate removed
 // duplicate removed
 // duplicate removed
-import Card from '@mui/material/Card';
 import Skeleton from '@mui/material/Skeleton';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -61,7 +59,6 @@ import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
-import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 import { withAlpha } from 'utils/colorUtils';
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -150,6 +147,7 @@ const lineProviderOptions = [
   'LION_TV',
   'TITAN',
   'NEXOLAT',
+  'GOL TV',
   'LION_PLUS+',
   'SPOTIFY',
   'NETFLIX',
@@ -163,6 +161,7 @@ const m3uProviderConfigMap = {
   NEXOLAT: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php', playlistType: 'm3u', outputFormat: 'mpegts' },
   NEXOLATV: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php', playlistType: 'm3u', outputFormat: 'mpegts' },
   FLOWZY: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php', playlistType: 'm3u', outputFormat: 'mpegts' },
+  GOLTV: { label: 'GOL TV', baseUrl: 'http://gol-tv.online/get.php', playlistType: 'm3u_plus', outputFormat: 'ts' },
   LIONTV: { label: 'Lion Tv', baseUrl: 'http://liontv.es:8080/get.php', playlistType: 'm3u_plus', outputFormat: 'ts' },
   LIONTVPLUS: { label: 'Lion Tv', baseUrl: 'http://liontv.es:8080/get.php', playlistType: 'm3u_plus', outputFormat: 'ts' },
   LIONPLUS: { label: 'Lion Tv', baseUrl: 'http://liontv.es:8080/get.php', playlistType: 'm3u_plus', outputFormat: 'ts' }
@@ -180,17 +179,6 @@ function localizedRegionName(code, locale) {
 }
 
 const countryLabel = (code, t, locale) => localizedRegionName(code, locale) || (code === 'GLOBAL' ? t('common.global') : code || t('common.global'));
-
-const glassCard = (theme) => ({
-  p: 2.5,
-  borderRadius: 3,
-  border: '1px solid',
-  borderColor: theme.palette.divider,
-  boxShadow: '0 16px 42px rgba(0,0,0,0.14)',
-  background: theme.palette.mode === 'light'
-    ? `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.primary.light}15 60%, ${theme.palette.background.paper} 100%)`
-    : `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.primary.dark}30 100%)`
-});
 
 const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
