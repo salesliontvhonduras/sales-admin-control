@@ -22,8 +22,6 @@ import Paper from '@mui/material/Paper';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
-import Card from '@mui/material/Card';
-import Divider from '@mui/material/Divider';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
@@ -60,7 +58,6 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import FlagCircleIcon from '@mui/icons-material/FlagCircle';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import PaidIcon from '@mui/icons-material/Paid';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
@@ -77,7 +74,6 @@ import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveEntityView from 'ui-component/responsive/ResponsiveEntityView';
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
-import { gridSpacing } from 'store/constant';
 import { listLicenseApps } from 'api/catalog-admin';
 import { lionTvApi } from 'utils/api';
 import {
@@ -254,6 +250,7 @@ const STATUS_OPTIONS = ['ACTIVE', 'INACTIVE', 'EXPIRED', 'AVAILABLE', 'EMERGENCY
 const LICENSE_PERIOD = ['ANNUAL', 'LIFETIME'];
 const TYPE_LICENSE = ['PRIMARY', 'USED'];
 const PAYMENT_FILTER_OPTIONS = ['PAID', 'PENDING'];
+const FALLBACK_LICENSE_SERVER_OPTIONS = Object.freeze([{ value: 'gol-tv', label: 'GOL TV' }]);
 const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
   '& .MuiInputLabel-root': { fontWeight: 500 }
@@ -286,6 +283,41 @@ function parseCatalogStatus(value) {
     return normalized === 'true' || normalized === '1';
   }
   return false;
+}
+
+function normalizeServerOptionKey(value) {
+  return String(value ?? '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+}
+
+function normalizeServerOption(item = {}) {
+  const value = item.value ?? item.key ?? item.serverKey ?? item.server_key ?? item.id ?? '';
+  const label = item.label ?? item.name ?? item.serverName ?? item.server_name ?? value;
+  return {
+    value: String(value ?? '').trim(),
+    label: String(label ?? value ?? '').trim()
+  };
+}
+
+function mergeServerOptions(options = []) {
+  const seenValues = new Set();
+  const seenLabels = new Set();
+
+  return [...FALLBACK_LICENSE_SERVER_OPTIONS, ...options].reduce((acc, option) => {
+    const normalized = normalizeServerOption(option);
+    if (!normalized.value) return acc;
+
+    const valueKey = normalizeServerOptionKey(normalized.value);
+    const labelKey = normalizeServerOptionKey(normalized.label || normalized.value);
+    if ((valueKey && seenValues.has(valueKey)) || (labelKey && seenLabels.has(labelKey))) return acc;
+
+    seenValues.add(valueKey);
+    seenLabels.add(labelKey);
+    acc.push(normalized);
+    return acc;
+  }, []);
 }
 
 const LEGACY_LICENSE_APP_LABELS = Object.freeze({
@@ -741,12 +773,11 @@ export default function LicensesLionTv() {
         skipAuthRedirect: true
       });
       const list = res?.data?.data ?? res?.data ?? [];
-      const normalized = Array.isArray(list)
-        ? list.map((s) => ({ value: s.key, label: s.label || s.key }))
-        : [];
-      setServerOptions(normalized);
+      setServerOptions(mergeServerOptions(Array.isArray(list) ? list : []));
     } catch (err) {
-      if (!handleUnauthorized(err)) {
+      const unauthorized = handleUnauthorized(err);
+      if (!unauthorized) {
+        setServerOptions(mergeServerOptions([]));
         enqueueSnackbar(t('licenses.messages.serversLoadError'), { variant: 'warning' });
       }
     }
