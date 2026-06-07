@@ -10,7 +10,8 @@ import {
   IconDashboard,
   IconUserSearch,
   IconKey,
-  IconAlertTriangle
+  IconAlertTriangle,
+  IconSettings
 } from '@tabler/icons-react';
 
 const icons = {
@@ -25,7 +26,8 @@ const icons = {
   IconUserSearch,
   IconMailCog,
   IconDashboard,
-  IconAlertTriangle
+  IconAlertTriangle,
+  IconSettings
 };
 
 const liontv = {
@@ -91,6 +93,16 @@ const liontv = {
           title: 'menu.ecommerceContactRouting',
           type: 'item',
           url: '/liontv/ecommerce-contact-routing',
+          resellerVisible: false,
+          breadcrumbs: true,
+          permission: { any: ['ROLE_ADMIN', 'ADMIN'] }
+        },
+        {
+          id: 'liontv-ecommerce-settings',
+          title: 'menu.ecommerceSettings',
+          type: 'item',
+          url: '/liontv/ecommerce-settings',
+          icon: icons.IconSettings,
           resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['ROLE_ADMIN', 'ADMIN'] }

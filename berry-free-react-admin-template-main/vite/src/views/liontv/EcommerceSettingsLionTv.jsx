@@ -1,0 +1,1057 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useSnackbar } from 'notistack';
+import useAuth from 'hooks/useAuth';
+
+import AddCircleOutlineOutlinedIcon from '@mui/icons-material/AddCircleOutlineOutlined';
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
+import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
+
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Chip from '@mui/material/Chip';
+import Divider from '@mui/material/Divider';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
+import MenuItem from '@mui/material/MenuItem';
+import Stack from '@mui/material/Stack';
+import Switch from '@mui/material/Switch';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+
+import { getAdminEcommerceSiteConfig, updateAdminEcommerceSiteConfig } from 'api/liontv-ecommerce-site';
+import MainCard from 'ui-component/cards/MainCard';
+import { PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
+import { gridSpacing } from 'store/constant';
+
+const DEFAULT_CONFIG = {
+  language: { default: 'es', supported: ['es', 'en'] },
+  brand: {
+    name: 'Lion TV Premium',
+    logoUrl: '/assets/lion-tv-premium-hn-logo.svg',
+    iconUrl: '/assets/lion-tv-premium-hn-logo.svg'
+  },
+  home: {
+    headline: {
+      es: 'Películas, series y deportes en vivo en un solo lugar',
+      en: 'Movies, series and live sports in one place'
+    },
+    subheadline: {
+      es: 'Disfruta Lion TV Premium en tus dispositivos favoritos. Ingresa tu correo para renovar, mejorar o contratar tu plan.',
+      en: 'Enjoy Lion TV Premium on your favorite devices. Enter your email to renew, upgrade or subscribe.'
+    },
+    priceLine: {
+      es: 'A partir de USD 4. Cancela cuando quieras.',
+      en: 'Starting at USD 4. Cancel anytime.'
+    },
+    emailPlaceholder: { es: 'Correo electrónico', en: 'Email address' },
+    ctaText: { es: 'Comenzar', en: 'Get Started' },
+    heroBannerUrl: ''
+  },
+  whatsapp: {
+    hirePhone: '50488204404',
+    hireMessage: {
+      es: 'Hola, quiero contratar Lion TV Premium.',
+      en: 'Hi, I want to subscribe to Lion TV Premium.'
+    },
+    resellerPhone: '50488204404',
+    resellerMessage: {
+      es: 'Hola, quiero información para ser reseller de Lion TV Premium.',
+      en: 'Hi, I want information about becoming a Lion TV Premium reseller.'
+    }
+  },
+  features: { demoOnlineEnabled: true, referralsEnabled: true },
+  content: { newMoviesUrl: '', newFutbolEventsUrl: '', featuredSportsEventsUrl: '' },
+  demo: {
+    apiBaseUrl: '',
+    appCode: 'VIVO_PLAYER',
+    appIconUrl: 'https://play-lh.googleusercontent.com/wrPb4PMamAVMDlB3enhOkHJpiFLx2Cppl9a_EbMxKiJ9Wd2NVOfd9oGOu2L0ubkfw3k=s96-rw',
+    androidApkUrl: 'https://drive.google.com/uc?export=download&id=1So_FuKnx85mPRjB_SlaR60lSlvquvOak',
+    androidBrowserUrl: 'http://webtv.vivo-player.com/',
+    browserDemoUrl: 'http://webtv.vivo-player.com/',
+    macosAppUrl: 'https://apps.apple.com/us/app/vivo-player-smart-iptv-player/id6479256394'
+  },
+  referrals: { apiBaseUrl: '' },
+  payment: { paypalDefaultUrl: '', cardDefaultUrl: '', postPaymentRedirectUrl: '', methods: ['PAYPAL', 'CARD'] },
+  points: { enabled: true, renewalMessage: 'Puedes aplicar tus puntos disponibles al renovar con nuestro equipo.' },
+  externalLinks: { speedTestUrl: 'https://fast.com' },
+  messages: {
+    existingCustomerTitle: 'Tu cuenta Lion TV Premium',
+    newCustomerTitle: 'Elige tu plan',
+    expirationMessage: 'Renueva antes de la fecha de expiración para mantener tu acceso activo.'
+  },
+  moreReasons: {
+    title: { es: 'Más motivos para unirte', en: 'More reasons to join' },
+    cards: [
+      {
+        id: 'devices',
+        title: { es: 'Disfruta en todos tus dispositivos', en: 'Watch on all your devices' },
+        description: { es: 'TV, celular, tablet o computadora con una experiencia fluida.', en: 'TV, phone, tablet or computer with a smooth experience.' },
+        icon: 'devices',
+        order: 1,
+        active: true
+      },
+      {
+        id: 'entertainment',
+        title: { es: 'Todo en un solo lugar', en: 'Everything in one place' },
+        description: { es: 'Deportes, películas, canales y entretenimiento para toda la familia.', en: 'Sports, movies, channels and entertainment for the whole family.' },
+        icon: 'entertainment',
+        order: 2,
+        active: true
+      },
+      {
+        id: 'price',
+        title: { es: 'Planes desde USD 4', en: 'Plans from USD 4' },
+        description: { es: 'Elige el plan y la cantidad de dispositivos que necesitas.', en: 'Choose the plan and number of devices you need.' },
+        icon: 'price',
+        order: 3,
+        active: true
+      }
+    ]
+  },
+  plans: [
+    {
+      code: 'BASIC',
+      name: 'Básico',
+      description: 'Acceso mensual Lion TV Premium',
+      featured: false,
+      variants: [4, 5, 6, 7, 8].map((price, index) => ({
+        connections: index + 1,
+        price,
+        currency: 'USD',
+        packageId: null,
+        paypalUrl: '',
+        cardUrl: ''
+      }))
+    },
+    {
+      code: 'PRIME',
+      name: 'Prime',
+      description: 'Acceso mensual Lion TV Premium',
+      featured: true,
+      variants: [6, 7, 8, 9, 10].map((price, index) => ({
+        connections: index + 1,
+        price,
+        currency: 'USD',
+        packageId: null,
+        paypalUrl: '',
+        cardUrl: ''
+      }))
+    },
+    {
+      code: 'PREMIUM',
+      name: 'Premium',
+      description: 'Acceso mensual Lion TV Premium',
+      featured: false,
+      variants: [10, 11, 12, 14, 16].map((price, index) => ({
+        connections: index + 1,
+        price,
+        currency: 'USD',
+        packageId: null,
+        paypalUrl: '',
+        cardUrl: ''
+      }))
+    }
+  ]
+};
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function localized(value, fallback) {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return {
+      es: value.es ?? fallback.es ?? '',
+      en: value.en ?? fallback.en ?? value.es ?? fallback.es ?? ''
+    };
+  }
+  if (typeof value === 'string') {
+    return {
+      es: value,
+      en: fallback.en ?? fallback.es ?? value
+    };
+  }
+  return clone(fallback);
+}
+
+function normalizeConfig(payload) {
+  const next = {
+    ...clone(DEFAULT_CONFIG),
+    ...(payload || {}),
+    language: { ...DEFAULT_CONFIG.language, ...(payload?.language || {}) },
+    brand: { ...DEFAULT_CONFIG.brand, ...(payload?.brand || {}) },
+    home: { ...DEFAULT_CONFIG.home, ...(payload?.home || {}) },
+    whatsapp: { ...DEFAULT_CONFIG.whatsapp, ...(payload?.whatsapp || {}) },
+    features: { ...DEFAULT_CONFIG.features, ...(payload?.features || {}) },
+    content: { ...DEFAULT_CONFIG.content, ...(payload?.content || {}) },
+    demo: { ...DEFAULT_CONFIG.demo, ...(payload?.demo || {}) },
+    referrals: { ...DEFAULT_CONFIG.referrals, ...(payload?.referrals || {}) },
+    payment: { ...DEFAULT_CONFIG.payment, ...(payload?.payment || {}) },
+    points: { ...DEFAULT_CONFIG.points, ...(payload?.points || {}) },
+    externalLinks: { ...DEFAULT_CONFIG.externalLinks, ...(payload?.externalLinks || {}) },
+    messages: { ...DEFAULT_CONFIG.messages, ...(payload?.messages || {}) },
+    moreReasons: {
+      ...DEFAULT_CONFIG.moreReasons,
+      ...(payload?.moreReasons || {}),
+      cards:
+        Array.isArray(payload?.moreReasons?.cards) && payload.moreReasons.cards.length
+          ? payload.moreReasons.cards
+          : clone(DEFAULT_CONFIG.moreReasons.cards)
+    },
+    plans: Array.isArray(payload?.plans) && payload.plans.length ? payload.plans : clone(DEFAULT_CONFIG.plans)
+  };
+  next.home.headline = localized(next.home.headline, DEFAULT_CONFIG.home.headline);
+  next.home.subheadline = localized(next.home.subheadline, DEFAULT_CONFIG.home.subheadline);
+  next.home.priceLine = localized(next.home.priceLine, DEFAULT_CONFIG.home.priceLine);
+  next.home.emailPlaceholder = localized(next.home.emailPlaceholder, DEFAULT_CONFIG.home.emailPlaceholder);
+  next.home.ctaText = localized(next.home.ctaText, DEFAULT_CONFIG.home.ctaText);
+  next.whatsapp.hireMessage = localized(next.whatsapp.hireMessage, DEFAULT_CONFIG.whatsapp.hireMessage);
+  next.whatsapp.resellerMessage = localized(next.whatsapp.resellerMessage, DEFAULT_CONFIG.whatsapp.resellerMessage);
+  next.moreReasons.title = localized(next.moreReasons.title, DEFAULT_CONFIG.moreReasons.title);
+  next.moreReasons.cards = (next.moreReasons.cards || []).map((card, index) => ({
+    id: card.id || `reason-${index + 1}`,
+    title: localized(card.title, { es: '', en: '' }),
+    description: localized(card.description, { es: '', en: '' }),
+    icon: card.icon || 'devices',
+    order: Number(card.order || index + 1),
+    active: card.active !== false
+  }));
+  return next;
+}
+
+export default function EcommerceSettingsLionTv() {
+  const { t } = useTranslation();
+  const { enqueueSnackbar } = useSnackbar();
+  const { accessToken } = useAuth();
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [form, setForm] = useState(normalizeConfig(DEFAULT_CONFIG));
+
+  const loadConfig = useCallback(async () => {
+    if (!accessToken) return;
+    setLoading(true);
+    setError('');
+    try {
+      const payload = await getAdminEcommerceSiteConfig({ skipAuthRedirect: true });
+      setForm(normalizeConfig(payload));
+    } catch (err) {
+      setError(err?.response?.data?.message || 'No se pudo cargar la configuración del ecommerce.');
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    loadConfig();
+  }, [loadConfig]);
+
+  const planCount = form.plans?.length || 0;
+  const variantCount = useMemo(
+    () => (form.plans || []).reduce((total, plan) => total + (Array.isArray(plan.variants) ? plan.variants.length : 0), 0),
+    [form.plans]
+  );
+
+  const setPath = (path, value) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      let cursor = next;
+      path.slice(0, -1).forEach((key) => {
+        if (!cursor[key] || typeof cursor[key] !== 'object') cursor[key] = {};
+        cursor = cursor[key];
+      });
+      cursor[path[path.length - 1]] = value;
+      return next;
+    });
+  };
+
+  const updatePlan = (planIndex, field, value) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      next.plans[planIndex][field] = value;
+      return next;
+    });
+  };
+
+  const updateVariant = (planIndex, variantIndex, field, value) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      next.plans[planIndex].variants[variantIndex][field] = value;
+      return next;
+    });
+  };
+
+  const addVariant = (planIndex) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      const variants = next.plans[planIndex].variants || [];
+      variants.push({
+        connections: variants.length + 1,
+        price: 0,
+        currency: 'USD',
+        packageId: null,
+        paypalUrl: '',
+        cardUrl: ''
+      });
+      next.plans[planIndex].variants = variants;
+      return next;
+    });
+  };
+
+  const removeVariant = (planIndex, variantIndex) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      next.plans[planIndex].variants = next.plans[planIndex].variants.filter((_, index) => index !== variantIndex);
+      return next;
+    });
+  };
+
+  const updateReasonCard = (cardIndex, path, value) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      let cursor = next.moreReasons.cards[cardIndex];
+      path.slice(0, -1).forEach((key) => {
+        if (!cursor[key] || typeof cursor[key] !== 'object') cursor[key] = {};
+        cursor = cursor[key];
+      });
+      cursor[path[path.length - 1]] = value;
+      return next;
+    });
+  };
+
+  const addReasonCard = () => {
+    setForm((prev) => {
+      const next = clone(prev);
+      const cards = next.moreReasons.cards || [];
+      cards.push({
+        id: `reason-${Date.now()}`,
+        title: { es: 'Nuevo motivo', en: 'New reason' },
+        description: { es: '', en: '' },
+        icon: 'devices',
+        order: cards.length + 1,
+        active: true
+      });
+      next.moreReasons.cards = cards;
+      return next;
+    });
+  };
+
+  const removeReasonCard = (cardIndex) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      next.moreReasons.cards = next.moreReasons.cards.filter((_, index) => index !== cardIndex);
+      return next;
+    });
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError('');
+    try {
+      const payload = await updateAdminEcommerceSiteConfig(form, { skipAuthRedirect: true });
+      setForm(normalizeConfig(payload));
+      enqueueSnackbar('Configuración ecommerce guardada.', { variant: 'success' });
+    } catch (err) {
+      const message = err?.response?.data?.message || 'No se pudo guardar la configuración ecommerce.';
+      setError(message);
+      enqueueSnackbar(message, { variant: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <PageLoadingState
+        title={t('menu.ecommerceSettings', 'Configuración ecommerce')}
+        description="Cargando configuración pública del storefront..."
+      />
+    );
+  }
+
+  if (error && !form) {
+    return (
+      <PageErrorState
+        title={t('menu.ecommerceSettings', 'Configuración ecommerce')}
+        description={error}
+        onRetry={loadConfig}
+      />
+    );
+  }
+
+  return (
+    <MainCard
+      title={t('menu.ecommerceSettings', 'Configuración ecommerce')}
+      secondary={
+        <Button variant="contained" startIcon={<SaveOutlinedIcon />} onClick={handleSave} disabled={saving}>
+          {saving ? 'Guardando...' : 'Guardar cambios'}
+        </Button>
+      }
+    >
+      <Stack spacing={gridSpacing}>
+        <Alert severity="info">
+          Esta configuración alimenta el nuevo ecommerce público de Lion TV Premium. Los links de pago se mantienen privados y
+          solo se resuelven desde el backend en el endpoint de redirección.
+        </Alert>
+        {error ? <Alert severity="warning">{error}</Alert> : null}
+
+        <Grid container spacing={gridSpacing}>
+          <Grid item xs={12} md={4}>
+            <SummaryCard icon={<StorefrontOutlinedIcon />} label="Planes" value={planCount} helper={`${variantCount} variantes configuradas`} />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <SummaryCard
+              label="Demo online"
+              value={form.features.demoOnlineEnabled ? 'Activa' : 'Inactiva'}
+              helper={form.demo.apiBaseUrl || 'Usará VITE_API_SHOPIFY_DEMOS'}
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <SummaryCard
+              label="Referidos"
+              value={form.features.referralsEnabled ? 'Activos' : 'Inactivos'}
+              helper={form.referrals.apiBaseUrl || 'Usará VITE_API_SHOPIFY_DEMOS'}
+            />
+          </Grid>
+        </Grid>
+
+        <SettingsSection title="Marca, idioma y home" description="Logo, banner, idioma por defecto y textos principales del flujo inicial tipo Netflix.">
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <TextField fullWidth label="Nombre de marca" value={form.brand.name} onChange={(event) => setPath(['brand', 'name'], event.target.value)} />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField fullWidth label="Logo URL" value={form.brand.logoUrl} onChange={(event) => setPath(['brand', 'logoUrl'], event.target.value)} />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField fullWidth label="Icon URL" value={form.brand.iconUrl} onChange={(event) => setPath(['brand', 'iconUrl'], event.target.value)} />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                select
+                label="Idioma por defecto"
+                value={form.language.default || 'es'}
+                onChange={(event) => setPath(['language', 'default'], event.target.value)}
+              >
+                <MenuItem value="es">Español</MenuItem>
+                <MenuItem value="en">Inglés</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <TextField
+                fullWidth
+                label="Banner principal URL"
+                value={form.home.heroBannerUrl}
+                onChange={(event) => setPath(['home', 'heroBannerUrl'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Headline ES"
+                value={form.home.headline.es}
+                onChange={(event) => setPath(['home', 'headline', 'es'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Headline EN"
+                value={form.home.headline.en}
+                onChange={(event) => setPath(['home', 'headline', 'en'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                label="Subheadline ES"
+                value={form.home.subheadline.es}
+                onChange={(event) => setPath(['home', 'subheadline', 'es'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                label="Subheadline EN"
+                value={form.home.subheadline.en}
+                onChange={(event) => setPath(['home', 'subheadline', 'en'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Texto precio ES"
+                value={form.home.priceLine.es}
+                onChange={(event) => setPath(['home', 'priceLine', 'es'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Texto precio EN"
+                value={form.home.priceLine.en}
+                onChange={(event) => setPath(['home', 'priceLine', 'en'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Placeholder correo ES"
+                value={form.home.emailPlaceholder.es}
+                onChange={(event) => setPath(['home', 'emailPlaceholder', 'es'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Placeholder correo EN"
+                value={form.home.emailPlaceholder.en}
+                onChange={(event) => setPath(['home', 'emailPlaceholder', 'en'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth label="CTA ES" value={form.home.ctaText.es} onChange={(event) => setPath(['home', 'ctaText', 'es'], event.target.value)} />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth label="CTA EN" value={form.home.ctaText.en} onChange={(event) => setPath(['home', 'ctaText', 'en'], event.target.value)} />
+            </Grid>
+          </Grid>
+        </SettingsSection>
+
+        <SettingsSection title="WhatsApp y enlaces externos" description="Botones públicos de contratación, reseller y link de test de velocidad.">
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="WhatsApp contratación"
+                value={form.whatsapp.hirePhone}
+                onChange={(event) => setPath(['whatsapp', 'hirePhone'], event.target.value)}
+                helperText="Solo números. Ejemplo: 50488204404."
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="WhatsApp reseller"
+                value={form.whatsapp.resellerPhone}
+                onChange={(event) => setPath(['whatsapp', 'resellerPhone'], event.target.value)}
+                helperText="Solo números. Si queda vacío, el botón se oculta."
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                label="Mensaje contratación ES"
+                value={form.whatsapp.hireMessage.es}
+                onChange={(event) => setPath(['whatsapp', 'hireMessage', 'es'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                label="Mensaje contratación EN"
+                value={form.whatsapp.hireMessage.en}
+                onChange={(event) => setPath(['whatsapp', 'hireMessage', 'en'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                label="Mensaje reseller ES"
+                value={form.whatsapp.resellerMessage.es}
+                onChange={(event) => setPath(['whatsapp', 'resellerMessage', 'es'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                label="Mensaje reseller EN"
+                value={form.whatsapp.resellerMessage.en}
+                onChange={(event) => setPath(['whatsapp', 'resellerMessage', 'en'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Link test de velocidad"
+                value={form.externalLinks.speedTestUrl}
+                onChange={(event) => setPath(['externalLinks', 'speedTestUrl'], event.target.value)}
+              />
+            </Grid>
+          </Grid>
+        </SettingsSection>
+
+        <SettingsSection title="Más motivos para unirte" description="Tarjetas visuales del storefront. Se muestran solo las activas y se ordenan por orden ascendente.">
+          <Stack spacing={2}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Título sección ES"
+                  value={form.moreReasons.title.es}
+                  onChange={(event) => setPath(['moreReasons', 'title', 'es'], event.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Título sección EN"
+                  value={form.moreReasons.title.en}
+                  onChange={(event) => setPath(['moreReasons', 'title', 'en'], event.target.value)}
+                />
+              </Grid>
+            </Grid>
+
+            {(form.moreReasons.cards || []).map((card, cardIndex) => (
+              <Card variant="outlined" key={card.id || cardIndex}>
+                <CardContent>
+                  <Grid container spacing={1.5} alignItems="center">
+                    <Grid item xs={12} md={2}>
+                      <TextField fullWidth label="ID" value={card.id} onChange={(event) => updateReasonCard(cardIndex, ['id'], event.target.value)} />
+                    </Grid>
+                    <Grid item xs={6} md={1}>
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="Orden"
+                        value={card.order}
+                        onChange={(event) => updateReasonCard(cardIndex, ['order'], Number(event.target.value || 0))}
+                      />
+                    </Grid>
+                    <Grid item xs={6} md={2}>
+                      <TextField fullWidth select label="Icono" value={card.icon} onChange={(event) => updateReasonCard(cardIndex, ['icon'], event.target.value)}>
+                        {['devices', 'entertainment', 'sports', 'price', 'cancel', 'demo', 'support'].map((icon) => (
+                          <MenuItem value={icon} key={icon}>
+                            {icon}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <TextField
+                        fullWidth
+                        label="Título ES"
+                        value={card.title.es}
+                        onChange={(event) => updateReasonCard(cardIndex, ['title', 'es'], event.target.value)}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <TextField
+                        fullWidth
+                        label="Título EN"
+                        value={card.title.en}
+                        onChange={(event) => updateReasonCard(cardIndex, ['title', 'en'], event.target.value)}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={1}>
+                      <FormControlLabel
+                        control={<Switch checked={Boolean(card.active)} onChange={(event) => updateReasonCard(cardIndex, ['active'], event.target.checked)} />}
+                        label="Activa"
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={1}>
+                      <Tooltip title="Eliminar card">
+                        <span>
+                          <IconButton color="error" onClick={() => removeReasonCard(cardIndex)}>
+                            <DeleteOutlineOutlinedIcon />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        multiline
+                        minRows={2}
+                        label="Descripción ES"
+                        value={card.description.es}
+                        onChange={(event) => updateReasonCard(cardIndex, ['description', 'es'], event.target.value)}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        multiline
+                        minRows={2}
+                        label="Descripción EN"
+                        value={card.description.en}
+                        onChange={(event) => updateReasonCard(cardIndex, ['description', 'en'], event.target.value)}
+                      />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            ))}
+
+            <Box>
+              <Button variant="outlined" startIcon={<AddCircleOutlineOutlinedIcon />} onClick={addReasonCard}>
+                Agregar motivo
+              </Button>
+            </Box>
+          </Stack>
+        </SettingsSection>
+
+        <SettingsSection title="Funciones y APIs" description="Activa demo/referidos y define URLs públicas de contenido.">
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={Boolean(form.features.demoOnlineEnabled)}
+                    onChange={(event) => setPath(['features', 'demoOnlineEnabled'], event.target.checked)}
+                  />
+                }
+                label="Activar demo online"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={Boolean(form.features.referralsEnabled)}
+                    onChange={(event) => setPath(['features', 'referralsEnabled'], event.target.checked)}
+                  />
+                }
+                label="Activar referidos"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="API base demo"
+                value={form.demo.apiBaseUrl}
+                onChange={(event) => setPath(['demo', 'apiBaseUrl'], event.target.value)}
+                helperText="Vacío usa VITE_API_SHOPIFY_DEMOS del ecommerce."
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField fullWidth label="App code demo" value={form.demo.appCode} onChange={(event) => setPath(['demo', 'appCode'], event.target.value)} />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Icono Vivo Player URL"
+                value={form.demo.appIconUrl}
+                onChange={(event) => setPath(['demo', 'appIconUrl'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Android APK URL"
+                value={form.demo.androidApkUrl}
+                onChange={(event) => setPath(['demo', 'androidApkUrl'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Android navegador URL"
+                value={form.demo.androidBrowserUrl}
+                onChange={(event) => setPath(['demo', 'androidBrowserUrl'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Demo web desktop URL"
+                value={form.demo.browserDemoUrl}
+                onChange={(event) => setPath(['demo', 'browserDemoUrl'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="macOS App Store URL"
+                value={form.demo.macosAppUrl}
+                onChange={(event) => setPath(['demo', 'macosAppUrl'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="API base referidos"
+                value={form.referrals.apiBaseUrl}
+                onChange={(event) => setPath(['referrals', 'apiBaseUrl'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Tendencia películas URL"
+                value={form.content.newMoviesUrl}
+                onChange={(event) => setPath(['content', 'newMoviesUrl'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Deportes hoy URL"
+                value={form.content.newFutbolEventsUrl}
+                onChange={(event) => setPath(['content', 'newFutbolEventsUrl'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Featured sports URL"
+                value={form.content.featuredSportsEventsUrl}
+                onChange={(event) => setPath(['content', 'featuredSportsEventsUrl'], event.target.value)}
+              />
+            </Grid>
+          </Grid>
+        </SettingsSection>
+
+        <SettingsSection title="Pagos y redirecciones" description="Links default y parámetros post-pago. Los links por variante se editan en cada plan.">
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="PayPal default URL"
+                value={form.payment.paypalDefaultUrl}
+                onChange={(event) => setPath(['payment', 'paypalDefaultUrl'], event.target.value)}
+                helperText="Soporta {email}, {planCode}, {connections}, {price}."
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Tarjeta default URL"
+                value={form.payment.cardDefaultUrl}
+                onChange={(event) => setPath(['payment', 'cardDefaultUrl'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Post-pago redirect URL"
+                value={form.payment.postPaymentRedirectUrl}
+                onChange={(event) => setPath(['payment', 'postPaymentRedirectUrl'], event.target.value)}
+              />
+            </Grid>
+          </Grid>
+        </SettingsSection>
+
+        <SettingsSection title="Planes, precios y conexiones" description="Matriz comercial editable. Cada variante puede tener links PayPal/tarjeta propios.">
+          <Stack spacing={2.5}>
+            {(form.plans || []).map((plan, planIndex) => (
+              <Card variant="outlined" key={`${plan.code}-${planIndex}`}>
+                <CardContent>
+                  <Stack spacing={2}>
+                    <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Chip color={plan.featured ? 'secondary' : 'default'} label={plan.featured ? 'Destacado' : 'Plan'} />
+                        <Typography variant="h4">{plan.name || plan.code}</Typography>
+                      </Stack>
+                      <FormControlLabel
+                        control={<Switch checked={Boolean(plan.featured)} onChange={(event) => updatePlan(planIndex, 'featured', event.target.checked)} />}
+                        label="Destacado"
+                      />
+                    </Stack>
+
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={3}>
+                        <TextField fullWidth label="Código" value={plan.code} onChange={(event) => updatePlan(planIndex, 'code', event.target.value)} />
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <TextField fullWidth label="Nombre" value={plan.name} onChange={(event) => updatePlan(planIndex, 'name', event.target.value)} />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Descripción"
+                          value={plan.description}
+                          onChange={(event) => updatePlan(planIndex, 'description', event.target.value)}
+                        />
+                      </Grid>
+                    </Grid>
+
+                    <Divider />
+
+                    <Stack spacing={1.5}>
+                      {(plan.variants || []).map((variant, variantIndex) => (
+                        <Grid container spacing={1.5} alignItems="center" key={`${plan.code}-${variantIndex}`}>
+                          <Grid item xs={6} md={1}>
+                            <TextField
+                              fullWidth
+                              type="number"
+                              label="Dispositivos"
+                              value={variant.connections ?? ''}
+                              onChange={(event) => updateVariant(planIndex, variantIndex, 'connections', Number(event.target.value || 0))}
+                            />
+                          </Grid>
+                          <Grid item xs={6} md={1}>
+                            <TextField
+                              fullWidth
+                              type="number"
+                              label="Precio"
+                              value={variant.price ?? ''}
+                              onChange={(event) => updateVariant(planIndex, variantIndex, 'price', Number(event.target.value || 0))}
+                            />
+                          </Grid>
+                          <Grid item xs={6} md={1}>
+                            <TextField
+                              fullWidth
+                              label="Moneda"
+                              value={variant.currency || 'USD'}
+                              onChange={(event) => updateVariant(planIndex, variantIndex, 'currency', event.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={6} md={1}>
+                            <TextField
+                              fullWidth
+                              type="number"
+                              label="Package ID"
+                              value={variant.packageId ?? ''}
+                              onChange={(event) =>
+                                updateVariant(planIndex, variantIndex, 'packageId', event.target.value ? Number(event.target.value) : null)
+                              }
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={3}>
+                            <TextField
+                              fullWidth
+                              label="PayPal URL"
+                              value={variant.paypalUrl || ''}
+                              onChange={(event) => updateVariant(planIndex, variantIndex, 'paypalUrl', event.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <TextField
+                              fullWidth
+                              label="Tarjeta URL"
+                              value={variant.cardUrl || ''}
+                              onChange={(event) => updateVariant(planIndex, variantIndex, 'cardUrl', event.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={1}>
+                            <Tooltip title="Eliminar variante">
+                              <span>
+                                <IconButton color="error" onClick={() => removeVariant(planIndex, variantIndex)} disabled={(plan.variants || []).length <= 1}>
+                                  <DeleteOutlineOutlinedIcon />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          </Grid>
+                        </Grid>
+                      ))}
+                    </Stack>
+
+                    <Box>
+                      <Button variant="outlined" startIcon={<AddCircleOutlineOutlinedIcon />} onClick={() => addVariant(planIndex)}>
+                        Agregar variante
+                      </Button>
+                    </Box>
+                  </Stack>
+                </CardContent>
+              </Card>
+            ))}
+          </Stack>
+        </SettingsSection>
+
+        <SettingsSection title="Puntos y mensajes" description="Textos comerciales para cliente existente, cliente nuevo y renovación.">
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <FormControlLabel
+                control={<Switch checked={Boolean(form.points.enabled)} onChange={(event) => setPath(['points', 'enabled'], event.target.checked)} />}
+                label="Puntos activos"
+              />
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <TextField
+                fullWidth
+                label="Mensaje de puntos"
+                value={form.points.renewalMessage}
+                onChange={(event) => setPath(['points', 'renewalMessage'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Título cliente existente"
+                value={form.messages.existingCustomerTitle}
+                onChange={(event) => setPath(['messages', 'existingCustomerTitle'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Título cliente nuevo"
+                value={form.messages.newCustomerTitle}
+                onChange={(event) => setPath(['messages', 'newCustomerTitle'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Mensaje expiración/renovación"
+                value={form.messages.expirationMessage}
+                onChange={(event) => setPath(['messages', 'expirationMessage'], event.target.value)}
+              />
+            </Grid>
+          </Grid>
+        </SettingsSection>
+      </Stack>
+    </MainCard>
+  );
+}
+
+function SettingsSection({ title, description, children }) {
+  return (
+    <Card variant="outlined">
+      <CardContent>
+        <Stack spacing={2.5}>
+          <Box>
+            <Typography variant="h3">{title}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {description}
+            </Typography>
+          </Box>
+          {children}
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SummaryCard({ icon, label, value, helper }) {
+  return (
+    <Card variant="outlined">
+      <CardContent>
+        <Stack spacing={1}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            {icon}
+            <Typography variant="overline" color="text.secondary">
+              {label}
+            </Typography>
+          </Stack>
+          <Typography variant="h3">{value}</Typography>
+          <Typography variant="body2" color="text.secondary" noWrap title={helper}>
+            {helper}
+          </Typography>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}

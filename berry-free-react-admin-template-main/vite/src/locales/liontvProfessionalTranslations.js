@@ -10,6 +10,7 @@ export const lionTvProfessionalTranslations = {
       view: 'View'
     },
     menu: {
+      ecommerceSettings: 'Ecommerce Settings',
       moviesSeriesPosts: 'Movies & Series Posts'
     },
     common: {
@@ -1286,6 +1287,7 @@ export const lionTvProfessionalTranslations = {
       view: 'Ver'
     },
     menu: {
+      ecommerceSettings: 'Configuración ecommerce',
       moviesSeriesPosts: 'Posts de Películas y Series'
     },
     common: {
