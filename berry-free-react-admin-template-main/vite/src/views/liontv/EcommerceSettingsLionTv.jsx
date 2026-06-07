@@ -30,6 +30,37 @@ import MainCard from 'ui-component/cards/MainCard';
 import { PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
 import { gridSpacing } from 'store/constant';
 
+const DEFAULT_PLAN_SPECS = [
+  {
+    id: 'includedContent',
+    label: { es: 'Contenido incluido', en: 'Included content' },
+    value: { es: 'Películas, series, canales y deportes', en: 'Movies, series, channels and sports' },
+    order: 1,
+    active: true
+  },
+  {
+    id: 'compatibleDevices',
+    label: { es: 'Dispositivos compatibles', en: 'Compatible devices' },
+    value: { es: 'TV, computadora, celular, tablet', en: 'TV, computer, phone, tablet' },
+    order: 2,
+    active: true
+  },
+  {
+    id: 'simultaneousDevices',
+    label: { es: 'Dispositivos simultáneos', en: 'Simultaneous devices' },
+    value: { es: '{devicesLabel}', en: '{devicesLabel}' },
+    order: 3,
+    active: true
+  },
+  {
+    id: 'support',
+    label: { es: 'Atención', en: 'Support' },
+    value: { es: 'Soporte por WhatsApp', en: 'WhatsApp support' },
+    order: 4,
+    active: true
+  }
+];
+
 const DEFAULT_CONFIG = {
   language: { default: 'es', supported: ['es', 'en'] },
   brand: {
@@ -78,9 +109,19 @@ const DEFAULT_CONFIG = {
     macosAppUrl: 'https://apps.apple.com/us/app/vivo-player-smart-iptv-player/id6479256394'
   },
   referrals: { apiBaseUrl: '' },
-  payment: { paypalDefaultUrl: '', cardDefaultUrl: '', postPaymentRedirectUrl: '', methods: ['PAYPAL', 'CARD'] },
+  payment: {
+    paypalDefaultUrl: '',
+    cardDefaultUrl: '',
+    automaticDebitDefaultUrl: '',
+    automaticDebitDiscountPercent: 5,
+    postPaymentRedirectUrl: '',
+    methods: ['PAYPAL', 'CARD', 'AUTOMATIC_DEBIT']
+  },
   points: { enabled: true, renewalMessage: 'Puedes aplicar tus puntos disponibles al renovar con nuestro equipo.' },
-  externalLinks: { speedTestUrl: 'https://fast.com' },
+  externalLinks: {
+    speedTestUrl: 'https://fast.com',
+    whatsappChannelUrl: 'https://whatsapp.com/channel/0029Vb74eCk9Bb61cxYPCN1J'
+  },
   messages: {
     existingCustomerTitle: 'Tu cuenta Lion TV Premium',
     newCustomerTitle: 'Elige tu plan',
@@ -121,13 +162,15 @@ const DEFAULT_CONFIG = {
       name: 'Básico',
       description: 'Acceso mensual Lion TV Premium',
       featured: false,
-      variants: [4, 5, 6, 7, 8].map((price, index) => ({
+      specs: clone(DEFAULT_PLAN_SPECS),
+      variants: [4.99, 5.99, 6.99, 7.99, 8.99].map((price, index) => ({
         connections: index + 1,
         price,
         currency: 'USD',
         packageId: null,
         paypalUrl: '',
-        cardUrl: ''
+        cardUrl: '',
+        automaticDebitUrl: ''
       }))
     },
     {
@@ -135,13 +178,15 @@ const DEFAULT_CONFIG = {
       name: 'Prime',
       description: 'Acceso mensual Lion TV Premium',
       featured: true,
-      variants: [6, 7, 8, 9, 10].map((price, index) => ({
+      specs: clone(DEFAULT_PLAN_SPECS),
+      variants: [9.99, 10.99, 11.99, 13.99, 15.99].map((price, index) => ({
         connections: index + 1,
         price,
         currency: 'USD',
         packageId: null,
         paypalUrl: '',
-        cardUrl: ''
+        cardUrl: '',
+        automaticDebitUrl: ''
       }))
     },
     {
@@ -149,13 +194,15 @@ const DEFAULT_CONFIG = {
       name: 'Premium',
       description: 'Acceso mensual Lion TV Premium',
       featured: false,
-      variants: [10, 11, 12, 14, 16].map((price, index) => ({
+      specs: clone(DEFAULT_PLAN_SPECS),
+      variants: [10.99, 11.99, 12.99, 14.99, 16.99].map((price, index) => ({
         connections: index + 1,
         price,
         currency: 'USD',
         packageId: null,
         paypalUrl: '',
-        cardUrl: ''
+        cardUrl: '',
+        automaticDebitUrl: ''
       }))
     }
   ]
@@ -179,6 +226,61 @@ function localized(value, fallback) {
     };
   }
   return clone(fallback);
+}
+
+function normalizeVariant(variant = {}, planCode = '', index = 0) {
+  const nextPrices = {
+    BASIC: [4.99, 5.99, 6.99, 7.99, 8.99],
+    PRIME: [9.99, 10.99, 11.99, 13.99, 15.99],
+    PREMIUM: [10.99, 11.99, 12.99, 14.99, 16.99]
+  }[String(planCode || '').toUpperCase()];
+  const legacyPrices = {
+    BASIC: [4, 5, 6, 7, 8],
+    PRIME: [6, 7, 8, 9, 10],
+    PREMIUM: [10, 11, 12, 14, 16]
+  }[String(planCode || '').toUpperCase()];
+  const legacyPrice = legacyPrices?.[index];
+  const migratedPrice = Number(variant.price) === legacyPrice && nextPrices?.[index] ? nextPrices[index] : variant.price;
+  return {
+    connections: Number(variant.connections || index + 1),
+    price: Number(migratedPrice ?? 0),
+    currency: variant.currency || 'USD',
+    packageId: variant.packageId ?? null,
+    paypalUrl: variant.paypalUrl || '',
+    cardUrl: variant.cardUrl || '',
+    automaticDebitUrl: variant.automaticDebitUrl || ''
+  };
+}
+
+function normalizePlanSpec(spec = {}, index = 0) {
+  const fallback = DEFAULT_PLAN_SPECS[index] || {
+    id: `spec-${index + 1}`,
+    label: { es: '', en: '' },
+    value: { es: '', en: '' },
+    order: index + 1,
+    active: true
+  };
+  return {
+    id: spec.id || fallback.id,
+    label: localized(spec.label, fallback.label),
+    value: localized(spec.value, fallback.value),
+    order: Number(spec.order || fallback.order || index + 1),
+    active: spec.active !== false
+  };
+}
+
+function normalizePlan(plan = {}, index = 0) {
+  const fallback = DEFAULT_CONFIG.plans[index] || {};
+  const code = plan.code || fallback.code || `PLAN_${index + 1}`;
+  const variants = Array.isArray(plan.variants) && plan.variants.length ? plan.variants : fallback.variants || [];
+  const specs = Array.isArray(plan.specs) && plan.specs.length ? plan.specs : DEFAULT_PLAN_SPECS;
+  return {
+    ...fallback,
+    ...plan,
+    code,
+    specs: specs.map((spec, specIndex) => normalizePlanSpec(spec, specIndex)),
+    variants: variants.map((variant, variantIndex) => normalizeVariant(variant, code, variantIndex))
+  };
 }
 
 function normalizeConfig(payload) {
@@ -223,6 +325,9 @@ function normalizeConfig(payload) {
     order: Number(card.order || index + 1),
     active: card.active !== false
   }));
+  next.payment.automaticDebitDiscountPercent = Number(next.payment.automaticDebitDiscountPercent ?? 5);
+  next.payment.methods = Array.from(new Set([...(next.payment.methods || []), 'AUTOMATIC_DEBIT']));
+  next.plans = (next.plans || []).map((plan, index) => normalizePlan(plan, index));
   return next;
 }
 
@@ -289,6 +394,43 @@ export default function EcommerceSettingsLionTv() {
     });
   };
 
+  const updatePlanSpec = (planIndex, specIndex, path, value) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      let cursor = next.plans[planIndex].specs[specIndex];
+      path.slice(0, -1).forEach((key) => {
+        if (!cursor[key] || typeof cursor[key] !== 'object') cursor[key] = {};
+        cursor = cursor[key];
+      });
+      cursor[path[path.length - 1]] = value;
+      return next;
+    });
+  };
+
+  const addPlanSpec = (planIndex) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      const specs = next.plans[planIndex].specs || [];
+      specs.push({
+        id: `spec-${Date.now()}`,
+        label: { es: 'Nueva opción', en: 'New option' },
+        value: { es: '', en: '' },
+        order: specs.length + 1,
+        active: true
+      });
+      next.plans[planIndex].specs = specs;
+      return next;
+    });
+  };
+
+  const removePlanSpec = (planIndex, specIndex) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      next.plans[planIndex].specs = next.plans[planIndex].specs.filter((_, index) => index !== specIndex);
+      return next;
+    });
+  };
+
   const addVariant = (planIndex) => {
     setForm((prev) => {
       const next = clone(prev);
@@ -299,7 +441,8 @@ export default function EcommerceSettingsLionTv() {
         currency: 'USD',
         packageId: null,
         paypalUrl: '',
-        cardUrl: ''
+        cardUrl: '',
+        automaticDebitUrl: ''
       });
       next.plans[planIndex].variants = variants;
       return next;
@@ -591,12 +734,21 @@ export default function EcommerceSettingsLionTv() {
                 onChange={(event) => setPath(['whatsapp', 'resellerMessage', 'en'], event.target.value)}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Link test de velocidad"
                 value={form.externalLinks.speedTestUrl}
                 onChange={(event) => setPath(['externalLinks', 'speedTestUrl'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Canal de WhatsApp"
+                value={form.externalLinks.whatsappChannelUrl}
+                onChange={(event) => setPath(['externalLinks', 'whatsappChannelUrl'], event.target.value)}
+                helperText="Se muestra como link horizontal en el footer del ecommerce."
               />
             </Grid>
           </Grid>
@@ -845,6 +997,25 @@ export default function EcommerceSettingsLionTv() {
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
+                label="Débito automático default URL"
+                value={form.payment.automaticDebitDefaultUrl}
+                onChange={(event) => setPath(['payment', 'automaticDebitDefaultUrl'], event.target.value)}
+                helperText="Solo se usa para el botón Con débito automático."
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Descuento débito automático (%)"
+                value={form.payment.automaticDebitDiscountPercent}
+                onChange={(event) => setPath(['payment', 'automaticDebitDiscountPercent'], Number(event.target.value || 0))}
+                helperText="Default 5. Placeholders: {price}, {originalPrice}, {discountAmount}, {discountPercent}."
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
                 label="Post-pago redirect URL"
                 value={form.payment.postPaymentRedirectUrl}
                 onChange={(event) => setPath(['payment', 'postPaymentRedirectUrl'], event.target.value)}
@@ -885,11 +1056,95 @@ export default function EcommerceSettingsLionTv() {
                           onChange={(event) => updatePlan(planIndex, 'description', event.target.value)}
                         />
                       </Grid>
-                    </Grid>
+	                    </Grid>
 
-                    <Divider />
+	                    <Divider />
 
-                    <Stack spacing={1.5}>
+	                    <Stack spacing={1.5}>
+	                      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={1}>
+	                        <Box>
+	                          <Typography variant="h5">Opciones visibles del plan</Typography>
+	                          <Typography variant="caption" color="text.secondary">
+	                            Puedes usar placeholders: {'{connections}'}, {'{devicesLabel}'} y {'{support}'}.
+	                          </Typography>
+	                        </Box>
+	                        <Button size="small" variant="outlined" startIcon={<AddCircleOutlineOutlinedIcon />} onClick={() => addPlanSpec(planIndex)}>
+	                          Agregar opción
+	                        </Button>
+	                      </Stack>
+
+	                      {(plan.specs || []).map((spec, specIndex) => (
+	                        <Card variant="outlined" key={`${plan.code}-spec-${spec.id || specIndex}`}>
+	                          <CardContent>
+	                            <Grid container spacing={1.5} alignItems="center">
+	                              <Grid item xs={12} md={2}>
+	                                <TextField fullWidth label="ID" value={spec.id} onChange={(event) => updatePlanSpec(planIndex, specIndex, ['id'], event.target.value)} />
+	                              </Grid>
+	                              <Grid item xs={6} md={1}>
+	                                <TextField
+	                                  fullWidth
+	                                  type="number"
+	                                  label="Orden"
+	                                  value={spec.order}
+	                                  onChange={(event) => updatePlanSpec(planIndex, specIndex, ['order'], Number(event.target.value || 0))}
+	                                />
+	                              </Grid>
+	                              <Grid item xs={6} md={2}>
+	                                <FormControlLabel
+	                                  control={<Switch checked={Boolean(spec.active)} onChange={(event) => updatePlanSpec(planIndex, specIndex, ['active'], event.target.checked)} />}
+	                                  label="Activa"
+	                                />
+	                              </Grid>
+	                              <Grid item xs={12} md={3}>
+	                                <TextField
+	                                  fullWidth
+	                                  label="Label ES"
+	                                  value={spec.label?.es || ''}
+	                                  onChange={(event) => updatePlanSpec(planIndex, specIndex, ['label', 'es'], event.target.value)}
+	                                />
+	                              </Grid>
+	                              <Grid item xs={12} md={3}>
+	                                <TextField
+	                                  fullWidth
+	                                  label="Label EN"
+	                                  value={spec.label?.en || ''}
+	                                  onChange={(event) => updatePlanSpec(planIndex, specIndex, ['label', 'en'], event.target.value)}
+	                                />
+	                              </Grid>
+	                              <Grid item xs={12} md={1}>
+	                                <Tooltip title="Eliminar opción">
+	                                  <span>
+	                                    <IconButton color="error" onClick={() => removePlanSpec(planIndex, specIndex)} disabled={(plan.specs || []).length <= 1}>
+	                                      <DeleteOutlineOutlinedIcon />
+	                                    </IconButton>
+	                                  </span>
+	                                </Tooltip>
+	                              </Grid>
+	                              <Grid item xs={12} md={6}>
+	                                <TextField
+	                                  fullWidth
+	                                  label="Valor ES"
+	                                  value={spec.value?.es || ''}
+	                                  onChange={(event) => updatePlanSpec(planIndex, specIndex, ['value', 'es'], event.target.value)}
+	                                />
+	                              </Grid>
+	                              <Grid item xs={12} md={6}>
+	                                <TextField
+	                                  fullWidth
+	                                  label="Valor EN"
+	                                  value={spec.value?.en || ''}
+	                                  onChange={(event) => updatePlanSpec(planIndex, specIndex, ['value', 'en'], event.target.value)}
+	                                />
+	                              </Grid>
+	                            </Grid>
+	                          </CardContent>
+	                        </Card>
+	                      ))}
+	                    </Stack>
+
+	                    <Divider />
+
+	                    <Stack spacing={1.5}>
                       {(plan.variants || []).map((variant, variantIndex) => (
                         <Grid container spacing={1.5} alignItems="center" key={`${plan.code}-${variantIndex}`}>
                           <Grid item xs={6} md={1}>
@@ -929,22 +1184,30 @@ export default function EcommerceSettingsLionTv() {
                               }
                             />
                           </Grid>
-                          <Grid item xs={12} md={3}>
-                            <TextField
-                              fullWidth
-                              label="PayPal URL"
-                              value={variant.paypalUrl || ''}
-                              onChange={(event) => updateVariant(planIndex, variantIndex, 'paypalUrl', event.target.value)}
-                            />
-                          </Grid>
-                          <Grid item xs={12} md={4}>
-                            <TextField
-                              fullWidth
-                              label="Tarjeta URL"
-                              value={variant.cardUrl || ''}
-                              onChange={(event) => updateVariant(planIndex, variantIndex, 'cardUrl', event.target.value)}
-                            />
-                          </Grid>
+	                          <Grid item xs={12} md={2}>
+	                            <TextField
+	                              fullWidth
+	                              label="PayPal URL"
+	                              value={variant.paypalUrl || ''}
+	                              onChange={(event) => updateVariant(planIndex, variantIndex, 'paypalUrl', event.target.value)}
+	                            />
+	                          </Grid>
+	                          <Grid item xs={12} md={2}>
+	                            <TextField
+	                              fullWidth
+	                              label="Tarjeta URL"
+	                              value={variant.cardUrl || ''}
+	                              onChange={(event) => updateVariant(planIndex, variantIndex, 'cardUrl', event.target.value)}
+	                            />
+	                          </Grid>
+	                          <Grid item xs={12} md={2}>
+	                            <TextField
+	                              fullWidth
+	                              label="Débito automático URL"
+	                              value={variant.automaticDebitUrl || ''}
+	                              onChange={(event) => updateVariant(planIndex, variantIndex, 'automaticDebitUrl', event.target.value)}
+	                            />
+	                          </Grid>
                           <Grid item xs={12} md={1}>
                             <Tooltip title="Eliminar variante">
                               <span>
