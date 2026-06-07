@@ -107,7 +107,7 @@ const DEFAULT_CONFIG = {
       },
       {
         id: 'price',
-        title: { es: 'Planes desde USD 4', en: 'Plans from USD 4' },
+        title: { es: 'Planes desde USD 4.99', en: 'Plans from USD 4.99' },
         description: { es: 'Elige el plan y la cantidad de dispositivos que necesitas.', en: 'Choose the plan and number of devices you need.' },
         icon: 'price',
         order: 3,
