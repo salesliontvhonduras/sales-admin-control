@@ -2,7 +2,7 @@ const IMPORTANT_MATCH_TEMPLATE_HTML = `<div style="margin:0;padding:0;background
   <div style="max-width:620px;margin:0 auto;background:#000000;padding:32px 12px;">
     <div style="background:#111111;border:1px solid #232323;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.45);">
       <div style="padding:30px 28px 22px;border-bottom:1px solid #232323;background:linear-gradient(180deg,#141414 0%,#0f0f0f 100%);text-align:center;">
-        <div style="font-size:28px;font-weight:800;letter-spacing:1px;color:#e50914;">Lion TV Premium</div>
+        <img src="{{brandLogoUrl}}" alt="Lion TV Premium" width="180" style="display:block;width:180px;max-width:72%;height:auto;margin:0 auto;border:0;outline:none;text-decoration:none;" />
         <div style="margin-top:10px;font-size:14px;color:#b3b3b3;letter-spacing:0.3px;">Partido importante</div>
       </div>
 
@@ -68,6 +68,17 @@ export function buildImportantMatchTemplatePreset() {
     category: 'SPORTS_MARKETING',
     active: true,
     variables: [
+      {
+        variableName: 'brandLogoUrl',
+        label: 'Logo Lion TV Premium',
+        inputType: 'url',
+        valueSource: 'RECIPIENT',
+        bindingKey: 'brandLogoUrl',
+        required: false,
+        defaultValue: 'https://liontvpremium.com/assets/lion-tv-premium-logo.png',
+        helpText: 'URL pública del logo usado en el encabezado del correo.',
+        sortOrder: 0
+      },
       {
         variableName: 'customerName',
         label: 'Nombre del cliente',

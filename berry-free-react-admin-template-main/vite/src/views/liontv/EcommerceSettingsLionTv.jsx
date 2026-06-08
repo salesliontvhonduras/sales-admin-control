@@ -65,8 +65,9 @@ const DEFAULT_CONFIG = {
   language: { default: 'es', supported: ['es', 'en'] },
   brand: {
     name: 'Lion TV Premium',
-    logoUrl: '/assets/lion-tv-premium-hn-logo.svg',
-    iconUrl: '/assets/lion-tv-premium-hn-logo.svg'
+    logoUrl: '/assets/lion-tv-premium-logo.png',
+    iconUrl: '/assets/lion-tv-premium-logo.png',
+    planIconUrl: '/assets/lion-tv-premium-logo.png'
   },
   home: {
     headline: {
