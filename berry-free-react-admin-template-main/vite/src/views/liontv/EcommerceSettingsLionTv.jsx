@@ -4,6 +4,7 @@ import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
 
 import AddCircleOutlineOutlinedIcon from '@mui/icons-material/AddCircleOutlineOutlined';
+import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined';
@@ -25,7 +26,7 @@ import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
-import { getAdminEcommerceSiteConfig, updateAdminEcommerceSiteConfig } from 'api/liontv-ecommerce-site';
+import { getAdminEcommerceSiteConfig, updateAdminEcommerceSiteConfig, uploadAdminEcommerceStoryMedia } from 'api/liontv-ecommerce-site';
 import MainCard from 'ui-component/cards/MainCard';
 import { PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
 import { gridSpacing } from 'store/constant';
@@ -100,6 +101,27 @@ const DEFAULT_CONFIG = {
   },
   features: { demoOnlineEnabled: true, referralsEnabled: true },
   content: { newMoviesUrl: '', newFutbolEventsUrl: '', featuredSportsEventsUrl: '' },
+  stories: {
+    enabled: true,
+    title: { es: 'Historias', en: 'Stories' },
+    autoplayMs: 6000,
+    items: [
+      {
+        id: 'mundial-2026',
+        title: { es: 'Mundial 2026', en: 'World Cup 2026' },
+        subtitle: { es: 'México, Canadá y USA en Lion TV Premium', en: 'Mexico, Canada and USA on Lion TV Premium' },
+        mediaType: 'image',
+        mediaUrl: '',
+        thumbnailUrl: '',
+        ctaText: { es: 'Ver planes', en: 'See plans' },
+        ctaUrl: '#plans',
+        startsAt: '',
+        endsAt: '',
+        order: 1,
+        active: true
+      }
+    ]
+  },
   demo: {
     apiBaseUrl: '',
     appCode: 'VIVO_PLAYER',
@@ -284,6 +306,31 @@ function normalizePlan(plan = {}, index = 0) {
   };
 }
 
+function normalizeStoryItem(item = {}, index = 0) {
+  const fallback = DEFAULT_CONFIG.stories.items[index] || {
+    id: `story-${index + 1}`,
+    title: { es: '', en: '' },
+    subtitle: { es: '', en: '' },
+    ctaText: { es: '', en: '' },
+    order: index + 1,
+    active: true
+  };
+  return {
+    id: item.id || fallback.id || `story-${index + 1}`,
+    title: localized(item.title, fallback.title || { es: '', en: '' }),
+    subtitle: localized(item.subtitle, fallback.subtitle || { es: '', en: '' }),
+    mediaType: item.mediaType === 'video' ? 'video' : 'image',
+    mediaUrl: item.mediaUrl || '',
+    thumbnailUrl: item.thumbnailUrl || '',
+    ctaText: localized(item.ctaText, fallback.ctaText || { es: '', en: '' }),
+    ctaUrl: item.ctaUrl || '',
+    startsAt: item.startsAt || '',
+    endsAt: item.endsAt || '',
+    order: Number(item.order || fallback.order || index + 1),
+    active: item.active !== false
+  };
+}
+
 function normalizeConfig(payload) {
   const next = {
     ...clone(DEFAULT_CONFIG),
@@ -294,6 +341,14 @@ function normalizeConfig(payload) {
     whatsapp: { ...DEFAULT_CONFIG.whatsapp, ...(payload?.whatsapp || {}) },
     features: { ...DEFAULT_CONFIG.features, ...(payload?.features || {}) },
     content: { ...DEFAULT_CONFIG.content, ...(payload?.content || {}) },
+    stories: {
+      ...DEFAULT_CONFIG.stories,
+      ...(payload?.stories || {}),
+      items:
+        Array.isArray(payload?.stories?.items) && payload.stories.items.length
+          ? payload.stories.items
+          : clone(DEFAULT_CONFIG.stories.items)
+    },
     demo: { ...DEFAULT_CONFIG.demo, ...(payload?.demo || {}) },
     referrals: { ...DEFAULT_CONFIG.referrals, ...(payload?.referrals || {}) },
     payment: { ...DEFAULT_CONFIG.payment, ...(payload?.payment || {}) },
@@ -317,6 +372,9 @@ function normalizeConfig(payload) {
   next.home.ctaText = localized(next.home.ctaText, DEFAULT_CONFIG.home.ctaText);
   next.whatsapp.hireMessage = localized(next.whatsapp.hireMessage, DEFAULT_CONFIG.whatsapp.hireMessage);
   next.whatsapp.resellerMessage = localized(next.whatsapp.resellerMessage, DEFAULT_CONFIG.whatsapp.resellerMessage);
+  next.stories.title = localized(next.stories.title, DEFAULT_CONFIG.stories.title);
+  next.stories.autoplayMs = Number(next.stories.autoplayMs || DEFAULT_CONFIG.stories.autoplayMs);
+  next.stories.items = (next.stories.items || []).map((item, index) => normalizeStoryItem(item, index));
   next.moreReasons.title = localized(next.moreReasons.title, DEFAULT_CONFIG.moreReasons.title);
   next.moreReasons.cards = (next.moreReasons.cards || []).map((card, index) => ({
     id: card.id || `reason-${index + 1}`,
@@ -339,6 +397,7 @@ export default function EcommerceSettingsLionTv() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingStoryId, setUploadingStoryId] = useState('');
   const [error, setError] = useState('');
   const [form, setForm] = useState(normalizeConfig(DEFAULT_CONFIG));
 
@@ -494,6 +553,76 @@ export default function EcommerceSettingsLionTv() {
       next.moreReasons.cards = next.moreReasons.cards.filter((_, index) => index !== cardIndex);
       return next;
     });
+  };
+
+  const updateStoryItem = (storyIndex, path, value) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      let cursor = next.stories.items[storyIndex];
+      path.slice(0, -1).forEach((key) => {
+        if (!cursor[key] || typeof cursor[key] !== 'object') cursor[key] = {};
+        cursor = cursor[key];
+      });
+      cursor[path[path.length - 1]] = value;
+      return next;
+    });
+  };
+
+  const addStoryItem = () => {
+    setForm((prev) => {
+      const next = clone(prev);
+      const items = next.stories.items || [];
+      items.push({
+        id: `story-${Date.now()}`,
+        title: { es: 'Nueva historia', en: 'New story' },
+        subtitle: { es: '', en: '' },
+        mediaType: 'image',
+        mediaUrl: '',
+        thumbnailUrl: '',
+        ctaText: { es: 'Ver más', en: 'See more' },
+        ctaUrl: '#plans',
+        startsAt: '',
+        endsAt: '',
+        order: items.length + 1,
+        active: true
+      });
+      next.stories.items = items;
+      return next;
+    });
+  };
+
+  const removeStoryItem = (storyIndex) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      next.stories.items = next.stories.items.filter((_, index) => index !== storyIndex);
+      return next;
+    });
+  };
+
+  const handleStoryFileSelected = async (storyIndex, file) => {
+    if (!file) return;
+    const storyId = form.stories.items?.[storyIndex]?.id || `story-${storyIndex}`;
+    setUploadingStoryId(storyId);
+    try {
+      const payload = await uploadAdminEcommerceStoryMedia(file, { skipAuthRedirect: true });
+      setForm((prev) => {
+        const next = clone(prev);
+        const item = next.stories.items[storyIndex];
+        if (!item) return next;
+        item.mediaUrl = payload?.url || item.mediaUrl;
+        item.mediaType = payload?.mediaType || item.mediaType || 'image';
+        if (!item.thumbnailUrl && payload?.mediaType === 'image') {
+          item.thumbnailUrl = payload.url;
+        }
+        return next;
+      });
+      enqueueSnackbar('Archivo de historia subido.', { variant: 'success' });
+    } catch (err) {
+      const message = err?.response?.data?.message || 'No se pudo subir el archivo de historia.';
+      enqueueSnackbar(message, { variant: 'error' });
+    } finally {
+      setUploadingStoryId('');
+    }
   };
 
   const handleSave = async () => {
@@ -860,6 +989,253 @@ export default function EcommerceSettingsLionTv() {
             <Box>
               <Button variant="outlined" startIcon={<AddCircleOutlineOutlinedIcon />} onClick={addReasonCard}>
                 Agregar motivo
+              </Button>
+            </Box>
+          </Stack>
+        </SettingsSection>
+
+        <SettingsSection title="Historias estilo Instagram" description="Contenido corto para mostrar debajo del hero del ecommerce. Puedes usar URLs externas o subir archivos al servidor.">
+          <Stack spacing={2}>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item xs={12} md={3}>
+                <FormControlLabel
+                  control={<Switch checked={Boolean(form.stories.enabled)} onChange={(event) => setPath(['stories', 'enabled'], event.target.checked)} />}
+                  label="Activar historias"
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Duración por historia (ms)"
+                  value={form.stories.autoplayMs}
+                  onChange={(event) => setPath(['stories', 'autoplayMs'], Number(event.target.value || 0))}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
+                  label="Título sección ES"
+                  value={form.stories.title.es}
+                  onChange={(event) => setPath(['stories', 'title', 'es'], event.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
+                  label="Título sección EN"
+                  value={form.stories.title.en}
+                  onChange={(event) => setPath(['stories', 'title', 'en'], event.target.value)}
+                />
+              </Grid>
+            </Grid>
+
+            {(form.stories.items || []).map((story, storyIndex) => {
+              const uploading = uploadingStoryId === story.id;
+              const previewUrl = story.thumbnailUrl || story.mediaUrl;
+              return (
+                <Card variant="outlined" key={story.id || storyIndex}>
+                  <CardContent>
+                    <Grid container spacing={1.5} alignItems="center">
+                      <Grid item xs={12} sm={3} md={2}>
+                        <Stack spacing={1} alignItems="center">
+                          <Box
+                            sx={{
+                              width: 86,
+                              height: 86,
+                              p: '3px',
+                              borderRadius: '999px',
+                              background: 'linear-gradient(135deg, #e50914, #f6b94d, #7a0008)'
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: '100%',
+                                height: '100%',
+                                overflow: 'hidden',
+                                borderRadius: '999px',
+                                bgcolor: '#111',
+                                display: 'grid',
+                                placeItems: 'center',
+                                color: '#fff',
+                                fontWeight: 700,
+                                fontSize: 12,
+                                textAlign: 'center'
+                              }}
+                            >
+                              {previewUrl ? (
+                                story.mediaType === 'video' && !story.thumbnailUrl ? (
+                                  'VIDEO'
+                                ) : (
+                                  <Box component="img" src={previewUrl} alt={story.title.es || 'Historia'} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                )
+                              ) : (
+                                'Historia'
+                              )}
+                            </Box>
+                          </Box>
+                          <Button size="small" variant="outlined" startIcon={<CloudUploadOutlinedIcon />} component="label" disabled={uploading}>
+                            {uploading ? 'Subiendo...' : 'Subir'}
+                            <input
+                              hidden
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+                              onChange={(event) => {
+                                handleStoryFileSelected(storyIndex, event.target.files?.[0]);
+                                event.target.value = '';
+                              }}
+                            />
+                          </Button>
+                        </Stack>
+                      </Grid>
+
+                      <Grid item xs={12} sm={9} md={10}>
+                        <Grid container spacing={1.5} alignItems="center">
+                          <Grid item xs={12} md={2}>
+                            <TextField fullWidth label="ID" value={story.id} onChange={(event) => updateStoryItem(storyIndex, ['id'], event.target.value)} />
+                          </Grid>
+                          <Grid item xs={6} md={1}>
+                            <TextField
+                              fullWidth
+                              type="number"
+                              label="Orden"
+                              value={story.order}
+                              onChange={(event) => updateStoryItem(storyIndex, ['order'], Number(event.target.value || 0))}
+                            />
+                          </Grid>
+                          <Grid item xs={6} md={2}>
+                            <TextField
+                              fullWidth
+                              select
+                              label="Tipo"
+                              value={story.mediaType}
+                              onChange={(event) => updateStoryItem(storyIndex, ['mediaType'], event.target.value)}
+                            >
+                              <MenuItem value="image">Imagen</MenuItem>
+                              <MenuItem value="video">Video</MenuItem>
+                            </TextField>
+                          </Grid>
+                          <Grid item xs={6} md={2}>
+                            <FormControlLabel
+                              control={<Switch checked={Boolean(story.active)} onChange={(event) => updateStoryItem(storyIndex, ['active'], event.target.checked)} />}
+                              label="Activa"
+                            />
+                          </Grid>
+                          <Grid item xs={6} md={1}>
+                            <Tooltip title="Eliminar historia">
+                              <span>
+                                <IconButton color="error" onClick={() => removeStoryItem(storyIndex)}>
+                                  <DeleteOutlineOutlinedIcon />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          </Grid>
+                          <Grid item xs={12} md={2}>
+                            <TextField
+                              fullWidth
+                              type="date"
+                              label="Inicio"
+                              InputLabelProps={{ shrink: true }}
+                              value={story.startsAt || ''}
+                              onChange={(event) => updateStoryItem(storyIndex, ['startsAt'], event.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={2}>
+                            <TextField
+                              fullWidth
+                              type="date"
+                              label="Fin"
+                              InputLabelProps={{ shrink: true }}
+                              value={story.endsAt || ''}
+                              onChange={(event) => updateStoryItem(storyIndex, ['endsAt'], event.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              fullWidth
+                              label="Título ES"
+                              value={story.title.es}
+                              onChange={(event) => updateStoryItem(storyIndex, ['title', 'es'], event.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              fullWidth
+                              label="Título EN"
+                              value={story.title.en}
+                              onChange={(event) => updateStoryItem(storyIndex, ['title', 'en'], event.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              fullWidth
+                              label="Subtítulo ES"
+                              value={story.subtitle.es}
+                              onChange={(event) => updateStoryItem(storyIndex, ['subtitle', 'es'], event.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              fullWidth
+                              label="Subtítulo EN"
+                              value={story.subtitle.en}
+                              onChange={(event) => updateStoryItem(storyIndex, ['subtitle', 'en'], event.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              fullWidth
+                              label="Media URL"
+                              value={story.mediaUrl}
+                              onChange={(event) => updateStoryItem(storyIndex, ['mediaUrl'], event.target.value)}
+                              helperText="Puedes pegar una URL externa o usar el botón Subir."
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              fullWidth
+                              label="Thumbnail URL"
+                              value={story.thumbnailUrl}
+                              onChange={(event) => updateStoryItem(storyIndex, ['thumbnailUrl'], event.target.value)}
+                              helperText="Recomendado para videos."
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <TextField
+                              fullWidth
+                              label="CTA ES"
+                              value={story.ctaText.es}
+                              onChange={(event) => updateStoryItem(storyIndex, ['ctaText', 'es'], event.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <TextField
+                              fullWidth
+                              label="CTA EN"
+                              value={story.ctaText.en}
+                              onChange={(event) => updateStoryItem(storyIndex, ['ctaText', 'en'], event.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <TextField
+                              fullWidth
+                              label="CTA URL"
+                              value={story.ctaUrl}
+                              onChange={(event) => updateStoryItem(storyIndex, ['ctaUrl'], event.target.value)}
+                              helperText="#plans, #demo, #referidos o URL HTTPS."
+                            />
+                          </Grid>
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              );
+            })}
+
+            <Box>
+              <Button variant="outlined" startIcon={<AddCircleOutlineOutlinedIcon />} onClick={addStoryItem}>
+                Agregar historia
               </Button>
             </Box>
           </Stack>

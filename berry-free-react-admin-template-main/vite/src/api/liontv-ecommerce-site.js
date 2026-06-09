@@ -9,3 +9,9 @@ export async function getAdminEcommerceSiteConfig(config = {}) {
 export async function updateAdminEcommerceSiteConfig(payload, config = {}) {
   return unwrap(await lionTvApi.put('/ecommerce-site/v1/admin/config', payload, config));
 }
+
+export async function uploadAdminEcommerceStoryMedia(file, config = {}) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return unwrap(await lionTvApi.post('/ecommerce-site/v1/admin/story-media', formData, config));
+}
