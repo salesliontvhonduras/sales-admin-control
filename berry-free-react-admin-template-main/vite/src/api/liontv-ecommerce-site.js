@@ -11,7 +11,10 @@ export async function updateAdminEcommerceSiteConfig(payload, config = {}) {
 }
 
 export async function uploadAdminEcommerceStoryMedia(file, config = {}) {
+  if (!file || typeof file.size !== 'number' || file.size <= 0) {
+    throw new Error('Selecciona un archivo para subir.');
+  }
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', file, file.name || 'story-media');
   return unwrap(await lionTvFormApi.post('/ecommerce-site/v1/admin/story-media', formData, config));
 }

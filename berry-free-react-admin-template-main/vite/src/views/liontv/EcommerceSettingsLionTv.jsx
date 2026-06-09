@@ -600,7 +600,10 @@ export default function EcommerceSettingsLionTv() {
   };
 
   const handleStoryFileSelected = async (storyIndex, file) => {
-    if (!file) return;
+    if (!file || typeof file.size !== 'number' || file.size <= 0) {
+      enqueueSnackbar('Selecciona un archivo válido para subir.', { variant: 'warning' });
+      return;
+    }
     const storyId = form.stories.items?.[storyIndex]?.id || `story-${storyIndex}`;
     setUploadingStoryId(storyId);
     try {
