@@ -29,6 +29,8 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
@@ -79,25 +81,83 @@ const newIdempotencyKey = () =>
   typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 const fieldSx = {
-  '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
-  '& .MuiInputLabel-root': { fontWeight: 500 }
+  '& .MuiOutlinedInput-root': {
+    borderRadius: 2,
+    minHeight: 56,
+    alignItems: 'center',
+    overflow: 'visible'
+  },
+  '& .MuiOutlinedInput-input': {
+    py: 1.45,
+    minWidth: 0
+  },
+  '& .MuiInputBase-input': {
+    minWidth: 0
+  },
+  '& .MuiInputAdornment-root': {
+    mt: '0 !important'
+  },
+  '& .MuiInputLabel-root': {
+    fontWeight: 600,
+    maxWidth: 'calc(100% - 28px)',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
+  },
+  '& .MuiInputLabel-root.MuiInputLabel-shrink': {
+    maxWidth: 'calc(133% - 32px)'
+  },
+  '& textarea.MuiInputBase-input': {
+    py: 0.5
+  }
 };
 
 const sectionSx = {
-  p: 2,
+  p: { xs: 1.5, sm: 2.25 },
   border: '1px solid',
   borderColor: 'divider',
-  borderRadius: 2,
-  bgcolor: 'background.paper'
+  borderRadius: 2.5,
+  bgcolor: 'background.paper',
+  overflow: 'visible',
+  '& .MuiGrid-item': {
+    minWidth: 0
+  }
 };
 
 const summaryCardSx = {
-  p: 2,
+  p: { xs: 1.5, sm: 2 },
   borderRadius: 2,
   border: '1px solid',
   borderColor: 'divider',
   bgcolor: 'background.paper',
-  height: '100%'
+  height: '100%',
+  minWidth: 0
+};
+
+const stepperSx = {
+  p: { xs: 1.5, sm: 2 },
+  border: '1px solid',
+  borderColor: 'divider',
+  borderRadius: 2.5,
+  bgcolor: 'background.paper',
+  '& .MuiStepLabel-label': {
+    mt: { xs: 0, sm: 0.75 },
+    fontSize: { xs: '0.8rem', sm: '0.875rem' },
+    fontWeight: 800,
+    lineHeight: 1.25
+  },
+  '& .MuiStepIcon-root': {
+    fontSize: { xs: 24, sm: 28 }
+  },
+  '& .MuiStepConnector-line': {
+    minHeight: { xs: 28, sm: 'auto' }
+  }
+};
+
+const actionButtonSx = {
+  width: { xs: '100%', sm: 'auto' },
+  minHeight: 44,
+  whiteSpace: 'nowrap'
 };
 
 const defaultOptions = {
@@ -406,7 +466,7 @@ function MiniMetric({ label, value, icon }) {
           <Typography variant="caption" color="text.secondary">
             {label}
           </Typography>
-          <Typography variant="subtitle2" fontWeight={800} noWrap>
+          <Typography variant="subtitle2" fontWeight={800} sx={{ lineHeight: 1.25, overflowWrap: 'anywhere' }}>
             {value || '-'}
           </Typography>
         </Box>
@@ -429,7 +489,7 @@ function PackageCard({ option, selected, onClick }) {
       <CardActionArea onClick={onClick} sx={{ p: 2, height: '100%' }}>
         <Stack spacing={1}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
-            <Typography variant="subtitle1" fontWeight={900} noWrap>
+            <Typography variant="subtitle1" fontWeight={900} sx={{ lineHeight: 1.2, overflowWrap: 'anywhere' }}>
               {option?.name || '-'}
             </Typography>
             {selected ? <CheckCircleOutlineIcon color="primary" /> : null}
@@ -565,6 +625,8 @@ function ResultCard({ result }) {
 
 export default function SalesWorkflowLionTv() {
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [tab, setTab] = useState(0);
   const [activeStep, setActiveStep] = useState(0);
   const [renewalStep, setRenewalStep] = useState(0);
@@ -872,6 +934,8 @@ export default function SalesWorkflowLionTv() {
 
         <Tabs
           value={tab}
+          variant={isMobile ? 'scrollable' : 'standard'}
+          scrollButtons={isMobile ? 'auto' : false}
           onChange={(_, value) => {
             setTab(value);
             clearPreview();
@@ -883,7 +947,12 @@ export default function SalesWorkflowLionTv() {
 
         {tab === 0 ? (
           <Stack spacing={2.5}>
-            <Stepper activeStep={activeStep} alternativeLabel>
+            <Stepper
+              activeStep={activeStep}
+              alternativeLabel={!isMobile}
+              orientation={isMobile ? 'vertical' : 'horizontal'}
+              sx={stepperSx}
+            >
               {activationSteps.map((label) => (
                 <Step key={label}>
                   <StepLabel>{label}</StepLabel>
@@ -997,19 +1066,19 @@ export default function SalesWorkflowLionTv() {
                 <Grid item xs={12} md={7}>
                   <Section title="Línea principal" helper="La línea queda asociada al cliente y a la suscripción en el execute transaccional.">
                     <Grid container spacing={2}>
-                      <Grid item xs={12} sm={4}>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <TextField fullWidth required label="Line ID" sx={fieldSx} value={activation.line.lineId} onChange={(e) => setNestedValue(setActivation, 'line', 'lineId', e.target.value)} />
                       </Grid>
-                      <Grid item xs={12} sm={4}>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <TextField fullWidth required label="Usuario línea" sx={fieldSx} value={activation.line.username} onChange={(e) => setNestedValue(setActivation, 'line', 'username', e.target.value)} />
                       </Grid>
-                      <Grid item xs={12} sm={4}>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <TextField fullWidth required label="Password" sx={fieldSx} value={activation.line.password} onChange={(e) => setNestedValue(setActivation, 'line', 'password', e.target.value)} />
                       </Grid>
-                      <Grid item xs={12} sm={4}>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <TextField fullWidth label="Expira" type="date" sx={fieldSx} value={activation.line.expDate} onChange={(e) => setNestedValue(setActivation, 'line', 'expDate', e.target.value)} InputLabelProps={{ shrink: true }} />
                       </Grid>
-                      <Grid item xs={12} sm={4}>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <TextField
                           fullWidth
                           label="Dispositivos deseados"
@@ -1026,7 +1095,7 @@ export default function SalesWorkflowLionTv() {
                           }
                         />
                       </Grid>
-                      <Grid item xs={12} sm={4}>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <TextField fullWidth label="Paquete" sx={fieldSx} value={activation.line.packageName} disabled />
                       </Grid>
                     </Grid>
@@ -1041,13 +1110,13 @@ export default function SalesWorkflowLionTv() {
                     />
                     {activation.linePlusEnabled ? (
                       <Grid container spacing={2}>
-                        <Grid item xs={12} sm={4}>
+                        <Grid item xs={12} sm={6} lg={4}>
                           <TextField fullWidth label="Line Plus ID" sx={fieldSx} value={activation.linePlus.lineId} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'lineId', e.target.value)} />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid item xs={12} sm={6} lg={4}>
                           <TextField fullWidth label="Usuario plus" sx={fieldSx} value={activation.linePlus.username} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'username', e.target.value)} />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid item xs={12} sm={6} lg={4}>
                           <TextField fullWidth label="Password plus" sx={fieldSx} value={activation.linePlus.password} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'password', e.target.value)} />
                         </Grid>
                       </Grid>
@@ -1062,7 +1131,7 @@ export default function SalesWorkflowLionTv() {
                 <Grid item xs={12} md={7}>
                   <Section title="Pago y suscripción" helper="El monto sigue editable para manejar descuentos, promociones y ajustes comerciales.">
                     <Grid container spacing={2}>
-                      <Grid item xs={12} sm={4}>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <FormControl fullWidth sx={fieldSx}>
                           <InputLabel>Billing</InputLabel>
                           <Select label="Billing" value={activation.subscription.billing} onChange={(e) => setNestedValue(setActivation, 'subscription', 'billing', e.target.value)}>
@@ -1073,7 +1142,7 @@ export default function SalesWorkflowLionTv() {
                           </Select>
                         </FormControl>
                       </Grid>
-                      <Grid item xs={12} sm={4}>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <TextField
                           fullWidth
                           label="Inicio"
@@ -1084,7 +1153,7 @@ export default function SalesWorkflowLionTv() {
                           InputLabelProps={{ shrink: true }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={4}>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <TextField
                           fullWidth
                           label="Renueva"
@@ -1098,7 +1167,7 @@ export default function SalesWorkflowLionTv() {
                           InputLabelProps={{ shrink: true }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={4}>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <TextField
                           fullWidth
                           label="Monto"
@@ -1112,7 +1181,7 @@ export default function SalesWorkflowLionTv() {
                           InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={4}>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <TextField
                           fullWidth
                           label="Descuento"
@@ -1126,7 +1195,7 @@ export default function SalesWorkflowLionTv() {
                           InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={4}>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <Autocomplete
                           options={services}
                           value={services.find((item) => String(item.id) === String(activation.invoice.serviceId)) || null}
@@ -1186,26 +1255,31 @@ export default function SalesWorkflowLionTv() {
             ) : null}
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between">
-              <Stack direction="row" spacing={1}>
-                <Button disabled={activeStep === 0 || busy} onClick={() => setActiveStep((step) => step - 1)}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                <Button sx={actionButtonSx} disabled={activeStep === 0 || busy} onClick={() => setActiveStep((step) => step - 1)}>
                   Atrás
                 </Button>
                 {activeStep < activationSteps.length - 1 ? (
-                  <Button variant="contained" disabled={!canGoActivationNext() || busy} onClick={() => setActiveStep((step) => step + 1)}>
+                  <Button
+                    sx={actionButtonSx}
+                    variant="contained"
+                    disabled={!canGoActivationNext() || busy}
+                    onClick={() => setActiveStep((step) => step + 1)}
+                  >
                     Continuar
                   </Button>
                 ) : null}
               </Stack>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                <Button variant="outlined" onClick={resetFlow} disabled={busy}>
+                <Button sx={actionButtonSx} variant="outlined" onClick={resetFlow} disabled={busy}>
                   Reiniciar
                 </Button>
                 {activeStep === activationSteps.length - 1 ? (
                   <>
-                    <Button variant="outlined" startIcon={<SearchIcon />} onClick={handleActivationPreview} disabled={busy}>
+                    <Button sx={actionButtonSx} variant="outlined" startIcon={<SearchIcon />} onClick={handleActivationPreview} disabled={busy}>
                       Vista previa
                     </Button>
-                    <Button variant="contained" startIcon={<RocketLaunchIcon />} onClick={handleActivationExecute} disabled={busy}>
+                    <Button sx={actionButtonSx} variant="contained" startIcon={<RocketLaunchIcon />} onClick={handleActivationExecute} disabled={busy}>
                       Confirmar activación
                     </Button>
                   </>
@@ -1215,7 +1289,12 @@ export default function SalesWorkflowLionTv() {
           </Stack>
         ) : (
           <Stack spacing={2.5}>
-            <Stepper activeStep={renewalStep} alternativeLabel>
+            <Stepper
+              activeStep={renewalStep}
+              alternativeLabel={!isMobile}
+              orientation={isMobile ? 'vertical' : 'horizontal'}
+              sx={stepperSx}
+            >
               {renewalSteps.map((label) => (
                 <Step key={label}>
                   <StepLabel>{label}</StepLabel>
@@ -1243,7 +1322,7 @@ export default function SalesWorkflowLionTv() {
                       )
                     }}
                   />
-                  <Button variant="contained" startIcon={<PersonSearchIcon />} onClick={handleLookup} disabled={busy}>
+                  <Button sx={actionButtonSx} variant="contained" startIcon={<PersonSearchIcon />} onClick={handleLookup} disabled={busy}>
                     Buscar
                   </Button>
                 </Stack>
@@ -1373,7 +1452,7 @@ export default function SalesWorkflowLionTv() {
                 <Grid item xs={12} md={7}>
                   <Section title="Pago y confirmación" helper="El preview muestra fecha nueva, cambio de plan y licencias faltantes antes de ejecutar.">
                     <Grid container spacing={2}>
-                      <Grid item xs={12} sm={4}>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <TextField
                           fullWidth
                           label="Monto"
@@ -1387,7 +1466,7 @@ export default function SalesWorkflowLionTv() {
                           InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={4}>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <TextField
                           fullWidth
                           label="Descuento"
@@ -1401,7 +1480,7 @@ export default function SalesWorkflowLionTv() {
                           InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={4}>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <Autocomplete
                           options={services}
                           value={services.find((item) => String(item.id) === String(renewal.invoice.serviceId)) || null}
@@ -1448,12 +1527,13 @@ export default function SalesWorkflowLionTv() {
             ) : null}
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between">
-              <Stack direction="row" spacing={1}>
-                <Button disabled={renewalStep === 0 || busy} onClick={() => setRenewalStep((step) => step - 1)}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                <Button sx={actionButtonSx} disabled={renewalStep === 0 || busy} onClick={() => setRenewalStep((step) => step - 1)}>
                   Atrás
                 </Button>
                 {renewalStep < renewalSteps.length - 1 ? (
                   <Button
+                    sx={actionButtonSx}
                     variant="contained"
                     disabled={(renewalStep === 1 && !renewal.subscriptionId) || busy}
                     onClick={() => setRenewalStep((step) => step + 1)}
@@ -1463,15 +1543,15 @@ export default function SalesWorkflowLionTv() {
                 ) : null}
               </Stack>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                <Button variant="outlined" onClick={resetFlow} disabled={busy}>
+                <Button sx={actionButtonSx} variant="outlined" onClick={resetFlow} disabled={busy}>
                   Reiniciar
                 </Button>
                 {renewalStep === renewalSteps.length - 1 ? (
                   <>
-                    <Button variant="outlined" startIcon={<SearchIcon />} onClick={handleRenewalPreview} disabled={busy || !renewal.subscriptionId}>
+                    <Button sx={actionButtonSx} variant="outlined" startIcon={<SearchIcon />} onClick={handleRenewalPreview} disabled={busy || !renewal.subscriptionId}>
                       Vista previa
                     </Button>
-                    <Button variant="contained" startIcon={<RocketLaunchIcon />} onClick={handleRenewalExecute} disabled={busy || !renewal.subscriptionId}>
+                    <Button sx={actionButtonSx} variant="contained" startIcon={<RocketLaunchIcon />} onClick={handleRenewalExecute} disabled={busy || !renewal.subscriptionId}>
                       Confirmar renovación
                     </Button>
                   </>
