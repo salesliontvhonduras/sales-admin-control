@@ -183,8 +183,31 @@ export const smsApi = axios.create({
 // INTERCEPTORES
 // =======================
 
+const isFormDataPayload = (value) => typeof FormData !== 'undefined' && value instanceof FormData;
+
+const removeHeader = (headers, headerName) => {
+  if (!headers) return;
+
+  if (typeof headers.delete === 'function') {
+    headers.delete(headerName);
+    return;
+  }
+
+  Object.keys(headers).forEach((key) => {
+    if (key.toLowerCase() === headerName.toLowerCase()) {
+      delete headers[key];
+    }
+  });
+};
+
 // Función general para añadir el token (intenta localStorage y sessionStorage)
 const attachToken = (config) => {
+  if (isFormDataPayload(config?.data)) {
+    config.headers = config.headers || {};
+    removeHeader(config.headers, 'Content-Type');
+    removeHeader(config.headers, 'content-type');
+  }
+
   if (config?.skipAuthHeader || COOKIE_MODE) return config;
   const token = getStoredAccessToken();
   if (token) {
