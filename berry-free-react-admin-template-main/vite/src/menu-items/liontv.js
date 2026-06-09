@@ -126,6 +126,14 @@ const liontv = {
           permission: { any: ['LIONTV_CUSTOMERS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] }
         },
         {
+          id: 'liontv-sales-workflow',
+          title: 'menu.salesWorkflow',
+          type: 'item',
+          url: '/liontv/sales-workflow',
+          breadcrumbs: true,
+          permission: { any: ['LIONTV_CUSTOMERS_VIEW', 'LIONTV_SUBSCRIPTIONS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] }
+        },
+        {
           id: 'liontv-potential-customers',
           title: 'menu.potentialCustomers',
           type: 'item',

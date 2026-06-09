@@ -13,6 +13,7 @@ const SmsManagement = Loadable(lazy(() => import('views/sms/SmsManagement')));
 const LionTvDashboard = Loadable(lazy(() => import('views/liontv/LionTvDashboard')));
 const DemosLionTv = Loadable(lazy(() => import('views/liontv/DemosLionTv')));
 const CustomersLionTv = Loadable(lazy(() => import('views/liontv/CustomersLionTv')));
+const SalesWorkflowLionTv = Loadable(lazy(() => import('views/liontv/SalesWorkflowLionTv')));
 const PotentialCustomersLionTv = Loadable(lazy(() => import('views/liontv/PotentialCustomersLionTv')));
 const ReferralLeadsLionTv = Loadable(lazy(() => import('views/liontv/ReferralLeadsLionTv')));
 const EmailTemplatesLionTv = Loadable(lazy(() => import('views/liontv/EmailTemplatesLionTv')));
@@ -97,6 +98,13 @@ const MainRoutes = {
           element: protectPage(
             { any: ['LIONTV_CUSTOMERS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
             <CustomersLionTv />
+          )
+        },
+        {
+          path: '/liontv/sales-workflow',
+          element: protectPage(
+            { any: ['LIONTV_CUSTOMERS_VIEW', 'LIONTV_SUBSCRIPTIONS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            <SalesWorkflowLionTv />
           )
         },
         {
