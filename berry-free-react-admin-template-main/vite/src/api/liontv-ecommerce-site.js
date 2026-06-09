@@ -1,4 +1,4 @@
-import { lionTvApi } from 'utils/api';
+import { lionTvApi, lionTvFormApi } from 'utils/api';
 
 const unwrap = (response) => response?.data?.data ?? response?.data ?? null;
 
@@ -13,5 +13,5 @@ export async function updateAdminEcommerceSiteConfig(payload, config = {}) {
 export async function uploadAdminEcommerceStoryMedia(file, config = {}) {
   const formData = new FormData();
   formData.append('file', file);
-  return unwrap(await lionTvApi.post('/ecommerce-site/v1/admin/story-media', formData, config));
+  return unwrap(await lionTvFormApi.post('/ecommerce-site/v1/admin/story-media', formData, config));
 }

@@ -119,6 +119,11 @@ export const lionTvApi = axios.create({
   withCredentials: COOKIE_MODE
 });
 
+export const lionTvFormApi = axios.create({
+  baseURL: API_LIONTV,
+  withCredentials: COOKIE_MODE
+});
+
 export const contentAutomationApi = axios.create({
   baseURL: API_CONTENT_AUTOMATION,
   headers: { 'Content-Type': 'application/json' },
@@ -224,6 +229,7 @@ productsApi.interceptors.request.use(attachToken);
 reservationsApi.interceptors.request.use(attachToken);
 smsApi.interceptors.request.use(attachToken);
 lionTvApi.interceptors.request.use(attachToken);
+lionTvFormApi.interceptors.request.use(attachToken);
 contentAutomationApi.interceptors.request.use(attachToken);
 m3uCatalogApi.interceptors.request.use(attachToken);
 catalogsApi.interceptors.request.use(attachToken);
@@ -296,6 +302,7 @@ const apiClients = [
   reservationsApi,
   smsApi,
   lionTvApi,
+  lionTvFormApi,
   contentAutomationApi,
   m3uCatalogApi,
   catalogsApi,
