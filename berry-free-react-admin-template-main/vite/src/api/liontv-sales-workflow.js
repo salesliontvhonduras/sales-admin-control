@@ -2,6 +2,10 @@ import { lionTvApi } from 'utils/api';
 
 const unwrap = (response) => response?.data?.data ?? response?.data ?? null;
 
+export async function getSalesWorkflowOptions(config = {}) {
+  return unwrap(await lionTvApi.get('/sales-workflow/v1/options', config));
+}
+
 export async function lookupSalesWorkflow(query, config = {}) {
   return unwrap(
     await lionTvApi.get('/sales-workflow/v1/lookup', {
