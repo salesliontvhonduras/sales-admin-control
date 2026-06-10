@@ -526,7 +526,7 @@ function buildInvoice(invoice, packageId, amount, options) {
 }
 
 function buildActivationPayload(form, options, withIdempotency = false) {
-  const packageId = toNumberOrNull(form.subscription.packageId) || toNumberOrNull(form.line.packageId);
+  const subscriptionPackageId = toNumberOrNull(form.subscription.packageId);
   const amount = cleanMoney(form.subscription.amount);
   return {
     ...(withIdempotency ? { idempotencyKey: newIdempotencyKey() } : {}),
@@ -535,26 +535,25 @@ function buildActivationPayload(form, options, withIdempotency = false) {
     line: {
       ...form.line,
       packageId: toNumberOrNull(form.line.packageId),
-      maxConnections: toNumberOrNull(form.line.maxConnections) || toNumberOrNull(form.desiredDeviceCount) || 1,
+      maxConnections: toNumberOrNull(form.line.maxConnections),
       enabled: true
     },
     linePlus: form.linePlusEnabled && form.linePlus.lineId
       ? {
           ...form.linePlus,
-          packageId: toNumberOrNull(form.linePlus.packageId) || packageId,
-          packageName: form.linePlus.packageName || form.line.packageName,
-          maxConnections: toNumberOrNull(form.linePlus.maxConnections) || toNumberOrNull(form.desiredDeviceCount) || 1,
+          packageId: toNumberOrNull(form.linePlus.packageId),
+          maxConnections: toNumberOrNull(form.linePlus.maxConnections),
           enabled: true
         }
       : null,
     subscription: {
       ...form.subscription,
-      packageId,
+      packageId: subscriptionPackageId,
       amount: amount ?? 0,
       discount: cleanMoney(form.subscription.discount) ?? 0,
       automaticPay: Boolean(form.subscription.automaticPay)
     },
-    invoice: buildInvoice(form.invoice, packageId, amount, options),
+    invoice: buildInvoice(form.invoice, subscriptionPackageId, amount, options),
     licenses: makeLicenses(form.desiredDeviceCount, form.subscription.billing)
   };
 }
@@ -747,13 +746,18 @@ function PreviewCard({ preview }) {
         </Stack>
         <Divider />
         <Grid container spacing={1.5}>
-          <Grid item xs={12} sm={6} md={3}>
-            <MiniMetric label={t('salesWorkflow.metrics.plan', 'Plan')} value={preview.newPackageName || preview.newPackageId} icon={<Inventory2Icon fontSize="small" />} color="primary" />
+          <Grid item xs={12} sm={6} md={4}>
+            <MiniMetric label={t('salesWorkflow.metrics.subscriptionPackage', 'Subscription package')} value={preview.newPackageName || preview.newPackageId} icon={<Inventory2Icon fontSize="small" />} color="primary" />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          {preview.linePackageName || preview.linePackageId ? (
+            <Grid item xs={12} sm={6} md={4}>
+              <MiniMetric label={t('salesWorkflow.metrics.linePackage', 'Line package')} value={preview.linePackageName || preview.linePackageId} icon={<LanIcon fontSize="small" />} color="info" />
+            </Grid>
+          ) : null}
+          <Grid item xs={12} sm={6} md={4}>
             <MiniMetric label={t('salesWorkflow.metrics.newDate', 'New date')} value={formatDate(preview.newRenewalDate)} icon={<AutorenewIcon fontSize="small" />} color="info" />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={4}>
             <MiniMetric
               label={t('salesWorkflow.metrics.devices', 'Devices')}
               value={t('salesWorkflow.preview.devicesValue', '{{desired}} desired · {{newLicenses}} new', {
@@ -764,13 +768,16 @@ function PreviewCard({ preview }) {
               color="secondary"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={4}>
+            <MiniMetric label={t('salesWorkflow.metrics.subscriptionAmount', 'Subscription amount')} value={formatMoney(preview.amount)} icon={<PaidOutlinedIcon fontSize="small" />} color="warning" />
+          </Grid>
+          <Grid item xs={12} sm={6} md={4}>
             <MiniMetric label={t('salesWorkflow.metrics.invoiceAmount', 'Invoice amount')} value={formatMoney(preview.invoiceAmount ?? preview.amount)} icon={<PaidOutlinedIcon fontSize="small" />} color="success" />
           </Grid>
         </Grid>
         {preview.currentPackageName && preview.currentPackageName !== preview.newPackageName ? (
           <Alert severity="info">
-            {t('salesWorkflow.messages.changedPlan', 'Plan change')}: {preview.currentPackageName} → {preview.newPackageName}
+            {t('salesWorkflow.messages.changedPlan', 'Subscription package change')}: {preview.currentPackageName} → {preview.newPackageName}
           </Alert>
         ) : null}
         {preview.warnings?.length ? (
@@ -891,8 +898,16 @@ export default function SalesWorkflowLionTv() {
   const services = (options.services || []).filter((item) => item.active !== false);
 
   const selectedActivationPackage = useMemo(
-    () => packages.find((item) => String(item.packageId) === String(activation.subscription.packageId || activation.line.packageId)) || null,
-    [activation.line.packageId, activation.subscription.packageId, packages]
+    () => packages.find((item) => String(item.packageId) === String(activation.subscription.packageId)) || null,
+    [activation.subscription.packageId, packages]
+  );
+  const selectedActivationLinePackage = useMemo(
+    () => packages.find((item) => String(item.packageId) === String(activation.line.packageId)) || null,
+    [activation.line.packageId, packages]
+  );
+  const selectedActivationLinePlusPackage = useMemo(
+    () => packages.find((item) => String(item.packageId) === String(activation.linePlus.packageId)) || null,
+    [activation.linePlus.packageId, packages]
   );
   const selectedExistingLine = useMemo(
     () => lineOptions.find((item) => String(item.lineId) === String(activation.line.lineId)) || null,
@@ -1040,7 +1055,7 @@ export default function SalesWorkflowLionTv() {
     setResult(null);
   };
 
-  const applyActivationPackage = (pkg) => {
+  const applyActivationSubscriptionPackage = (pkg) => {
     if (!pkg) return;
     const devices = pkg.roleCount || 1;
     setActivation((prev) => ({
@@ -1048,15 +1063,9 @@ export default function SalesWorkflowLionTv() {
       desiredDeviceCount: devices,
       line: {
         ...prev.line,
-        packageId: pkg.packageId,
-        packageName: pkg.name,
-        maxConnections: devices
-      },
-      linePlus: {
-        ...prev.linePlus,
-        packageId: pkg.packageId,
-        packageName: pkg.name,
-        maxConnections: devices
+        packageId: prev.line.packageId || pkg.packageId,
+        packageName: prev.line.packageName || pkg.name,
+        maxConnections: prev.line.packageId ? prev.line.maxConnections || devices : devices
       },
       subscription: {
         ...prev.subscription,
@@ -1065,6 +1074,36 @@ export default function SalesWorkflowLionTv() {
       invoice: {
         ...prev.invoice,
         packageId: pkg.packageId
+      }
+    }));
+    clearPreview();
+  };
+
+  const applyActivationLinePackage = (pkg) => {
+    if (!pkg) return;
+    const devices = pkg.roleCount || activation.desiredDeviceCount || 1;
+    setActivation((prev) => ({
+      ...prev,
+      line: {
+        ...prev.line,
+        packageId: pkg.packageId,
+        packageName: pkg.name,
+        maxConnections: devices
+      }
+    }));
+    clearPreview();
+  };
+
+  const applyActivationLinePlusPackage = (pkg) => {
+    if (!pkg) return;
+    const devices = pkg.roleCount || activation.desiredDeviceCount || 1;
+    setActivation((prev) => ({
+      ...prev,
+      linePlus: {
+        ...prev.linePlus,
+        packageId: pkg.packageId,
+        packageName: pkg.name,
+        maxConnections: devices
       }
     }));
     clearPreview();
@@ -1094,7 +1133,6 @@ export default function SalesWorkflowLionTv() {
 
   const handleExistingLineSelect = (line) => {
     setActivation((prev) => {
-      const nextPackageId = prev.subscription.packageId || line?.packageId || '';
       return {
         ...prev,
         line: {
@@ -1109,14 +1147,6 @@ export default function SalesWorkflowLionTv() {
           maxConnections: line?.maxConnections || prev.line.maxConnections || prev.desiredDeviceCount || 1,
           provider: line?.provider || prev.line.provider,
           lineCountry: line?.lineCountry || prev.line.lineCountry
-        },
-        subscription: {
-          ...prev.subscription,
-          packageId: nextPackageId
-        },
-        invoice: {
-          ...prev.invoice,
-          packageId: nextPackageId
         }
       };
     });
@@ -1245,7 +1275,7 @@ export default function SalesWorkflowLionTv() {
       if (activation.mainLineMode === MAIN_LINE_USE_EXISTING) {
         return Boolean(activation.line.lineId && activation.subscription.packageId);
       }
-      return Boolean(activation.line.lineId && activation.line.username && activation.line.password && activation.subscription.packageId);
+      return Boolean(activation.line.lineId && activation.line.username && activation.line.password && activation.line.packageId && activation.subscription.packageId);
     }
     return true;
   };
@@ -1400,8 +1430,8 @@ export default function SalesWorkflowLionTv() {
               <Grid container spacing={gridSpacing}>
                 <Grid item xs={12} lg={4}>
                   <Section
-                    title={t('salesWorkflow.sections.packageTitle', 'Package')}
-                    helper={t('salesWorkflow.sections.packageHelper', 'Select a real package; connections and name are filled automatically.')}
+                    title={t('salesWorkflow.sections.subscriptionPackageTitle', 'Subscription package')}
+                    helper={t('salesWorkflow.sections.subscriptionPackageHelper', 'This package is used for the subscription, invoice, credits and renewal.')}
                     icon={<Inventory2Icon fontSize="small" />}
                     color="secondary"
                   >
@@ -1409,10 +1439,10 @@ export default function SalesWorkflowLionTv() {
                       options={packages}
                       loading={optionsLoading}
                       value={selectedActivationPackage}
-                      onChange={(_, value) => applyActivationPackage(value)}
+                      onChange={(_, value) => applyActivationSubscriptionPackage(value)}
                       getOptionLabel={(option) => option?.displayName || option?.name || ''}
                       isOptionEqualToValue={(option, value) => String(option?.packageId) === String(value?.packageId)}
-                      renderInput={(params) => <TextField {...params} label={t('salesWorkflow.fields.searchPackage', 'Search package')} sx={fieldSx} />}
+                      renderInput={(params) => <TextField {...params} label={t('salesWorkflow.fields.searchSubscriptionPackage', 'Search subscription package')} sx={fieldSx} />}
                     />
                     <Grid container spacing={1.5}>
                       {packages.slice(0, 6).map((pkg) => (
@@ -1420,7 +1450,7 @@ export default function SalesWorkflowLionTv() {
                           <PackageCard
                             option={pkg}
                             selected={String(pkg.packageId) === String(activation.subscription.packageId)}
-                            onClick={() => applyActivationPackage(pkg)}
+                            onClick={() => applyActivationSubscriptionPackage(pkg)}
                             t={t}
                           />
                         </Grid>
@@ -1561,6 +1591,25 @@ export default function SalesWorkflowLionTv() {
                       <TextField fullWidth required={activation.mainLineMode === MAIN_LINE_CREATE_NEW} label={t('salesWorkflow.fields.lineUsername', 'Line username')} sx={fieldSx} value={activation.line.username} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'username', e.target.value)} />
                       <TextField fullWidth required={activation.mainLineMode === MAIN_LINE_CREATE_NEW} label={t('salesWorkflow.fields.password', 'Password')} sx={fieldSx} value={activation.line.password} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'password', e.target.value)} />
                       <TextField fullWidth label={t('salesWorkflow.fields.expires', 'Expires')} type="date" sx={fieldSx} value={activation.line.expDate} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'expDate', e.target.value)} InputLabelProps={{ shrink: true }} />
+                      {activation.mainLineMode === MAIN_LINE_CREATE_NEW ? (
+                        <Autocomplete
+                          options={packages}
+                          loading={optionsLoading}
+                          value={selectedActivationLinePackage}
+                          onChange={(_, value) => applyActivationLinePackage(value)}
+                          getOptionLabel={(option) => option?.displayName || option?.name || ''}
+                          isOptionEqualToValue={(option, value) => String(option?.packageId) === String(value?.packageId)}
+                          renderInput={(params) => <TextField {...params} required label={t('salesWorkflow.fields.linePackage', 'Line package')} sx={fieldSx} />}
+                        />
+                      ) : (
+                        <TextField
+                          fullWidth
+                          label={t('salesWorkflow.fields.linePackage', 'Line package')}
+                          sx={fieldSx}
+                          value={activation.line.packageName || activation.line.packageId || ''}
+                          disabled
+                        />
+                      )}
                       <TextField
                         fullWidth
                         label={t('salesWorkflow.fields.desiredDevices', 'Desired devices')}
@@ -1576,7 +1625,6 @@ export default function SalesWorkflowLionTv() {
                           }))
                         }
                       />
-                      <TextField fullWidth label={t('salesWorkflow.fields.package', 'Package')} sx={fieldSx} value={activation.line.packageName} disabled />
                     </Box>
                     <FormControlLabel
                       control={
@@ -1592,6 +1640,15 @@ export default function SalesWorkflowLionTv() {
                         <TextField fullWidth label={t('salesWorkflow.fields.linePlusId', 'Line Plus ID')} sx={fieldSx} value={activation.linePlus.lineId} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'lineId', e.target.value)} />
                         <TextField fullWidth label={t('salesWorkflow.fields.plusUsername', 'Plus username')} sx={fieldSx} value={activation.linePlus.username} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'username', e.target.value)} />
                         <TextField fullWidth label={t('salesWorkflow.fields.plusPassword', 'Plus password')} sx={fieldSx} value={activation.linePlus.password} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'password', e.target.value)} />
+                        <Autocomplete
+                          options={packages}
+                          loading={optionsLoading}
+                          value={selectedActivationLinePlusPackage}
+                          onChange={(_, value) => applyActivationLinePlusPackage(value)}
+                          getOptionLabel={(option) => option?.displayName || option?.name || ''}
+                          isOptionEqualToValue={(option, value) => String(option?.packageId) === String(value?.packageId)}
+                          renderInput={(params) => <TextField {...params} required label={t('salesWorkflow.fields.linePlusPackage', 'Line Plus package')} sx={fieldSx} />}
+                        />
                       </Box>
                     ) : null}
                   </Section>
@@ -1647,32 +1704,37 @@ export default function SalesWorkflowLionTv() {
                       </Grid>
                       <Grid item xs={12} sm={6} lg={4}>
                         <TextField
-                          fullWidth
-	                          label={t('salesWorkflow.fields.amount', 'Amount')}
-                          type="number"
-                          sx={fieldSx}
-                          value={activation.subscription.amount}
-                          onChange={(e) => {
-                            setNestedValue(setActivation, 'subscription', 'amount', e.target.value);
-                            setNestedValue(setActivation, 'invoice', 'amountPaid', e.target.value);
-                          }}
-                          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6} lg={4}>
-                        <TextField
-                          fullWidth
-	                          label={t('salesWorkflow.fields.discount', 'Discount')}
-                          type="number"
-                          sx={fieldSx}
-                          value={activation.subscription.discount}
-                          onChange={(e) => {
-                            setNestedValue(setActivation, 'subscription', 'discount', e.target.value);
-                            setNestedValue(setActivation, 'invoice', 'amountDiscount', e.target.value);
-                          }}
-                          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
-                        />
-                      </Grid>
+	                          fullWidth
+	                          label={t('salesWorkflow.fields.subscriptionAmount', 'Subscription amount')}
+	                          type="number"
+	                          sx={fieldSx}
+	                          value={activation.subscription.amount}
+	                          onChange={(e) => setNestedValue(setActivation, 'subscription', 'amount', e.target.value)}
+	                          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+	                        />
+	                      </Grid>
+	                      <Grid item xs={12} sm={6} lg={4}>
+	                        <TextField
+	                          fullWidth
+	                          label={t('salesWorkflow.fields.invoiceAmount', 'Invoice amount')}
+	                          type="number"
+	                          sx={fieldSx}
+	                          value={activation.invoice.amountPaid}
+	                          onChange={(e) => setNestedValue(setActivation, 'invoice', 'amountPaid', e.target.value)}
+	                          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+	                        />
+	                      </Grid>
+	                      <Grid item xs={12} sm={6} lg={4}>
+	                        <TextField
+	                          fullWidth
+	                          label={t('salesWorkflow.fields.invoiceDiscount', 'Invoice discount')}
+	                          type="number"
+	                          sx={fieldSx}
+	                          value={activation.invoice.amountDiscount}
+	                          onChange={(e) => setNestedValue(setActivation, 'invoice', 'amountDiscount', e.target.value)}
+	                          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+	                        />
+	                      </Grid>
                       <Grid item xs={12} sm={6} lg={4}>
                         <Autocomplete
                           options={services}
@@ -1721,12 +1783,15 @@ export default function SalesWorkflowLionTv() {
                     <Grid container spacing={1.5}>
                       <Grid item xs={12} sm={6}>
 	                        <MiniMetric label={t('salesWorkflow.metrics.client', 'Customer')} value={activation.customer.customerFullname} icon={<PersonSearchIcon fontSize="small" />} color="primary" />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-	                        <MiniMetric label={t('salesWorkflow.metrics.plan', 'Plan')} value={selectedActivationPackage?.name} icon={<Inventory2Icon fontSize="small" />} color="secondary" />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-	                        <MiniMetric label={t('salesWorkflow.metrics.line', 'Line')} value={activation.line.lineId} icon={<LanIcon fontSize="small" />} color="info" />
+	                      </Grid>
+	                      <Grid item xs={12} sm={6}>
+		                        <MiniMetric label={t('salesWorkflow.metrics.subscriptionPackage', 'Subscription package')} value={selectedActivationPackage?.name} icon={<Inventory2Icon fontSize="small" />} color="secondary" />
+	                      </Grid>
+	                      <Grid item xs={12} sm={6}>
+		                        <MiniMetric label={t('salesWorkflow.metrics.linePackage', 'Line package')} value={activation.line.packageName || activation.line.packageId} icon={<LanIcon fontSize="small" />} color="info" />
+	                      </Grid>
+	                      <Grid item xs={12} sm={6}>
+		                        <MiniMetric label={t('salesWorkflow.metrics.line', 'Line')} value={activation.line.lineId} icon={<LanIcon fontSize="small" />} color="info" />
                       </Grid>
                       <Grid item xs={12} sm={6}>
 	                        <MiniMetric label={t('salesWorkflow.metrics.devices', 'Devices')} value={activation.desiredDeviceCount} icon={<DevicesIcon fontSize="small" />} color="success" />
@@ -1888,7 +1953,7 @@ export default function SalesWorkflowLionTv() {
 	                                    <MiniMetric label={t('salesWorkflow.metrics.devices', 'Devices')} value={subscription.configuredDevices || 0} icon={<DevicesIcon fontSize="small" />} color="secondary" />
 	                                  </Grid>
 	                                  <Grid item xs={6}>
-	                                    <MiniMetric label={t('salesWorkflow.metrics.amount', 'Amount')} value={formatMoney(subscription.amount)} icon={<PaidOutlinedIcon fontSize="small" />} color="success" />
+	                                    <MiniMetric label={t('salesWorkflow.metrics.subscriptionAmount', 'Subscription amount')} value={formatMoney(subscription.amount)} icon={<PaidOutlinedIcon fontSize="small" />} color="success" />
 	                                  </Grid>
                                 </Grid>
                               </Stack>
@@ -1929,7 +1994,7 @@ export default function SalesWorkflowLionTv() {
                       onChange={(_, value) => applyRenewalPackage(value)}
                       getOptionLabel={(option) => option?.displayName || option?.name || ''}
                       isOptionEqualToValue={(option, value) => String(option?.packageId) === String(value?.packageId)}
-                      renderInput={(params) => <TextField {...params} label={t('salesWorkflow.fields.planPackage', 'Plan / package')} sx={fieldSx} />}
+                      renderInput={(params) => <TextField {...params} label={t('salesWorkflow.fields.subscriptionPackage', 'Subscription package')} sx={fieldSx} />}
                     />
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={6} lg={3}>
@@ -1986,32 +2051,37 @@ export default function SalesWorkflowLionTv() {
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={6} lg={3}>
                         <TextField
-                          fullWidth
-                          label={t('salesWorkflow.fields.amount', 'Amount')}
-                          type="number"
-                          sx={fieldSx}
-                          value={renewal.subscription.amount}
-                          onChange={(e) => {
-                            setNestedValue(setRenewal, 'subscription', 'amount', e.target.value);
-                            setNestedValue(setRenewal, 'invoice', 'amountPaid', e.target.value);
-                          }}
-                          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6} lg={3}>
-                        <TextField
-                          fullWidth
-                          label={t('salesWorkflow.fields.discount', 'Discount')}
-                          type="number"
-                          sx={fieldSx}
-                          value={renewal.subscription.discount}
-                          onChange={(e) => {
-                            setNestedValue(setRenewal, 'subscription', 'discount', e.target.value);
-                            setNestedValue(setRenewal, 'invoice', 'amountDiscount', e.target.value);
-                          }}
-                          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
-                        />
-                      </Grid>
+	                          fullWidth
+	                          label={t('salesWorkflow.fields.subscriptionAmount', 'Subscription amount')}
+	                          type="number"
+	                          sx={fieldSx}
+	                          value={renewal.subscription.amount}
+	                          onChange={(e) => setNestedValue(setRenewal, 'subscription', 'amount', e.target.value)}
+	                          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+	                        />
+	                      </Grid>
+	                      <Grid item xs={12} sm={6} lg={3}>
+	                        <TextField
+	                          fullWidth
+	                          label={t('salesWorkflow.fields.invoiceAmount', 'Invoice amount')}
+	                          type="number"
+	                          sx={fieldSx}
+	                          value={renewal.invoice.amountPaid}
+	                          onChange={(e) => setNestedValue(setRenewal, 'invoice', 'amountPaid', e.target.value)}
+	                          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+	                        />
+	                      </Grid>
+	                      <Grid item xs={12} sm={6} lg={3}>
+	                        <TextField
+	                          fullWidth
+	                          label={t('salesWorkflow.fields.invoiceDiscount', 'Invoice discount')}
+	                          type="number"
+	                          sx={fieldSx}
+	                          value={renewal.invoice.amountDiscount}
+	                          onChange={(e) => setNestedValue(setRenewal, 'invoice', 'amountDiscount', e.target.value)}
+	                          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+	                        />
+	                      </Grid>
                       <Grid item xs={12} sm={6} lg={3}>
                         <Autocomplete
                           options={services}
