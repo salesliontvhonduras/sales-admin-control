@@ -7761,6 +7761,374 @@ const mergeTranslations = (target, source) => {
 mergeTranslations(resources.en.translation, lionTvProfessionalTranslations.en);
 mergeTranslations(resources.es.translation, lionTvProfessionalTranslations.es);
 
+resources.en.translation.salesWorkflow = {
+  title: 'Sales & Renewals',
+  common: {
+    customerFallback: 'Customer',
+    noPackage: 'No package'
+  },
+  tabs: {
+    activation: 'New account',
+    renewal: 'Renew customer'
+  },
+  steps: {
+    activation: {
+      customer: 'Customer',
+      linePlan: 'Line & plan',
+      paymentConfirm: 'Payment & confirmation'
+    },
+    renewal: {
+      search: 'Search',
+      selectPlan: 'Select plan',
+      paymentConfirm: 'Payment & confirmation'
+    }
+  },
+  sections: {
+    customerTitle: 'Customer details',
+    customerHelper: 'Capture the minimum details to create the customer and validate duplicates before continuing.',
+    initialStatusTitle: 'Initial status',
+    initialStatusHelper: 'Operational values that will be sent to the backend.',
+    packageTitle: 'Package',
+    packageHelper: 'Select a real package; connections and name are filled automatically.',
+    lineTitle: 'Main line',
+    lineHelper: 'The line is associated with the customer and subscription in the transactional execute.',
+    paymentTitle: 'Payment and subscription',
+    paymentHelper: 'The amount remains editable to handle discounts, promotions and commercial adjustments.',
+    activationSummaryTitle: 'Activation summary',
+    activationSummaryHelper: 'Review before generating the preview or executing.',
+    searchTitle: 'Search customer or subscription',
+    searchHelper: 'Search by name, email, phone, lineId or subscriptionId.',
+    selectSubscriptionTitle: 'Select subscription',
+    selectSubscriptionHelper: 'The renewal uses the existing customer; it does not create a new customer.',
+    selectedSubscriptionTitle: 'Selected subscription',
+    selectedSubscriptionHelper: 'Adjust package, renewal base and devices.',
+    renewalPaymentTitle: 'Payment and confirmation',
+    renewalPaymentHelper: 'Preview shows the new date, plan change and missing licenses before executing.'
+  },
+  fields: {
+    fullName: 'Full name',
+    gender: 'Gender',
+    openingDate: 'Opening date',
+    email: 'Email',
+    phone: 'Phone / WhatsApp',
+    lineId: 'Line ID',
+    lineUsername: 'Line username',
+    mainLineMode: 'Line mode',
+    searchExistingLine: 'Search existing line',
+    searchExistingLinePlaceholder: 'Line ID, username or package',
+    password: 'Password',
+    expires: 'Expires',
+    desiredDevices: 'Desired devices',
+    package: 'Package',
+    searchPackage: 'Search package',
+    linePlusId: 'Line Plus ID',
+    plusUsername: 'Plus username',
+    plusPassword: 'Plus password',
+    billing: 'Billing',
+    start: 'Start',
+    renewalDate: 'Renews',
+    amount: 'Amount',
+    discount: 'Discount',
+    service: 'Service',
+    paymentMethod: 'Payment method',
+    bank: 'Bank',
+    notes: 'Invoice notes',
+    search: 'Search',
+    planPackage: 'Plan / package',
+    renewalBase: 'Base if expired',
+    manualRenewalDate: 'Optional manual date'
+  },
+  options: {
+    male: 'Male',
+    female: 'Female',
+    other: 'Other',
+    monthly: 'Monthly',
+    quarterly: 'Quarterly',
+    biannual: 'Biannual',
+    annual: 'Annual',
+    addPlusLine: 'Add Plus line',
+    createNewLine: 'Create new line',
+    useExistingLine: 'Use existing line',
+    currentExpiration: 'From current expiration',
+    today: 'From today'
+  },
+  buttons: {
+    reloadOptions: 'Reload options',
+    back: 'Back',
+    continue: 'Continue',
+    reset: 'Reset',
+    preview: 'Preview',
+    confirmActivation: 'Confirm activation',
+    confirmRenewal: 'Confirm renewal',
+    search: 'Search',
+    copyWhatsapp: 'Copy WhatsApp',
+    openCustomer: 'Open customer',
+    openSubscription: 'Open subscription',
+    openInvoice: 'Open invoice',
+    openLicenses: 'Open licenses'
+  },
+  metrics: {
+    status: 'Status',
+    channel: 'Channel',
+    client: 'Customer',
+    plan: 'Plan',
+    currentPlan: 'Current plan',
+    line: 'Line',
+    devices: 'Devices',
+    expires: 'Expires',
+    amount: 'Amount',
+    availableSlots: 'Available slots',
+    capacity: 'Capacity',
+    newDate: 'New date',
+    invoiceAmount: 'Invoice amount'
+  },
+  status: {
+    available: 'Available',
+    review: 'Review'
+  },
+  preview: {
+    title: 'Review before confirming',
+    subscription: 'Subscription',
+    newSubscription: 'new',
+    devicesValue: '{{desired}} desired · {{newLicenses}} new'
+  },
+  result: {
+    title: 'Workflow executed',
+    customer: 'Customer',
+    line: 'Line',
+    subscription: 'Subscription',
+    invoice: 'Invoice',
+    newLicenses: 'New licenses'
+  },
+  messages: {
+    flowInfo:
+      'Guided flow for activations and renewals. Packages, banks, services and payment methods come from catalogs/API; manual CRUD remains as backup.',
+    packageDevices: '{{count}} suggested device(s)',
+    possibleExistingCustomer: 'Possible existing customer',
+    customersFound: 'Customers found',
+    noSubscriptions: 'No subscriptions were found for this search.',
+    linesLoadError: 'Could not load lines.',
+    existingLineSelected: 'Existing line selected',
+    existingLineNoMutation: 'This line will not be modified. The workflow only creates the customer, subscription, invoice and licenses.',
+    selectExistingLine: 'Select one existing line from inventory to continue.',
+    capacityValue: '{{active}} active / {{max}} max · {{available}} free',
+    selectedRenewal: '{{customer}} · subscription #{{subscriptionId}} · current date {{date}}',
+    noSubscriptionSelected: 'Select a subscription before renewing.',
+    decreaseDevicesWarning: 'You are reducing devices. The system does not remove licenses automatically; this will remain for manual review.',
+    changedPlan: 'Plan change',
+    copiedWhatsapp: 'WhatsApp message copied.',
+    whatsappMessage: 'Hi {{customer}}, your Lion TV Premium {{workflow}} was registered. New date: {{date}}.',
+    optionsLoadError: 'Could not load workflow options.',
+    lookupError: 'Could not search customer.',
+    previewError: 'Could not generate preview.',
+    created: 'New account created successfully.',
+    renewed: 'Renewal executed successfully.',
+    activationError: 'Could not execute activation.',
+    renewalError: 'Could not execute renewal.'
+  },
+  workflowTypes: {
+    renewal: 'renewal',
+    activation: 'activation'
+  },
+  paymentMethods: {
+    'Bank Transfer': 'Bank transfer',
+    Paypal: 'PayPal',
+    Ecommerce: 'Ecommerce',
+    'Link pago': 'Payment link',
+    'Debito Automatico': 'Automatic debit',
+    Cryptocurrency: 'Cryptocurrency',
+    'Loyalty Points': 'Loyalty points'
+  },
+  fallbacks: {
+    bank: 'Bank',
+    service: 'Service'
+  }
+};
+
+resources.es.translation.salesWorkflow = {
+  title: 'Ventas y Renovaciones',
+  common: {
+    customerFallback: 'Cliente',
+    noPackage: 'Sin paquete'
+  },
+  tabs: {
+    activation: 'Nueva cuenta',
+    renewal: 'Renovar cliente'
+  },
+  steps: {
+    activation: {
+      customer: 'Cliente',
+      linePlan: 'Línea y plan',
+      paymentConfirm: 'Pago y confirmación'
+    },
+    renewal: {
+      search: 'Buscar',
+      selectPlan: 'Seleccionar plan',
+      paymentConfirm: 'Pago y confirmación'
+    }
+  },
+  sections: {
+    customerTitle: 'Datos del cliente',
+    customerHelper: 'Captura lo mínimo para crear el cliente y validar duplicados antes de continuar.',
+    initialStatusTitle: 'Estado inicial',
+    initialStatusHelper: 'Valores operativos que se enviarán al backend.',
+    packageTitle: 'Paquete',
+    packageHelper: 'Selecciona un paquete real; se autocompletan conexiones y nombre.',
+    lineTitle: 'Línea principal',
+    lineHelper: 'La línea queda asociada al cliente y a la suscripción en el execute transaccional.',
+    paymentTitle: 'Pago y suscripción',
+    paymentHelper: 'El monto sigue editable para manejar descuentos, promociones y ajustes comerciales.',
+    activationSummaryTitle: 'Resumen de activación',
+    activationSummaryHelper: 'Revisa antes de generar el preview o ejecutar.',
+    searchTitle: 'Buscar cliente o suscripción',
+    searchHelper: 'Puedes buscar por nombre, correo, teléfono, lineId o subscriptionId.',
+    selectSubscriptionTitle: 'Selecciona la suscripción',
+    selectSubscriptionHelper: 'La renovación usa el cliente existente; no se crea cliente nuevo.',
+    selectedSubscriptionTitle: 'Suscripción seleccionada',
+    selectedSubscriptionHelper: 'Ajusta paquete, base de renovación y dispositivos.',
+    renewalPaymentTitle: 'Pago y confirmación',
+    renewalPaymentHelper: 'El preview muestra fecha nueva, cambio de plan y licencias faltantes antes de ejecutar.'
+  },
+  fields: {
+    fullName: 'Nombre completo',
+    gender: 'Género',
+    openingDate: 'Fecha alta',
+    email: 'Correo',
+    phone: 'Teléfono / WhatsApp',
+    lineId: 'Line ID',
+    lineUsername: 'Usuario línea',
+    mainLineMode: 'Modo de línea',
+    searchExistingLine: 'Buscar línea existente',
+    searchExistingLinePlaceholder: 'Line ID, usuario o paquete',
+    password: 'Password',
+    expires: 'Expira',
+    desiredDevices: 'Dispositivos deseados',
+    package: 'Paquete',
+    searchPackage: 'Buscar paquete',
+    linePlusId: 'Line Plus ID',
+    plusUsername: 'Usuario plus',
+    plusPassword: 'Password plus',
+    billing: 'Billing',
+    start: 'Inicio',
+    renewalDate: 'Renueva',
+    amount: 'Monto',
+    discount: 'Descuento',
+    service: 'Servicio',
+    paymentMethod: 'Método de pago',
+    bank: 'Banco',
+    notes: 'Notas factura',
+    search: 'Buscar',
+    planPackage: 'Plan / paquete',
+    renewalBase: 'Base si venció',
+    manualRenewalDate: 'Fecha manual opcional'
+  },
+  options: {
+    male: 'Masculino',
+    female: 'Femenino',
+    other: 'Otro',
+    monthly: 'Mensual',
+    quarterly: 'Trimestral',
+    biannual: 'Semestral',
+    annual: 'Anual',
+    addPlusLine: 'Agregar línea Plus',
+    createNewLine: 'Crear línea nueva',
+    useExistingLine: 'Usar línea existente',
+    currentExpiration: 'Desde vencimiento actual',
+    today: 'Desde hoy'
+  },
+  buttons: {
+    reloadOptions: 'Recargar opciones',
+    back: 'Atrás',
+    continue: 'Continuar',
+    reset: 'Reiniciar',
+    preview: 'Vista previa',
+    confirmActivation: 'Confirmar activación',
+    confirmRenewal: 'Confirmar renovación',
+    search: 'Buscar',
+    copyWhatsapp: 'Copiar WhatsApp',
+    openCustomer: 'Abrir cliente',
+    openSubscription: 'Abrir suscripción',
+    openInvoice: 'Abrir factura',
+    openLicenses: 'Abrir licencias'
+  },
+  metrics: {
+    status: 'Estado',
+    channel: 'Canal',
+    client: 'Cliente',
+    plan: 'Plan',
+    currentPlan: 'Plan actual',
+    line: 'Línea',
+    devices: 'Dispositivos',
+    expires: 'Expira',
+    amount: 'Monto',
+    availableSlots: 'Cupos libres',
+    capacity: 'Capacidad',
+    newDate: 'Fecha nueva',
+    invoiceAmount: 'Monto factura'
+  },
+  status: {
+    available: 'Disponible',
+    review: 'Revisar'
+  },
+  preview: {
+    title: 'Resumen antes de confirmar',
+    subscription: 'Suscripción',
+    newSubscription: 'nueva',
+    devicesValue: '{{desired}} deseados · {{newLicenses}} nuevas'
+  },
+  result: {
+    title: 'Flujo ejecutado',
+    customer: 'Cliente',
+    line: 'Línea',
+    subscription: 'Suscripción',
+    invoice: 'Factura',
+    newLicenses: 'Licencias nuevas'
+  },
+  messages: {
+    flowInfo:
+      'Flujo guiado para activaciones y renovaciones. Los paquetes, bancos, servicios y métodos salen de catálogos/API; el CRUD manual queda como respaldo.',
+    packageDevices: '{{count}} dispositivo(s) sugeridos',
+    possibleExistingCustomer: 'Posible cliente existente',
+    customersFound: 'Clientes encontrados',
+    noSubscriptions: 'No se encontraron suscripciones para esa búsqueda.',
+    linesLoadError: 'No se pudieron cargar las líneas.',
+    existingLineSelected: 'Línea existente seleccionada',
+    existingLineNoMutation: 'Esta línea no será modificada. El flujo solo crea el cliente, la suscripción, la factura y las licencias.',
+    selectExistingLine: 'Selecciona una línea existente del inventario para continuar.',
+    capacityValue: '{{active}} activas / {{max}} máximas · {{available}} libres',
+    selectedRenewal: '{{customer}} · suscripción #{{subscriptionId}} · fecha actual {{date}}',
+    noSubscriptionSelected: 'Selecciona una suscripción antes de renovar.',
+    decreaseDevicesWarning: 'Estás bajando dispositivos. El sistema no elimina licencias automáticamente; quedará para revisión manual.',
+    changedPlan: 'Cambio de plan',
+    copiedWhatsapp: 'Mensaje copiado para WhatsApp.',
+    whatsappMessage: 'Hola {{customer}}, tu {{workflow}} Lion TV Premium quedó registrada. Nueva fecha: {{date}}.',
+    optionsLoadError: 'No se pudieron cargar las opciones del workflow.',
+    lookupError: 'No se pudo buscar el cliente.',
+    previewError: 'No se pudo generar el preview.',
+    created: 'Nueva cuenta creada correctamente.',
+    renewed: 'Renovación ejecutada correctamente.',
+    activationError: 'No se pudo ejecutar la activación.',
+    renewalError: 'No se pudo ejecutar la renovación.'
+  },
+  workflowTypes: {
+    renewal: 'renovación',
+    activation: 'activación'
+  },
+  paymentMethods: {
+    'Bank Transfer': 'Transferencia bancaria',
+    Paypal: 'PayPal',
+    Ecommerce: 'Ecommerce',
+    'Link pago': 'Link de pago',
+    'Debito Automatico': 'Débito automático',
+    Cryptocurrency: 'Criptomoneda',
+    'Loyalty Points': 'Puntos de lealtad'
+  },
+  fallbacks: {
+    bank: 'Banco',
+    service: 'Servicio'
+  }
+};
+
 const interpolationCandidateKeys = new Set([
   'count',
   'val',

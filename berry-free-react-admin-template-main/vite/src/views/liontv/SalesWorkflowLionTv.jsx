@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useSnackbar } from 'notistack';
 
 import Alert from '@mui/material/Alert';
@@ -55,13 +56,16 @@ import {
   executeActivation,
   executeRenewal,
   getSalesWorkflowOptions,
+  listSalesWorkflowLines,
   lookupSalesWorkflow,
   previewActivation,
   previewRenewal
 } from 'api/liontv-sales-workflow';
 
-const activationSteps = ['Cliente', 'Línea y plan', 'Pago y confirmación'];
-const renewalSteps = ['Buscar', 'Seleccionar plan', 'Pago y confirmación'];
+const MAIN_LINE_CREATE_NEW = 'CREATE_NEW';
+const MAIN_LINE_USE_EXISTING = 'USE_EXISTING';
+const RENEWAL_BASE_CURRENT_EXPIRATION = 'CURRENT_EXPIRATION';
+const RENEWAL_BASE_TODAY = 'TODAY';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -125,13 +129,13 @@ const sectionSx = {
 };
 
 const summaryCardSx = {
-  p: { xs: 1.5, sm: 2 },
-  borderRadius: 2,
+  p: { xs: 1.25, sm: 1.5 },
+  borderRadius: 2.5,
   border: '1px solid',
   borderColor: 'divider',
-  bgcolor: 'background.paper',
   height: '100%',
-  minWidth: 0
+  minWidth: 0,
+  overflow: 'hidden'
 };
 
 const stepperSx = {
@@ -140,6 +144,7 @@ const stepperSx = {
   borderColor: 'divider',
   borderRadius: 2.5,
   bgcolor: 'background.paper',
+  overflow: 'visible',
   '& .MuiStepLabel-label': {
     mt: { xs: 0, sm: 0.75 },
     fontSize: { xs: '0.8rem', sm: '0.875rem' },
@@ -158,6 +163,14 @@ const actionButtonSx = {
   width: { xs: '100%', sm: 'auto' },
   minHeight: 44,
   whiteSpace: 'nowrap'
+};
+
+const optionChipSx = {
+  height: 24,
+  fontWeight: 700,
+  '& .MuiChip-label': {
+    px: 1
+  }
 };
 
 const defaultOptions = {
@@ -183,6 +196,7 @@ const defaultOptions = {
 };
 
 const defaultActivation = (options = defaultOptions) => ({
+  mainLineMode: MAIN_LINE_CREATE_NEW,
   customer: {
     customerFullname: '',
     gender: 'M',
@@ -250,7 +264,7 @@ const defaultRenewal = (options = defaultOptions) => ({
   subscriptionId: '',
   currentDeviceCount: 0,
   desiredDeviceCount: 1,
-  renewalBaseMode: '',
+  renewalBaseMode: RENEWAL_BASE_CURRENT_EXPIRATION,
   subscription: {
     billing: options.defaults?.billing || 'MONTHLY',
     amount: '',
@@ -301,6 +315,47 @@ function normalizeCatalogOption(item = {}, fallbackPrefix = 'Opción') {
     label: item.label ?? item.name ?? item.bankName ?? item.serviceName ?? item.description ?? `${fallbackPrefix} ${id ?? ''}`.trim(),
     active: item.active ?? item.enabled ?? item.status !== 'INACTIVE'
   };
+}
+
+function normalizeBankOption(item = {}, fallbackPrefix = 'Banco') {
+  const id = item.id ?? item.bankId ?? item.bank_id ?? item.value ?? item.code ?? null;
+  return {
+    id,
+    label: item.bank ?? item.name ?? item.description ?? item.bankName ?? item.label ?? `${fallbackPrefix} ${id ?? ''}`.trim(),
+    active: item.active ?? item.enabled ?? item.status !== 'INACTIVE'
+  };
+}
+
+function normalizeServiceOption(item = {}, fallbackPrefix = 'Servicio') {
+  return normalizeCatalogOption(item, fallbackPrefix);
+}
+
+function normalizeLineOption(item = {}) {
+  const maxConnections = Number(item.max_connections ?? item.maxConnections ?? 0) || 0;
+  const activeConnections = Number(item.active_connections ?? item.activeConnections ?? 0) || 0;
+  const lineId = item.id ?? item.lineId ?? item.line_id ?? '';
+  const packageId = item.package_id ?? item.packageId ?? null;
+  const packageName = item.package_name ?? item.packageName ?? '';
+  return {
+    lineId,
+    username: item.username ?? '',
+    password: item.password ?? '',
+    packageId,
+    packageName,
+    expDate: item.exp_date ?? item.expDate ?? '',
+    enabled: item.enabled !== false,
+    expired: Boolean(item.is_expired ?? item.isExpired),
+    maxConnections,
+    activeConnections,
+    availableSlots: Math.max(maxConnections - activeConnections, 0),
+    provider: item.provider ?? '',
+    lineCountry: item.line_country ?? item.lineCountry ?? '',
+    label: [lineId, item.username, packageName].filter(Boolean).join(' · ')
+  };
+}
+
+function buildLineOptionLabel(option = {}) {
+  return option.label || [option.lineId, option.username, option.packageName].filter(Boolean).join(' · ') || '';
 }
 
 function toNumberOrNull(value) {
@@ -388,6 +443,7 @@ function buildActivationPayload(form, options, withIdempotency = false) {
   const amount = cleanMoney(form.subscription.amount);
   return {
     ...(withIdempotency ? { idempotencyKey: newIdempotencyKey() } : {}),
+    mainLineMode: form.mainLineMode || MAIN_LINE_CREATE_NEW,
     customer: form.customer,
     line: {
       ...form.line,
@@ -423,7 +479,7 @@ function buildRenewalPayload(form, options, withIdempotency = false) {
     ...(withIdempotency ? { idempotencyKey: newIdempotencyKey() } : {}),
     subscriptionId: toNumberOrNull(form.subscriptionId),
     desiredDeviceCount: toNumberOrNull(form.desiredDeviceCount) || 0,
-    renewalBaseMode: form.renewalBaseMode || null,
+    renewalBaseMode: form.renewalBaseMode || RENEWAL_BASE_CURRENT_EXPIRATION,
     subscription: {
       ...form.subscription,
       packageId,
@@ -437,31 +493,76 @@ function buildRenewalPayload(form, options, withIdempotency = false) {
   };
 }
 
-function Section({ title, helper, children }) {
+function Section({ title, helper, icon, color = 'primary', children }) {
   return (
-    <Box sx={sectionSx}>
+    <Box
+      sx={(theme) => ({
+        ...sectionSx,
+        borderColor: theme.palette[color]?.light || theme.palette.divider,
+        background:
+          theme.palette.mode === 'light'
+            ? `linear-gradient(145deg, ${theme.palette[color]?.light || theme.palette.primary.light}18, ${theme.palette.background.paper} 42%)`
+            : theme.palette.surface?.card || theme.palette.background.paper,
+        boxShadow: theme.palette.mode === 'light' ? '0 12px 30px rgba(15, 23, 42, 0.06)' : 'none'
+      })}
+    >
       <Stack spacing={1.5}>
-        <Box>
-          <Typography variant="subtitle1" fontWeight={800}>
-            {title}
-          </Typography>
-          {helper ? (
-            <Typography variant="body2" color="text.secondary">
-              {helper}
-            </Typography>
+        <Stack direction="row" spacing={1.5} alignItems="flex-start">
+          {icon ? (
+            <Avatar
+              sx={(theme) => ({
+                width: 38,
+                height: 38,
+                bgcolor: `${theme.palette[color]?.main || theme.palette.primary.main}18`,
+                color: theme.palette[color]?.main || theme.palette.primary.main,
+                flexShrink: 0
+              })}
+            >
+              {icon}
+            </Avatar>
           ) : null}
-        </Box>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="subtitle1" fontWeight={900} sx={{ lineHeight: 1.25 }}>
+              {title}
+            </Typography>
+            {helper ? (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                {helper}
+              </Typography>
+            ) : null}
+          </Box>
+        </Stack>
         {children}
       </Stack>
     </Box>
   );
 }
 
-function MiniMetric({ label, value, icon }) {
+function MiniMetric({ label, value, icon, color = 'primary' }) {
   return (
-    <Paper variant="outlined" sx={summaryCardSx}>
+    <Paper
+      variant="outlined"
+      sx={(theme) => ({
+        ...summaryCardSx,
+        borderColor: theme.palette[color]?.light || theme.palette.divider,
+        background:
+          theme.palette.mode === 'light'
+            ? `linear-gradient(145deg, ${theme.palette[color]?.light || theme.palette.primary.light}16, ${theme.palette.background.paper})`
+            : theme.palette.surface?.card || theme.palette.background.paper
+      })}
+    >
       <Stack direction="row" spacing={1.25} alignItems="center">
-        <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}>{icon}</Avatar>
+        <Avatar
+          sx={(theme) => ({
+            width: 34,
+            height: 34,
+            bgcolor: `${theme.palette[color]?.main || theme.palette.primary.main}18`,
+            color: theme.palette[color]?.main || theme.palette.primary.main,
+            flexShrink: 0
+          })}
+        >
+          {icon}
+        </Avatar>
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="caption" color="text.secondary">
             {label}
@@ -475,16 +576,22 @@ function MiniMetric({ label, value, icon }) {
   );
 }
 
-function PackageCard({ option, selected, onClick }) {
+function PackageCard({ option, selected, onClick, t }) {
   return (
     <Card
       variant="outlined"
-      sx={{
+      sx={(theme) => ({
         borderRadius: 2,
         borderColor: selected ? 'primary.main' : 'divider',
-        boxShadow: selected ? '0 0 0 2px rgba(229,9,20,0.18)' : 'none',
-        height: '100%'
-      }}
+        boxShadow: selected ? '0 12px 28px rgba(229,9,20,0.16)' : 'none',
+        height: '100%',
+        background:
+          theme.palette.mode === 'light'
+            ? selected
+              ? `linear-gradient(145deg, ${theme.palette.primary.light}18, ${theme.palette.background.paper})`
+              : theme.palette.background.paper
+            : theme.palette.surface?.card || theme.palette.background.paper
+      })}
     >
       <CardActionArea onClick={onClick} sx={{ p: 2, height: '100%' }}>
         <Stack spacing={1}>
@@ -495,11 +602,11 @@ function PackageCard({ option, selected, onClick }) {
             {selected ? <CheckCircleOutlineIcon color="primary" /> : null}
           </Stack>
           <Typography variant="body2" color="text.secondary">
-            {option?.roleCount || 1} dispositivo(s) sugeridos
+            {t('salesWorkflow.messages.packageDevices', '{{count}} suggested device(s)', { count: option?.roleCount || 1 })}
           </Typography>
           <Stack direction="row" spacing={1} flexWrap="wrap">
-            {option?.type ? <Chip size="small" label={option.type} /> : null}
-            {option?.officialDuration ? <Chip size="small" label={`${option.officialDuration} ${option.officialDurationIn || ''}`} /> : null}
+            {option?.type ? <Chip size="small" label={option.type} sx={optionChipSx} /> : null}
+            {option?.officialDuration ? <Chip size="small" label={`${option.officialDuration} ${option.officialDurationIn || ''}`} sx={optionChipSx} /> : null}
           </Stack>
         </Stack>
       </CardActionArea>
@@ -508,44 +615,54 @@ function PackageCard({ option, selected, onClick }) {
 }
 
 function PreviewCard({ preview }) {
+  const { t } = useTranslation();
   if (!preview) return null;
 
   return (
-    <Card variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+    <Card variant="outlined" sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2.5 }}>
       <Stack spacing={1.5}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }} justifyContent="space-between">
           <Box>
             <Typography variant="subtitle1" fontWeight={900}>
-              Resumen antes de confirmar
+              {t('salesWorkflow.preview.title', 'Review before confirming')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {preview.customerName || 'Cliente'} · Suscripción {preview.subscriptionId || 'nueva'}
+              {preview.customerName || t('salesWorkflow.common.customerFallback', 'Customer')} ·{' '}
+              {t('salesWorkflow.preview.subscription', 'Subscription')} {preview.subscriptionId || t('salesWorkflow.preview.newSubscription', 'new')}
             </Typography>
           </Box>
-          <Chip color="primary" label={preview.workflowType === 'RENEWAL' ? 'Renovación' : 'Nueva cuenta'} />
+          <Chip
+            color="primary"
+            label={preview.workflowType === 'RENEWAL' ? t('salesWorkflow.tabs.renewal', 'Renew customer') : t('salesWorkflow.tabs.activation', 'New account')}
+            sx={optionChipSx}
+          />
         </Stack>
         <Divider />
         <Grid container spacing={1.5}>
           <Grid item xs={12} sm={6} md={3}>
-            <MiniMetric label="Plan" value={preview.newPackageName || preview.newPackageId} icon={<Inventory2Icon fontSize="small" />} />
+            <MiniMetric label={t('salesWorkflow.metrics.plan', 'Plan')} value={preview.newPackageName || preview.newPackageId} icon={<Inventory2Icon fontSize="small" />} color="primary" />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <MiniMetric label="Fecha nueva" value={formatDate(preview.newRenewalDate)} icon={<AutorenewIcon fontSize="small" />} />
+            <MiniMetric label={t('salesWorkflow.metrics.newDate', 'New date')} value={formatDate(preview.newRenewalDate)} icon={<AutorenewIcon fontSize="small" />} color="info" />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
             <MiniMetric
-              label="Dispositivos"
-              value={`${preview.desiredDeviceCount ?? 0} deseados · ${preview.additionalLicensesToCreate ?? 0} nuevas`}
+              label={t('salesWorkflow.metrics.devices', 'Devices')}
+              value={t('salesWorkflow.preview.devicesValue', '{{desired}} desired · {{newLicenses}} new', {
+                desired: preview.desiredDeviceCount ?? 0,
+                newLicenses: preview.additionalLicensesToCreate ?? 0
+              })}
               icon={<DevicesIcon fontSize="small" />}
+              color="secondary"
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <MiniMetric label="Monto factura" value={formatMoney(preview.invoiceAmount ?? preview.amount)} icon={<PaidOutlinedIcon fontSize="small" />} />
+            <MiniMetric label={t('salesWorkflow.metrics.invoiceAmount', 'Invoice amount')} value={formatMoney(preview.invoiceAmount ?? preview.amount)} icon={<PaidOutlinedIcon fontSize="small" />} color="success" />
           </Grid>
         </Grid>
         {preview.currentPackageName && preview.currentPackageName !== preview.newPackageName ? (
           <Alert severity="info">
-            Cambio de plan: {preview.currentPackageName} → {preview.newPackageName}
+            {t('salesWorkflow.messages.changedPlan', 'Plan change')}: {preview.currentPackageName} → {preview.newPackageName}
           </Alert>
         ) : null}
         {preview.warnings?.length ? (
@@ -564,32 +681,48 @@ function PreviewCard({ preview }) {
 
 function ResultCard({ result }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
   if (!result) return null;
 
   const copyMessage = async () => {
     const summary = result.summary || {};
-    const message = `Hola ${summary.customerName || ''}, tu ${result.workflowType === 'RENEWAL' ? 'renovación' : 'activación'} Lion TV Premium quedó registrada. Nueva fecha: ${formatDate(summary.newRenewalDate)}.`;
+    const message = t('salesWorkflow.messages.whatsappMessage', {
+      customer: summary.customerName || '',
+      workflow: result.workflowType === 'RENEWAL' ? t('salesWorkflow.workflowTypes.renewal', 'renewal') : t('salesWorkflow.workflowTypes.activation', 'activation'),
+      date: formatDate(summary.newRenewalDate)
+    });
     await navigator.clipboard?.writeText(message);
-    enqueueSnackbar('Mensaje copiado para WhatsApp.', { variant: 'success' });
+    enqueueSnackbar(t('salesWorkflow.messages.copiedWhatsapp', 'WhatsApp message copied.'), { variant: 'success' });
   };
 
   return (
-    <Card variant="outlined" sx={{ p: 2, borderRadius: 2, borderColor: 'success.main' }}>
+    <Card
+      variant="outlined"
+      sx={(theme) => ({
+        p: { xs: 1.5, sm: 2 },
+        borderRadius: 2.5,
+        borderColor: 'success.light',
+        background:
+          theme.palette.mode === 'light'
+            ? `linear-gradient(145deg, ${theme.palette.success.light}1f, ${theme.palette.background.paper})`
+            : theme.palette.surface?.card || theme.palette.background.paper
+      })}
+    >
       <Stack spacing={1.5}>
         <Stack direction="row" spacing={1} alignItems="center">
           <CheckCircleOutlineIcon color="success" />
           <Typography variant="subtitle1" fontWeight={900}>
-            Flujo ejecutado
+            {t('salesWorkflow.result.title', 'Workflow executed')}
           </Typography>
         </Stack>
         <Grid container spacing={1.5}>
           {[
-            ['Cliente', result.customerId],
-            ['Línea', result.lineId],
-            ['Suscripción', result.subscriptionId],
-            ['Factura', result.invoiceId],
-            ['Licencias nuevas', result.createdLicenseIds?.length || 0]
+            [t('salesWorkflow.result.customer', 'Customer'), result.customerId],
+            [t('salesWorkflow.result.line', 'Line'), result.lineId],
+            [t('salesWorkflow.result.subscription', 'Subscription'), result.subscriptionId],
+            [t('salesWorkflow.result.invoice', 'Invoice'), result.invoiceId],
+            [t('salesWorkflow.result.newLicenses', 'New licenses'), result.createdLicenseIds?.length || 0]
           ].map(([label, value]) => (
             <Grid item xs={12} sm={6} md={2.4} key={label}>
               <Typography variant="caption" color="text.secondary">
@@ -602,20 +735,20 @@ function ResultCard({ result }) {
           ))}
         </Grid>
         <Stack direction="row" spacing={1} flexWrap="wrap">
-          <Button size="small" onClick={() => navigate('/liontv/customers')}>
-            Abrir cliente
+          <Button size="small" sx={actionButtonSx} onClick={() => navigate('/liontv/customers')}>
+            {t('salesWorkflow.buttons.openCustomer', 'Open customer')}
           </Button>
-          <Button size="small" onClick={() => navigate('/liontv/subscriptions')}>
-            Abrir suscripción
+          <Button size="small" sx={actionButtonSx} onClick={() => navigate('/liontv/subscriptions')}>
+            {t('salesWorkflow.buttons.openSubscription', 'Open subscription')}
           </Button>
-          <Button size="small" onClick={() => navigate('/liontv/invoices')}>
-            Abrir factura
+          <Button size="small" sx={actionButtonSx} onClick={() => navigate('/liontv/invoices')}>
+            {t('salesWorkflow.buttons.openInvoice', 'Open invoice')}
           </Button>
-          <Button size="small" onClick={() => navigate('/liontv/licenses')}>
-            Abrir licencias
+          <Button size="small" sx={actionButtonSx} onClick={() => navigate('/liontv/licenses')}>
+            {t('salesWorkflow.buttons.openLicenses', 'Open licenses')}
           </Button>
-          <Button size="small" startIcon={<ContentCopyIcon />} onClick={copyMessage}>
-            Copiar WhatsApp
+          <Button size="small" sx={actionButtonSx} startIcon={<ContentCopyIcon />} onClick={copyMessage}>
+            {t('salesWorkflow.buttons.copyWhatsapp', 'Copy WhatsApp')}
           </Button>
         </Stack>
       </Stack>
@@ -625,6 +758,7 @@ function ResultCard({ result }) {
 
 export default function SalesWorkflowLionTv() {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [tab, setTab] = useState(0);
@@ -633,6 +767,8 @@ export default function SalesWorkflowLionTv() {
   const [options, setOptions] = useState(defaultOptions);
   const [optionsLoading, setOptionsLoading] = useState(true);
   const [customers, setCustomers] = useState([]);
+  const [lineOptions, setLineOptions] = useState([]);
+  const [linesLoading, setLinesLoading] = useState(false);
   const [activation, setActivation] = useState(() => defaultActivation(defaultOptions));
   const [renewal, setRenewal] = useState(() => defaultRenewal(defaultOptions));
   const [lookupQuery, setLookupQuery] = useState('');
@@ -649,6 +785,10 @@ export default function SalesWorkflowLionTv() {
   const selectedActivationPackage = useMemo(
     () => packages.find((item) => String(item.packageId) === String(activation.subscription.packageId || activation.line.packageId)) || null,
     [activation.line.packageId, activation.subscription.packageId, packages]
+  );
+  const selectedExistingLine = useMemo(
+    () => lineOptions.find((item) => String(item.lineId) === String(activation.line.lineId)) || null,
+    [activation.line.lineId, lineOptions]
   );
   const selectedRenewalPackage = useMemo(
     () => packages.find((item) => String(item.packageId) === String(renewal.subscription.packageId)) || null,
@@ -670,6 +810,39 @@ export default function SalesWorkflowLionTv() {
   }, [activation.customer.customerMail, activation.customer.customerPhone, customers]);
   const activationRequiresBank = paymentRequiresBank(options, activation.invoice.paymentMethod);
   const renewalRequiresBank = paymentRequiresBank(options, renewal.invoice.paymentMethod);
+  const activationSteps = useMemo(
+    () => [
+      t('salesWorkflow.steps.activation.customer', 'Customer'),
+      t('salesWorkflow.steps.activation.linePlan', 'Line & plan'),
+      t('salesWorkflow.steps.activation.paymentConfirm', 'Payment & confirmation')
+    ],
+    [t]
+  );
+  const renewalSteps = useMemo(
+    () => [
+      t('salesWorkflow.steps.renewal.search', 'Search'),
+      t('salesWorkflow.steps.renewal.selectPlan', 'Select plan'),
+      t('salesWorkflow.steps.renewal.paymentConfirm', 'Payment & confirmation')
+    ],
+    [t]
+  );
+  const paymentMethodLabel = useCallback(
+    (method) => t(`salesWorkflow.paymentMethods.${method.code}`, method.label || method.code),
+    [t]
+  );
+
+  const loadLineOptions = useCallback(async () => {
+    setLinesLoading(true);
+    try {
+      const payload = await listSalesWorkflowLines();
+      const normalized = unwrapArray(payload).map(normalizeLineOption);
+      setLineOptions(normalized);
+    } catch (error) {
+      enqueueSnackbar(extractError(error, t('salesWorkflow.messages.linesLoadError', 'Could not load lines.')), { variant: 'error' });
+    } finally {
+      setLinesLoading(false);
+    }
+  }, [enqueueSnackbar, t]);
 
   const loadOptions = useCallback(async () => {
     setOptionsLoading(true);
@@ -684,11 +857,11 @@ export default function SalesWorkflowLionTv() {
       const workflowOptions = workflowResult.status === 'fulfilled' && workflowResult.value ? workflowResult.value : defaultOptions;
       const loadedBanks =
         bankResult.status === 'fulfilled'
-          ? unwrapArray(bankResult.value).map((item) => normalizeCatalogOption(item, 'Banco'))
+          ? unwrapArray(bankResult.value).map((item) => normalizeBankOption(item, t('salesWorkflow.fallbacks.bank', 'Bank')))
           : workflowOptions.banks || [];
       const loadedServices =
         serviceResult.status === 'fulfilled'
-          ? unwrapArray(serviceResult.value).map((item) => normalizeCatalogOption(item, 'Servicio'))
+          ? unwrapArray(serviceResult.value).map((item) => normalizeServiceOption(item, t('salesWorkflow.fallbacks.service', 'Service')))
           : workflowOptions.services || [];
       const customersPayload =
         customerResult.status === 'fulfilled'
@@ -738,15 +911,21 @@ export default function SalesWorkflowLionTv() {
         }
       }));
     } catch (error) {
-      enqueueSnackbar(extractError(error, 'No se pudieron cargar las opciones del workflow.'), { variant: 'error' });
+      enqueueSnackbar(extractError(error, t('salesWorkflow.messages.optionsLoadError', 'Could not load workflow options.')), { variant: 'error' });
     } finally {
       setOptionsLoading(false);
     }
-  }, [enqueueSnackbar]);
+  }, [enqueueSnackbar, t]);
 
   useEffect(() => {
     loadOptions();
   }, [loadOptions]);
+
+  useEffect(() => {
+    if (tab === 0 && activeStep === 1 && activation.mainLineMode === MAIN_LINE_USE_EXISTING && !lineOptions.length && !linesLoading) {
+      loadLineOptions();
+    }
+  }, [activation.mainLineMode, activeStep, lineOptions.length, linesLoading, loadLineOptions, tab]);
 
   const clearPreview = () => {
     setPreview(null);
@@ -783,6 +962,59 @@ export default function SalesWorkflowLionTv() {
     clearPreview();
   };
 
+  const handleMainLineModeChange = (mode) => {
+    setActivation((prev) => ({
+      ...prev,
+      mainLineMode: mode,
+      line:
+        mode === MAIN_LINE_CREATE_NEW
+          ? { ...defaultActivation(options).line, packageId: prev.line.packageId, packageName: prev.line.packageName, maxConnections: prev.desiredDeviceCount || 1 }
+          : {
+              ...prev.line,
+              lineId: '',
+              username: '',
+              password: '',
+              expDate: prev.line.expDate,
+              maxConnections: prev.line.maxConnections || prev.desiredDeviceCount || 1
+            }
+    }));
+    clearPreview();
+    if (mode === MAIN_LINE_USE_EXISTING && !lineOptions.length) {
+      loadLineOptions();
+    }
+  };
+
+  const handleExistingLineSelect = (line) => {
+    setActivation((prev) => {
+      const nextPackageId = prev.subscription.packageId || line?.packageId || '';
+      return {
+        ...prev,
+        line: {
+          ...prev.line,
+          lineId: line?.lineId || '',
+          username: line?.username || '',
+          password: line?.password || '',
+          packageId: line?.packageId || prev.line.packageId || '',
+          packageName: line?.packageName || prev.line.packageName || '',
+          expDate: line?.expDate ? String(line.expDate).slice(0, 10) : prev.line.expDate,
+          enabled: line?.enabled ?? prev.line.enabled,
+          maxConnections: line?.maxConnections || prev.line.maxConnections || prev.desiredDeviceCount || 1,
+          provider: line?.provider || prev.line.provider,
+          lineCountry: line?.lineCountry || prev.line.lineCountry
+        },
+        subscription: {
+          ...prev.subscription,
+          packageId: nextPackageId
+        },
+        invoice: {
+          ...prev.invoice,
+          packageId: nextPackageId
+        }
+      };
+    });
+    clearPreview();
+  };
+
   const applyRenewalPackage = (pkg) => {
     if (!pkg) return;
     const devices = pkg.roleCount || renewal.currentDeviceCount || 1;
@@ -810,7 +1042,7 @@ export default function SalesWorkflowLionTv() {
       setRenewalStep(1);
       clearPreview();
     } catch (error) {
-      enqueueSnackbar(extractError(error, 'No se pudo buscar el cliente.'), { variant: 'error' });
+      enqueueSnackbar(extractError(error, t('salesWorkflow.messages.lookupError', 'Could not search customer.')), { variant: 'error' });
     } finally {
       setBusy(false);
     }
@@ -852,7 +1084,7 @@ export default function SalesWorkflowLionTv() {
       const response = await previewActivation(buildActivationPayload(activation, options));
       setPreview(response);
     } catch (error) {
-      enqueueSnackbar(extractError(error, 'No se pudo generar el preview.'), { variant: 'error' });
+      enqueueSnackbar(extractError(error, t('salesWorkflow.messages.previewError', 'Could not generate preview.')), { variant: 'error' });
     } finally {
       setBusy(false);
     }
@@ -864,9 +1096,9 @@ export default function SalesWorkflowLionTv() {
       const response = await executeActivation(buildActivationPayload(activation, options, true));
       setResult(response);
       setPreview(response?.summary || preview);
-      enqueueSnackbar('Nueva cuenta creada correctamente.', { variant: 'success' });
+      enqueueSnackbar(t('salesWorkflow.messages.created', 'New account created successfully.'), { variant: 'success' });
     } catch (error) {
-      enqueueSnackbar(extractError(error, 'No se pudo ejecutar la activación.'), { variant: 'error' });
+      enqueueSnackbar(extractError(error, t('salesWorkflow.messages.activationError', 'Could not execute activation.')), { variant: 'error' });
     } finally {
       setBusy(false);
     }
@@ -879,7 +1111,7 @@ export default function SalesWorkflowLionTv() {
       const response = await previewRenewal(buildRenewalPayload(renewal, options));
       setPreview(response);
     } catch (error) {
-      enqueueSnackbar(extractError(error, 'No se pudo generar el preview.'), { variant: 'error' });
+      enqueueSnackbar(extractError(error, t('salesWorkflow.messages.previewError', 'Could not generate preview.')), { variant: 'error' });
     } finally {
       setBusy(false);
     }
@@ -891,9 +1123,9 @@ export default function SalesWorkflowLionTv() {
       const response = await executeRenewal(buildRenewalPayload(renewal, options, true));
       setResult(response);
       setPreview(response?.summary || preview);
-      enqueueSnackbar('Renovación ejecutada correctamente.', { variant: 'success' });
+      enqueueSnackbar(t('salesWorkflow.messages.renewed', 'Renewal executed successfully.'), { variant: 'success' });
     } catch (error) {
-      enqueueSnackbar(extractError(error, 'No se pudo ejecutar la renovación.'), { variant: 'error' });
+      enqueueSnackbar(extractError(error, t('salesWorkflow.messages.renewalError', 'Could not execute renewal.')), { variant: 'error' });
     } finally {
       setBusy(false);
     }
@@ -901,7 +1133,12 @@ export default function SalesWorkflowLionTv() {
 
   const canGoActivationNext = () => {
     if (activeStep === 0) return Boolean(activation.customer.customerFullname && (activation.customer.customerMail || activation.customer.customerPhone));
-    if (activeStep === 1) return Boolean(activation.line.lineId && activation.line.username && activation.line.password && activation.subscription.packageId);
+    if (activeStep === 1) {
+      if (activation.mainLineMode === MAIN_LINE_USE_EXISTING) {
+        return Boolean(activation.line.lineId && activation.subscription.packageId);
+      }
+      return Boolean(activation.line.lineId && activation.line.username && activation.line.password && activation.subscription.packageId);
+    }
     return true;
   };
 
@@ -917,19 +1154,22 @@ export default function SalesWorkflowLionTv() {
 
   return (
     <MainCard
-      title="Ventas y Renovaciones"
+      title={t('salesWorkflow.title', 'Sales & Renewals')}
       secondary={
         <Stack direction="row" spacing={1}>
           {optionsLoading ? <CircularProgress size={22} /> : null}
           <Button startIcon={<RefreshIcon />} onClick={loadOptions} disabled={busy || optionsLoading}>
-            Recargar opciones
+            {t('salesWorkflow.buttons.reloadOptions', 'Reload options')}
           </Button>
         </Stack>
       }
     >
       <Stack spacing={3}>
         <Alert severity="info">
-          Flujo guiado para activaciones y renovaciones. Los paquetes, bancos, servicios y métodos salen de catálogos/API; el CRUD manual queda como respaldo.
+          {t(
+            'salesWorkflow.messages.flowInfo',
+            'Guided flow for activations and renewals. Packages, banks, services and payment methods come from catalogs/API; manual CRUD remains as backup.'
+          )}
         </Alert>
 
         <Tabs
@@ -941,8 +1181,8 @@ export default function SalesWorkflowLionTv() {
             clearPreview();
           }}
         >
-          <Tab label="Nueva cuenta" icon={<AddCircleOutlineIcon />} iconPosition="start" />
-          <Tab label="Renovar cliente" icon={<CreditScoreIcon />} iconPosition="start" />
+          <Tab label={t('salesWorkflow.tabs.activation', 'New account')} icon={<AddCircleOutlineIcon />} iconPosition="start" />
+          <Tab label={t('salesWorkflow.tabs.renewal', 'Renew customer')} icon={<CreditScoreIcon />} iconPosition="start" />
         </Tabs>
 
         {tab === 0 ? (
@@ -963,13 +1203,18 @@ export default function SalesWorkflowLionTv() {
             {activeStep === 0 ? (
               <Grid container spacing={gridSpacing}>
                 <Grid item xs={12} md={8}>
-                  <Section title="Datos del cliente" helper="Captura lo mínimo para crear el cliente y validar duplicados antes de continuar.">
+                  <Section
+                    title={t('salesWorkflow.sections.customerTitle', 'Customer details')}
+                    helper={t('salesWorkflow.sections.customerHelper', 'Capture the minimum details to create the customer and validate duplicates before continuing.')}
+                    icon={<PersonSearchIcon fontSize="small" />}
+                    color="primary"
+                  >
                     <Grid container spacing={2}>
                       <Grid item xs={12} md={6}>
                         <TextField
                           fullWidth
                           required
-                          label="Nombre completo"
+	                          label={t('salesWorkflow.fields.fullName', 'Full name')}
                           sx={fieldSx}
                           value={activation.customer.customerFullname}
                           onChange={(e) => setNestedValue(setActivation, 'customer', 'customerFullname', e.target.value)}
@@ -977,15 +1222,15 @@ export default function SalesWorkflowLionTv() {
                       </Grid>
                       <Grid item xs={12} sm={6} md={3}>
                         <FormControl fullWidth sx={fieldSx}>
-                          <InputLabel>Género</InputLabel>
+                          <InputLabel>{t('salesWorkflow.fields.gender', 'Gender')}</InputLabel>
                           <Select
-                            label="Género"
+                            label={t('salesWorkflow.fields.gender', 'Gender')}
                             value={activation.customer.gender}
                             onChange={(e) => setNestedValue(setActivation, 'customer', 'gender', e.target.value)}
                           >
-                            <MenuItem value="M">Masculino</MenuItem>
-                            <MenuItem value="F">Femenino</MenuItem>
-                            <MenuItem value="O">Otro</MenuItem>
+                            <MenuItem value="M">{t('salesWorkflow.options.male', 'Male')}</MenuItem>
+                            <MenuItem value="F">{t('salesWorkflow.options.female', 'Female')}</MenuItem>
+                            <MenuItem value="O">{t('salesWorkflow.options.other', 'Other')}</MenuItem>
                           </Select>
                         </FormControl>
                       </Grid>
@@ -993,7 +1238,7 @@ export default function SalesWorkflowLionTv() {
                         <TextField
                           fullWidth
                           type="date"
-                          label="Fecha alta"
+                          label={t('salesWorkflow.fields.openingDate', 'Opening date')}
                           sx={fieldSx}
                           value={activation.customer.openingDate}
                           onChange={(e) => setNestedValue(setActivation, 'customer', 'openingDate', e.target.value)}
@@ -1003,7 +1248,7 @@ export default function SalesWorkflowLionTv() {
                       <Grid item xs={12} md={6}>
                         <TextField
                           fullWidth
-                          label="Correo"
+                          label={t('salesWorkflow.fields.email', 'Email')}
                           sx={fieldSx}
                           value={activation.customer.customerMail}
                           onChange={(e) => setNestedValue(setActivation, 'customer', 'customerMail', e.target.value)}
@@ -1012,7 +1257,7 @@ export default function SalesWorkflowLionTv() {
                       <Grid item xs={12} md={6}>
                         <TextField
                           fullWidth
-                          label="Teléfono / WhatsApp"
+                          label={t('salesWorkflow.fields.phone', 'Phone / WhatsApp')}
                           sx={fieldSx}
                           value={activation.customer.customerPhone}
                           onChange={(e) => setNestedValue(setActivation, 'customer', 'customerPhone', e.target.value)}
@@ -1021,16 +1266,21 @@ export default function SalesWorkflowLionTv() {
                     </Grid>
                     {duplicateCustomers.length ? (
                       <Alert severity="warning" icon={<WarningAmberIcon />}>
-                        Posible cliente existente: {duplicateCustomers.map((item) => `${item.label || item.email} (#${item.id})`).join(', ')}.
+                        {t('salesWorkflow.messages.possibleExistingCustomer', 'Possible existing customer')}: {duplicateCustomers.map((item) => `${item.label || item.email} (#${item.id})`).join(', ')}.
                       </Alert>
                     ) : null}
                   </Section>
                 </Grid>
                 <Grid item xs={12} md={4}>
-                  <Section title="Estado inicial" helper="Valores operativos que se enviarán al backend.">
+                  <Section
+                    title={t('salesWorkflow.sections.initialStatusTitle', 'Initial status')}
+                    helper={t('salesWorkflow.sections.initialStatusHelper', 'Operational values that will be sent to the backend.')}
+                    icon={<CheckCircleOutlineIcon fontSize="small" />}
+                    color="success"
+                  >
                     <Stack spacing={1.5}>
-                      <MiniMetric label="Estado" value={activation.customer.customerStatus} icon={<CheckCircleOutlineIcon fontSize="small" />} />
-                      <MiniMetric label="Canal" value="SALES_WORKFLOW" icon={<LanIcon fontSize="small" />} />
+                      <MiniMetric label={t('salesWorkflow.metrics.status', 'Status')} value={activation.customer.customerStatus} icon={<CheckCircleOutlineIcon fontSize="small" />} color="success" />
+                      <MiniMetric label={t('salesWorkflow.metrics.channel', 'Channel')} value="SALES_WORKFLOW" icon={<LanIcon fontSize="small" />} color="info" />
                     </Stack>
                   </Section>
                 </Grid>
@@ -1040,7 +1290,12 @@ export default function SalesWorkflowLionTv() {
             {activeStep === 1 ? (
               <Grid container spacing={gridSpacing}>
                 <Grid item xs={12} md={5}>
-                  <Section title="Paquete" helper="Selecciona un paquete real; se autocompletan conexiones y nombre.">
+                  <Section
+                    title={t('salesWorkflow.sections.packageTitle', 'Package')}
+                    helper={t('salesWorkflow.sections.packageHelper', 'Select a real package; connections and name are filled automatically.')}
+                    icon={<Inventory2Icon fontSize="small" />}
+                    color="secondary"
+                  >
                     <Autocomplete
                       options={packages}
                       loading={optionsLoading}
@@ -1048,7 +1303,7 @@ export default function SalesWorkflowLionTv() {
                       onChange={(_, value) => applyActivationPackage(value)}
                       getOptionLabel={(option) => option?.displayName || option?.name || ''}
                       isOptionEqualToValue={(option, value) => String(option?.packageId) === String(value?.packageId)}
-                      renderInput={(params) => <TextField {...params} label="Buscar paquete" sx={fieldSx} />}
+                      renderInput={(params) => <TextField {...params} label={t('salesWorkflow.fields.searchPackage', 'Search package')} sx={fieldSx} />}
                     />
                     <Grid container spacing={1.5}>
                       {packages.slice(0, 6).map((pkg) => (
@@ -1057,6 +1312,7 @@ export default function SalesWorkflowLionTv() {
                             option={pkg}
                             selected={String(pkg.packageId) === String(activation.subscription.packageId)}
                             onClick={() => applyActivationPackage(pkg)}
+                            t={t}
                           />
                         </Grid>
                       ))}
@@ -1064,24 +1320,150 @@ export default function SalesWorkflowLionTv() {
                   </Section>
                 </Grid>
                 <Grid item xs={12} md={7}>
-                  <Section title="Línea principal" helper="La línea queda asociada al cliente y a la suscripción en el execute transaccional.">
+                  <Section
+                    title={t('salesWorkflow.sections.lineTitle', 'Main line')}
+                    helper={t('salesWorkflow.sections.lineHelper', 'The line is associated with the customer and subscription in the transactional execute.')}
+                    icon={<LanIcon fontSize="small" />}
+                    color="info"
+                  >
+                    <FormControl fullWidth sx={fieldSx}>
+                      <InputLabel>{t('salesWorkflow.fields.mainLineMode', 'Line mode')}</InputLabel>
+                      <Select
+                        label={t('salesWorkflow.fields.mainLineMode', 'Line mode')}
+                        value={activation.mainLineMode}
+                        onChange={(e) => handleMainLineModeChange(e.target.value)}
+                      >
+                        <MenuItem value={MAIN_LINE_CREATE_NEW}>{t('salesWorkflow.options.createNewLine', 'Create new line')}</MenuItem>
+                        <MenuItem value={MAIN_LINE_USE_EXISTING}>{t('salesWorkflow.options.useExistingLine', 'Use existing line')}</MenuItem>
+                      </Select>
+                    </FormControl>
+                    {activation.mainLineMode === MAIN_LINE_USE_EXISTING ? (
+                      <Stack spacing={1.5}>
+                        <Autocomplete
+                          fullWidth
+                          options={lineOptions}
+                          loading={linesLoading}
+                          value={selectedExistingLine}
+                          onOpen={() => {
+                            if (!lineOptions.length) loadLineOptions();
+                          }}
+                          onChange={(_, value) => handleExistingLineSelect(value)}
+                          getOptionLabel={buildLineOptionLabel}
+                          isOptionEqualToValue={(option, value) => option.lineId === value?.lineId}
+                          renderOption={(props, option) => (
+                            <Box component="li" {...props}>
+                              <Stack spacing={0.25} sx={{ minWidth: 0 }}>
+                                <Typography variant="body2" fontWeight={800} sx={{ overflowWrap: 'anywhere' }}>
+                                  {option.lineId} · {option.username || '-'}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {option.packageName || t('salesWorkflow.common.noPackage', 'No package')} ·{' '}
+                                  {t('salesWorkflow.metrics.expires', 'Expires')}: {formatDate(option.expDate)} ·{' '}
+                                  {t('salesWorkflow.metrics.availableSlots', 'Available slots')}: {option.availableSlots}
+                                </Typography>
+                              </Stack>
+                            </Box>
+                          )}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label={t('salesWorkflow.fields.searchExistingLine', 'Search existing line')}
+                              placeholder={t('salesWorkflow.fields.searchExistingLinePlaceholder', 'Line ID, username or package')}
+                              sx={fieldSx}
+                              InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                  <>
+                                    {linesLoading ? <CircularProgress color="inherit" size={18} /> : null}
+                                    {params.InputProps.endAdornment}
+                                  </>
+                                )
+                              }}
+                            />
+                          )}
+                        />
+                        {selectedExistingLine ? (
+                          <Paper
+                            variant="outlined"
+                            sx={(theme) => ({
+                              p: 1.5,
+                              borderRadius: 2,
+                              borderColor: theme.palette.info.light,
+                              background:
+                                theme.palette.mode === 'light'
+                                  ? `linear-gradient(145deg, ${theme.palette.info.light}1c, ${theme.palette.background.paper})`
+                                  : theme.palette.surface?.card || theme.palette.background.paper
+                            })}
+                          >
+                            <Stack spacing={1}>
+                              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }} justifyContent="space-between">
+                                <Typography variant="subtitle2" fontWeight={900}>
+                                  {t('salesWorkflow.messages.existingLineSelected', 'Existing line selected')}
+                                </Typography>
+                                <Chip
+                                  size="small"
+                                  color={selectedExistingLine.enabled && !selectedExistingLine.expired ? 'success' : 'warning'}
+                                  label={
+                                    selectedExistingLine.enabled && !selectedExistingLine.expired
+                                      ? t('salesWorkflow.status.available', 'Available')
+                                      : t('salesWorkflow.status.review', 'Review')
+                                  }
+                                  sx={optionChipSx}
+                                />
+                              </Stack>
+                              <Grid container spacing={1.5}>
+                                <Grid item xs={12} sm={6}>
+                                  <MiniMetric label={t('salesWorkflow.fields.lineId', 'Line ID')} value={selectedExistingLine.lineId} icon={<LanIcon fontSize="small" />} color="info" />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                  <MiniMetric label={t('salesWorkflow.metrics.currentPlan', 'Current plan')} value={selectedExistingLine.packageName} icon={<Inventory2Icon fontSize="small" />} color="secondary" />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                  <MiniMetric label={t('salesWorkflow.metrics.expires', 'Expires')} value={formatDate(selectedExistingLine.expDate)} icon={<AutorenewIcon fontSize="small" />} color="warning" />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                  <MiniMetric
+                                    label={t('salesWorkflow.metrics.capacity', 'Capacity')}
+                                    value={t('salesWorkflow.messages.capacityValue', '{{active}} active / {{max}} max · {{available}} free', {
+                                      active: selectedExistingLine.activeConnections,
+                                      max: selectedExistingLine.maxConnections,
+                                      available: selectedExistingLine.availableSlots
+                                    })}
+                                    icon={<DevicesIcon fontSize="small" />}
+                                    color="success"
+                                  />
+                                </Grid>
+                              </Grid>
+                              <Alert severity="info">
+                                {t(
+                                  'salesWorkflow.messages.existingLineNoMutation',
+                                  'This line will not be modified. The workflow only creates the customer, subscription, invoice and licenses.'
+                                )}
+                              </Alert>
+                            </Stack>
+                          </Paper>
+                        ) : (
+                          <Alert severity="info">{t('salesWorkflow.messages.selectExistingLine', 'Select one existing line from inventory to continue.')}</Alert>
+                        )}
+                      </Stack>
+                    ) : null}
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={6} lg={4}>
-                        <TextField fullWidth required label="Line ID" sx={fieldSx} value={activation.line.lineId} onChange={(e) => setNestedValue(setActivation, 'line', 'lineId', e.target.value)} />
+                        <TextField fullWidth required label={t('salesWorkflow.fields.lineId', 'Line ID')} sx={fieldSx} value={activation.line.lineId} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'lineId', e.target.value)} />
                       </Grid>
                       <Grid item xs={12} sm={6} lg={4}>
-                        <TextField fullWidth required label="Usuario línea" sx={fieldSx} value={activation.line.username} onChange={(e) => setNestedValue(setActivation, 'line', 'username', e.target.value)} />
+                        <TextField fullWidth required={activation.mainLineMode === MAIN_LINE_CREATE_NEW} label={t('salesWorkflow.fields.lineUsername', 'Line username')} sx={fieldSx} value={activation.line.username} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'username', e.target.value)} />
                       </Grid>
                       <Grid item xs={12} sm={6} lg={4}>
-                        <TextField fullWidth required label="Password" sx={fieldSx} value={activation.line.password} onChange={(e) => setNestedValue(setActivation, 'line', 'password', e.target.value)} />
+                        <TextField fullWidth required={activation.mainLineMode === MAIN_LINE_CREATE_NEW} label={t('salesWorkflow.fields.password', 'Password')} sx={fieldSx} value={activation.line.password} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'password', e.target.value)} />
                       </Grid>
                       <Grid item xs={12} sm={6} lg={4}>
-                        <TextField fullWidth label="Expira" type="date" sx={fieldSx} value={activation.line.expDate} onChange={(e) => setNestedValue(setActivation, 'line', 'expDate', e.target.value)} InputLabelProps={{ shrink: true }} />
+                        <TextField fullWidth label={t('salesWorkflow.fields.expires', 'Expires')} type="date" sx={fieldSx} value={activation.line.expDate} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'expDate', e.target.value)} InputLabelProps={{ shrink: true }} />
                       </Grid>
                       <Grid item xs={12} sm={6} lg={4}>
                         <TextField
                           fullWidth
-                          label="Dispositivos deseados"
+	                          label={t('salesWorkflow.fields.desiredDevices', 'Desired devices')}
                           type="number"
                           sx={fieldSx}
                           value={activation.desiredDeviceCount}
@@ -1096,7 +1478,7 @@ export default function SalesWorkflowLionTv() {
                         />
                       </Grid>
                       <Grid item xs={12} sm={6} lg={4}>
-                        <TextField fullWidth label="Paquete" sx={fieldSx} value={activation.line.packageName} disabled />
+                        <TextField fullWidth label={t('salesWorkflow.fields.package', 'Package')} sx={fieldSx} value={activation.line.packageName} disabled />
                       </Grid>
                     </Grid>
                     <FormControlLabel
@@ -1106,18 +1488,18 @@ export default function SalesWorkflowLionTv() {
                           onChange={(e) => setActivation((prev) => ({ ...prev, linePlusEnabled: e.target.checked }))}
                         />
                       }
-                      label="Agregar línea Plus"
+                      label={t('salesWorkflow.options.addPlusLine', 'Add Plus line')}
                     />
                     {activation.linePlusEnabled ? (
                       <Grid container spacing={2}>
                         <Grid item xs={12} sm={6} lg={4}>
-                          <TextField fullWidth label="Line Plus ID" sx={fieldSx} value={activation.linePlus.lineId} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'lineId', e.target.value)} />
+	                          <TextField fullWidth label={t('salesWorkflow.fields.linePlusId', 'Line Plus ID')} sx={fieldSx} value={activation.linePlus.lineId} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'lineId', e.target.value)} />
                         </Grid>
                         <Grid item xs={12} sm={6} lg={4}>
-                          <TextField fullWidth label="Usuario plus" sx={fieldSx} value={activation.linePlus.username} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'username', e.target.value)} />
+	                          <TextField fullWidth label={t('salesWorkflow.fields.plusUsername', 'Plus username')} sx={fieldSx} value={activation.linePlus.username} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'username', e.target.value)} />
                         </Grid>
                         <Grid item xs={12} sm={6} lg={4}>
-                          <TextField fullWidth label="Password plus" sx={fieldSx} value={activation.linePlus.password} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'password', e.target.value)} />
+	                          <TextField fullWidth label={t('salesWorkflow.fields.plusPassword', 'Plus password')} sx={fieldSx} value={activation.linePlus.password} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'password', e.target.value)} />
                         </Grid>
                       </Grid>
                     ) : null}
@@ -1129,23 +1511,28 @@ export default function SalesWorkflowLionTv() {
             {activeStep === 2 ? (
               <Grid container spacing={gridSpacing}>
                 <Grid item xs={12} md={7}>
-                  <Section title="Pago y suscripción" helper="El monto sigue editable para manejar descuentos, promociones y ajustes comerciales.">
+                  <Section
+                    title={t('salesWorkflow.sections.paymentTitle', 'Payment and subscription')}
+                    helper={t('salesWorkflow.sections.paymentHelper', 'The amount remains editable to handle discounts, promotions and commercial adjustments.')}
+                    icon={<PaidOutlinedIcon fontSize="small" />}
+                    color="success"
+                  >
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={6} lg={4}>
                         <FormControl fullWidth sx={fieldSx}>
-                          <InputLabel>Billing</InputLabel>
-                          <Select label="Billing" value={activation.subscription.billing} onChange={(e) => setNestedValue(setActivation, 'subscription', 'billing', e.target.value)}>
-                            <MenuItem value="MONTHLY">Mensual</MenuItem>
-                            <MenuItem value="QUARTERLY">Trimestral</MenuItem>
-                            <MenuItem value="BIANNUAL">Semestral</MenuItem>
-                            <MenuItem value="ANNUAL">Anual</MenuItem>
+                          <InputLabel>{t('salesWorkflow.fields.billing', 'Billing')}</InputLabel>
+                          <Select label={t('salesWorkflow.fields.billing', 'Billing')} value={activation.subscription.billing} onChange={(e) => setNestedValue(setActivation, 'subscription', 'billing', e.target.value)}>
+                            <MenuItem value="MONTHLY">{t('salesWorkflow.options.monthly', 'Monthly')}</MenuItem>
+                            <MenuItem value="QUARTERLY">{t('salesWorkflow.options.quarterly', 'Quarterly')}</MenuItem>
+                            <MenuItem value="BIANNUAL">{t('salesWorkflow.options.biannual', 'Biannual')}</MenuItem>
+                            <MenuItem value="ANNUAL">{t('salesWorkflow.options.annual', 'Annual')}</MenuItem>
                           </Select>
                         </FormControl>
                       </Grid>
                       <Grid item xs={12} sm={6} lg={4}>
                         <TextField
                           fullWidth
-                          label="Inicio"
+	                          label={t('salesWorkflow.fields.start', 'Start')}
                           type="date"
                           sx={fieldSx}
                           value={activation.subscription.startDate}
@@ -1156,7 +1543,7 @@ export default function SalesWorkflowLionTv() {
                       <Grid item xs={12} sm={6} lg={4}>
                         <TextField
                           fullWidth
-                          label="Renueva"
+	                          label={t('salesWorkflow.fields.renewalDate', 'Renews')}
                           type="date"
                           sx={fieldSx}
                           value={activation.subscription.renewalDate}
@@ -1170,7 +1557,7 @@ export default function SalesWorkflowLionTv() {
                       <Grid item xs={12} sm={6} lg={4}>
                         <TextField
                           fullWidth
-                          label="Monto"
+	                          label={t('salesWorkflow.fields.amount', 'Amount')}
                           type="number"
                           sx={fieldSx}
                           value={activation.subscription.amount}
@@ -1184,7 +1571,7 @@ export default function SalesWorkflowLionTv() {
                       <Grid item xs={12} sm={6} lg={4}>
                         <TextField
                           fullWidth
-                          label="Descuento"
+	                          label={t('salesWorkflow.fields.discount', 'Discount')}
                           type="number"
                           sx={fieldSx}
                           value={activation.subscription.discount}
@@ -1201,18 +1588,18 @@ export default function SalesWorkflowLionTv() {
                           value={services.find((item) => String(item.id) === String(activation.invoice.serviceId)) || null}
                           onChange={(_, value) => setNestedValue(setActivation, 'invoice', 'serviceId', value?.id || '')}
                           getOptionLabel={(option) => option?.label || ''}
-                          renderInput={(params) => <TextField {...params} label="Servicio" sx={fieldSx} />}
+	                          renderInput={(params) => <TextField {...params} label={t('salesWorkflow.fields.service', 'Service')} sx={fieldSx} />}
                         />
                       </Grid>
                       <Grid item xs={12} sm={activationRequiresBank ? 6 : 12}>
                         <FormControl fullWidth sx={fieldSx}>
-                          <InputLabel>Método de pago</InputLabel>
-                          <Select label="Método de pago" value={activation.invoice.paymentMethod} onChange={(e) => setNestedValue(setActivation, 'invoice', 'paymentMethod', e.target.value)}>
-                            {paymentMethods.map((method) => (
-                              <MenuItem key={method.code} value={method.code}>
-                                {method.label || method.code}
-                              </MenuItem>
-                            ))}
+	                          <InputLabel>{t('salesWorkflow.fields.paymentMethod', 'Payment method')}</InputLabel>
+	                          <Select label={t('salesWorkflow.fields.paymentMethod', 'Payment method')} value={activation.invoice.paymentMethod} onChange={(e) => setNestedValue(setActivation, 'invoice', 'paymentMethod', e.target.value)}>
+	                            {paymentMethods.map((method) => (
+	                              <MenuItem key={method.code} value={method.code}>
+	                                {paymentMethodLabel(method)}
+	                              </MenuItem>
+	                            ))}
                           </Select>
                         </FormControl>
                       </Grid>
@@ -1223,32 +1610,49 @@ export default function SalesWorkflowLionTv() {
                             value={banks.find((item) => String(item.id) === String(activation.invoice.bankId)) || null}
                             onChange={(_, value) => setNestedValue(setActivation, 'invoice', 'bankId', value?.id || '')}
                             getOptionLabel={(option) => option?.label || ''}
-                            renderInput={(params) => <TextField {...params} required label="Banco" sx={fieldSx} />}
+	                            renderInput={(params) => <TextField {...params} required label={t('salesWorkflow.fields.bank', 'Bank')} sx={fieldSx} />}
                           />
                         </Grid>
                       ) : null}
                       <Grid item xs={12}>
-                        <TextField fullWidth multiline minRows={2} label="Notas factura" sx={fieldSx} value={activation.invoice.notes} onChange={(e) => setNestedValue(setActivation, 'invoice', 'notes', e.target.value)} />
+	                        <TextField fullWidth multiline minRows={2} label={t('salesWorkflow.fields.notes', 'Invoice notes')} sx={fieldSx} value={activation.invoice.notes} onChange={(e) => setNestedValue(setActivation, 'invoice', 'notes', e.target.value)} />
                       </Grid>
                     </Grid>
                   </Section>
                 </Grid>
                 <Grid item xs={12} md={5}>
-                  <Section title="Resumen de activación" helper="Revisa antes de generar el preview o ejecutar.">
+	                  <Section
+	                    title={t('salesWorkflow.sections.activationSummaryTitle', 'Activation summary')}
+	                    helper={t('salesWorkflow.sections.activationSummaryHelper', 'Review before generating the preview or executing.')}
+	                    icon={<RocketLaunchIcon fontSize="small" />}
+	                    color="primary"
+	                  >
                     <Grid container spacing={1.5}>
                       <Grid item xs={12} sm={6}>
-                        <MiniMetric label="Cliente" value={activation.customer.customerFullname} icon={<PersonSearchIcon fontSize="small" />} />
+	                        <MiniMetric label={t('salesWorkflow.metrics.client', 'Customer')} value={activation.customer.customerFullname} icon={<PersonSearchIcon fontSize="small" />} color="primary" />
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <MiniMetric label="Plan" value={selectedActivationPackage?.name} icon={<Inventory2Icon fontSize="small" />} />
+	                        <MiniMetric label={t('salesWorkflow.metrics.plan', 'Plan')} value={selectedActivationPackage?.name} icon={<Inventory2Icon fontSize="small" />} color="secondary" />
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <MiniMetric label="Línea" value={activation.line.lineId} icon={<LanIcon fontSize="small" />} />
+	                        <MiniMetric label={t('salesWorkflow.metrics.line', 'Line')} value={activation.line.lineId} icon={<LanIcon fontSize="small" />} color="info" />
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <MiniMetric label="Dispositivos" value={activation.desiredDeviceCount} icon={<DevicesIcon fontSize="small" />} />
+	                        <MiniMetric label={t('salesWorkflow.metrics.devices', 'Devices')} value={activation.desiredDeviceCount} icon={<DevicesIcon fontSize="small" />} color="success" />
                       </Grid>
                     </Grid>
+                    {activation.mainLineMode === MAIN_LINE_USE_EXISTING ? (
+                      <Alert severity="info">
+                        <Stack spacing={0.5}>
+                          <Typography variant="body2" fontWeight={800}>
+                            {t('salesWorkflow.messages.existingLineSelected', 'Existing line selected')}: {activation.line.lineId || '-'}
+                          </Typography>
+                          <Typography variant="body2">
+                            {t('salesWorkflow.messages.existingLineNoMutation', 'This line will not be modified. The workflow only creates the customer, subscription, invoice and licenses.')}
+                          </Typography>
+                        </Stack>
+                      </Alert>
+                    ) : null}
                   </Section>
                 </Grid>
               </Grid>
@@ -1257,7 +1661,7 @@ export default function SalesWorkflowLionTv() {
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between">
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                 <Button sx={actionButtonSx} disabled={activeStep === 0 || busy} onClick={() => setActiveStep((step) => step - 1)}>
-                  Atrás
+                  {t('salesWorkflow.buttons.back', 'Back')}
                 </Button>
                 {activeStep < activationSteps.length - 1 ? (
                   <Button
@@ -1266,21 +1670,21 @@ export default function SalesWorkflowLionTv() {
                     disabled={!canGoActivationNext() || busy}
                     onClick={() => setActiveStep((step) => step + 1)}
                   >
-                    Continuar
+                    {t('salesWorkflow.buttons.continue', 'Continue')}
                   </Button>
                 ) : null}
               </Stack>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                 <Button sx={actionButtonSx} variant="outlined" onClick={resetFlow} disabled={busy}>
-                  Reiniciar
+                  {t('salesWorkflow.buttons.reset', 'Reset')}
                 </Button>
                 {activeStep === activationSteps.length - 1 ? (
                   <>
                     <Button sx={actionButtonSx} variant="outlined" startIcon={<SearchIcon />} onClick={handleActivationPreview} disabled={busy}>
-                      Vista previa
+                      {t('salesWorkflow.buttons.preview', 'Preview')}
                     </Button>
                     <Button sx={actionButtonSx} variant="contained" startIcon={<RocketLaunchIcon />} onClick={handleActivationExecute} disabled={busy}>
-                      Confirmar activación
+                      {t('salesWorkflow.buttons.confirmActivation', 'Confirm activation')}
                     </Button>
                   </>
                 ) : null}
@@ -1303,11 +1707,16 @@ export default function SalesWorkflowLionTv() {
             </Stepper>
 
             {renewalStep === 0 ? (
-              <Section title="Buscar cliente o suscripción" helper="Puedes buscar por nombre, correo, teléfono, lineId o subscriptionId.">
+              <Section
+                title={t('salesWorkflow.sections.searchTitle', 'Search customer or subscription')}
+                helper={t('salesWorkflow.sections.searchHelper', 'Search by name, email, phone, lineId or subscriptionId.')}
+                icon={<SearchIcon fontSize="small" />}
+                color="primary"
+              >
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={1}>
                   <TextField
                     fullWidth
-                    label="Buscar"
+                    label={t('salesWorkflow.fields.search', 'Search')}
                     sx={fieldSx}
                     value={lookupQuery}
                     onChange={(e) => setLookupQuery(e.target.value)}
@@ -1323,7 +1732,7 @@ export default function SalesWorkflowLionTv() {
                     }}
                   />
                   <Button sx={actionButtonSx} variant="contained" startIcon={<PersonSearchIcon />} onClick={handleLookup} disabled={busy}>
-                    Buscar
+                    {t('salesWorkflow.buttons.search', 'Search')}
                   </Button>
                 </Stack>
               </Section>
@@ -1332,10 +1741,15 @@ export default function SalesWorkflowLionTv() {
             {renewalStep === 1 ? (
               <Grid container spacing={gridSpacing}>
                 <Grid item xs={12}>
-                  <Section title="Selecciona la suscripción" helper="La renovación usa el cliente existente; no se crea cliente nuevo.">
+                  <Section
+                    title={t('salesWorkflow.sections.selectSubscriptionTitle', 'Select subscription')}
+                    helper={t('salesWorkflow.sections.selectSubscriptionHelper', 'The renewal uses the existing customer; it does not create a new customer.')}
+                    icon={<CreditScoreIcon fontSize="small" />}
+                    color="secondary"
+                  >
                     {lookup?.customers?.length ? (
                       <Alert severity="info">
-                        Clientes encontrados: {lookup.customers.map((item) => `${item.customerFullname || item.customerMail} (#${item.customerId})`).join(', ')}
+                        {t('salesWorkflow.messages.customersFound', 'Customers found')}: {lookup.customers.map((item) => `${item.customerFullname || item.customerMail} (#${item.customerId})`).join(', ')}
                       </Alert>
                     ) : null}
                     <Grid container spacing={2}>
@@ -1345,33 +1759,34 @@ export default function SalesWorkflowLionTv() {
                             variant="outlined"
                             sx={{
                               borderRadius: 2,
-                              borderColor: String(renewal.subscriptionId) === String(subscription.subscriptionId) ? 'primary.main' : 'divider'
-                            }}
-                          >
+	                              borderColor: String(renewal.subscriptionId) === String(subscription.subscriptionId) ? 'primary.main' : 'divider',
+	                              boxShadow: String(renewal.subscriptionId) === String(subscription.subscriptionId) ? '0 12px 28px rgba(229,9,20,0.16)' : 'none'
+	                            }}
+	                          >
                             <CardActionArea onClick={() => handleSelectSubscription(subscription)} sx={{ p: 2 }}>
                               <Stack spacing={1}>
                                 <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
                                   <Typography variant="subtitle1" fontWeight={900}>
-                                    {subscription.customerName || 'Cliente'}
-                                  </Typography>
-                                  <Chip size="small" color={subscription.status === 'ACTIVE' ? 'success' : 'warning'} label={subscription.status || '-'} />
-                                </Stack>
-                                <Typography variant="body2" color="text.secondary">
-                                  Suscripción #{subscription.subscriptionId} · Línea {subscription.lineId || '-'}
-                                </Typography>
-                                <Grid container spacing={1}>
-                                  <Grid item xs={6}>
-                                    <MiniMetric label="Plan actual" value={subscription.packageName || subscription.packageId} icon={<Inventory2Icon fontSize="small" />} />
-                                  </Grid>
-                                  <Grid item xs={6}>
-                                    <MiniMetric label="Expira" value={formatDate(subscription.renewalDate)} icon={<AutorenewIcon fontSize="small" />} />
-                                  </Grid>
-                                  <Grid item xs={6}>
-                                    <MiniMetric label="Dispositivos" value={subscription.configuredDevices || 0} icon={<DevicesIcon fontSize="small" />} />
-                                  </Grid>
-                                  <Grid item xs={6}>
-                                    <MiniMetric label="Monto" value={formatMoney(subscription.amount)} icon={<PaidOutlinedIcon fontSize="small" />} />
-                                  </Grid>
+	                                    {subscription.customerName || t('salesWorkflow.common.customerFallback', 'Customer')}
+	                                  </Typography>
+	                                  <Chip size="small" color={subscription.status === 'ACTIVE' ? 'success' : 'warning'} label={subscription.status || '-'} sx={optionChipSx} />
+	                                </Stack>
+	                                <Typography variant="body2" color="text.secondary">
+	                                  {t('salesWorkflow.preview.subscription', 'Subscription')} #{subscription.subscriptionId} · {t('salesWorkflow.metrics.line', 'Line')} {subscription.lineId || '-'}
+	                                </Typography>
+	                                <Grid container spacing={1}>
+	                                  <Grid item xs={6}>
+	                                    <MiniMetric label={t('salesWorkflow.metrics.currentPlan', 'Current plan')} value={subscription.packageName || subscription.packageId} icon={<Inventory2Icon fontSize="small" />} color="primary" />
+	                                  </Grid>
+	                                  <Grid item xs={6}>
+	                                    <MiniMetric label={t('salesWorkflow.metrics.expires', 'Expires')} value={formatDate(subscription.renewalDate)} icon={<AutorenewIcon fontSize="small" />} color="info" />
+	                                  </Grid>
+	                                  <Grid item xs={6}>
+	                                    <MiniMetric label={t('salesWorkflow.metrics.devices', 'Devices')} value={subscription.configuredDevices || 0} icon={<DevicesIcon fontSize="small" />} color="secondary" />
+	                                  </Grid>
+	                                  <Grid item xs={6}>
+	                                    <MiniMetric label={t('salesWorkflow.metrics.amount', 'Amount')} value={formatMoney(subscription.amount)} icon={<PaidOutlinedIcon fontSize="small" />} color="success" />
+	                                  </Grid>
                                 </Grid>
                               </Stack>
                             </CardActionArea>
@@ -1379,7 +1794,7 @@ export default function SalesWorkflowLionTv() {
                         </Grid>
                       ))}
                     </Grid>
-                    {lookup && !lookup.subscriptions?.length ? <Alert severity="warning">No se encontraron suscripciones para esa búsqueda.</Alert> : null}
+                    {lookup && !lookup.subscriptions?.length ? <Alert severity="warning">{t('salesWorkflow.messages.noSubscriptions', 'No subscriptions were found for this search.')}</Alert> : null}
                   </Section>
                 </Grid>
               </Grid>
@@ -1388,13 +1803,22 @@ export default function SalesWorkflowLionTv() {
             {renewalStep === 2 ? (
               <Grid container spacing={gridSpacing}>
                 <Grid item xs={12} md={5}>
-                  <Section title="Suscripción seleccionada" helper="Ajusta paquete, base de renovación y dispositivos.">
+                  <Section
+                    title={t('salesWorkflow.sections.selectedSubscriptionTitle', 'Selected subscription')}
+                    helper={t('salesWorkflow.sections.selectedSubscriptionHelper', 'Adjust package, renewal base and devices.')}
+                    icon={<AutorenewIcon fontSize="small" />}
+                    color="info"
+                  >
                     {selectedSubscription ? (
                       <Alert severity="info">
-                        {selectedSubscription.customerName || 'Cliente'} · suscripción #{selectedSubscription.subscriptionId} · fecha actual {formatDate(selectedSubscription.renewalDate)}
+                        {t('salesWorkflow.messages.selectedRenewal', '{{customer}} · subscription #{{subscriptionId}} · current date {{date}}', {
+                          customer: selectedSubscription.customerName || t('salesWorkflow.common.customerFallback', 'Customer'),
+                          subscriptionId: selectedSubscription.subscriptionId,
+                          date: formatDate(selectedSubscription.renewalDate)
+                        })}
                       </Alert>
                     ) : (
-                      <Alert severity="warning">Selecciona una suscripción antes de renovar.</Alert>
+                      <Alert severity="warning">{t('salesWorkflow.messages.noSubscriptionSelected', 'Select a subscription before renewing.')}</Alert>
                     )}
                     <Autocomplete
                       options={packages}
@@ -1402,13 +1826,13 @@ export default function SalesWorkflowLionTv() {
                       onChange={(_, value) => applyRenewalPackage(value)}
                       getOptionLabel={(option) => option?.displayName || option?.name || ''}
                       isOptionEqualToValue={(option, value) => String(option?.packageId) === String(value?.packageId)}
-                      renderInput={(params) => <TextField {...params} label="Plan / paquete" sx={fieldSx} />}
+                      renderInput={(params) => <TextField {...params} label={t('salesWorkflow.fields.planPackage', 'Plan / package')} sx={fieldSx} />}
                     />
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={6}>
                         <TextField
                           fullWidth
-                          label="Dispositivos deseados"
+	                          label={t('salesWorkflow.fields.desiredDevices', 'Desired devices')}
                           type="number"
                           sx={fieldSx}
                           value={renewal.desiredDeviceCount}
@@ -1417,28 +1841,28 @@ export default function SalesWorkflowLionTv() {
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <FormControl fullWidth sx={fieldSx}>
-                          <InputLabel>Base si venció</InputLabel>
-                          <Select label="Base si venció" value={renewal.renewalBaseMode} onChange={(e) => setRenewal((prev) => ({ ...prev, renewalBaseMode: e.target.value }))}>
-                            <MenuItem value="">Desde vencimiento actual</MenuItem>
-                            <MenuItem value="TODAY">Desde hoy</MenuItem>
+                          <InputLabel>{t('salesWorkflow.fields.renewalBase', 'Base if expired')}</InputLabel>
+                          <Select label={t('salesWorkflow.fields.renewalBase', 'Base if expired')} value={renewal.renewalBaseMode} onChange={(e) => setRenewal((prev) => ({ ...prev, renewalBaseMode: e.target.value }))}>
+                            <MenuItem value={RENEWAL_BASE_CURRENT_EXPIRATION}>{t('salesWorkflow.options.currentExpiration', 'From current expiration')}</MenuItem>
+                            <MenuItem value={RENEWAL_BASE_TODAY}>{t('salesWorkflow.options.today', 'From today')}</MenuItem>
                           </Select>
                         </FormControl>
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <FormControl fullWidth sx={fieldSx}>
-                          <InputLabel>Billing</InputLabel>
-                          <Select label="Billing" value={renewal.subscription.billing} onChange={(e) => setNestedValue(setRenewal, 'subscription', 'billing', e.target.value)}>
-                            <MenuItem value="MONTHLY">Mensual</MenuItem>
-                            <MenuItem value="QUARTERLY">Trimestral</MenuItem>
-                            <MenuItem value="BIANNUAL">Semestral</MenuItem>
-                            <MenuItem value="ANNUAL">Anual</MenuItem>
+                          <InputLabel>{t('salesWorkflow.fields.billing', 'Billing')}</InputLabel>
+                          <Select label={t('salesWorkflow.fields.billing', 'Billing')} value={renewal.subscription.billing} onChange={(e) => setNestedValue(setRenewal, 'subscription', 'billing', e.target.value)}>
+                            <MenuItem value="MONTHLY">{t('salesWorkflow.options.monthly', 'Monthly')}</MenuItem>
+                            <MenuItem value="QUARTERLY">{t('salesWorkflow.options.quarterly', 'Quarterly')}</MenuItem>
+                            <MenuItem value="BIANNUAL">{t('salesWorkflow.options.biannual', 'Biannual')}</MenuItem>
+                            <MenuItem value="ANNUAL">{t('salesWorkflow.options.annual', 'Annual')}</MenuItem>
                           </Select>
                         </FormControl>
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <TextField
                           fullWidth
-                          label="Fecha manual opcional"
+                          label={t('salesWorkflow.fields.manualRenewalDate', 'Optional manual date')}
                           type="date"
                           sx={fieldSx}
                           value={renewal.subscription.renewalDate}
@@ -1450,12 +1874,17 @@ export default function SalesWorkflowLionTv() {
                   </Section>
                 </Grid>
                 <Grid item xs={12} md={7}>
-                  <Section title="Pago y confirmación" helper="El preview muestra fecha nueva, cambio de plan y licencias faltantes antes de ejecutar.">
+                  <Section
+                    title={t('salesWorkflow.sections.renewalPaymentTitle', 'Payment and confirmation')}
+                    helper={t('salesWorkflow.sections.renewalPaymentHelper', 'Preview shows the new date, plan change and missing licenses before executing.')}
+                    icon={<PaidOutlinedIcon fontSize="small" />}
+                    color="success"
+                  >
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={6} lg={4}>
                         <TextField
                           fullWidth
-                          label="Monto"
+                          label={t('salesWorkflow.fields.amount', 'Amount')}
                           type="number"
                           sx={fieldSx}
                           value={renewal.subscription.amount}
@@ -1469,7 +1898,7 @@ export default function SalesWorkflowLionTv() {
                       <Grid item xs={12} sm={6} lg={4}>
                         <TextField
                           fullWidth
-                          label="Descuento"
+                          label={t('salesWorkflow.fields.discount', 'Discount')}
                           type="number"
                           sx={fieldSx}
                           value={renewal.subscription.discount}
@@ -1486,16 +1915,16 @@ export default function SalesWorkflowLionTv() {
                           value={services.find((item) => String(item.id) === String(renewal.invoice.serviceId)) || null}
                           onChange={(_, value) => setNestedValue(setRenewal, 'invoice', 'serviceId', value?.id || '')}
                           getOptionLabel={(option) => option?.label || ''}
-                          renderInput={(params) => <TextField {...params} label="Servicio" sx={fieldSx} />}
+	                          renderInput={(params) => <TextField {...params} label={t('salesWorkflow.fields.service', 'Service')} sx={fieldSx} />}
                         />
                       </Grid>
                       <Grid item xs={12} sm={renewalRequiresBank ? 6 : 12}>
                         <FormControl fullWidth sx={fieldSx}>
-                          <InputLabel>Método de pago</InputLabel>
-                          <Select label="Método de pago" value={renewal.invoice.paymentMethod} onChange={(e) => setNestedValue(setRenewal, 'invoice', 'paymentMethod', e.target.value)}>
+                          <InputLabel>{t('salesWorkflow.fields.paymentMethod', 'Payment method')}</InputLabel>
+                          <Select label={t('salesWorkflow.fields.paymentMethod', 'Payment method')} value={renewal.invoice.paymentMethod} onChange={(e) => setNestedValue(setRenewal, 'invoice', 'paymentMethod', e.target.value)}>
                             {paymentMethods.map((method) => (
                               <MenuItem key={method.code} value={method.code}>
-                                {method.label || method.code}
+                                {paymentMethodLabel(method)}
                               </MenuItem>
                             ))}
                           </Select>
@@ -1508,17 +1937,17 @@ export default function SalesWorkflowLionTv() {
                             value={banks.find((item) => String(item.id) === String(renewal.invoice.bankId)) || null}
                             onChange={(_, value) => setNestedValue(setRenewal, 'invoice', 'bankId', value?.id || '')}
                             getOptionLabel={(option) => option?.label || ''}
-                            renderInput={(params) => <TextField {...params} required label="Banco" sx={fieldSx} />}
+                            renderInput={(params) => <TextField {...params} required label={t('salesWorkflow.fields.bank', 'Bank')} sx={fieldSx} />}
                           />
                         </Grid>
                       ) : null}
                       <Grid item xs={12}>
-                        <TextField fullWidth multiline minRows={2} label="Notas factura" sx={fieldSx} value={renewal.invoice.notes} onChange={(e) => setNestedValue(setRenewal, 'invoice', 'notes', e.target.value)} />
+                        <TextField fullWidth multiline minRows={2} label={t('salesWorkflow.fields.notes', 'Invoice notes')} sx={fieldSx} value={renewal.invoice.notes} onChange={(e) => setNestedValue(setRenewal, 'invoice', 'notes', e.target.value)} />
                       </Grid>
                     </Grid>
                     {Number(renewal.desiredDeviceCount || 0) < Number(renewal.currentDeviceCount || 0) ? (
                       <Alert severity="warning">
-                        Estás bajando dispositivos. El sistema no elimina licencias automáticamente; quedará para revisión manual.
+                        {t('salesWorkflow.messages.decreaseDevicesWarning', 'You are reducing devices. The system does not remove licenses automatically; this will remain for manual review.')}
                       </Alert>
                     ) : null}
                   </Section>
@@ -1529,7 +1958,7 @@ export default function SalesWorkflowLionTv() {
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between">
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                 <Button sx={actionButtonSx} disabled={renewalStep === 0 || busy} onClick={() => setRenewalStep((step) => step - 1)}>
-                  Atrás
+                  {t('salesWorkflow.buttons.back', 'Back')}
                 </Button>
                 {renewalStep < renewalSteps.length - 1 ? (
                   <Button
@@ -1538,21 +1967,21 @@ export default function SalesWorkflowLionTv() {
                     disabled={(renewalStep === 1 && !renewal.subscriptionId) || busy}
                     onClick={() => setRenewalStep((step) => step + 1)}
                   >
-                    Continuar
+                    {t('salesWorkflow.buttons.continue', 'Continue')}
                   </Button>
                 ) : null}
               </Stack>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                 <Button sx={actionButtonSx} variant="outlined" onClick={resetFlow} disabled={busy}>
-                  Reiniciar
+                  {t('salesWorkflow.buttons.reset', 'Reset')}
                 </Button>
                 {renewalStep === renewalSteps.length - 1 ? (
                   <>
                     <Button sx={actionButtonSx} variant="outlined" startIcon={<SearchIcon />} onClick={handleRenewalPreview} disabled={busy || !renewal.subscriptionId}>
-                      Vista previa
+                      {t('salesWorkflow.buttons.preview', 'Preview')}
                     </Button>
                     <Button sx={actionButtonSx} variant="contained" startIcon={<RocketLaunchIcon />} onClick={handleRenewalExecute} disabled={busy || !renewal.subscriptionId}>
-                      Confirmar renovación
+                      {t('salesWorkflow.buttons.confirmRenewal', 'Confirm renewal')}
                     </Button>
                   </>
                 ) : null}

@@ -15,6 +15,22 @@ export async function lookupSalesWorkflow(query, config = {}) {
   );
 }
 
+export async function listSalesWorkflowLines(config = {}) {
+  return unwrap(
+    await lionTvApi.get('/lines/v1/list-lines', {
+      ...config,
+      params: {
+        index: 0,
+        start: 0,
+        size: 5000,
+        filters: '',
+        sorting: '',
+        ...(config.params || {})
+      }
+    })
+  );
+}
+
 export async function previewActivation(payload, config = {}) {
   return unwrap(await lionTvApi.post('/sales-workflow/v1/activation/preview', payload, config));
 }
