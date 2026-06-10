@@ -205,6 +205,25 @@ const actionBarSx = {
   boxShadow: '0 18px 48px rgba(2, 8, 23, 0.08)'
 };
 
+const STATIC_PALETTE_FALLBACKS = {
+  primary: '#5096ff',
+  secondary: '#7c4dff',
+  info: '#0288d1',
+  success: '#2e7d32',
+  warning: '#ed6c02',
+  error: '#d32f2f'
+};
+
+const isCssVarColor = (value) => typeof value === 'string' && value.trim().startsWith('var(');
+
+const paletteMain = (theme, color = 'primary') => {
+  const value = theme.palette[color]?.main || theme.palette.primary.main;
+  return isCssVarColor(value) ? STATIC_PALETTE_FALLBACKS[color] || STATIC_PALETTE_FALLBACKS.primary : value;
+};
+
+const dividerBorderColor = (theme) =>
+  theme.palette.mode === 'light' ? 'rgba(15, 23, 42, 0.16)' : 'rgba(255, 255, 255, 0.22)';
+
 const workflowTabsSx = {
   minHeight: 52,
   borderBottom: '1px solid',
@@ -549,24 +568,27 @@ function Section({ title, helper, icon, color = 'primary', children }) {
   return (
     <Paper
       variant="outlined"
-      sx={(theme) => ({
-        ...sectionSx,
-        borderColor: alpha(theme.palette[color]?.main || theme.palette.primary.main, theme.palette.mode === 'light' ? 0.22 : 0.35),
-        background:
-          theme.palette.mode === 'light'
-            ? `linear-gradient(180deg, ${alpha(theme.palette[color]?.main || theme.palette.primary.main, 0.055)}, ${theme.palette.background.paper} 118px)`
-            : `linear-gradient(180deg, ${alpha(theme.palette[color]?.main || theme.palette.primary.main, 0.12)}, ${theme.palette.background.paper} 130px)`,
-        boxShadow: theme.palette.mode === 'light' ? '0 18px 44px rgba(15, 23, 42, 0.07)' : '0 18px 48px rgba(0, 0, 0, 0.22)',
-        '&:before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 3,
-          backgroundColor: theme.palette[color]?.main || theme.palette.primary.main
-        }
-      })}
+      sx={(theme) => {
+        const mainColor = paletteMain(theme, color);
+        return {
+          ...sectionSx,
+          borderColor: alpha(mainColor, theme.palette.mode === 'light' ? 0.22 : 0.35),
+          background:
+            theme.palette.mode === 'light'
+              ? `linear-gradient(180deg, ${alpha(mainColor, 0.055)}, ${theme.palette.background.paper} 118px)`
+              : `linear-gradient(180deg, ${alpha(mainColor, 0.12)}, ${theme.palette.background.paper} 130px)`,
+          boxShadow: theme.palette.mode === 'light' ? '0 18px 44px rgba(15, 23, 42, 0.07)' : '0 18px 48px rgba(0, 0, 0, 0.22)',
+          '&:before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 3,
+            backgroundColor: mainColor
+          }
+        };
+      }}
     >
       <Stack spacing={2.25}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }}>
@@ -575,8 +597,8 @@ function Section({ title, helper, icon, color = 'primary', children }) {
               sx={(theme) => ({
                 width: 42,
                 height: 42,
-                bgcolor: alpha(theme.palette[color]?.main || theme.palette.primary.main, 0.12),
-                color: theme.palette[color]?.main || theme.palette.primary.main,
+                bgcolor: alpha(paletteMain(theme, color), 0.12),
+                color: paletteMain(theme, color),
                 flexShrink: 0
               })}
             >
@@ -605,22 +627,25 @@ function MiniMetric({ label, value, icon, color = 'primary' }) {
   return (
     <Paper
       variant="outlined"
-      sx={(theme) => ({
-        ...summaryCardSx,
-        borderColor: alpha(theme.palette[color]?.main || theme.palette.primary.main, theme.palette.mode === 'light' ? 0.18 : 0.32),
-        background:
-          theme.palette.mode === 'light'
-            ? `linear-gradient(145deg, ${alpha(theme.palette[color]?.main || theme.palette.primary.main, 0.075)}, ${theme.palette.background.paper})`
-            : `linear-gradient(145deg, ${alpha(theme.palette[color]?.main || theme.palette.primary.main, 0.12)}, ${theme.palette.background.paper})`
-      })}
+      sx={(theme) => {
+        const mainColor = paletteMain(theme, color);
+        return {
+          ...summaryCardSx,
+          borderColor: alpha(mainColor, theme.palette.mode === 'light' ? 0.18 : 0.32),
+          background:
+            theme.palette.mode === 'light'
+              ? `linear-gradient(145deg, ${alpha(mainColor, 0.075)}, ${theme.palette.background.paper})`
+              : `linear-gradient(145deg, ${alpha(mainColor, 0.12)}, ${theme.palette.background.paper})`
+        };
+      }}
     >
       <Stack direction="row" spacing={1.25} alignItems="center">
         <Avatar
           sx={(theme) => ({
             width: 36,
             height: 36,
-            bgcolor: alpha(theme.palette[color]?.main || theme.palette.primary.main, 0.13),
-            color: theme.palette[color]?.main || theme.palette.primary.main,
+            bgcolor: alpha(paletteMain(theme, color), 0.13),
+            color: paletteMain(theme, color),
             flexShrink: 0
           })}
         >
@@ -643,19 +668,22 @@ function PackageCard({ option, selected, onClick, t }) {
   return (
     <Card
       variant="outlined"
-      sx={(theme) => ({
-        borderRadius: 2.25,
-        borderColor: selected ? 'primary.main' : alpha(theme.palette.divider, 0.85),
-        boxShadow: selected ? `0 18px 34px ${alpha(theme.palette.primary.main, 0.18)}` : '0 10px 26px rgba(2, 8, 23, 0.04)',
-        height: '100%',
-        overflow: 'hidden',
-        background:
-          theme.palette.mode === 'light'
-            ? selected
-              ? `linear-gradient(145deg, ${alpha(theme.palette.primary.main, 0.1)}, ${theme.palette.background.paper})`
-              : theme.palette.background.paper
-            : `linear-gradient(145deg, ${alpha(theme.palette.primary.main, selected ? 0.16 : 0.06)}, ${theme.palette.background.paper})`
-      })}
+      sx={(theme) => {
+        const primaryMain = paletteMain(theme, 'primary');
+        return {
+          borderRadius: 2.25,
+          borderColor: selected ? primaryMain : dividerBorderColor(theme),
+          boxShadow: selected ? `0 18px 34px ${alpha(primaryMain, 0.18)}` : '0 10px 26px rgba(2, 8, 23, 0.04)',
+          height: '100%',
+          overflow: 'hidden',
+          background:
+            theme.palette.mode === 'light'
+              ? selected
+                ? `linear-gradient(145deg, ${alpha(primaryMain, 0.1)}, ${theme.palette.background.paper})`
+                : theme.palette.background.paper
+              : `linear-gradient(145deg, ${alpha(primaryMain, selected ? 0.16 : 0.06)}, ${theme.palette.background.paper})`
+        };
+      }}
     >
       <CardActionArea onClick={onClick} sx={{ p: 2, height: '100%' }}>
         <Stack spacing={1}>
@@ -1822,22 +1850,23 @@ export default function SalesWorkflowLionTv() {
                         <Grid item xs={12} md={6} lg={4} key={subscription.subscriptionId}>
                           <Card
                             variant="outlined"
-                            sx={(theme) => {
-                              const selected = String(renewal.subscriptionId) === String(subscription.subscriptionId);
-                              return {
-                                borderRadius: 2.25,
-                                borderColor: selected ? theme.palette.primary.main : alpha(theme.palette.divider, 0.85),
-                                boxShadow: selected ? `0 18px 34px ${alpha(theme.palette.primary.main, 0.18)}` : '0 10px 26px rgba(2, 8, 23, 0.04)',
-                                height: '100%',
-                                overflow: 'hidden',
-                                background:
-                                  theme.palette.mode === 'light'
-                                    ? selected
-                                      ? `linear-gradient(145deg, ${alpha(theme.palette.primary.main, 0.1)}, ${theme.palette.background.paper})`
-                                      : theme.palette.background.paper
-                                    : `linear-gradient(145deg, ${alpha(theme.palette.primary.main, selected ? 0.16 : 0.06)}, ${theme.palette.background.paper})`
-                              };
-                            }}
+	                            sx={(theme) => {
+	                              const selected = String(renewal.subscriptionId) === String(subscription.subscriptionId);
+                                const primaryMain = paletteMain(theme, 'primary');
+	                              return {
+	                                borderRadius: 2.25,
+	                                borderColor: selected ? primaryMain : dividerBorderColor(theme),
+	                                boxShadow: selected ? `0 18px 34px ${alpha(primaryMain, 0.18)}` : '0 10px 26px rgba(2, 8, 23, 0.04)',
+	                                height: '100%',
+	                                overflow: 'hidden',
+	                                background:
+	                                  theme.palette.mode === 'light'
+	                                    ? selected
+	                                      ? `linear-gradient(145deg, ${alpha(primaryMain, 0.1)}, ${theme.palette.background.paper})`
+	                                      : theme.palette.background.paper
+	                                    : `linear-gradient(145deg, ${alpha(primaryMain, selected ? 0.16 : 0.06)}, ${theme.palette.background.paper})`
+	                              };
+	                            }}
 	                          >
                             <CardActionArea onClick={() => handleSelectSubscription(subscription)} sx={{ p: 2, height: '100%' }}>
                               <Stack spacing={1}>

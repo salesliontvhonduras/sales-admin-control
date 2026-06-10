@@ -62,6 +62,114 @@ const DEFAULT_PLAN_SPECS = [
   }
 ];
 
+const TOUR_TARGET_OPTIONS = [
+  { value: 'email-capture', label: 'Campo de correo' },
+  { value: 'start-button', label: 'Botón Comenzar' },
+  { value: 'plans-section', label: 'Sección planes' },
+  { value: 'plan-card', label: 'Tarjeta de plan' },
+  { value: 'connections-selector', label: 'Selector conexiones' },
+  { value: 'payment-buttons', label: 'Botones de pago' },
+  { value: 'demo-button', label: 'Botón demo' },
+  { value: 'demo-vivo-player', label: 'Guía Vivo Player' },
+  { value: 'demo-form', label: 'Formulario demo/OTP' },
+  { value: 'referral-button', label: 'Botón referidos' }
+];
+
+const TOUR_ACTION_OPTIONS = [
+  { value: 'none', label: 'Sin acción' },
+  { value: 'scrollToHero', label: 'Ir al hero' },
+  { value: 'scrollToPlans', label: 'Ir a planes' },
+  { value: 'openDemoModal', label: 'Abrir demo' },
+  { value: 'openReferralModal', label: 'Abrir referidos' }
+];
+
+const DEFAULT_GUIDED_TOUR_STEPS = [
+  {
+    id: 'email',
+    target: 'email-capture',
+    action: 'scrollToHero',
+    title: { es: 'Ingresa tu correo', en: 'Enter your email' },
+    description: {
+      es: 'Escribe tu correo y presiona Comenzar para ver planes o tu suscripción actual.',
+      en: 'Enter your email and press Get Started to see plans or your current subscription.'
+    },
+    order: 1,
+    active: true
+  },
+  {
+    id: 'start',
+    target: 'start-button',
+    action: 'scrollToHero',
+    title: { es: 'Presiona Comenzar', en: 'Press Get Started' },
+    description: {
+      es: 'Validamos tu correo para mostrar planes si eres nuevo o tu cuenta si ya eres cliente.',
+      en: 'We validate your email to show plans if you are new or your account if you are a customer.'
+    },
+    order: 2,
+    active: true
+  },
+  {
+    id: 'plans',
+    target: 'plans-section',
+    action: 'scrollToPlans',
+    title: { es: 'Selecciona tu plan', en: 'Choose your plan' },
+    description: {
+      es: 'Compara Básico, Prime y Premium. La tarjeta activa queda marcada.',
+      en: 'Compare Basic, Prime and Premium. The active card is marked.'
+    },
+    order: 3,
+    active: true
+  },
+  {
+    id: 'connections',
+    target: 'connections-selector',
+    action: 'scrollToPlans',
+    title: { es: 'Elige conexiones', en: 'Choose connections' },
+    description: {
+      es: 'Selecciona 1, 2, 3, 4 o 5 conexiones según los dispositivos simultáneos que necesitas.',
+      en: 'Select 1, 2, 3, 4 or 5 connections based on the simultaneous devices you need.'
+    },
+    order: 4,
+    active: true
+  },
+  {
+    id: 'payments',
+    target: 'payment-buttons',
+    action: 'scrollToPlans',
+    title: { es: 'Paga tu plan', en: 'Pay your plan' },
+    description: {
+      es: 'Elige PayPal, tarjeta o débito automático con descuento cuando esté configurado.',
+      en: 'Choose PayPal, card or automatic debit with discount when configured.'
+    },
+    order: 5,
+    active: true
+  },
+  {
+    id: 'demo-vivo',
+    target: 'demo-vivo-player',
+    action: 'openDemoModal',
+    title: { es: 'Descarga Vivo Player', en: 'Download Vivo Player' },
+    description: {
+      es: 'Para la demo debes descargar o abrir Vivo Player y copiar la MAC del dispositivo.',
+      en: 'For the demo you must download or open Vivo Player and copy the device MAC.'
+    },
+    order: 6,
+    active: true
+  },
+  {
+    id: 'demo-form',
+    target: 'demo-form',
+    action: 'openDemoModal',
+    title: { es: 'Valida el OTP', en: 'Validate the OTP' },
+    description: {
+      es: 'Completa tus datos, valida el OTP enviado por correo y activa la demo Prime.',
+      en: 'Complete your information, validate the OTP sent by email and activate the Prime demo.'
+    },
+    order: 7,
+    active: true
+  }
+];
+
 const DEFAULT_CONFIG = {
   language: { default: 'es', supported: ['es', 'en'] },
   brand: {
@@ -121,6 +229,13 @@ const DEFAULT_CONFIG = {
         active: true
       }
     ]
+  },
+  guidedTour: {
+    enabled: true,
+    autoStart: true,
+    version: 'v1',
+    buttonText: { es: 'Cómo comprar', en: 'How to buy' },
+    steps: clone(DEFAULT_GUIDED_TOUR_STEPS)
   },
   demo: {
     apiBaseUrl: '',
@@ -331,6 +446,27 @@ function normalizeStoryItem(item = {}, index = 0) {
   };
 }
 
+function normalizeTourStep(step = {}, index = 0) {
+  const fallback = DEFAULT_GUIDED_TOUR_STEPS[index] || {
+    id: `tour-step-${index + 1}`,
+    target: 'email-capture',
+    action: 'none',
+    title: { es: '', en: '' },
+    description: { es: '', en: '' },
+    order: index + 1,
+    active: true
+  };
+  return {
+    id: step.id || fallback.id || `tour-step-${index + 1}`,
+    target: step.target || fallback.target || 'email-capture',
+    action: step.action || fallback.action || 'none',
+    title: localized(step.title, fallback.title || { es: '', en: '' }),
+    description: localized(step.description, fallback.description || { es: '', en: '' }),
+    order: Number(step.order || fallback.order || index + 1),
+    active: step.active !== false
+  };
+}
+
 function normalizeConfig(payload) {
   const next = {
     ...clone(DEFAULT_CONFIG),
@@ -348,6 +484,14 @@ function normalizeConfig(payload) {
         Array.isArray(payload?.stories?.items) && payload.stories.items.length
           ? payload.stories.items
           : clone(DEFAULT_CONFIG.stories.items)
+    },
+    guidedTour: {
+      ...DEFAULT_CONFIG.guidedTour,
+      ...(payload?.guidedTour || {}),
+      steps:
+        Array.isArray(payload?.guidedTour?.steps) && payload.guidedTour.steps.length
+          ? payload.guidedTour.steps
+          : clone(DEFAULT_CONFIG.guidedTour.steps)
     },
     demo: { ...DEFAULT_CONFIG.demo, ...(payload?.demo || {}) },
     referrals: { ...DEFAULT_CONFIG.referrals, ...(payload?.referrals || {}) },
@@ -375,6 +519,9 @@ function normalizeConfig(payload) {
   next.stories.title = localized(next.stories.title, DEFAULT_CONFIG.stories.title);
   next.stories.autoplayMs = Number(next.stories.autoplayMs || DEFAULT_CONFIG.stories.autoplayMs);
   next.stories.items = (next.stories.items || []).map((item, index) => normalizeStoryItem(item, index));
+  next.guidedTour.buttonText = localized(next.guidedTour.buttonText, DEFAULT_CONFIG.guidedTour.buttonText);
+  next.guidedTour.version = next.guidedTour.version || DEFAULT_CONFIG.guidedTour.version;
+  next.guidedTour.steps = (next.guidedTour.steps || []).map((step, index) => normalizeTourStep(step, index));
   next.moreReasons.title = localized(next.moreReasons.title, DEFAULT_CONFIG.moreReasons.title);
   next.moreReasons.cards = (next.moreReasons.cards || []).map((card, index) => ({
     id: card.id || `reason-${index + 1}`,
@@ -595,6 +742,45 @@ export default function EcommerceSettingsLionTv() {
     setForm((prev) => {
       const next = clone(prev);
       next.stories.items = next.stories.items.filter((_, index) => index !== storyIndex);
+      return next;
+    });
+  };
+
+  const updateTourStep = (stepIndex, path, value) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      let cursor = next.guidedTour.steps[stepIndex];
+      path.slice(0, -1).forEach((key) => {
+        if (!cursor[key] || typeof cursor[key] !== 'object') cursor[key] = {};
+        cursor = cursor[key];
+      });
+      cursor[path[path.length - 1]] = value;
+      return next;
+    });
+  };
+
+  const addTourStep = () => {
+    setForm((prev) => {
+      const next = clone(prev);
+      const steps = next.guidedTour.steps || [];
+      steps.push({
+        id: `tour-step-${Date.now()}`,
+        target: 'email-capture',
+        action: 'none',
+        title: { es: 'Nuevo paso', en: 'New step' },
+        description: { es: '', en: '' },
+        order: steps.length + 1,
+        active: true
+      });
+      next.guidedTour.steps = steps;
+      return next;
+    });
+  };
+
+  const removeTourStep = (stepIndex) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      next.guidedTour.steps = next.guidedTour.steps.filter((_, index) => index !== stepIndex);
       return next;
     });
   };
@@ -1239,6 +1425,177 @@ export default function EcommerceSettingsLionTv() {
             <Box>
               <Button variant="outlined" startIcon={<AddCircleOutlineOutlinedIcon />} onClick={addStoryItem}>
                 Agregar historia
+              </Button>
+            </Box>
+          </Stack>
+        </SettingsSection>
+
+        <SettingsSection title="Tour guiado" description="Onboarding visible en el ecommerce para explicar cómo comprar un plan y cómo crear una demo.">
+          <Stack spacing={2}>
+            <Grid container spacing={2} alignItems="center">
+              <Grid item xs={12} md={3}>
+                <FormControlLabel
+                  control={<Switch checked={Boolean(form.guidedTour.enabled)} onChange={(event) => setPath(['guidedTour', 'enabled'], event.target.checked)} />}
+                  label="Activar tour"
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <FormControlLabel
+                  control={<Switch checked={Boolean(form.guidedTour.autoStart)} onChange={(event) => setPath(['guidedTour', 'autoStart'], event.target.checked)} />}
+                  label="Abrir en primera visita"
+                />
+              </Grid>
+              <Grid item xs={12} md={2}>
+                <TextField
+                  fullWidth
+                  label="Versión"
+                  value={form.guidedTour.version}
+                  onChange={(event) => setPath(['guidedTour', 'version'], event.target.value)}
+                  helperText="Cambia este valor para reabrirlo a usuarios que ya lo vieron."
+                />
+              </Grid>
+              <Grid item xs={12} md={2}>
+                <TextField
+                  fullWidth
+                  label="Botón ES"
+                  value={form.guidedTour.buttonText.es}
+                  onChange={(event) => setPath(['guidedTour', 'buttonText', 'es'], event.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={2}>
+                <TextField
+                  fullWidth
+                  label="Botón EN"
+                  value={form.guidedTour.buttonText.en}
+                  onChange={(event) => setPath(['guidedTour', 'buttonText', 'en'], event.target.value)}
+                />
+              </Grid>
+            </Grid>
+
+            <Alert severity="info">
+              Los targets deben existir en el ecommerce. Para pasos de demo usa la acción “Abrir demo” para que el modal se abra antes de enfocar Vivo Player u OTP.
+            </Alert>
+
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+              {(form.guidedTour.steps || [])
+                .slice()
+                .sort((a, b) => Number(a.order || 0) - Number(b.order || 0))
+                .map((step) => (
+                  <Chip
+                    key={`tour-preview-${step.id}`}
+                    label={`${step.order}. ${step.target} · ${step.action}`}
+                    color={step.active ? 'primary' : 'default'}
+                    variant={step.active ? 'filled' : 'outlined'}
+                    size="small"
+                  />
+                ))}
+            </Stack>
+
+            {(form.guidedTour.steps || []).map((step, stepIndex) => (
+              <Card variant="outlined" key={step.id || stepIndex}>
+                <CardContent>
+                  <Grid container spacing={1.5} alignItems="center">
+                    <Grid item xs={12} md={2}>
+                      <TextField fullWidth label="ID" value={step.id} onChange={(event) => updateTourStep(stepIndex, ['id'], event.target.value)} />
+                    </Grid>
+                    <Grid item xs={6} md={1}>
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="Orden"
+                        value={step.order}
+                        onChange={(event) => updateTourStep(stepIndex, ['order'], Number(event.target.value || 0))}
+                      />
+                    </Grid>
+                    <Grid item xs={6} md={2}>
+                      <TextField
+                        fullWidth
+                        select
+                        label="Target"
+                        value={step.target}
+                        onChange={(event) => updateTourStep(stepIndex, ['target'], event.target.value)}
+                      >
+                        {TOUR_TARGET_OPTIONS.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
+                    <Grid item xs={12} md={2}>
+                      <TextField
+                        fullWidth
+                        select
+                        label="Acción"
+                        value={step.action}
+                        onChange={(event) => updateTourStep(stepIndex, ['action'], event.target.value)}
+                      >
+                        {TOUR_ACTION_OPTIONS.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
+                    <Grid item xs={8} md={2}>
+                      <FormControlLabel
+                        control={<Switch checked={Boolean(step.active)} onChange={(event) => updateTourStep(stepIndex, ['active'], event.target.checked)} />}
+                        label="Activo"
+                      />
+                    </Grid>
+                    <Grid item xs={4} md={1}>
+                      <Tooltip title="Eliminar paso">
+                        <span>
+                          <IconButton color="error" onClick={() => removeTourStep(stepIndex)}>
+                            <DeleteOutlineOutlinedIcon />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Título ES"
+                        value={step.title.es}
+                        onChange={(event) => updateTourStep(stepIndex, ['title', 'es'], event.target.value)}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="Título EN"
+                        value={step.title.en}
+                        onChange={(event) => updateTourStep(stepIndex, ['title', 'en'], event.target.value)}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        multiline
+                        minRows={2}
+                        label="Descripción ES"
+                        value={step.description.es}
+                        onChange={(event) => updateTourStep(stepIndex, ['description', 'es'], event.target.value)}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        multiline
+                        minRows={2}
+                        label="Descripción EN"
+                        value={step.description.en}
+                        onChange={(event) => updateTourStep(stepIndex, ['description', 'en'], event.target.value)}
+                      />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
+            ))}
+
+            <Box>
+              <Button variant="outlined" startIcon={<AddCircleOutlineOutlinedIcon />} onClick={addTourStep}>
+                Agregar paso
               </Button>
             </Box>
           </Stack>
