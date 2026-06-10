@@ -15,7 +15,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/GridLegacy';
 import InputAdornment from '@mui/material/InputAdornment';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -87,7 +87,7 @@ const newIdempotencyKey = () =>
 const fieldSx = {
   '& .MuiOutlinedInput-root': {
     borderRadius: 1.75,
-    minHeight: 54,
+    minHeight: 56,
     alignItems: 'center',
     overflow: 'visible',
     bgcolor: 'background.default',
@@ -148,8 +148,24 @@ const sectionSx = {
   bgcolor: 'background.paper',
   overflow: 'hidden',
   position: 'relative',
+  width: '100%',
   height: '100%',
   '& .MuiGrid-item': {
+    minWidth: 0
+  }
+};
+
+const balancedFormGridSx = {
+  display: 'grid',
+  gridTemplateColumns: {
+    xs: '1fr',
+    sm: 'repeat(2, minmax(0, 1fr))',
+    lg: 'repeat(3, minmax(220px, 1fr))'
+  },
+  gap: 2,
+  alignItems: 'start',
+  minWidth: 0,
+  '& > *': {
     minWidth: 0
   }
 };
@@ -1540,40 +1556,28 @@ export default function SalesWorkflowLionTv() {
                         )}
                       </Stack>
                     ) : null}
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6} lg={4}>
-                        <TextField fullWidth required label={t('salesWorkflow.fields.lineId', 'Line ID')} sx={fieldSx} value={activation.line.lineId} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'lineId', e.target.value)} />
-                      </Grid>
-                      <Grid item xs={12} sm={6} lg={4}>
-                        <TextField fullWidth required={activation.mainLineMode === MAIN_LINE_CREATE_NEW} label={t('salesWorkflow.fields.lineUsername', 'Line username')} sx={fieldSx} value={activation.line.username} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'username', e.target.value)} />
-                      </Grid>
-                      <Grid item xs={12} sm={6} lg={4}>
-                        <TextField fullWidth required={activation.mainLineMode === MAIN_LINE_CREATE_NEW} label={t('salesWorkflow.fields.password', 'Password')} sx={fieldSx} value={activation.line.password} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'password', e.target.value)} />
-                      </Grid>
-                      <Grid item xs={12} sm={6} lg={4}>
-                        <TextField fullWidth label={t('salesWorkflow.fields.expires', 'Expires')} type="date" sx={fieldSx} value={activation.line.expDate} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'expDate', e.target.value)} InputLabelProps={{ shrink: true }} />
-                      </Grid>
-                      <Grid item xs={12} sm={6} lg={4}>
-                        <TextField
-                          fullWidth
-	                          label={t('salesWorkflow.fields.desiredDevices', 'Desired devices')}
-                          type="number"
-                          sx={fieldSx}
-                          value={activation.desiredDeviceCount}
-                          onChange={(e) =>
-                            setActivation((prev) => ({
-                              ...prev,
-                              desiredDeviceCount: e.target.value,
-                              line: { ...prev.line, maxConnections: e.target.value },
-                              linePlus: { ...prev.linePlus, maxConnections: e.target.value }
-                            }))
-                          }
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6} lg={4}>
-                        <TextField fullWidth label={t('salesWorkflow.fields.package', 'Package')} sx={fieldSx} value={activation.line.packageName} disabled />
-                      </Grid>
-                    </Grid>
+                    <Box sx={balancedFormGridSx}>
+                      <TextField fullWidth required label={t('salesWorkflow.fields.lineId', 'Line ID')} sx={fieldSx} value={activation.line.lineId} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'lineId', e.target.value)} />
+                      <TextField fullWidth required={activation.mainLineMode === MAIN_LINE_CREATE_NEW} label={t('salesWorkflow.fields.lineUsername', 'Line username')} sx={fieldSx} value={activation.line.username} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'username', e.target.value)} />
+                      <TextField fullWidth required={activation.mainLineMode === MAIN_LINE_CREATE_NEW} label={t('salesWorkflow.fields.password', 'Password')} sx={fieldSx} value={activation.line.password} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'password', e.target.value)} />
+                      <TextField fullWidth label={t('salesWorkflow.fields.expires', 'Expires')} type="date" sx={fieldSx} value={activation.line.expDate} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'expDate', e.target.value)} InputLabelProps={{ shrink: true }} />
+                      <TextField
+                        fullWidth
+                        label={t('salesWorkflow.fields.desiredDevices', 'Desired devices')}
+                        type="number"
+                        sx={fieldSx}
+                        value={activation.desiredDeviceCount}
+                        onChange={(e) =>
+                          setActivation((prev) => ({
+                            ...prev,
+                            desiredDeviceCount: e.target.value,
+                            line: { ...prev.line, maxConnections: e.target.value },
+                            linePlus: { ...prev.linePlus, maxConnections: e.target.value }
+                          }))
+                        }
+                      />
+                      <TextField fullWidth label={t('salesWorkflow.fields.package', 'Package')} sx={fieldSx} value={activation.line.packageName} disabled />
+                    </Box>
                     <FormControlLabel
                       control={
                         <Switch
@@ -1584,17 +1588,11 @@ export default function SalesWorkflowLionTv() {
                       label={t('salesWorkflow.options.addPlusLine', 'Add Plus line')}
                     />
                     {activation.linePlusEnabled ? (
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6} lg={4}>
-	                          <TextField fullWidth label={t('salesWorkflow.fields.linePlusId', 'Line Plus ID')} sx={fieldSx} value={activation.linePlus.lineId} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'lineId', e.target.value)} />
-                        </Grid>
-                        <Grid item xs={12} sm={6} lg={4}>
-	                          <TextField fullWidth label={t('salesWorkflow.fields.plusUsername', 'Plus username')} sx={fieldSx} value={activation.linePlus.username} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'username', e.target.value)} />
-                        </Grid>
-                        <Grid item xs={12} sm={6} lg={4}>
-	                          <TextField fullWidth label={t('salesWorkflow.fields.plusPassword', 'Plus password')} sx={fieldSx} value={activation.linePlus.password} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'password', e.target.value)} />
-                        </Grid>
-                      </Grid>
+                      <Box sx={balancedFormGridSx}>
+                        <TextField fullWidth label={t('salesWorkflow.fields.linePlusId', 'Line Plus ID')} sx={fieldSx} value={activation.linePlus.lineId} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'lineId', e.target.value)} />
+                        <TextField fullWidth label={t('salesWorkflow.fields.plusUsername', 'Plus username')} sx={fieldSx} value={activation.linePlus.username} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'username', e.target.value)} />
+                        <TextField fullWidth label={t('salesWorkflow.fields.plusPassword', 'Plus password')} sx={fieldSx} value={activation.linePlus.password} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'password', e.target.value)} />
+                      </Box>
                     ) : null}
                   </Section>
                 </Grid>
