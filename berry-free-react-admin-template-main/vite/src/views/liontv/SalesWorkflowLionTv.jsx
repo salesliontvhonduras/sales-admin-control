@@ -267,6 +267,24 @@ const defaultOptions = {
   packages: [],
   banks: [],
   services: [],
+  customerChannels: [
+    { code: 'red social', label: 'Red social', active: true },
+    { code: 'google', label: 'Google', active: true },
+    { code: 'familiares', label: 'Familiares', active: true },
+    { code: 'amigos', label: 'Amigos', active: true }
+  ],
+  lineProviders: [
+    { code: 'LION_TV', label: 'LION_TV', active: true },
+    { code: 'TITAN', label: 'TITAN', active: true },
+    { code: 'NEXOLAT', label: 'NEXOLAT', active: true },
+    { code: 'GOL TV', label: 'GOL TV', active: true },
+    { code: 'LION_PLUS+', label: 'LION_PLUS+', active: true },
+    { code: 'SPOTIFY', label: 'SPOTIFY', active: true },
+    { code: 'NETFLIX', label: 'NETFLIX', active: true },
+    { code: 'AMAZON_PRIME', label: 'AMAZON_PRIME', active: true },
+    { code: 'YOUTUBE_PREMIUM', label: 'YOUTUBE_PREMIUM', active: true },
+    { code: 'DISNEY_PLUS_PREMIUM', label: 'DISNEY_PLUS_PREMIUM', active: true }
+  ],
   paymentMethods: [
     { code: 'Bank Transfer', label: 'Transferencia bancaria', requiresBank: true, active: true, order: 10 },
     { code: 'Paypal', label: 'PayPal', requiresBank: false, active: true, order: 20 },
@@ -294,7 +312,7 @@ const defaultActivation = (options = defaultOptions) => ({
     customerPhone: '',
     customerStatus: options.defaults?.customerStatus || 'ACTIVE',
     openingDate: today(),
-    channel: 'SALES_WORKFLOW',
+    channel: '',
     isReferered: false,
     refererBy: ''
   },
@@ -307,7 +325,7 @@ const defaultActivation = (options = defaultOptions) => ({
     expDate: plusMonths(today()),
     enabled: true,
     maxConnections: 1,
-    provider: 'LION_TV',
+    provider: '',
     lineCountry: 'GLOBAL'
   },
   linePlusEnabled: false,
@@ -320,7 +338,7 @@ const defaultActivation = (options = defaultOptions) => ({
     expDate: plusMonths(today()),
     enabled: true,
     maxConnections: 1,
-    provider: 'LION_TV',
+    provider: '',
     lineCountry: 'GLOBAL'
   },
   subscription: {
@@ -400,8 +418,10 @@ function normalizeCustomer(item = {}) {
 
 function normalizeCatalogOption(item = {}, fallbackPrefix = 'Opción') {
   const id = item.id ?? item.bankId ?? item.serviceId ?? item.value ?? item.code ?? null;
+  const code = item.code ?? item.value ?? item.key ?? id ?? '';
   return {
     id,
+    code,
     label: item.label ?? item.name ?? item.bankName ?? item.serviceName ?? item.description ?? `${fallbackPrefix} ${id ?? ''}`.trim(),
     active: item.active ?? item.enabled ?? item.status !== 'INACTIVE'
   };
@@ -409,14 +429,20 @@ function normalizeCatalogOption(item = {}, fallbackPrefix = 'Opción') {
 
 function normalizeBankOption(item = {}, fallbackPrefix = 'Banco') {
   const id = item.id ?? item.bankId ?? item.bank_id ?? item.value ?? item.code ?? null;
+  const code = item.code ?? item.value ?? id ?? '';
   return {
     id,
+    code,
     label: item.bank ?? item.name ?? item.description ?? item.bankName ?? item.label ?? `${fallbackPrefix} ${id ?? ''}`.trim(),
     active: item.active ?? item.enabled ?? item.status !== 'INACTIVE'
   };
 }
 
 function normalizeServiceOption(item = {}, fallbackPrefix = 'Servicio') {
+  return normalizeCatalogOption(item, fallbackPrefix);
+}
+
+function normalizeWorkflowOption(item = {}, fallbackPrefix = 'Opción') {
   return normalizeCatalogOption(item, fallbackPrefix);
 }
 
@@ -1125,6 +1151,12 @@ export default function SalesWorkflowLionTv() {
   const paymentMethods = (options.paymentMethods || []).filter((item) => item.active !== false).sort((a, b) => (a.order || 0) - (b.order || 0));
   const banks = (options.banks || []).filter((item) => item.active !== false);
   const services = (options.services || []).filter((item) => item.active !== false);
+  const customerChannelOptions = (options.customerChannels || defaultOptions.customerChannels)
+    .map((item) => normalizeWorkflowOption(item, t('salesWorkflow.fallbacks.channel', 'Channel')))
+    .filter((item) => item.active !== false);
+  const lineProviderOptions = (options.lineProviders || defaultOptions.lineProviders)
+    .map((item) => normalizeWorkflowOption(item, t('salesWorkflow.fallbacks.provider', 'Provider')))
+    .filter((item) => item.active !== false);
 
   const selectedActivationPackage = useMemo(
     () => packages.find((item) => String(item.packageId) === String(activation.subscription.packageId)) || null,
@@ -1211,6 +1243,20 @@ export default function SalesWorkflowLionTv() {
     (method) => t(`salesWorkflow.paymentMethods.${method.code}`, method.label || method.code),
     [t]
   );
+  const customerChannelLabel = useCallback(
+    (value) => {
+      const option = customerChannelOptions.find((item) => String(item.code) === String(value));
+      return value ? t(`salesWorkflow.customerChannels.${value}`, option?.label || value) : t('salesWorkflow.messages.selectCustomerChannel', 'Select a channel');
+    },
+    [customerChannelOptions, t]
+  );
+  const lineProviderLabel = useCallback(
+    (value) => {
+      const option = lineProviderOptions.find((item) => String(item.code) === String(value));
+      return value ? option?.label || value : t('salesWorkflow.messages.selectLineProvider', 'Select a provider');
+    },
+    [lineProviderOptions, t]
+  );
 
   const loadLineOptions = useCallback(async () => {
     setLinesLoading(true);
@@ -1296,6 +1342,8 @@ export default function SalesWorkflowLionTv() {
         ...workflowOptions,
         banks: loadedBanks,
         services: loadedServices.length ? loadedServices : workflowOptions.services || [],
+        customerChannels: workflowOptions.customerChannels?.length ? workflowOptions.customerChannels : defaultOptions.customerChannels,
+        lineProviders: workflowOptions.lineProviders?.length ? workflowOptions.lineProviders : defaultOptions.lineProviders,
         paymentMethods: workflowOptions.paymentMethods?.length ? workflowOptions.paymentMethods : defaultOptions.paymentMethods,
         defaults: { ...defaultOptions.defaults, ...(workflowOptions.defaults || {}) }
       };
@@ -1615,12 +1663,13 @@ export default function SalesWorkflowLionTv() {
   };
 
   const canGoActivationNext = () => {
-    if (activeStep === 0) return Boolean(activation.customer.customerFullname && (activation.customer.customerMail || activation.customer.customerPhone));
+    if (activeStep === 0) return Boolean(activation.customer.customerFullname && activation.customer.channel && (activation.customer.customerMail || activation.customer.customerPhone));
     if (activeStep === 1) {
+      if (activation.linePlusEnabled && !Boolean(activation.linePlus.lineId && activation.linePlus.provider && activation.linePlus.packageId)) return false;
       if (activation.mainLineMode === MAIN_LINE_USE_EXISTING) {
         return Boolean(activation.line.lineId && activation.subscription.packageId);
       }
-      return Boolean(activation.line.lineId && activation.line.username && activation.line.password && activation.line.packageId && activation.subscription.packageId);
+      return Boolean(activation.line.provider && activation.line.lineId && activation.line.username && activation.line.password && activation.line.packageId && activation.subscription.packageId);
     }
     return true;
   };
@@ -1704,6 +1753,26 @@ export default function SalesWorkflowLionTv() {
                           onChange={(e) => setNestedValue(setActivation, 'customer', 'customerFullname', e.target.value)}
                         />
                       </Grid>
+                      <Grid item xs={12} md={6}>
+                        <FormControl fullWidth required sx={fieldSx}>
+                          <InputLabel shrink>{t('salesWorkflow.fields.customerChannel', 'Customer channel')}</InputLabel>
+                          <Select
+                            label={t('salesWorkflow.fields.customerChannel', 'Customer channel')}
+                            value={activation.customer.channel}
+                            onChange={(e) => setNestedValue(setActivation, 'customer', 'channel', e.target.value)}
+                            displayEmpty
+                          >
+                            <MenuItem value="" disabled>
+                              {t('salesWorkflow.messages.selectCustomerChannel', 'Select a channel')}
+                            </MenuItem>
+                            {customerChannelOptions.map((option) => (
+                              <MenuItem key={option.code} value={option.code}>
+                                {customerChannelLabel(option.code)}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </Grid>
                       <Grid item xs={12} sm={6} md={3}>
                         <FormControl fullWidth sx={fieldSx}>
                           <InputLabel>{t('salesWorkflow.fields.gender', 'Gender')}</InputLabel>
@@ -1764,7 +1833,7 @@ export default function SalesWorkflowLionTv() {
                   >
                     <Stack spacing={1.5}>
                       <MiniMetric label={t('salesWorkflow.metrics.status', 'Status')} value={activation.customer.customerStatus} icon={<CheckCircleOutlineIcon fontSize="small" />} color="success" />
-                      <MiniMetric label={t('salesWorkflow.metrics.channel', 'Channel')} value="SALES_WORKFLOW" icon={<LanIcon fontSize="small" />} color="info" />
+                      <MiniMetric label={t('salesWorkflow.metrics.channel', 'Channel')} value={customerChannelLabel(activation.customer.channel)} icon={<LanIcon fontSize="small" />} color="info" />
                     </Stack>
                   </Section>
                 </Grid>
@@ -1903,6 +1972,9 @@ export default function SalesWorkflowLionTv() {
                                   <MiniMetric label={t('salesWorkflow.metrics.currentPlan', 'Current plan')} value={selectedExistingLine.packageName} icon={<Inventory2Icon fontSize="small" />} color="secondary" />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
+                                  <MiniMetric label={t('salesWorkflow.metrics.lineProvider', 'Line provider')} value={lineProviderLabel(selectedExistingLine.provider)} icon={<LanIcon fontSize="small" />} color="info" />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
                                   <MiniMetric label={t('salesWorkflow.metrics.expires', 'Expires')} value={formatDate(selectedExistingLine.expDate)} icon={<AutorenewIcon fontSize="small" />} color="warning" />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
@@ -1932,6 +2004,34 @@ export default function SalesWorkflowLionTv() {
                       </Stack>
                     ) : null}
                     <Box sx={balancedFormGridSx}>
+                      {activation.mainLineMode === MAIN_LINE_CREATE_NEW ? (
+                        <FormControl fullWidth required sx={fieldSx}>
+                          <InputLabel shrink>{t('salesWorkflow.fields.lineProvider', 'Line provider')}</InputLabel>
+                          <Select
+                            label={t('salesWorkflow.fields.lineProvider', 'Line provider')}
+                            value={activation.line.provider}
+                            onChange={(e) => setNestedValue(setActivation, 'line', 'provider', e.target.value)}
+                            displayEmpty
+                          >
+                            <MenuItem value="" disabled>
+                              {t('salesWorkflow.messages.selectLineProvider', 'Select a provider')}
+                            </MenuItem>
+                            {lineProviderOptions.map((option) => (
+                              <MenuItem key={option.code} value={option.code}>
+                                {lineProviderLabel(option.code)}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      ) : (
+                        <TextField
+                          fullWidth
+                          label={t('salesWorkflow.fields.lineProvider', 'Line provider')}
+                          sx={fieldSx}
+                          value={lineProviderLabel(activation.line.provider)}
+                          disabled
+                        />
+                      )}
                       <TextField fullWidth required label={t('salesWorkflow.fields.lineId', 'Line ID')} sx={fieldSx} value={activation.line.lineId} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'lineId', e.target.value)} />
                       <TextField fullWidth required={activation.mainLineMode === MAIN_LINE_CREATE_NEW} label={t('salesWorkflow.fields.lineUsername', 'Line username')} sx={fieldSx} value={activation.line.username} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'username', e.target.value)} />
                       <TextField fullWidth required={activation.mainLineMode === MAIN_LINE_CREATE_NEW} label={t('salesWorkflow.fields.password', 'Password')} sx={fieldSx} value={activation.line.password} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'password', e.target.value)} />
@@ -1982,6 +2082,24 @@ export default function SalesWorkflowLionTv() {
                     />
                     {activation.linePlusEnabled ? (
                       <Box sx={balancedFormGridSx}>
+                        <FormControl fullWidth required sx={fieldSx}>
+                          <InputLabel shrink>{t('salesWorkflow.fields.linePlusProvider', 'Plus line provider')}</InputLabel>
+                          <Select
+                            label={t('salesWorkflow.fields.linePlusProvider', 'Plus line provider')}
+                            value={activation.linePlus.provider}
+                            onChange={(e) => setNestedValue(setActivation, 'linePlus', 'provider', e.target.value)}
+                            displayEmpty
+                          >
+                            <MenuItem value="" disabled>
+                              {t('salesWorkflow.messages.selectLineProvider', 'Select a provider')}
+                            </MenuItem>
+                            {lineProviderOptions.map((option) => (
+                              <MenuItem key={option.code} value={option.code}>
+                                {lineProviderLabel(option.code)}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
                         <TextField fullWidth label={t('salesWorkflow.fields.linePlusId', 'Line Plus ID')} sx={fieldSx} value={activation.linePlus.lineId} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'lineId', e.target.value)} />
                         <TextField fullWidth label={t('salesWorkflow.fields.plusUsername', 'Plus username')} sx={fieldSx} value={activation.linePlus.username} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'username', e.target.value)} />
                         <TextField fullWidth label={t('salesWorkflow.fields.plusPassword', 'Plus password')} sx={fieldSx} value={activation.linePlus.password} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'password', e.target.value)} />
@@ -2145,18 +2263,29 @@ export default function SalesWorkflowLionTv() {
                       <Grid item xs={12} sm={6}>
 	                        <MiniMetric label={t('salesWorkflow.metrics.client', 'Customer')} value={activation.customer.customerFullname} icon={<PersonSearchIcon fontSize="small" />} color="primary" />
 	                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <MiniMetric label={t('salesWorkflow.metrics.channel', 'Channel')} value={customerChannelLabel(activation.customer.channel)} icon={<LanIcon fontSize="small" />} color="info" />
+                      </Grid>
 	                      <Grid item xs={12} sm={6}>
 		                        <MiniMetric label={t('salesWorkflow.metrics.subscriptionPackage', 'Subscription package')} value={selectedActivationPackage?.name} icon={<Inventory2Icon fontSize="small" />} color="secondary" />
 	                      </Grid>
 	                      <Grid item xs={12} sm={6}>
 		                        <MiniMetric label={t('salesWorkflow.metrics.linePackage', 'Line package')} value={activation.line.packageName || activation.line.packageId} icon={<LanIcon fontSize="small" />} color="info" />
 	                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <MiniMetric label={t('salesWorkflow.metrics.lineProvider', 'Line provider')} value={lineProviderLabel(activation.line.provider)} icon={<LanIcon fontSize="small" />} color="info" />
+                      </Grid>
 	                      <Grid item xs={12} sm={6}>
 		                        <MiniMetric label={t('salesWorkflow.metrics.line', 'Line')} value={activation.line.lineId} icon={<LanIcon fontSize="small" />} color="info" />
                       </Grid>
                       <Grid item xs={12} sm={6}>
 	                        <MiniMetric label={t('salesWorkflow.metrics.devices', 'Devices')} value={activation.desiredDeviceCount} icon={<DevicesIcon fontSize="small" />} color="success" />
                       </Grid>
+                      {activation.linePlusEnabled ? (
+                        <Grid item xs={12} sm={6}>
+                          <MiniMetric label={t('salesWorkflow.metrics.linePlusProvider', 'Plus line provider')} value={lineProviderLabel(activation.linePlus.provider)} icon={<LanIcon fontSize="small" />} color="info" />
+                        </Grid>
+                      ) : null}
                     </Grid>
                     {activation.mainLineMode === MAIN_LINE_USE_EXISTING ? (
                       <Alert severity="info">

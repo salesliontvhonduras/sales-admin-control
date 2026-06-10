@@ -7812,11 +7812,13 @@ resources.en.translation.salesWorkflow = {
   },
   fields: {
     fullName: 'Full name',
+    customerChannel: 'Customer channel',
     gender: 'Gender',
     openingDate: 'Opening date',
     email: 'Email',
     phone: 'Phone / WhatsApp',
     lineId: 'Line ID',
+    lineProvider: 'Line provider',
     lineUsername: 'Line username',
     mainLineMode: 'Line mode',
     searchExistingLine: 'Search existing line',
@@ -7828,6 +7830,7 @@ resources.en.translation.salesWorkflow = {
     subscriptionPackage: 'Subscription package',
     linePackage: 'Line package',
     linePlusPackage: 'Line Plus package',
+    linePlusProvider: 'Plus line provider',
     searchPackage: 'Search package',
     searchSubscriptionPackage: 'Search subscription package',
     linePlusId: 'Line Plus ID',
@@ -7888,6 +7891,8 @@ resources.en.translation.salesWorkflow = {
     plan: 'Plan',
     subscriptionPackage: 'Subscription package',
     linePackage: 'Line package',
+    lineProvider: 'Line provider',
+    linePlusProvider: 'Plus line provider',
     currentPlan: 'Current plan',
     line: 'Line',
     devices: 'Devices',
@@ -7931,6 +7936,8 @@ resources.en.translation.salesWorkflow = {
     existingLineSelected: 'Existing line selected',
     existingLineNoMutation: 'This line will not be modified. The workflow only creates the customer, subscription, invoice and licenses.',
     selectExistingLine: 'Select one existing line from inventory to continue.',
+    selectCustomerChannel: 'Select a channel',
+    selectLineProvider: 'Select a provider',
     capacityValue: '{{active}} active / {{max}} max · {{available}} free',
     selectedRenewal: '{{customer}} · subscription #{{subscriptionId}} · current date {{date}}',
     noSubscriptionSelected: 'Select a subscription before renewing.',
@@ -7966,6 +7973,12 @@ resources.en.translation.salesWorkflow = {
     renewal: 'renewal',
     activation: 'activation'
   },
+  customerChannels: {
+    'red social': 'Social media',
+    google: 'Google',
+    familiares: 'Family',
+    amigos: 'Friends'
+  },
   paymentMethods: {
     'Bank Transfer': 'Bank transfer',
     Paypal: 'PayPal',
@@ -7977,7 +7990,9 @@ resources.en.translation.salesWorkflow = {
   },
   fallbacks: {
     bank: 'Bank',
-    service: 'Service'
+    service: 'Service',
+    channel: 'Channel',
+    provider: 'Provider'
   }
 };
 
@@ -8032,11 +8047,13 @@ resources.es.translation.salesWorkflow = {
   },
   fields: {
     fullName: 'Nombre completo',
+    customerChannel: 'Canal del cliente',
     gender: 'Género',
     openingDate: 'Fecha alta',
     email: 'Correo',
     phone: 'Teléfono / WhatsApp',
     lineId: 'Line ID',
+    lineProvider: 'Provider de línea',
     lineUsername: 'Usuario línea',
     mainLineMode: 'Modo de línea',
     searchExistingLine: 'Buscar línea existente',
@@ -8048,6 +8065,7 @@ resources.es.translation.salesWorkflow = {
     subscriptionPackage: 'Paquete de suscripción',
     linePackage: 'Paquete de línea',
     linePlusPackage: 'Paquete de línea Plus',
+    linePlusProvider: 'Provider línea Plus',
     searchPackage: 'Buscar paquete',
     searchSubscriptionPackage: 'Buscar paquete de suscripción',
     linePlusId: 'Line Plus ID',
@@ -8108,6 +8126,8 @@ resources.es.translation.salesWorkflow = {
     plan: 'Plan',
     subscriptionPackage: 'Paquete de suscripción',
     linePackage: 'Paquete de línea',
+    lineProvider: 'Provider de línea',
+    linePlusProvider: 'Provider línea Plus',
     currentPlan: 'Plan actual',
     line: 'Línea',
     devices: 'Dispositivos',
@@ -8151,6 +8171,8 @@ resources.es.translation.salesWorkflow = {
     existingLineSelected: 'Línea existente seleccionada',
     existingLineNoMutation: 'Esta línea no será modificada. El flujo solo crea el cliente, la suscripción, la factura y las licencias.',
     selectExistingLine: 'Selecciona una línea existente del inventario para continuar.',
+    selectCustomerChannel: 'Selecciona un canal',
+    selectLineProvider: 'Selecciona un provider',
     capacityValue: '{{active}} activas / {{max}} máximas · {{available}} libres',
     selectedRenewal: '{{customer}} · suscripción #{{subscriptionId}} · fecha actual {{date}}',
     noSubscriptionSelected: 'Selecciona una suscripción antes de renovar.',
@@ -8186,6 +8208,12 @@ resources.es.translation.salesWorkflow = {
     renewal: 'renovación',
     activation: 'activación'
   },
+  customerChannels: {
+    'red social': 'Red social',
+    google: 'Google',
+    familiares: 'Familiares',
+    amigos: 'Amigos'
+  },
   paymentMethods: {
     'Bank Transfer': 'Transferencia bancaria',
     Paypal: 'PayPal',
@@ -8197,7 +8225,9 @@ resources.es.translation.salesWorkflow = {
   },
   fallbacks: {
     bank: 'Banco',
-    service: 'Servicio'
+    service: 'Servicio',
+    channel: 'Canal',
+    provider: 'Provider'
   }
 };
 
