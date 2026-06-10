@@ -31,7 +31,7 @@ import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import { useTheme } from '@mui/material/styles';
+import { alpha, useTheme } from '@mui/material/styles';
 
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
@@ -86,14 +86,33 @@ const newIdempotencyKey = () =>
 
 const fieldSx = {
   '& .MuiOutlinedInput-root': {
-    borderRadius: 2,
-    minHeight: 56,
+    borderRadius: 1.75,
+    minHeight: 54,
     alignItems: 'center',
-    overflow: 'visible'
+    overflow: 'visible',
+    bgcolor: 'background.default',
+    transition: 'border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease',
+    '& fieldset': {
+      borderColor: 'divider'
+    },
+    '&:hover fieldset': {
+      borderColor: 'primary.light'
+    },
+    '&.Mui-focused': {
+      boxShadow: '0 0 0 3px rgba(80, 150, 255, 0.14)'
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: 'primary.main',
+      borderWidth: 1.5
+    },
+    '&.Mui-disabled': {
+      opacity: 0.82
+    }
   },
   '& .MuiOutlinedInput-input': {
-    py: 1.45,
-    minWidth: 0
+    py: 1.3,
+    minWidth: 0,
+    fontWeight: 650
   },
   '& .MuiInputBase-input': {
     minWidth: 0
@@ -102,7 +121,8 @@ const fieldSx = {
     mt: '0 !important'
   },
   '& .MuiInputLabel-root': {
-    fontWeight: 600,
+    fontWeight: 750,
+    fontSize: '0.86rem',
     maxWidth: 'calc(100% - 28px)',
     whiteSpace: 'nowrap',
     overflow: 'hidden',
@@ -113,46 +133,54 @@ const fieldSx = {
   },
   '& textarea.MuiInputBase-input': {
     py: 0.5
+  },
+  '& .MuiFormHelperText-root': {
+    ml: 0,
+    fontWeight: 600
   }
 };
 
 const sectionSx = {
-  p: { xs: 1.5, sm: 2.25 },
+  p: { xs: 2, sm: 2.5, md: 3 },
   border: '1px solid',
   borderColor: 'divider',
-  borderRadius: 2.5,
+  borderRadius: 3,
   bgcolor: 'background.paper',
-  overflow: 'visible',
+  overflow: 'hidden',
+  position: 'relative',
+  height: '100%',
   '& .MuiGrid-item': {
     minWidth: 0
   }
 };
 
 const summaryCardSx = {
-  p: { xs: 1.25, sm: 1.5 },
-  borderRadius: 2.5,
+  p: { xs: 1.35, sm: 1.5 },
+  borderRadius: 2,
   border: '1px solid',
   borderColor: 'divider',
   height: '100%',
+  minHeight: 82,
   minWidth: 0,
   overflow: 'hidden'
 };
 
 const stepperSx = {
-  p: { xs: 1.5, sm: 2 },
+  p: { xs: 1.25, sm: 1.75 },
   border: '1px solid',
   borderColor: 'divider',
-  borderRadius: 2.5,
+  borderRadius: 3,
   bgcolor: 'background.paper',
   overflow: 'visible',
+  boxShadow: '0 14px 42px rgba(2, 8, 23, 0.06)',
   '& .MuiStepLabel-label': {
-    mt: { xs: 0, sm: 0.75 },
-    fontSize: { xs: '0.8rem', sm: '0.875rem' },
+    mt: { xs: 0, sm: 0.6 },
+    fontSize: { xs: '0.78rem', sm: '0.86rem' },
     fontWeight: 800,
     lineHeight: 1.25
   },
   '& .MuiStepIcon-root': {
-    fontSize: { xs: 24, sm: 28 }
+    fontSize: { xs: 24, sm: 26 }
   },
   '& .MuiStepConnector-line': {
     minHeight: { xs: 28, sm: 'auto' }
@@ -162,7 +190,31 @@ const stepperSx = {
 const actionButtonSx = {
   width: { xs: '100%', sm: 'auto' },
   minHeight: 44,
+  borderRadius: 1.75,
+  px: 2.25,
+  fontWeight: 800,
   whiteSpace: 'nowrap'
+};
+
+const actionBarSx = {
+  p: { xs: 1.25, sm: 1.5 },
+  border: '1px solid',
+  borderColor: 'divider',
+  borderRadius: 2.5,
+  bgcolor: 'background.paper',
+  boxShadow: '0 18px 48px rgba(2, 8, 23, 0.08)'
+};
+
+const workflowTabsSx = {
+  minHeight: 52,
+  borderBottom: '1px solid',
+  borderColor: 'divider',
+  '& .MuiTab-root': {
+    minHeight: 52,
+    px: { xs: 1.5, sm: 2.5 },
+    fontWeight: 850,
+    textTransform: 'none'
+  }
 };
 
 const optionChipSx = {
@@ -495,25 +547,35 @@ function buildRenewalPayload(form, options, withIdempotency = false) {
 
 function Section({ title, helper, icon, color = 'primary', children }) {
   return (
-    <Box
+    <Paper
+      variant="outlined"
       sx={(theme) => ({
         ...sectionSx,
-        borderColor: theme.palette[color]?.light || theme.palette.divider,
+        borderColor: alpha(theme.palette[color]?.main || theme.palette.primary.main, theme.palette.mode === 'light' ? 0.22 : 0.35),
         background:
           theme.palette.mode === 'light'
-            ? `linear-gradient(145deg, ${theme.palette[color]?.light || theme.palette.primary.light}18, ${theme.palette.background.paper} 42%)`
-            : theme.palette.surface?.card || theme.palette.background.paper,
-        boxShadow: theme.palette.mode === 'light' ? '0 12px 30px rgba(15, 23, 42, 0.06)' : 'none'
+            ? `linear-gradient(180deg, ${alpha(theme.palette[color]?.main || theme.palette.primary.main, 0.055)}, ${theme.palette.background.paper} 118px)`
+            : `linear-gradient(180deg, ${alpha(theme.palette[color]?.main || theme.palette.primary.main, 0.12)}, ${theme.palette.background.paper} 130px)`,
+        boxShadow: theme.palette.mode === 'light' ? '0 18px 44px rgba(15, 23, 42, 0.07)' : '0 18px 48px rgba(0, 0, 0, 0.22)',
+        '&:before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 3,
+          backgroundColor: theme.palette[color]?.main || theme.palette.primary.main
+        }
       })}
     >
-      <Stack spacing={1.5}>
-        <Stack direction="row" spacing={1.5} alignItems="flex-start">
+      <Stack spacing={2.25}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }}>
           {icon ? (
             <Avatar
               sx={(theme) => ({
-                width: 38,
-                height: 38,
-                bgcolor: `${theme.palette[color]?.main || theme.palette.primary.main}18`,
+                width: 42,
+                height: 42,
+                bgcolor: alpha(theme.palette[color]?.main || theme.palette.primary.main, 0.12),
                 color: theme.palette[color]?.main || theme.palette.primary.main,
                 flexShrink: 0
               })}
@@ -522,19 +584,20 @@ function Section({ title, helper, icon, color = 'primary', children }) {
             </Avatar>
           ) : null}
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="subtitle1" fontWeight={900} sx={{ lineHeight: 1.25 }}>
+            <Typography variant="h4" fontWeight={900} sx={{ lineHeight: 1.18, fontSize: { xs: '1rem', sm: '1.08rem' } }}>
               {title}
             </Typography>
             {helper ? (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.35, maxWidth: 820 }}>
                 {helper}
               </Typography>
             ) : null}
           </Box>
         </Stack>
-        {children}
+        <Divider />
+        <Stack spacing={2}>{children}</Stack>
       </Stack>
-    </Box>
+    </Paper>
   );
 }
 
@@ -544,19 +607,19 @@ function MiniMetric({ label, value, icon, color = 'primary' }) {
       variant="outlined"
       sx={(theme) => ({
         ...summaryCardSx,
-        borderColor: theme.palette[color]?.light || theme.palette.divider,
+        borderColor: alpha(theme.palette[color]?.main || theme.palette.primary.main, theme.palette.mode === 'light' ? 0.18 : 0.32),
         background:
           theme.palette.mode === 'light'
-            ? `linear-gradient(145deg, ${theme.palette[color]?.light || theme.palette.primary.light}16, ${theme.palette.background.paper})`
-            : theme.palette.surface?.card || theme.palette.background.paper
+            ? `linear-gradient(145deg, ${alpha(theme.palette[color]?.main || theme.palette.primary.main, 0.075)}, ${theme.palette.background.paper})`
+            : `linear-gradient(145deg, ${alpha(theme.palette[color]?.main || theme.palette.primary.main, 0.12)}, ${theme.palette.background.paper})`
       })}
     >
       <Stack direction="row" spacing={1.25} alignItems="center">
         <Avatar
           sx={(theme) => ({
-            width: 34,
-            height: 34,
-            bgcolor: `${theme.palette[color]?.main || theme.palette.primary.main}18`,
+            width: 36,
+            height: 36,
+            bgcolor: alpha(theme.palette[color]?.main || theme.palette.primary.main, 0.13),
             color: theme.palette[color]?.main || theme.palette.primary.main,
             flexShrink: 0
           })}
@@ -564,10 +627,10 @@ function MiniMetric({ label, value, icon, color = 'primary' }) {
           {icon}
         </Avatar>
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontWeight: 750, lineHeight: 1.25 }}>
             {label}
           </Typography>
-          <Typography variant="subtitle2" fontWeight={800} sx={{ lineHeight: 1.25, overflowWrap: 'anywhere' }}>
+          <Typography variant="subtitle2" fontWeight={900} sx={{ lineHeight: 1.25, overflowWrap: 'anywhere', mt: 0.35 }}>
             {value || '-'}
           </Typography>
         </Box>
@@ -581,16 +644,17 @@ function PackageCard({ option, selected, onClick, t }) {
     <Card
       variant="outlined"
       sx={(theme) => ({
-        borderRadius: 2,
-        borderColor: selected ? 'primary.main' : 'divider',
-        boxShadow: selected ? '0 12px 28px rgba(229,9,20,0.16)' : 'none',
+        borderRadius: 2.25,
+        borderColor: selected ? 'primary.main' : alpha(theme.palette.divider, 0.85),
+        boxShadow: selected ? `0 18px 34px ${alpha(theme.palette.primary.main, 0.18)}` : '0 10px 26px rgba(2, 8, 23, 0.04)',
         height: '100%',
+        overflow: 'hidden',
         background:
           theme.palette.mode === 'light'
             ? selected
-              ? `linear-gradient(145deg, ${theme.palette.primary.light}18, ${theme.palette.background.paper})`
+              ? `linear-gradient(145deg, ${alpha(theme.palette.primary.main, 0.1)}, ${theme.palette.background.paper})`
               : theme.palette.background.paper
-            : theme.palette.surface?.card || theme.palette.background.paper
+            : `linear-gradient(145deg, ${alpha(theme.palette.primary.main, selected ? 0.16 : 0.06)}, ${theme.palette.background.paper})`
       })}
     >
       <CardActionArea onClick={onClick} sx={{ p: 2, height: '100%' }}>
@@ -1165,7 +1229,7 @@ export default function SalesWorkflowLionTv() {
       }
     >
       <Stack spacing={3}>
-        <Alert severity="info">
+        <Alert severity="info" sx={{ borderRadius: 2.5, alignItems: 'center' }}>
           {t(
             'salesWorkflow.messages.flowInfo',
             'Guided flow for activations and renewals. Packages, banks, services and payment methods come from catalogs/API; manual CRUD remains as backup.'
@@ -1176,6 +1240,7 @@ export default function SalesWorkflowLionTv() {
           value={tab}
           variant={isMobile ? 'scrollable' : 'standard'}
           scrollButtons={isMobile ? 'auto' : false}
+          sx={workflowTabsSx}
           onChange={(_, value) => {
             setTab(value);
             clearPreview();
@@ -1202,7 +1267,7 @@ export default function SalesWorkflowLionTv() {
 
             {activeStep === 0 ? (
               <Grid container spacing={gridSpacing}>
-                <Grid item xs={12} md={8}>
+                <Grid item xs={12} lg={8}>
                   <Section
                     title={t('salesWorkflow.sections.customerTitle', 'Customer details')}
                     helper={t('salesWorkflow.sections.customerHelper', 'Capture the minimum details to create the customer and validate duplicates before continuing.')}
@@ -1271,7 +1336,7 @@ export default function SalesWorkflowLionTv() {
                     ) : null}
                   </Section>
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} lg={4}>
                   <Section
                     title={t('salesWorkflow.sections.initialStatusTitle', 'Initial status')}
                     helper={t('salesWorkflow.sections.initialStatusHelper', 'Operational values that will be sent to the backend.')}
@@ -1289,7 +1354,7 @@ export default function SalesWorkflowLionTv() {
 
             {activeStep === 1 ? (
               <Grid container spacing={gridSpacing}>
-                <Grid item xs={12} md={5}>
+                <Grid item xs={12} lg={4}>
                   <Section
                     title={t('salesWorkflow.sections.packageTitle', 'Package')}
                     helper={t('salesWorkflow.sections.packageHelper', 'Select a real package; connections and name are filled automatically.')}
@@ -1307,7 +1372,7 @@ export default function SalesWorkflowLionTv() {
                     />
                     <Grid container spacing={1.5}>
                       {packages.slice(0, 6).map((pkg) => (
-                        <Grid item xs={12} sm={6} key={pkg.packageId}>
+                        <Grid item xs={12} key={pkg.packageId}>
                           <PackageCard
                             option={pkg}
                             selected={String(pkg.packageId) === String(activation.subscription.packageId)}
@@ -1319,7 +1384,7 @@ export default function SalesWorkflowLionTv() {
                     </Grid>
                   </Section>
                 </Grid>
-                <Grid item xs={12} md={7}>
+                <Grid item xs={12} lg={8}>
                   <Section
                     title={t('salesWorkflow.sections.lineTitle', 'Main line')}
                     helper={t('salesWorkflow.sections.lineHelper', 'The line is associated with the customer and subscription in the transactional execute.')}
@@ -1510,7 +1575,7 @@ export default function SalesWorkflowLionTv() {
 
             {activeStep === 2 ? (
               <Grid container spacing={gridSpacing}>
-                <Grid item xs={12} md={7}>
+                <Grid item xs={12} lg={8}>
                   <Section
                     title={t('salesWorkflow.sections.paymentTitle', 'Payment and subscription')}
                     helper={t('salesWorkflow.sections.paymentHelper', 'The amount remains editable to handle discounts, promotions and commercial adjustments.')}
@@ -1591,7 +1656,7 @@ export default function SalesWorkflowLionTv() {
 	                          renderInput={(params) => <TextField {...params} label={t('salesWorkflow.fields.service', 'Service')} sx={fieldSx} />}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={activationRequiresBank ? 6 : 12}>
+                      <Grid item xs={12} sm={activationRequiresBank ? 6 : 12} lg={activationRequiresBank ? 3 : 6}>
                         <FormControl fullWidth sx={fieldSx}>
 	                          <InputLabel>{t('salesWorkflow.fields.paymentMethod', 'Payment method')}</InputLabel>
 	                          <Select label={t('salesWorkflow.fields.paymentMethod', 'Payment method')} value={activation.invoice.paymentMethod} onChange={(e) => setNestedValue(setActivation, 'invoice', 'paymentMethod', e.target.value)}>
@@ -1604,7 +1669,7 @@ export default function SalesWorkflowLionTv() {
                         </FormControl>
                       </Grid>
                       {activationRequiresBank ? (
-                        <Grid item xs={12} sm={6}>
+                        <Grid item xs={12} sm={6} lg={3}>
                           <Autocomplete
                             options={banks}
                             value={banks.find((item) => String(item.id) === String(activation.invoice.bankId)) || null}
@@ -1620,7 +1685,7 @@ export default function SalesWorkflowLionTv() {
                     </Grid>
                   </Section>
                 </Grid>
-                <Grid item xs={12} md={5}>
+                <Grid item xs={12} lg={4}>
 	                  <Section
 	                    title={t('salesWorkflow.sections.activationSummaryTitle', 'Activation summary')}
 	                    helper={t('salesWorkflow.sections.activationSummaryHelper', 'Review before generating the preview or executing.')}
@@ -1658,7 +1723,7 @@ export default function SalesWorkflowLionTv() {
               </Grid>
             ) : null}
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between">
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between" sx={actionBarSx}>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                 <Button sx={actionButtonSx} disabled={activeStep === 0 || busy} onClick={() => setActiveStep((step) => step - 1)}>
                   {t('salesWorkflow.buttons.back', 'Back')}
@@ -1757,13 +1822,24 @@ export default function SalesWorkflowLionTv() {
                         <Grid item xs={12} md={6} lg={4} key={subscription.subscriptionId}>
                           <Card
                             variant="outlined"
-                            sx={{
-                              borderRadius: 2,
-	                              borderColor: String(renewal.subscriptionId) === String(subscription.subscriptionId) ? 'primary.main' : 'divider',
-	                              boxShadow: String(renewal.subscriptionId) === String(subscription.subscriptionId) ? '0 12px 28px rgba(229,9,20,0.16)' : 'none'
-	                            }}
+                            sx={(theme) => {
+                              const selected = String(renewal.subscriptionId) === String(subscription.subscriptionId);
+                              return {
+                                borderRadius: 2.25,
+                                borderColor: selected ? theme.palette.primary.main : alpha(theme.palette.divider, 0.85),
+                                boxShadow: selected ? `0 18px 34px ${alpha(theme.palette.primary.main, 0.18)}` : '0 10px 26px rgba(2, 8, 23, 0.04)',
+                                height: '100%',
+                                overflow: 'hidden',
+                                background:
+                                  theme.palette.mode === 'light'
+                                    ? selected
+                                      ? `linear-gradient(145deg, ${alpha(theme.palette.primary.main, 0.1)}, ${theme.palette.background.paper})`
+                                      : theme.palette.background.paper
+                                    : `linear-gradient(145deg, ${alpha(theme.palette.primary.main, selected ? 0.16 : 0.06)}, ${theme.palette.background.paper})`
+                              };
+                            }}
 	                          >
-                            <CardActionArea onClick={() => handleSelectSubscription(subscription)} sx={{ p: 2 }}>
+                            <CardActionArea onClick={() => handleSelectSubscription(subscription)} sx={{ p: 2, height: '100%' }}>
                               <Stack spacing={1}>
                                 <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
                                   <Typography variant="subtitle1" fontWeight={900}>
@@ -1802,7 +1878,7 @@ export default function SalesWorkflowLionTv() {
 
             {renewalStep === 2 ? (
               <Grid container spacing={gridSpacing}>
-                <Grid item xs={12} md={5}>
+                <Grid item xs={12}>
                   <Section
                     title={t('salesWorkflow.sections.selectedSubscriptionTitle', 'Selected subscription')}
                     helper={t('salesWorkflow.sections.selectedSubscriptionHelper', 'Adjust package, renewal base and devices.')}
@@ -1829,7 +1905,7 @@ export default function SalesWorkflowLionTv() {
                       renderInput={(params) => <TextField {...params} label={t('salesWorkflow.fields.planPackage', 'Plan / package')} sx={fieldSx} />}
                     />
                     <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}>
+                      <Grid item xs={12} sm={6} lg={3}>
                         <TextField
                           fullWidth
 	                          label={t('salesWorkflow.fields.desiredDevices', 'Desired devices')}
@@ -1839,7 +1915,7 @@ export default function SalesWorkflowLionTv() {
                           onChange={(e) => setRenewal((prev) => ({ ...prev, desiredDeviceCount: e.target.value }))}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6}>
+                      <Grid item xs={12} sm={6} lg={3}>
                         <FormControl fullWidth sx={fieldSx}>
                           <InputLabel>{t('salesWorkflow.fields.renewalBase', 'Base if expired')}</InputLabel>
                           <Select label={t('salesWorkflow.fields.renewalBase', 'Base if expired')} value={renewal.renewalBaseMode} onChange={(e) => setRenewal((prev) => ({ ...prev, renewalBaseMode: e.target.value }))}>
@@ -1848,7 +1924,7 @@ export default function SalesWorkflowLionTv() {
                           </Select>
                         </FormControl>
                       </Grid>
-                      <Grid item xs={12} sm={6}>
+                      <Grid item xs={12} sm={6} lg={3}>
                         <FormControl fullWidth sx={fieldSx}>
                           <InputLabel>{t('salesWorkflow.fields.billing', 'Billing')}</InputLabel>
                           <Select label={t('salesWorkflow.fields.billing', 'Billing')} value={renewal.subscription.billing} onChange={(e) => setNestedValue(setRenewal, 'subscription', 'billing', e.target.value)}>
@@ -1859,7 +1935,7 @@ export default function SalesWorkflowLionTv() {
                           </Select>
                         </FormControl>
                       </Grid>
-                      <Grid item xs={12} sm={6}>
+                      <Grid item xs={12} sm={6} lg={3}>
                         <TextField
                           fullWidth
                           label={t('salesWorkflow.fields.manualRenewalDate', 'Optional manual date')}
@@ -1873,7 +1949,7 @@ export default function SalesWorkflowLionTv() {
                     </Grid>
                   </Section>
                 </Grid>
-                <Grid item xs={12} md={7}>
+                <Grid item xs={12}>
                   <Section
                     title={t('salesWorkflow.sections.renewalPaymentTitle', 'Payment and confirmation')}
                     helper={t('salesWorkflow.sections.renewalPaymentHelper', 'Preview shows the new date, plan change and missing licenses before executing.')}
@@ -1881,7 +1957,7 @@ export default function SalesWorkflowLionTv() {
                     color="success"
                   >
                     <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6} lg={4}>
+                      <Grid item xs={12} sm={6} lg={3}>
                         <TextField
                           fullWidth
                           label={t('salesWorkflow.fields.amount', 'Amount')}
@@ -1895,7 +1971,7 @@ export default function SalesWorkflowLionTv() {
                           InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6} lg={4}>
+                      <Grid item xs={12} sm={6} lg={3}>
                         <TextField
                           fullWidth
                           label={t('salesWorkflow.fields.discount', 'Discount')}
@@ -1909,7 +1985,7 @@ export default function SalesWorkflowLionTv() {
                           InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={6} lg={4}>
+                      <Grid item xs={12} sm={6} lg={3}>
                         <Autocomplete
                           options={services}
                           value={services.find((item) => String(item.id) === String(renewal.invoice.serviceId)) || null}
@@ -1918,7 +1994,7 @@ export default function SalesWorkflowLionTv() {
 	                          renderInput={(params) => <TextField {...params} label={t('salesWorkflow.fields.service', 'Service')} sx={fieldSx} />}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={renewalRequiresBank ? 6 : 12}>
+                      <Grid item xs={12} sm={renewalRequiresBank ? 6 : 12} lg={renewalRequiresBank ? 3 : 6}>
                         <FormControl fullWidth sx={fieldSx}>
                           <InputLabel>{t('salesWorkflow.fields.paymentMethod', 'Payment method')}</InputLabel>
                           <Select label={t('salesWorkflow.fields.paymentMethod', 'Payment method')} value={renewal.invoice.paymentMethod} onChange={(e) => setNestedValue(setRenewal, 'invoice', 'paymentMethod', e.target.value)}>
@@ -1931,7 +2007,7 @@ export default function SalesWorkflowLionTv() {
                         </FormControl>
                       </Grid>
                       {renewalRequiresBank ? (
-                        <Grid item xs={12} sm={6}>
+                        <Grid item xs={12} sm={6} lg={3}>
                           <Autocomplete
                             options={banks}
                             value={banks.find((item) => String(item.id) === String(renewal.invoice.bankId)) || null}
@@ -1955,7 +2031,7 @@ export default function SalesWorkflowLionTv() {
               </Grid>
             ) : null}
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between">
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between" sx={actionBarSx}>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                 <Button sx={actionButtonSx} disabled={renewalStep === 0 || busy} onClick={() => setRenewalStep((step) => step - 1)}>
                   {t('salesWorkflow.buttons.back', 'Back')}
