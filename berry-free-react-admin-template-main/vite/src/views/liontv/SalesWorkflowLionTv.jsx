@@ -47,11 +47,14 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import RocketLaunchIcon from '@mui/icons-material/RocketLaunch';
 import SearchIcon from '@mui/icons-material/Search';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 import { listBanks, listServices } from 'api/catalog-admin';
+import { getLoyaltyConfig, getLoyaltyCustomerBalance } from 'api/liontv-engagement';
 import {
   executeActivation,
   executeRenewal,
@@ -511,16 +514,17 @@ function makeLicenses(count, billing) {
   }));
 }
 
-function buildInvoice(invoice, packageId, amount, options) {
+function buildInvoice(invoice, packageId, amount, options, overrides = {}) {
   const requiresBank = paymentRequiresBank(options, invoice.paymentMethod);
   return {
     ...invoice,
+    ...overrides,
     serviceId: toNumberOrNull(invoice.serviceId) || options.defaults?.serviceId || 1,
     packageId: toNumberOrNull(invoice.packageId) || toNumberOrNull(packageId),
     amountPaid: cleanMoney(invoice.amountPaid) ?? cleanMoney(amount) ?? 0,
     amountDiscount: cleanMoney(invoice.amountDiscount) ?? 0,
-    loyaltyPointsUsed: toNumberOrNull(invoice.loyaltyPointsUsed) || 0,
-    loyaltyAmountRedeemed: cleanMoney(invoice.loyaltyAmountRedeemed) ?? 0,
+    loyaltyPointsUsed: toNumberOrNull(overrides.loyaltyPointsUsed ?? invoice.loyaltyPointsUsed) || 0,
+    loyaltyAmountRedeemed: cleanMoney(overrides.loyaltyAmountRedeemed ?? invoice.loyaltyAmountRedeemed) ?? 0,
     bankId: requiresBank ? toNumberOrNull(invoice.bankId) : null
   };
 }
@@ -558,7 +562,7 @@ function buildActivationPayload(form, options, withIdempotency = false) {
   };
 }
 
-function buildRenewalPayload(form, options, withIdempotency = false) {
+function buildRenewalPayload(form, options, withIdempotency = false, invoiceOverrides = {}) {
   const packageId = toNumberOrNull(form.subscription.packageId);
   const amount = cleanMoney(form.subscription.amount);
   return {
@@ -574,7 +578,7 @@ function buildRenewalPayload(form, options, withIdempotency = false) {
       renewalDate: form.subscription.renewalDate || null,
       automaticPay: Boolean(form.subscription.automaticPay)
     },
-    invoice: buildInvoice(form.invoice, packageId, amount, options),
+    invoice: buildInvoice(form.invoice, packageId, amount, options, invoiceOverrides),
     newLicenses: []
   };
 }
@@ -774,6 +778,21 @@ function PreviewCard({ preview }) {
           <Grid item xs={12} sm={6} md={4}>
             <MiniMetric label={t('salesWorkflow.metrics.invoiceAmount', 'Invoice amount')} value={formatMoney(preview.invoiceAmount ?? preview.amount)} icon={<PaidOutlinedIcon fontSize="small" />} color="success" />
           </Grid>
+          {Number(preview.loyaltyPointsUsed || 0) > 0 ? (
+            <Grid item xs={12} sm={6} md={4}>
+              <MiniMetric
+                label={t('salesWorkflow.metrics.loyaltyApplied', 'Points applied')}
+                value={`${Number(preview.loyaltyPointsUsed || 0).toLocaleString()} pts · ${formatMoney(preview.loyaltyAmountRedeemed || 0)}`}
+                icon={<AutoAwesomeIcon fontSize="small" />}
+                color="secondary"
+              />
+            </Grid>
+          ) : null}
+          {preview.invoiceNetAmount !== null && preview.invoiceNetAmount !== undefined ? (
+            <Grid item xs={12} sm={6} md={4}>
+              <MiniMetric label={t('salesWorkflow.metrics.invoiceNetAmount', 'Net invoice')} value={formatMoney(preview.invoiceNetAmount)} icon={<PaidOutlinedIcon fontSize="small" />} color="info" />
+            </Grid>
+          ) : null}
         </Grid>
         {preview.currentPackageName && preview.currentPackageName !== preview.newPackageName ? (
           <Alert severity="info">
@@ -791,6 +810,212 @@ function PreviewCard({ preview }) {
         ) : null}
       </Stack>
     </Card>
+  );
+}
+
+function LoyaltyRedemptionPanel({
+  t,
+  config,
+  configLoading,
+  balanceLoading,
+  customerId,
+  availablePoints,
+  pointsValue,
+  onPointsChange,
+  previewAmount,
+  netAmount,
+  pointsExceeded,
+  amountExceeded,
+  programInactive,
+  disabledInfo = false
+}) {
+  const isActive = Boolean(config?.active);
+  const disabled = disabledInfo || !customerId || configLoading || !isActive;
+
+  return (
+    <Paper
+      variant="outlined"
+      sx={(theme) => {
+        const mainColor = paletteMain(theme, 'secondary');
+        return {
+          p: { xs: 1.5, sm: 2 },
+          borderRadius: 2.5,
+          borderColor:
+            pointsExceeded || amountExceeded
+              ? theme.palette.error.main
+              : alpha(mainColor, theme.palette.mode === 'light' ? 0.22 : 0.34),
+          background:
+            theme.palette.mode === 'light'
+              ? `linear-gradient(145deg, ${alpha(mainColor, 0.08)}, ${theme.palette.background.paper})`
+              : `linear-gradient(145deg, ${alpha(mainColor, 0.13)}, ${theme.palette.background.paper})`,
+          overflow: 'hidden'
+        };
+      }}
+    >
+      <Stack spacing={2}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+          <Stack direction="row" spacing={1.25} alignItems="center" sx={{ minWidth: 0 }}>
+            <Avatar
+              sx={(theme) => ({
+                width: 40,
+                height: 40,
+                bgcolor: alpha(paletteMain(theme, 'secondary'), 0.14),
+                color: paletteMain(theme, 'secondary'),
+                flexShrink: 0
+              })}
+            >
+              <AutoAwesomeIcon fontSize="small" />
+            </Avatar>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="h4" fontWeight={900} sx={{ lineHeight: 1.18, fontSize: { xs: '1rem', sm: '1.05rem' } }}>
+                {t('salesWorkflow.sections.loyaltyTitle', 'Loyalty points')}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {disabledInfo
+                  ? t('salesWorkflow.sections.loyaltyActivationHelper', 'Points apply only to existing customers during renewals.')
+                  : t('salesWorkflow.sections.loyaltyHelper', 'Apply available points to this renewal invoice.')}
+              </Typography>
+            </Box>
+          </Stack>
+          <Chip
+            size="small"
+            color={isActive && !disabledInfo ? 'secondary' : 'default'}
+            variant={isActive && !disabledInfo ? 'light' : 'outlined'}
+            label={
+              disabledInfo
+                ? t('salesWorkflow.messages.loyaltyExistingOnly', 'Existing customers only')
+                : isActive
+                  ? t('salesWorkflow.messages.loyaltyReady', 'Ready to apply')
+                  : t('salesWorkflow.messages.loyaltyDisabled', 'Loyalty disabled')
+            }
+            sx={{ fontWeight: 800 }}
+          />
+        </Stack>
+
+        {disabledInfo ? (
+          <Alert severity="info" icon={<InfoOutlinedIcon />}>
+            {t('salesWorkflow.messages.loyaltyActivationInfo', 'New accounts start without a points balance. Apply points later from a renewal or invoice.')}
+          </Alert>
+        ) : null}
+
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={4}>
+            <MiniMetric
+              label={t('salesWorkflow.metrics.availablePoints', 'Available points')}
+              value={customerId ? Number(availablePoints || 0).toLocaleString() : '--'}
+              icon={<AutoAwesomeIcon fontSize="small" />}
+              color="secondary"
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, fontWeight: 650 }}>
+              {isActive
+                ? t('salesWorkflow.messages.loyaltyConversion', '{{points}} point(s) = ${{amount}}', {
+                    points: Number(config?.pointsPerUnit || 1),
+                    amount: Number(config?.amountUnit || 10).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                  })
+                : t('salesWorkflow.messages.loyaltyDisabled', 'Loyalty disabled')}
+            </Typography>
+            {balanceLoading ? (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                {t('salesWorkflow.messages.loadingPoints', 'Loading points...')}
+              </Typography>
+            ) : null}
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label={t('salesWorkflow.fields.loyaltyPointsUsed', 'Points to use')}
+              type="number"
+              sx={fieldSx}
+              value={pointsValue}
+              onChange={onPointsChange}
+              disabled={disabled}
+              error={pointsExceeded}
+              inputProps={{ min: 0, step: 1 }}
+              helperText={
+                !customerId
+                  ? t('salesWorkflow.messages.loyaltySelectSubscription', 'Select a subscription first.')
+                  : pointsExceeded
+                    ? t('salesWorkflow.messages.loyaltyExceeded', 'The customer does not have enough available points.')
+                    : t('salesWorkflow.messages.loyaltyMaxAvailable', 'Available: {{count}} pts', {
+                        count: Number(availablePoints || 0).toLocaleString()
+                      })
+              }
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <AutoAwesomeIcon fontSize="small" sx={{ color: 'secondary.main' }} />
+                  </InputAdornment>
+                )
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label={t('salesWorkflow.fields.loyaltyAmountRedeemed', 'Redeemed amount')}
+              sx={fieldSx}
+              value={previewAmount}
+              disabled
+              error={amountExceeded}
+              helperText={
+                amountExceeded
+                  ? t('salesWorkflow.messages.loyaltyAmountExceeded', 'Points exceed the net invoice amount.')
+                  : t('salesWorkflow.messages.loyaltyNetAfter', 'Net after discount and points: ${{amount}}', {
+                      amount: Number(netAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })
+                    })
+              }
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Typography variant="subtitle2" color="secondary.main" sx={{ fontWeight: 800 }}>
+                      $
+                    </Typography>
+                  </InputAdornment>
+                )
+              }}
+            />
+          </Grid>
+        </Grid>
+
+        <Box
+          sx={(theme) => ({
+            p: 1.35,
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor:
+              pointsExceeded || amountExceeded
+                ? theme.palette.error.main
+                : theme.palette.mode === 'dark'
+                  ? 'rgba(148, 163, 184, 0.22)'
+                  : 'rgba(148, 163, 184, 0.32)',
+            bgcolor:
+              programInactive && Number(pointsValue || 0) > 0
+                ? theme.palette.error.lighter
+                : theme.palette.mode === 'dark'
+                  ? 'rgba(15, 23, 42, 0.54)'
+                  : 'rgba(248, 250, 252, 0.92)'
+          })}
+        >
+          <Stack direction="row" spacing={1} alignItems="flex-start">
+            <InfoOutlinedIcon
+              fontSize="small"
+              sx={(theme) => ({
+                mt: '2px',
+                color: pointsExceeded || amountExceeded ? theme.palette.error.main : paletteMain(theme, 'primary')
+              })}
+            />
+            <Typography variant="caption" color={pointsExceeded || amountExceeded ? 'error.main' : 'text.secondary'} sx={{ fontWeight: 650 }}>
+              {programInactive
+                ? t('salesWorkflow.messages.loyaltyInactiveHelp', 'The loyalty program is inactive. Activate it before applying points.')
+                : t(
+                    'salesWorkflow.messages.loyaltyHelper',
+                    'The redeemed points are sent to the invoice and the loyalty ledger applies the deduction when the invoice is saved.'
+                  )}
+            </Typography>
+          </Stack>
+        </Box>
+      </Stack>
+    </Paper>
   );
 }
 
@@ -891,6 +1116,10 @@ export default function SalesWorkflowLionTv() {
   const [preview, setPreview] = useState(null);
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [loyaltyConfig, setLoyaltyConfig] = useState(null);
+  const [loyaltyConfigLoading, setLoyaltyConfigLoading] = useState(false);
+  const [loyaltyByCustomerId, setLoyaltyByCustomerId] = useState({});
+  const [loyaltyCustomerLoading, setLoyaltyCustomerLoading] = useState(false);
 
   const packages = options.packages || [];
   const paymentMethods = (options.paymentMethods || []).filter((item) => item.active !== false).sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -920,6 +1149,35 @@ export default function SalesWorkflowLionTv() {
   const selectedSubscription = useMemo(
     () => lookup?.subscriptions?.find((item) => String(item.subscriptionId) === String(renewal.subscriptionId)),
     [lookup?.subscriptions, renewal.subscriptionId]
+  );
+  const selectedRenewalCustomerId = Number(selectedSubscription?.customerId || 0);
+  const selectedRenewalLoyalty = selectedRenewalCustomerId ? loyaltyByCustomerId[selectedRenewalCustomerId] || null : null;
+  const renewalLoyaltyPointsRequested = useMemo(() => {
+    const parsed = Number(renewal.invoice.loyaltyPointsUsed || 0);
+    if (!Number.isFinite(parsed) || parsed <= 0) return 0;
+    return Math.floor(parsed);
+  }, [renewal.invoice.loyaltyPointsUsed]);
+  const selectedRenewalAvailablePoints = Number(selectedRenewalLoyalty?.availablePoints || 0);
+  const renewalLoyaltyPreviewAmount = useMemo(() => {
+    if (!loyaltyConfig?.active || renewalLoyaltyPointsRequested <= 0) return 0;
+    const pointsPerUnit = Math.max(Number(loyaltyConfig?.pointsPerUnit || 1), 1);
+    const amountUnit = Number(loyaltyConfig?.amountUnit || 10);
+    return Number(((renewalLoyaltyPointsRequested * amountUnit) / pointsPerUnit).toFixed(2));
+  }, [loyaltyConfig, renewalLoyaltyPointsRequested]);
+  const renewalInvoiceNetAfterLoyalty = useMemo(() => {
+    const gross = Number(renewal.invoice.amountPaid || 0);
+    const discount = Number(renewal.invoice.amountDiscount || 0);
+    return Number((gross - discount - renewalLoyaltyPreviewAmount).toFixed(2));
+  }, [renewal.invoice.amountDiscount, renewal.invoice.amountPaid, renewalLoyaltyPreviewAmount]);
+  const renewalLoyaltyPointsExceeded = renewalLoyaltyPointsRequested > selectedRenewalAvailablePoints;
+  const renewalLoyaltyProgramInactive = Boolean(selectedRenewalCustomerId) && !loyaltyConfigLoading && !loyaltyConfig?.active;
+  const renewalLoyaltyAmountExceeded = renewalInvoiceNetAfterLoyalty < 0;
+  const renewalInvoiceLoyaltyOverrides = useMemo(
+    () => ({
+      loyaltyPointsUsed: renewalLoyaltyPointsRequested,
+      loyaltyAmountRedeemed: renewalLoyaltyPreviewAmount
+    }),
+    [renewalLoyaltyPointsRequested, renewalLoyaltyPreviewAmount]
   );
   const duplicateCustomers = useMemo(() => {
     const email = normalizeText(activation.customer.customerMail);
@@ -966,6 +1224,47 @@ export default function SalesWorkflowLionTv() {
       setLinesLoading(false);
     }
   }, [enqueueSnackbar, t]);
+
+  const loadLoyaltyConfig = useCallback(async () => {
+    setLoyaltyConfigLoading(true);
+    try {
+      const config = await getLoyaltyConfig();
+      setLoyaltyConfig(config || null);
+    } catch (error) {
+      enqueueSnackbar(extractError(error, t('salesWorkflow.messages.loyaltyConfigError', 'Could not load loyalty configuration.')), {
+        variant: 'warning'
+      });
+    } finally {
+      setLoyaltyConfigLoading(false);
+    }
+  }, [enqueueSnackbar, t]);
+
+  const loadCustomerLoyalty = useCallback(
+    async (customerId) => {
+      const safeId = Number(customerId);
+      if (!safeId || loyaltyByCustomerId[safeId]) return;
+      setLoyaltyCustomerLoading(true);
+      try {
+        const summary = await getLoyaltyCustomerBalance(safeId);
+        setLoyaltyByCustomerId((prev) => ({
+          ...prev,
+          [safeId]: summary || {
+            customerId: safeId,
+            availablePoints: 0,
+            lifetimeEarned: 0,
+            lifetimeAdjusted: 0
+          }
+        }));
+      } catch (error) {
+        enqueueSnackbar(extractError(error, t('salesWorkflow.messages.loyaltyBalanceError', 'Could not load customer points balance.')), {
+          variant: 'warning'
+        });
+      } finally {
+        setLoyaltyCustomerLoading(false);
+      }
+    },
+    [enqueueSnackbar, loyaltyByCustomerId, t]
+  );
 
   const loadOptions = useCallback(async () => {
     setOptionsLoading(true);
@@ -1043,6 +1342,28 @@ export default function SalesWorkflowLionTv() {
   useEffect(() => {
     loadOptions();
   }, [loadOptions]);
+
+  useEffect(() => {
+    loadLoyaltyConfig();
+  }, [loadLoyaltyConfig]);
+
+  useEffect(() => {
+    if (!selectedRenewalCustomerId || loyaltyConfigLoading || !loyaltyConfig?.active) return;
+    loadCustomerLoyalty(selectedRenewalCustomerId);
+  }, [loadCustomerLoyalty, loyaltyConfig?.active, loyaltyConfigLoading, selectedRenewalCustomerId]);
+
+  useEffect(() => {
+    if (loyaltyConfigLoading || loyaltyConfig?.active) return;
+    if (!renewal.invoice.loyaltyPointsUsed && !Number(renewal.invoice.loyaltyAmountRedeemed || 0)) return;
+    setRenewal((prev) => ({
+      ...prev,
+      invoice: {
+        ...prev.invoice,
+        loyaltyPointsUsed: 0,
+        loyaltyAmountRedeemed: 0
+      }
+    }));
+  }, [loyaltyConfig?.active, loyaltyConfigLoading, renewal.invoice.loyaltyAmountRedeemed, renewal.invoice.loyaltyPointsUsed]);
 
   useEffect(() => {
     if (tab === 0 && activeStep === 1 && activation.mainLineMode === MAIN_LINE_USE_EXISTING && !lineOptions.length && !linesLoading) {
@@ -1215,6 +1536,28 @@ export default function SalesWorkflowLionTv() {
     clearPreview();
   };
 
+  const validateRenewalLoyalty = () => {
+    if (renewalLoyaltyProgramInactive && renewalLoyaltyPointsRequested > 0) {
+      enqueueSnackbar(t('salesWorkflow.messages.loyaltyInactive', 'The loyalty program is inactive for this account.'), {
+        variant: 'warning'
+      });
+      return false;
+    }
+    if (renewalLoyaltyPointsExceeded) {
+      enqueueSnackbar(t('salesWorkflow.messages.loyaltyExceeded', 'The customer does not have enough available points.'), {
+        variant: 'warning'
+      });
+      return false;
+    }
+    if (renewalLoyaltyAmountExceeded) {
+      enqueueSnackbar(t('salesWorkflow.messages.loyaltyAmountExceeded', 'Points exceed the net invoice amount.'), {
+        variant: 'warning'
+      });
+      return false;
+    }
+    return true;
+  };
+
   const handleActivationPreview = async () => {
     setBusy(true);
     setResult(null);
@@ -1243,10 +1586,11 @@ export default function SalesWorkflowLionTv() {
   };
 
   const handleRenewalPreview = async () => {
+    if (!validateRenewalLoyalty()) return;
     setBusy(true);
     setResult(null);
     try {
-      const response = await previewRenewal(buildRenewalPayload(renewal, options));
+      const response = await previewRenewal(buildRenewalPayload(renewal, options, false, renewalInvoiceLoyaltyOverrides));
       setPreview(response);
     } catch (error) {
       enqueueSnackbar(extractError(error, t('salesWorkflow.messages.previewError', 'Could not generate preview.')), { variant: 'error' });
@@ -1256,9 +1600,10 @@ export default function SalesWorkflowLionTv() {
   };
 
   const handleRenewalExecute = async () => {
+    if (!validateRenewalLoyalty()) return;
     setBusy(true);
     try {
-      const response = await executeRenewal(buildRenewalPayload(renewal, options, true));
+      const response = await executeRenewal(buildRenewalPayload(renewal, options, true, renewalInvoiceLoyaltyOverrides));
       setResult(response);
       setPreview(response?.summary || preview);
       enqueueSnackbar(t('salesWorkflow.messages.renewed', 'Renewal executed successfully.'), { variant: 'success' });
@@ -1769,9 +2114,25 @@ export default function SalesWorkflowLionTv() {
                       ) : null}
                       <Grid item xs={12}>
 	                        <TextField fullWidth multiline minRows={2} label={t('salesWorkflow.fields.notes', 'Invoice notes')} sx={fieldSx} value={activation.invoice.notes} onChange={(e) => setNestedValue(setActivation, 'invoice', 'notes', e.target.value)} />
-                      </Grid>
-                    </Grid>
-                  </Section>
+	                      </Grid>
+	                    </Grid>
+                    <LoyaltyRedemptionPanel
+                      t={t}
+                      config={loyaltyConfig}
+                      configLoading={loyaltyConfigLoading}
+                      balanceLoading={false}
+                      customerId={null}
+                      availablePoints={0}
+                      pointsValue={0}
+                      onPointsChange={() => {}}
+                      previewAmount={0}
+                      netAmount={Number(activation.invoice.amountPaid || 0) - Number(activation.invoice.amountDiscount || 0)}
+                      pointsExceeded={false}
+                      amountExceeded={false}
+                      programInactive={false}
+                      disabledInfo
+                    />
+	                  </Section>
                 </Grid>
                 <Grid item xs={12} lg={4}>
 	                  <Section
@@ -2114,10 +2475,25 @@ export default function SalesWorkflowLionTv() {
                           />
                         </Grid>
                       ) : null}
-                      <Grid item xs={12}>
-                        <TextField fullWidth multiline minRows={2} label={t('salesWorkflow.fields.notes', 'Invoice notes')} sx={fieldSx} value={renewal.invoice.notes} onChange={(e) => setNestedValue(setRenewal, 'invoice', 'notes', e.target.value)} />
-                      </Grid>
-                    </Grid>
+	                      <Grid item xs={12}>
+	                        <TextField fullWidth multiline minRows={2} label={t('salesWorkflow.fields.notes', 'Invoice notes')} sx={fieldSx} value={renewal.invoice.notes} onChange={(e) => setNestedValue(setRenewal, 'invoice', 'notes', e.target.value)} />
+	                      </Grid>
+	                    </Grid>
+                    <LoyaltyRedemptionPanel
+                      t={t}
+                      config={loyaltyConfig}
+                      configLoading={loyaltyConfigLoading}
+                      balanceLoading={loyaltyCustomerLoading}
+                      customerId={selectedRenewalCustomerId}
+                      availablePoints={selectedRenewalAvailablePoints}
+                      pointsValue={renewal.invoice.loyaltyPointsUsed}
+                      onPointsChange={(e) => setNestedValue(setRenewal, 'invoice', 'loyaltyPointsUsed', e.target.value)}
+                      previewAmount={renewalLoyaltyPreviewAmount}
+                      netAmount={renewalInvoiceNetAfterLoyalty}
+                      pointsExceeded={renewalLoyaltyPointsExceeded}
+                      amountExceeded={renewalLoyaltyAmountExceeded}
+                      programInactive={renewalLoyaltyProgramInactive}
+                    />
                     {Number(renewal.desiredDeviceCount || 0) < Number(renewal.currentDeviceCount || 0) ? (
                       <Alert severity="warning">
                         {t('salesWorkflow.messages.decreaseDevicesWarning', 'You are reducing devices. The system does not remove licenses automatically; this will remain for manual review.')}

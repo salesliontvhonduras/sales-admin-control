@@ -7805,7 +7805,10 @@ resources.en.translation.salesWorkflow = {
     selectedSubscriptionTitle: 'Selected subscription',
     selectedSubscriptionHelper: 'Adjust package, renewal base and devices.',
     renewalPaymentTitle: 'Payment and confirmation',
-    renewalPaymentHelper: 'Preview shows the new date, plan change and missing licenses before executing.'
+    renewalPaymentHelper: 'Preview shows the new date, plan change and missing licenses before executing.',
+    loyaltyTitle: 'Loyalty points',
+    loyaltyHelper: 'Apply available points to this renewal invoice.',
+    loyaltyActivationHelper: 'Points apply only to existing customers during renewals.'
   },
   fields: {
     fullName: 'Full name',
@@ -7845,7 +7848,9 @@ resources.en.translation.salesWorkflow = {
     search: 'Search',
     planPackage: 'Plan / package',
     renewalBase: 'Base if expired',
-    manualRenewalDate: 'Optional manual date'
+    manualRenewalDate: 'Optional manual date',
+    loyaltyPointsUsed: 'Points to use',
+    loyaltyAmountRedeemed: 'Redeemed amount'
   },
   options: {
     male: 'Male',
@@ -7892,7 +7897,10 @@ resources.en.translation.salesWorkflow = {
     availableSlots: 'Available slots',
     capacity: 'Capacity',
     newDate: 'New date',
-    invoiceAmount: 'Invoice amount'
+    invoiceAmount: 'Invoice amount',
+    availablePoints: 'Available points',
+    loyaltyApplied: 'Points applied',
+    invoiceNetAmount: 'Net invoice'
   },
   status: {
     available: 'Available',
@@ -7936,7 +7944,23 @@ resources.en.translation.salesWorkflow = {
     created: 'New account created successfully.',
     renewed: 'Renewal executed successfully.',
     activationError: 'Could not execute activation.',
-    renewalError: 'Could not execute renewal.'
+    renewalError: 'Could not execute renewal.',
+    loyaltyConfigError: 'Could not load loyalty configuration.',
+    loyaltyBalanceError: 'Could not load customer points balance.',
+    loyaltyInactive: 'The loyalty program is inactive for this account.',
+    loyaltyExceeded: 'The customer does not have enough available points.',
+    loyaltyAmountExceeded: 'Points exceed the net invoice amount.',
+    loyaltyExistingOnly: 'Existing customers only',
+    loyaltyReady: 'Ready to apply',
+    loyaltyDisabled: 'Loyalty disabled',
+    loyaltyActivationInfo: 'New accounts start without a points balance. Apply points later from a renewal or invoice.',
+    loyaltyConversion: '{{points}} point(s) = ${{amount}}',
+    loadingPoints: 'Loading points...',
+    loyaltySelectSubscription: 'Select a subscription first.',
+    loyaltyMaxAvailable: 'Available: {{count}} pts',
+    loyaltyNetAfter: 'Net after discount and points: ${{amount}}',
+    loyaltyInactiveHelp: 'The loyalty program is inactive. Activate it before applying points.',
+    loyaltyHelper: 'The redeemed points are sent to the invoice and the loyalty ledger applies the deduction when the invoice is saved.'
   },
   workflowTypes: {
     renewal: 'renewal',
@@ -8001,7 +8025,10 @@ resources.es.translation.salesWorkflow = {
     selectedSubscriptionTitle: 'Suscripción seleccionada',
     selectedSubscriptionHelper: 'Ajusta paquete, base de renovación y dispositivos.',
     renewalPaymentTitle: 'Pago y confirmación',
-    renewalPaymentHelper: 'El preview muestra fecha nueva, cambio de plan y licencias faltantes antes de ejecutar.'
+    renewalPaymentHelper: 'El preview muestra fecha nueva, cambio de plan y licencias faltantes antes de ejecutar.',
+    loyaltyTitle: 'Puntos de lealtad',
+    loyaltyHelper: 'Aplica puntos disponibles a esta factura de renovación.',
+    loyaltyActivationHelper: 'Los puntos aplican solo para clientes existentes durante renovaciones.'
   },
   fields: {
     fullName: 'Nombre completo',
@@ -8041,7 +8068,9 @@ resources.es.translation.salesWorkflow = {
     search: 'Buscar',
     planPackage: 'Plan / paquete',
     renewalBase: 'Base si venció',
-    manualRenewalDate: 'Fecha manual opcional'
+    manualRenewalDate: 'Fecha manual opcional',
+    loyaltyPointsUsed: 'Puntos a usar',
+    loyaltyAmountRedeemed: 'Monto redimido'
   },
   options: {
     male: 'Masculino',
@@ -8088,7 +8117,10 @@ resources.es.translation.salesWorkflow = {
     availableSlots: 'Cupos libres',
     capacity: 'Capacidad',
     newDate: 'Fecha nueva',
-    invoiceAmount: 'Monto factura'
+    invoiceAmount: 'Monto factura',
+    availablePoints: 'Puntos disponibles',
+    loyaltyApplied: 'Puntos aplicados',
+    invoiceNetAmount: 'Neto factura'
   },
   status: {
     available: 'Disponible',
@@ -8132,7 +8164,23 @@ resources.es.translation.salesWorkflow = {
     created: 'Nueva cuenta creada correctamente.',
     renewed: 'Renovación ejecutada correctamente.',
     activationError: 'No se pudo ejecutar la activación.',
-    renewalError: 'No se pudo ejecutar la renovación.'
+    renewalError: 'No se pudo ejecutar la renovación.',
+    loyaltyConfigError: 'No se pudo cargar la configuración de lealtad.',
+    loyaltyBalanceError: 'No se pudo cargar el saldo de puntos del cliente.',
+    loyaltyInactive: 'El programa de puntos está inactivo para esta cuenta.',
+    loyaltyExceeded: 'El cliente no tiene suficientes puntos disponibles.',
+    loyaltyAmountExceeded: 'Los puntos exceden el monto neto de la factura.',
+    loyaltyExistingOnly: 'Solo clientes existentes',
+    loyaltyReady: 'Listo para aplicar',
+    loyaltyDisabled: 'Lealtad desactivada',
+    loyaltyActivationInfo: 'Las cuentas nuevas inician sin saldo de puntos. Aplica puntos después desde una renovación o factura.',
+    loyaltyConversion: '{{points}} punto(s) = ${{amount}}',
+    loadingPoints: 'Cargando puntos...',
+    loyaltySelectSubscription: 'Selecciona una suscripción primero.',
+    loyaltyMaxAvailable: 'Disponibles: {{count}} pts',
+    loyaltyNetAfter: 'Neto después de descuento y puntos: ${{amount}}',
+    loyaltyInactiveHelp: 'El programa de puntos está inactivo. Actívalo antes de aplicar puntos.',
+    loyaltyHelper: 'Los puntos redimidos se envían a la factura y el ledger de lealtad aplica la deducción cuando se guarda la factura.'
   },
   workflowTypes: {
     renewal: 'renovación',
