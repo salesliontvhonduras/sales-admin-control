@@ -331,7 +331,7 @@ const defaultActivation = (options = defaultOptions) => ({
     packageName: '',
     expDate: plusMonths(today()),
     enabled: true,
-    maxConnections: 1,
+    maxConnections: '',
     provider: '',
     lineCountry: 'GLOBAL'
   },
@@ -344,7 +344,7 @@ const defaultActivation = (options = defaultOptions) => ({
     packageName: '',
     expDate: plusMonths(today()),
     enabled: true,
-    maxConnections: 1,
+    maxConnections: '',
     provider: '',
     lineCountry: 'GLOBAL'
   },
@@ -488,6 +488,18 @@ function toNumberOrNull(value) {
   if (value === '' || value === null || value === undefined) return null;
   const parsed = Number(value);
   return Number.isNaN(parsed) ? null : parsed;
+}
+
+function isPositiveNumber(value) {
+  const parsed = toNumberOrNull(value);
+  return parsed !== null && parsed > 0;
+}
+
+function suggestedConnections(currentValue, pkg) {
+  if (isPositiveNumber(currentValue)) {
+    return currentValue;
+  }
+  return pkg?.roleCount && pkg.roleCount > 0 ? pkg.roleCount : 1;
 }
 
 function cleanMoney(value) {
@@ -1519,12 +1531,6 @@ export default function SalesWorkflowLionTv() {
     setActivation((prev) => ({
       ...prev,
       desiredDeviceCount: devices,
-      line: {
-        ...prev.line,
-        packageId: prev.line.packageId || pkg.packageId,
-        packageName: prev.line.packageName || pkg.name,
-        maxConnections: prev.line.packageId ? prev.line.maxConnections || devices : devices
-      },
       subscription: {
         ...prev.subscription,
         packageId: pkg.packageId
@@ -1539,14 +1545,13 @@ export default function SalesWorkflowLionTv() {
 
   const applyActivationLinePackage = (pkg) => {
     if (!pkg) return;
-    const devices = pkg.roleCount || activation.desiredDeviceCount || 1;
     setActivation((prev) => ({
       ...prev,
       line: {
         ...prev.line,
         packageId: pkg.packageId,
         packageName: pkg.name,
-        maxConnections: devices
+        maxConnections: suggestedConnections(prev.line.maxConnections, pkg)
       }
     }));
     clearPreview();
@@ -1554,14 +1559,13 @@ export default function SalesWorkflowLionTv() {
 
   const applyActivationLinePlusPackage = (pkg) => {
     if (!pkg) return;
-    const devices = pkg.roleCount || activation.desiredDeviceCount || 1;
     setActivation((prev) => ({
       ...prev,
       linePlus: {
         ...prev.linePlus,
         packageId: pkg.packageId,
         packageName: pkg.name,
-        maxConnections: devices
+        maxConnections: suggestedConnections(prev.linePlus.maxConnections, pkg)
       }
     }));
     clearPreview();
@@ -1613,14 +1617,19 @@ export default function SalesWorkflowLionTv() {
       mainLineMode: mode,
       line:
         mode === MAIN_LINE_CREATE_NEW
-          ? { ...defaultActivation(options).line, packageId: prev.line.packageId, packageName: prev.line.packageName, maxConnections: prev.desiredDeviceCount || 1 }
+          ? {
+              ...defaultActivation(options).line,
+              packageId: prev.line.packageId,
+              packageName: prev.line.packageName,
+              maxConnections: isPositiveNumber(prev.line.maxConnections) ? prev.line.maxConnections : ''
+            }
           : {
               ...prev.line,
               lineId: '',
               username: '',
               password: '',
               expDate: prev.line.expDate,
-              maxConnections: prev.line.maxConnections || prev.desiredDeviceCount || 1
+              maxConnections: isPositiveNumber(prev.line.maxConnections) ? prev.line.maxConnections : ''
             }
     }));
     clearPreview();
@@ -1642,7 +1651,7 @@ export default function SalesWorkflowLionTv() {
           packageName: line?.packageName || prev.line.packageName || '',
           expDate: line?.expDate ? String(line.expDate).slice(0, 10) : prev.line.expDate,
           enabled: line?.enabled ?? prev.line.enabled,
-          maxConnections: line?.maxConnections || prev.line.maxConnections || prev.desiredDeviceCount || 1,
+          maxConnections: line?.maxConnections ?? prev.line.maxConnections ?? '',
           provider: line?.provider || prev.line.provider,
           lineCountry: line?.lineCountry || prev.line.lineCountry
         }
@@ -1804,11 +1813,18 @@ export default function SalesWorkflowLionTv() {
       return Boolean(activation.customer.customerFullname && activation.customer.channel && (activation.customer.customerMail || activation.customer.customerPhone));
     }
     if (activeStep === 1) {
-      if (activation.linePlusEnabled && !Boolean(activation.linePlus.provider && activation.linePlus.packageId)) return false;
+      if (activation.linePlusEnabled && !Boolean(activation.linePlus.provider && activation.linePlus.packageId && isPositiveNumber(activation.linePlus.maxConnections))) return false;
       if (activation.mainLineMode === MAIN_LINE_USE_EXISTING) {
         return Boolean(activation.line.lineId && activation.subscription.packageId);
       }
-      return Boolean(activation.line.provider && activation.line.username && activation.line.password && activation.line.packageId && activation.subscription.packageId);
+      return Boolean(
+        activation.line.provider &&
+          activation.line.username &&
+          activation.line.password &&
+          activation.line.packageId &&
+          isPositiveNumber(activation.line.maxConnections) &&
+          activation.subscription.packageId
+      );
     }
     return true;
   };
@@ -2338,16 +2354,32 @@ export default function SalesWorkflowLionTv() {
                       )}
                       <TextField
                         fullWidth
-                        label={t('salesWorkflow.fields.desiredDevices', 'Desired devices')}
+                        required={activation.mainLineMode === MAIN_LINE_CREATE_NEW}
+                        label={t('salesWorkflow.fields.mainLineConnections', 'Main line connections')}
+                        type="number"
+                        sx={fieldSx}
+                        value={activation.line.maxConnections}
+                        disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING}
+                        inputProps={{ min: 1, step: 1 }}
+                        helperText={
+                          activation.mainLineMode === MAIN_LINE_CREATE_NEW
+                            ? t('salesWorkflow.messages.lineConnectionsHelper', 'Capacity configured on the line. It is independent from licenses.')
+                            : t('salesWorkflow.messages.existingLineConnectionsReadonly', 'Existing line capacity is read-only.')
+                        }
+                        onChange={(e) => setNestedValue(setActivation, 'line', 'maxConnections', e.target.value)}
+                      />
+                      <TextField
+                        fullWidth
+                        label={t('salesWorkflow.fields.licensesToCreate', 'Licenses/devices to create')}
                         type="number"
                         sx={fieldSx}
                         value={activation.desiredDeviceCount}
+                        inputProps={{ min: 0, step: 1 }}
+                        helperText={t('salesWorkflow.messages.licensesToCreateHelper', 'Licenses to create now. Use 0 when the customer will receive licenses later.')}
                         onChange={(e) =>
                           setActivation((prev) => ({
                             ...prev,
-                            desiredDeviceCount: e.target.value,
-                            line: { ...prev.line, maxConnections: e.target.value },
-                            linePlus: { ...prev.linePlus, maxConnections: e.target.value }
+                            desiredDeviceCount: e.target.value
                           }))
                         }
                       />
@@ -2420,6 +2452,17 @@ export default function SalesWorkflowLionTv() {
                           getOptionLabel={(option) => option?.displayName || option?.name || ''}
                           isOptionEqualToValue={(option, value) => String(option?.packageId) === String(value?.packageId)}
                           renderInput={(params) => <TextField {...params} required label={t('salesWorkflow.fields.linePlusPackage', 'Line Plus package')} sx={fieldSx} />}
+                        />
+                        <TextField
+                          fullWidth
+                          required
+                          label={t('salesWorkflow.fields.linePlusConnections', 'Plus line connections')}
+                          type="number"
+                          sx={fieldSx}
+                          value={activation.linePlus.maxConnections}
+                          inputProps={{ min: 1, step: 1 }}
+                          helperText={t('salesWorkflow.messages.lineConnectionsHelper', 'Capacity configured on the line. It is independent from licenses.')}
+                          onChange={(e) => setNestedValue(setActivation, 'linePlus', 'maxConnections', e.target.value)}
                         />
                       </Box>
                     ) : null}
@@ -2602,12 +2645,20 @@ export default function SalesWorkflowLionTv() {
 		                        <MiniMetric label={t('salesWorkflow.metrics.line', 'Line')} value={activation.line.lineId} icon={<LanIcon fontSize="small" />} color="info" />
                       </Grid>
                       <Grid item xs={12} sm={6}>
-	                        <MiniMetric label={t('salesWorkflow.metrics.devices', 'Devices')} value={activation.desiredDeviceCount} icon={<DevicesIcon fontSize="small" />} color="success" />
+	                        <MiniMetric label={t('salesWorkflow.metrics.mainLineConnections', 'Main line connections')} value={activation.line.maxConnections} icon={<DevicesIcon fontSize="small" />} color="info" />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+	                        <MiniMetric label={t('salesWorkflow.metrics.licensesToCreate', 'Licenses/devices to create')} value={activation.desiredDeviceCount} icon={<DevicesIcon fontSize="small" />} color="success" />
                       </Grid>
                       {activation.linePlusEnabled ? (
-                        <Grid item xs={12} sm={6}>
-                          <MiniMetric label={t('salesWorkflow.metrics.linePlusProvider', 'Plus line provider')} value={lineProviderLabel(activation.linePlus.provider)} icon={<LanIcon fontSize="small" />} color="info" />
-                        </Grid>
+                        <>
+                          <Grid item xs={12} sm={6}>
+                            <MiniMetric label={t('salesWorkflow.metrics.linePlusProvider', 'Plus line provider')} value={lineProviderLabel(activation.linePlus.provider)} icon={<LanIcon fontSize="small" />} color="info" />
+                          </Grid>
+                          <Grid item xs={12} sm={6}>
+                            <MiniMetric label={t('salesWorkflow.metrics.linePlusConnections', 'Plus line connections')} value={activation.linePlus.maxConnections} icon={<DevicesIcon fontSize="small" />} color="info" />
+                          </Grid>
+                        </>
                       ) : null}
                     </Grid>
                     {activation.mainLineMode === MAIN_LINE_USE_EXISTING ? (

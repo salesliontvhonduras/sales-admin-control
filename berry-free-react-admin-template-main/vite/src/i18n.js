@@ -7879,6 +7879,9 @@ resources.en.translation.salesWorkflow = {
     password: 'Password',
     expires: 'Expires',
     desiredDevices: 'Desired devices',
+    mainLineConnections: 'Main line connections',
+    linePlusConnections: 'Plus line connections',
+    licensesToCreate: 'Licenses/devices to create',
     package: 'Package',
     subscriptionPackage: 'Subscription package',
     linePackage: 'Line package',
@@ -7954,6 +7957,9 @@ resources.en.translation.salesWorkflow = {
     currentPlan: 'Current plan',
     line: 'Line',
     devices: 'Devices',
+    mainLineConnections: 'Main line connections',
+    linePlusConnections: 'Plus line connections',
+    licensesToCreate: 'Licenses/devices to create',
     expires: 'Expires',
     amount: 'Amount',
     subscriptionAmount: 'Subscription amount',
@@ -8031,7 +8037,10 @@ resources.en.translation.salesWorkflow = {
 	    loyaltyInactiveHelp: 'The loyalty program is inactive. Activate it before applying points.',
 	    loyaltyHelper: 'The redeemed points are sent to the invoice and the loyalty ledger applies the deduction when the invoice is saved.',
 	    generatedLineIdHelper: 'Line ID generated automatically and validated against the database.',
-	    lineIdGenerateError: 'Could not generate Line ID.'
+	    lineIdGenerateError: 'Could not generate Line ID.',
+    lineConnectionsHelper: 'Capacity configured on the line. It is independent from licenses.',
+    existingLineConnectionsReadonly: 'Existing line capacity is read-only.',
+    licensesToCreateHelper: 'Licenses to create now. Use 0 when the customer will receive licenses later.'
 	  },
   workflowTypes: {
     renewal: 'renewal',
@@ -8128,6 +8137,9 @@ resources.es.translation.salesWorkflow = {
     password: 'Password',
     expires: 'Expira',
     desiredDevices: 'Dispositivos deseados',
+    mainLineConnections: 'Conexiones línea principal',
+    linePlusConnections: 'Conexiones línea Plus',
+    licensesToCreate: 'Licencias/dispositivos a crear',
     package: 'Paquete',
     subscriptionPackage: 'Paquete de suscripción',
     linePackage: 'Paquete de línea',
@@ -8203,6 +8215,9 @@ resources.es.translation.salesWorkflow = {
     currentPlan: 'Plan actual',
     line: 'Línea',
     devices: 'Dispositivos',
+    mainLineConnections: 'Conexiones línea principal',
+    linePlusConnections: 'Conexiones línea Plus',
+    licensesToCreate: 'Licencias/dispositivos a crear',
     expires: 'Expira',
     amount: 'Monto',
     subscriptionAmount: 'Monto suscripción',
@@ -8280,7 +8295,10 @@ resources.es.translation.salesWorkflow = {
 	    loyaltyInactiveHelp: 'El programa de puntos está inactivo. Actívalo antes de aplicar puntos.',
 	    loyaltyHelper: 'Los puntos redimidos se envían a la factura y el ledger de lealtad aplica la deducción cuando se guarda la factura.',
 	    generatedLineIdHelper: 'Line ID generado automáticamente y validado contra la base de datos.',
-	    lineIdGenerateError: 'No se pudo generar Line ID.'
+	    lineIdGenerateError: 'No se pudo generar Line ID.',
+    lineConnectionsHelper: 'Capacidad configurada en la línea. Es independiente de las licencias.',
+    existingLineConnectionsReadonly: 'La capacidad de una línea existente es de solo lectura.',
+    licensesToCreateHelper: 'Licencias a crear ahora. Usa 0 cuando el cliente recibirá licencias después.'
 	  },
   workflowTypes: {
     renewal: 'renovación',

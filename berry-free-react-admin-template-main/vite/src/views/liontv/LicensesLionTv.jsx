@@ -87,6 +87,7 @@ import {
 } from 'api/liontv-license-bob';
 
 const UNKNOWN_RANDOM_APP = 'UNKNOWN_RANDOM';
+const DEFAULT_MANAGED_LICENSE_APP = 'VIVO_PLAYER';
 const LICENSE_APP_IPTV_4K_SMARTERS = 'IPTV_4K_SMARTERS';
 
 function normalizeManagedLicenseAppCode(value) {
@@ -590,7 +591,7 @@ export default function LicensesLionTv() {
     price: '',
     isPaid: false,
     expireAt: '',
-    licensePeriod: 'ANNUAL',
+    licensePeriod: 'LIFETIME',
     typeLicense: 'PRIMARY'
   });
 
@@ -990,7 +991,13 @@ export default function LicensesLionTv() {
     [licenseApps]
   );
 
-  const defaultLicenseApp = activeLicenseAppOptions[0]?.value ?? '';
+  const defaultLicenseApp = useMemo(
+    () =>
+      activeLicenseAppOptions.find((option) => normalizeManagedLicenseAppCode(option.value) === DEFAULT_MANAGED_LICENSE_APP)?.value ??
+      activeLicenseAppOptions[0]?.value ??
+      '',
+    [activeLicenseAppOptions]
+  );
 
   const formHasLegacyApp = useMemo(
     () => Boolean(form.licenseId && form.app && !form.randomLicense && !activeLicenseAppOptions.some((option) => option.value === form.app)),
@@ -1107,8 +1114,8 @@ export default function LicensesLionTv() {
       app: defaultLicenseApp,
       price: 125,
       isPaid: false,
-      expireAt: computeExpireDate('ANNUAL'),
-      licensePeriod: 'ANNUAL',
+      expireAt: computeExpireDate('LIFETIME'),
+      licensePeriod: 'LIFETIME',
       typeLicense: 'PRIMARY'
     }),
   [defaultLicenseApp]);
@@ -1149,10 +1156,27 @@ export default function LicensesLionTv() {
       return;
     }
     if (field === 'customerId') {
-      setForm((prev) => ({ ...prev, customerId: value, subscriptionId: '' }));
+      const selectedCustomer = e.customer || e.option || null;
+      const selectedCustomerName =
+        selectedCustomer?.customerFullname ||
+        selectedCustomer?.fullName ||
+        selectedCustomer?.label ||
+        customerNameMap[String(value)] ||
+        '';
+      setForm((prev) => ({
+        ...prev,
+        customerId: value,
+        subscriptionId: '',
+        name: !prev.licenseId && selectedCustomerName ? selectedCustomerName : prev.name
+      }));
       return;
     }
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setOpenModal(true);
   };
 
   const handleEdit = (row) => {
@@ -1764,10 +1788,7 @@ export default function LicensesLionTv() {
             <Button
               variant="contained"
               startIcon={<AddCircleOutlineIcon />}
-              onClick={() => {
-                resetForm();
-                setOpenModal(true);
-              }}
+              onClick={openCreateModal}
               sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700, px: 2.8, boxShadow: '0 12px 24px rgba(0,133,255,0.35)' }}
               fullWidth={isMobile}
             >
@@ -2000,7 +2021,7 @@ export default function LicensesLionTv() {
                   <Typography variant="body2" color="text.secondary">
                     {t('licenses.table.emptyText', 'Try adjusting filters or add a new license.')}
                   </Typography>
-                  <Button variant="contained" onClick={() => setOpenModal(true)} size="small" fullWidth>
+                  <Button variant="contained" onClick={openCreateModal} size="small" fullWidth>
                     {t('actions.add', 'Add')}
                   </Button>
                 </Stack>
@@ -2181,7 +2202,7 @@ export default function LicensesLionTv() {
                           <Typography variant="body2" color="text.secondary">
                             {t('licenses.table.emptyText', 'Try adjusting filters or add a new license.')}
                           </Typography>
-                          <Button variant="contained" onClick={() => setOpenModal(true)} size="small">
+                          <Button variant="contained" onClick={openCreateModal} size="small">
                             {t('actions.add', 'Add')}
                           </Button>
                         </Stack>
@@ -2393,7 +2414,7 @@ export default function LicensesLionTv() {
                 <Grid item xs={12} sm={3}>
                   <CustomerAutocomplete
                     value={form.customerId}
-                    onChange={(_, id) => handleFormChange('customerId')({ target: { value: id } })}
+                    onChange={(option, id) => handleFormChange('customerId')({ target: { value: id }, option })}
                     label={t('licenses.form.customer', 'Customer')}
                     helperText={
                       form.licenseId
