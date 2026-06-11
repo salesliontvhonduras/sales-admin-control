@@ -58,6 +58,7 @@ import { getLoyaltyConfig, getLoyaltyCustomerBalance } from 'api/liontv-engageme
 import {
   executeActivation,
   executeRenewal,
+  getNextSalesWorkflowLineId,
   getSalesWorkflowOptions,
   listSalesWorkflowLines,
   lookupSalesWorkflow,
@@ -568,7 +569,7 @@ function buildActivationPayload(form, options, withIdempotency = false) {
       maxConnections: toNumberOrNull(form.line.maxConnections),
       enabled: true
     },
-    linePlus: form.linePlusEnabled && form.linePlus.lineId
+    linePlus: form.linePlusEnabled
       ? {
           ...form.linePlus,
           packageId: toNumberOrNull(form.linePlus.packageId),
@@ -1135,6 +1136,7 @@ export default function SalesWorkflowLionTv() {
   const [customers, setCustomers] = useState([]);
   const [lineOptions, setLineOptions] = useState([]);
   const [linesLoading, setLinesLoading] = useState(false);
+  const [lineIdLoading, setLineIdLoading] = useState({ main: false, plus: false });
   const [activation, setActivation] = useState(() => defaultActivation(defaultOptions));
   const [renewal, setRenewal] = useState(() => defaultRenewal(defaultOptions));
   const [lookupQuery, setLookupQuery] = useState('');
@@ -1270,6 +1272,35 @@ export default function SalesWorkflowLionTv() {
       setLinesLoading(false);
     }
   }, [enqueueSnackbar, t]);
+
+  const generateActivationLineId = useCallback(
+    async (target = 'line') => {
+      const loadingKey = target === 'linePlus' ? 'plus' : 'main';
+      setLineIdLoading((prev) => ({ ...prev, [loadingKey]: true }));
+      try {
+        const reserved = target === 'linePlus' ? [activation.line.lineId].filter(Boolean) : [activation.linePlus.lineId].filter(Boolean);
+        const response = await getNextSalesWorkflowLineId(reserved);
+        const nextLineId = response?.lineId || '';
+        if (!nextLineId) {
+          throw new Error('missing lineId');
+        }
+        setActivation((prev) => ({
+          ...prev,
+          [target]: {
+            ...prev[target],
+            lineId: nextLineId
+          }
+        }));
+        setPreview(null);
+        setResult(null);
+      } catch (error) {
+        enqueueSnackbar(t('salesWorkflow.messages.lineIdGenerateError', 'Could not generate Line ID.'), { variant: 'error' });
+      } finally {
+        setLineIdLoading((prev) => ({ ...prev, [loadingKey]: false }));
+      }
+    },
+    [activation.line.lineId, activation.linePlus.lineId, enqueueSnackbar, t]
+  );
 
   const loadLoyaltyConfig = useCallback(async () => {
     setLoyaltyConfigLoading(true);
@@ -1423,6 +1454,26 @@ export default function SalesWorkflowLionTv() {
     setPreview(null);
     setResult(null);
   };
+
+  useEffect(() => {
+    if (tab !== 0 || activeStep !== 1 || activation.mainLineMode !== MAIN_LINE_CREATE_NEW) return;
+    if (activation.line.lineId || lineIdLoading.main) return;
+    generateActivationLineId('line');
+  }, [activation.line.lineId, activation.mainLineMode, activeStep, generateActivationLineId, lineIdLoading.main, tab]);
+
+  useEffect(() => {
+    if (tab !== 0 || activeStep !== 1 || activation.mainLineMode !== MAIN_LINE_CREATE_NEW || !activation.linePlusEnabled) return;
+    if (activation.linePlus.lineId || lineIdLoading.plus) return;
+    generateActivationLineId('linePlus');
+  }, [
+    activation.linePlus.lineId,
+    activation.linePlusEnabled,
+    activation.mainLineMode,
+    activeStep,
+    generateActivationLineId,
+    lineIdLoading.plus,
+    tab
+  ]);
 
   const applyActivationSubscriptionPackage = (pkg) => {
     if (!pkg) return;
@@ -1665,11 +1716,11 @@ export default function SalesWorkflowLionTv() {
   const canGoActivationNext = () => {
     if (activeStep === 0) return Boolean(activation.customer.customerFullname && activation.customer.channel && (activation.customer.customerMail || activation.customer.customerPhone));
     if (activeStep === 1) {
-      if (activation.linePlusEnabled && !Boolean(activation.linePlus.lineId && activation.linePlus.provider && activation.linePlus.packageId)) return false;
+      if (activation.linePlusEnabled && !Boolean(activation.linePlus.provider && activation.linePlus.packageId)) return false;
       if (activation.mainLineMode === MAIN_LINE_USE_EXISTING) {
         return Boolean(activation.line.lineId && activation.subscription.packageId);
       }
-      return Boolean(activation.line.provider && activation.line.lineId && activation.line.username && activation.line.password && activation.line.packageId && activation.subscription.packageId);
+      return Boolean(activation.line.provider && activation.line.username && activation.line.password && activation.line.packageId && activation.subscription.packageId);
     }
     return true;
   };
@@ -2032,7 +2083,39 @@ export default function SalesWorkflowLionTv() {
                           disabled
                         />
                       )}
-                      <TextField fullWidth required label={t('salesWorkflow.fields.lineId', 'Line ID')} sx={fieldSx} value={activation.line.lineId} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'lineId', e.target.value)} />
+                      {activation.mainLineMode === MAIN_LINE_CREATE_NEW ? (
+                        <Box
+                          sx={{
+                            display: 'grid',
+                            gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) auto' },
+                            gap: 1,
+                            alignItems: 'flex-start'
+                          }}
+                        >
+                          <TextField
+                            fullWidth
+                            label={t('salesWorkflow.fields.lineId', 'Line ID')}
+                            sx={fieldSx}
+                            value={activation.line.lineId || ''}
+                            helperText={t('salesWorkflow.messages.generatedLineIdHelper', 'Line ID generated automatically and validated against the database.')}
+                            InputProps={{ readOnly: true }}
+                          />
+                          <Button
+                            variant="outlined"
+                            color="primary"
+                            onClick={() => generateActivationLineId('line')}
+                            disabled={lineIdLoading.main}
+                            startIcon={lineIdLoading.main ? <CircularProgress size={16} color="inherit" /> : activation.line.lineId ? <RefreshIcon /> : <AutoAwesomeIcon />}
+                            sx={{ minHeight: 56, whiteSpace: 'nowrap', width: { xs: '100%', sm: 'auto' } }}
+                          >
+                            {activation.line.lineId
+                              ? t('salesWorkflow.buttons.regenerateLineId', 'Regenerate')
+                              : t('salesWorkflow.buttons.generateLineId', 'Generate Line ID')}
+                          </Button>
+                        </Box>
+                      ) : (
+                        <TextField fullWidth label={t('salesWorkflow.fields.lineId', 'Line ID')} sx={fieldSx} value={activation.line.lineId} disabled />
+                      )}
                       <TextField fullWidth required={activation.mainLineMode === MAIN_LINE_CREATE_NEW} label={t('salesWorkflow.fields.lineUsername', 'Line username')} sx={fieldSx} value={activation.line.username} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'username', e.target.value)} />
                       <TextField fullWidth required={activation.mainLineMode === MAIN_LINE_CREATE_NEW} label={t('salesWorkflow.fields.password', 'Password')} sx={fieldSx} value={activation.line.password} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'password', e.target.value)} />
                       <TextField fullWidth label={t('salesWorkflow.fields.expires', 'Expires')} type="date" sx={fieldSx} value={activation.line.expDate} disabled={activation.mainLineMode === MAIN_LINE_USE_EXISTING} onChange={(e) => setNestedValue(setActivation, 'line', 'expDate', e.target.value)} InputLabelProps={{ shrink: true }} />
@@ -2100,7 +2183,35 @@ export default function SalesWorkflowLionTv() {
                             ))}
                           </Select>
                         </FormControl>
-                        <TextField fullWidth label={t('salesWorkflow.fields.linePlusId', 'Line Plus ID')} sx={fieldSx} value={activation.linePlus.lineId} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'lineId', e.target.value)} />
+                        <Box
+                          sx={{
+                            display: 'grid',
+                            gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) auto' },
+                            gap: 1,
+                            alignItems: 'flex-start'
+                          }}
+                        >
+                          <TextField
+                            fullWidth
+                            label={t('salesWorkflow.fields.linePlusId', 'Line Plus ID')}
+                            sx={fieldSx}
+                            value={activation.linePlus.lineId || ''}
+                            helperText={t('salesWorkflow.messages.generatedLineIdHelper', 'Line ID generated automatically and validated against the database.')}
+                            InputProps={{ readOnly: true }}
+                          />
+                          <Button
+                            variant="outlined"
+                            color="primary"
+                            onClick={() => generateActivationLineId('linePlus')}
+                            disabled={lineIdLoading.plus}
+                            startIcon={lineIdLoading.plus ? <CircularProgress size={16} color="inherit" /> : activation.linePlus.lineId ? <RefreshIcon /> : <AutoAwesomeIcon />}
+                            sx={{ minHeight: 56, whiteSpace: 'nowrap', width: { xs: '100%', sm: 'auto' } }}
+                          >
+                            {activation.linePlus.lineId
+                              ? t('salesWorkflow.buttons.regenerateLineId', 'Regenerate')
+                              : t('salesWorkflow.buttons.generateLineId', 'Generate Line ID')}
+                          </Button>
+                        </Box>
                         <TextField fullWidth label={t('salesWorkflow.fields.plusUsername', 'Plus username')} sx={fieldSx} value={activation.linePlus.username} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'username', e.target.value)} />
                         <TextField fullWidth label={t('salesWorkflow.fields.plusPassword', 'Plus password')} sx={fieldSx} value={activation.linePlus.password} onChange={(e) => setNestedValue(setActivation, 'linePlus', 'password', e.target.value)} />
                         <Autocomplete

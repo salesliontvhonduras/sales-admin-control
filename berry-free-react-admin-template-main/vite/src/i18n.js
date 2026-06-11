@@ -7879,11 +7879,13 @@ resources.en.translation.salesWorkflow = {
     confirmRenewal: 'Confirm renewal',
     search: 'Search',
     copyWhatsapp: 'Copy WhatsApp',
-    openCustomer: 'Open customer',
-    openSubscription: 'Open subscription',
-    openInvoice: 'Open invoice',
-    openLicenses: 'Open licenses'
-  },
+	    openCustomer: 'Open customer',
+	    openSubscription: 'Open subscription',
+	    openInvoice: 'Open invoice',
+	    openLicenses: 'Open licenses',
+	    generateLineId: 'Generate Line ID',
+	    regenerateLineId: 'Regenerate'
+	  },
   metrics: {
     status: 'Status',
     channel: 'Channel',
@@ -7964,11 +7966,13 @@ resources.en.translation.salesWorkflow = {
     loyaltyConversion: '{{points}} point(s) = ${{amount}}',
     loadingPoints: 'Loading points...',
     loyaltySelectSubscription: 'Select a subscription first.',
-    loyaltyMaxAvailable: 'Available: {{count}} pts',
-    loyaltyNetAfter: 'Net after discount and points: ${{amount}}',
-    loyaltyInactiveHelp: 'The loyalty program is inactive. Activate it before applying points.',
-    loyaltyHelper: 'The redeemed points are sent to the invoice and the loyalty ledger applies the deduction when the invoice is saved.'
-  },
+	    loyaltyMaxAvailable: 'Available: {{count}} pts',
+	    loyaltyNetAfter: 'Net after discount and points: ${{amount}}',
+	    loyaltyInactiveHelp: 'The loyalty program is inactive. Activate it before applying points.',
+	    loyaltyHelper: 'The redeemed points are sent to the invoice and the loyalty ledger applies the deduction when the invoice is saved.',
+	    generatedLineIdHelper: 'Line ID generated automatically and validated against the database.',
+	    lineIdGenerateError: 'Could not generate Line ID.'
+	  },
   workflowTypes: {
     renewal: 'renewal',
     activation: 'activation'
@@ -8114,11 +8118,13 @@ resources.es.translation.salesWorkflow = {
     confirmRenewal: 'Confirmar renovación',
     search: 'Buscar',
     copyWhatsapp: 'Copiar WhatsApp',
-    openCustomer: 'Abrir cliente',
-    openSubscription: 'Abrir suscripción',
-    openInvoice: 'Abrir factura',
-    openLicenses: 'Abrir licencias'
-  },
+	    openCustomer: 'Abrir cliente',
+	    openSubscription: 'Abrir suscripción',
+	    openInvoice: 'Abrir factura',
+	    openLicenses: 'Abrir licencias',
+	    generateLineId: 'Generar Line ID',
+	    regenerateLineId: 'Regenerar'
+	  },
   metrics: {
     status: 'Estado',
     channel: 'Canal',
@@ -8199,11 +8205,13 @@ resources.es.translation.salesWorkflow = {
     loyaltyConversion: '{{points}} punto(s) = ${{amount}}',
     loadingPoints: 'Cargando puntos...',
     loyaltySelectSubscription: 'Selecciona una suscripción primero.',
-    loyaltyMaxAvailable: 'Disponibles: {{count}} pts',
-    loyaltyNetAfter: 'Neto después de descuento y puntos: ${{amount}}',
-    loyaltyInactiveHelp: 'El programa de puntos está inactivo. Actívalo antes de aplicar puntos.',
-    loyaltyHelper: 'Los puntos redimidos se envían a la factura y el ledger de lealtad aplica la deducción cuando se guarda la factura.'
-  },
+	    loyaltyMaxAvailable: 'Disponibles: {{count}} pts',
+	    loyaltyNetAfter: 'Neto después de descuento y puntos: ${{amount}}',
+	    loyaltyInactiveHelp: 'El programa de puntos está inactivo. Actívalo antes de aplicar puntos.',
+	    loyaltyHelper: 'Los puntos redimidos se envían a la factura y el ledger de lealtad aplica la deducción cuando se guarda la factura.',
+	    generatedLineIdHelper: 'Line ID generado automáticamente y validado contra la base de datos.',
+	    lineIdGenerateError: 'No se pudo generar Line ID.'
+	  },
   workflowTypes: {
     renewal: 'renovación',
     activation: 'activación'

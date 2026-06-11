@@ -15,6 +15,19 @@ export async function lookupSalesWorkflow(query, config = {}) {
   );
 }
 
+export async function getNextSalesWorkflowLineId(reserved = [], config = {}) {
+  const reservedValue = Array.isArray(reserved) ? reserved.filter(Boolean).join(',') : String(reserved || '');
+  return unwrap(
+    await lionTvApi.get('/sales-workflow/v1/next-line-id', {
+      ...config,
+      params: {
+        ...(reservedValue ? { reserved: reservedValue } : {}),
+        ...(config.params || {})
+      }
+    })
+  );
+}
+
 export async function listSalesWorkflowLines(config = {}) {
   return unwrap(
     await lionTvApi.get('/lines/v1/list-lines', {
