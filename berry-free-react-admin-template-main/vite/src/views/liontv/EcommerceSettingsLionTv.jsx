@@ -571,6 +571,9 @@ export default function EcommerceSettingsLionTv() {
     () => (form.plans || []).reduce((total, plan) => total + (Array.isArray(plan.variants) ? plan.variants.length : 0), 0),
     [form.plans]
   );
+  const demoEnabledHelper = form.features.demoOnlineEnabled
+    ? t('ecommerceSettings.demoControl.enabledHelper', 'Los clientes pueden crear demos en línea.')
+    : t('ecommerceSettings.demoControl.disabledHelper', 'El ecommerce mostrará solo Activación inmediata.');
 
   const setPath = (path, value) => {
     setForm((prev) => {
@@ -871,9 +874,13 @@ export default function EcommerceSettingsLionTv() {
           </Grid>
           <Grid item xs={12} md={4}>
             <SummaryCard
-              label="Demo online"
-              value={form.features.demoOnlineEnabled ? 'Activa' : 'Inactiva'}
-              helper={form.demo.apiBaseUrl || 'Usará VITE_API_SHOPIFY_DEMOS'}
+              label={t('ecommerceSettings.demoControl.summaryLabel', 'Demos ecommerce')}
+              value={
+                form.features.demoOnlineEnabled
+                  ? t('ecommerceSettings.demoControl.enabledValue', 'Permitidas')
+                  : t('ecommerceSettings.demoControl.disabledValue', 'Solo activación inmediata')
+              }
+              helper={demoEnabledHelper}
             />
           </Grid>
           <Grid item xs={12} md={4}>
@@ -1601,18 +1608,26 @@ export default function EcommerceSettingsLionTv() {
           </Stack>
         </SettingsSection>
 
-        <SettingsSection title="Funciones y APIs" description="Activa demo/referidos y define URLs públicas de contenido.">
+        <SettingsSection
+          title={t('ecommerceSettings.sections.featuresTitle', 'Funciones y APIs')}
+          description={t('ecommerceSettings.sections.featuresDescription', 'Controla demos, referidos y URLs públicas de contenido.')}
+        >
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={Boolean(form.features.demoOnlineEnabled)}
-                    onChange={(event) => setPath(['features', 'demoOnlineEnabled'], event.target.checked)}
-                  />
-                }
-                label="Activar demo online"
-              />
+              <Stack spacing={0.75}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={Boolean(form.features.demoOnlineEnabled)}
+                      onChange={(event) => setPath(['features', 'demoOnlineEnabled'], event.target.checked)}
+                    />
+                  }
+                  label={t('ecommerceSettings.demoControl.switchLabel', 'Permitir crear demos desde ecommerce')}
+                />
+                <Typography variant="caption" color="text.secondary">
+                  {demoEnabledHelper}
+                </Typography>
+              </Stack>
             </Grid>
             <Grid item xs={12} md={6}>
               <FormControlLabel

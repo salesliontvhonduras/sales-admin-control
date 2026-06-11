@@ -77,6 +77,20 @@ const resources = {
         emailCampaigns: 'Email Campaigns',
         contentAutomation: 'Content Automation'
       },
+      ecommerceSettings: {
+        sections: {
+          featuresTitle: 'Features and APIs',
+          featuresDescription: 'Control demos, referrals and public content URLs.'
+        },
+        demoControl: {
+          summaryLabel: 'Ecommerce demos',
+          enabledValue: 'Allowed',
+          disabledValue: 'Immediate activation only',
+          switchLabel: 'Allow customers to create demos from ecommerce',
+          enabledHelper: 'Customers can create online demos.',
+          disabledHelper: 'The ecommerce will show Immediate activation only.'
+        }
+      },
       auth: {
         hi: 'Hi, Welcome Back',
         enterCredentials: 'Enter your credentials to continue',
@@ -4298,6 +4312,20 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
         emailTemplates: 'Templates de Email',
         emailCampaigns: 'Campañas de Email',
         contentAutomation: 'Automatización de Contenido'
+      },
+      ecommerceSettings: {
+        sections: {
+          featuresTitle: 'Funciones y APIs',
+          featuresDescription: 'Controla demos, referidos y URLs públicas de contenido.'
+        },
+        demoControl: {
+          summaryLabel: 'Demos ecommerce',
+          enabledValue: 'Permitidas',
+          disabledValue: 'Solo activación inmediata',
+          switchLabel: 'Permitir crear demos desde ecommerce',
+          enabledHelper: 'Los clientes pueden crear demos en línea.',
+          disabledHelper: 'El ecommerce mostrará solo Activación inmediata.'
+        }
       },
       auth: {
         hi: 'Hola, bienvenido',
