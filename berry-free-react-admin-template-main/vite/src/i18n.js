@@ -7811,12 +7811,15 @@ resources.en.translation.salesWorkflow = {
     loyaltyActivationHelper: 'Points apply only to existing customers during renewals.'
   },
   fields: {
+    customerMode: 'Customer mode',
     fullName: 'Full name',
     customerChannel: 'Customer channel',
     gender: 'Gender',
     openingDate: 'Opening date',
     email: 'Email',
     phone: 'Phone / WhatsApp',
+    searchExistingCustomer: 'Search existing customer',
+    searchExistingCustomerPlaceholder: 'Name, email or phone',
     lineId: 'Line ID',
     lineProvider: 'Line provider',
     lineUsername: 'Line username',
@@ -7856,6 +7859,8 @@ resources.en.translation.salesWorkflow = {
     loyaltyAmountRedeemed: 'Redeemed amount'
   },
   options: {
+    createNewCustomer: 'Create new customer',
+    useExistingCustomer: 'Use existing customer',
     male: 'Male',
     female: 'Female',
     other: 'Other',
@@ -7887,6 +7892,7 @@ resources.en.translation.salesWorkflow = {
 	    regenerateLineId: 'Regenerate'
 	  },
   metrics: {
+    customerMode: 'Customer mode',
     status: 'Status',
     channel: 'Channel',
     client: 'Customer',
@@ -7932,11 +7938,14 @@ resources.en.translation.salesWorkflow = {
       'Guided flow for activations and renewals. Packages, banks, services and payment methods come from catalogs/API; manual CRUD remains as backup.',
     packageDevices: '{{count}} suggested device(s)',
     possibleExistingCustomer: 'Possible existing customer',
+    existingCustomerSelected: 'Existing customer selected',
+    existingCustomerNoMutation: 'This customer will not be created again. The workflow only creates the new line/subscription, invoice and licenses.',
+    selectExistingCustomer: 'Select an existing customer to add a new account.',
     customersFound: 'Customers found',
     noSubscriptions: 'No subscriptions were found for this search.',
     linesLoadError: 'Could not load lines.',
     existingLineSelected: 'Existing line selected',
-    existingLineNoMutation: 'This line will not be modified. The workflow only creates the customer, subscription, invoice and licenses.',
+    existingLineNoMutation: 'This line will not be modified. The workflow only uses it to create the subscription, invoice and licenses.',
     selectExistingLine: 'Select one existing line from inventory to continue.',
     selectCustomerChannel: 'Select a channel',
     selectLineProvider: 'Select a provider',
@@ -7951,6 +7960,7 @@ resources.en.translation.salesWorkflow = {
     lookupError: 'Could not search customer.',
     previewError: 'Could not generate preview.',
     created: 'New account created successfully.',
+    existingAccountCreated: 'New account added to existing customer successfully.',
     renewed: 'Renewal executed successfully.',
     activationError: 'Could not execute activation.',
     renewalError: 'Could not execute renewal.',
@@ -8050,12 +8060,15 @@ resources.es.translation.salesWorkflow = {
     loyaltyActivationHelper: 'Los puntos aplican solo para clientes existentes durante renovaciones.'
   },
   fields: {
+    customerMode: 'Modo de cliente',
     fullName: 'Nombre completo',
     customerChannel: 'Canal del cliente',
     gender: 'Género',
     openingDate: 'Fecha alta',
     email: 'Correo',
     phone: 'Teléfono / WhatsApp',
+    searchExistingCustomer: 'Buscar cliente existente',
+    searchExistingCustomerPlaceholder: 'Nombre, correo o teléfono',
     lineId: 'Line ID',
     lineProvider: 'Provider de línea',
     lineUsername: 'Usuario línea',
@@ -8095,6 +8108,8 @@ resources.es.translation.salesWorkflow = {
     loyaltyAmountRedeemed: 'Monto redimido'
   },
   options: {
+    createNewCustomer: 'Crear cliente nuevo',
+    useExistingCustomer: 'Usar cliente existente',
     male: 'Masculino',
     female: 'Femenino',
     other: 'Otro',
@@ -8126,6 +8141,7 @@ resources.es.translation.salesWorkflow = {
 	    regenerateLineId: 'Regenerar'
 	  },
   metrics: {
+    customerMode: 'Modo de cliente',
     status: 'Estado',
     channel: 'Canal',
     client: 'Cliente',
@@ -8171,11 +8187,14 @@ resources.es.translation.salesWorkflow = {
       'Flujo guiado para activaciones y renovaciones. Los paquetes, bancos, servicios y métodos salen de catálogos/API; el CRUD manual queda como respaldo.',
     packageDevices: '{{count}} dispositivo(s) sugeridos',
     possibleExistingCustomer: 'Posible cliente existente',
+    existingCustomerSelected: 'Cliente existente seleccionado',
+    existingCustomerNoMutation: 'Este cliente no se creará de nuevo. El flujo solo crea la nueva línea/suscripción, factura y licencias.',
+    selectExistingCustomer: 'Selecciona un cliente existente para agregarle una cuenta nueva.',
     customersFound: 'Clientes encontrados',
     noSubscriptions: 'No se encontraron suscripciones para esa búsqueda.',
     linesLoadError: 'No se pudieron cargar las líneas.',
     existingLineSelected: 'Línea existente seleccionada',
-    existingLineNoMutation: 'Esta línea no será modificada. El flujo solo crea el cliente, la suscripción, la factura y las licencias.',
+    existingLineNoMutation: 'Esta línea no será modificada. El flujo solo la usa para crear la suscripción, la factura y las licencias.',
     selectExistingLine: 'Selecciona una línea existente del inventario para continuar.',
     selectCustomerChannel: 'Selecciona un canal',
     selectLineProvider: 'Selecciona un provider',
@@ -8190,6 +8209,7 @@ resources.es.translation.salesWorkflow = {
     lookupError: 'No se pudo buscar el cliente.',
     previewError: 'No se pudo generar el preview.',
     created: 'Nueva cuenta creada correctamente.',
+    existingAccountCreated: 'Cuenta nueva agregada al cliente existente correctamente.',
     renewed: 'Renovación ejecutada correctamente.',
     activationError: 'No se pudo ejecutar la activación.',
     renewalError: 'No se pudo ejecutar la renovación.',

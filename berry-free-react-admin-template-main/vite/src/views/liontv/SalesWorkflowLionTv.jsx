@@ -68,6 +68,8 @@ import {
 
 const MAIN_LINE_CREATE_NEW = 'CREATE_NEW';
 const MAIN_LINE_USE_EXISTING = 'USE_EXISTING';
+const CUSTOMER_CREATE_NEW = 'CREATE_NEW';
+const CUSTOMER_USE_EXISTING = 'USE_EXISTING';
 const RENEWAL_BASE_CURRENT_EXPIRATION = 'CURRENT_EXPIRATION';
 const RENEWAL_BASE_TODAY = 'TODAY';
 
@@ -305,8 +307,10 @@ const defaultOptions = {
 };
 
 const defaultActivation = (options = defaultOptions) => ({
+  customerMode: CUSTOMER_CREATE_NEW,
   mainLineMode: MAIN_LINE_CREATE_NEW,
   customer: {
+    customerId: null,
     customerFullname: '',
     gender: 'M',
     customerMail: '',
@@ -413,7 +417,10 @@ function normalizeCustomer(item = {}) {
     label: item.customerFullname ?? item.fullName ?? item.customer_name ?? item.name ?? '',
     email: item.customerMail ?? item.email ?? item.mail ?? '',
     phone: item.customerPhone ?? item.phone ?? '',
-    status: item.customerStatus ?? item.status ?? ''
+    status: item.customerStatus ?? item.status ?? '',
+    gender: item.gender ?? '',
+    openingDate: item.openingDate ?? item.opening_date ?? '',
+    channel: item.channel ?? ''
   };
 }
 
@@ -561,6 +568,7 @@ function buildActivationPayload(form, options, withIdempotency = false) {
   const amount = cleanMoney(form.subscription.amount);
   return {
     ...(withIdempotency ? { idempotencyKey: newIdempotencyKey() } : {}),
+    customerMode: form.customerMode || CUSTOMER_CREATE_NEW,
     mainLineMode: form.mainLineMode || MAIN_LINE_CREATE_NEW,
     customer: form.customer,
     line: {
@@ -1176,6 +1184,10 @@ export default function SalesWorkflowLionTv() {
     () => lineOptions.find((item) => String(item.lineId) === String(activation.line.lineId)) || null,
     [activation.line.lineId, lineOptions]
   );
+  const selectedExistingActivationCustomer = useMemo(
+    () => customers.find((item) => String(item.id) === String(activation.customer.customerId)) || null,
+    [activation.customer.customerId, customers]
+  );
   const selectedRenewalPackage = useMemo(
     () => packages.find((item) => String(item.packageId) === String(renewal.subscription.packageId)) || null,
     [packages, renewal.subscription.packageId]
@@ -1214,6 +1226,7 @@ export default function SalesWorkflowLionTv() {
     [renewalLoyaltyPointsRequested, renewalLoyaltyPreviewAmount]
   );
   const duplicateCustomers = useMemo(() => {
+    if (activation.customerMode === CUSTOMER_USE_EXISTING) return [];
     const email = normalizeText(activation.customer.customerMail);
     const phone = normalizePhone(activation.customer.customerPhone);
     if (!email && !phone) return [];
@@ -1222,7 +1235,7 @@ export default function SalesWorkflowLionTv() {
       const samePhone = phone && normalizePhone(customer.phone) === phone;
       return sameEmail || samePhone;
     });
-  }, [activation.customer.customerMail, activation.customer.customerPhone, customers]);
+  }, [activation.customer.customerMail, activation.customer.customerPhone, activation.customerMode, customers]);
   const activationRequiresBank = paymentRequiresBank(options, activation.invoice.paymentMethod);
   const renewalRequiresBank = paymentRequiresBank(options, renewal.invoice.paymentMethod);
   const activationSteps = useMemo(
@@ -1529,6 +1542,42 @@ export default function SalesWorkflowLionTv() {
     clearPreview();
   };
 
+  const handleActivationCustomerModeChange = (mode) => {
+    setActivation((prev) => ({
+      ...prev,
+      customerMode: mode,
+      customer:
+        mode === CUSTOMER_CREATE_NEW
+          ? {
+              ...prev.customer,
+              customerId: null
+            }
+          : {
+              ...prev.customer,
+              customerId: prev.customer.customerId || null
+            }
+    }));
+    clearPreview();
+  };
+
+  const handleExistingActivationCustomerSelect = (customer) => {
+    setActivation((prev) => ({
+      ...prev,
+      customer: {
+        ...prev.customer,
+        customerId: customer?.id || null,
+        customerFullname: customer?.label || '',
+        customerMail: customer?.email || '',
+        customerPhone: customer?.phone || '',
+        customerStatus: customer?.status || prev.customer.customerStatus,
+        gender: customer?.gender || prev.customer.gender,
+        openingDate: customer?.openingDate ? String(customer.openingDate).slice(0, 10) : prev.customer.openingDate,
+        channel: customer?.channel || prev.customer.channel
+      }
+    }));
+    clearPreview();
+  };
+
   const handleMainLineModeChange = (mode) => {
     setActivation((prev) => ({
       ...prev,
@@ -1676,7 +1725,12 @@ export default function SalesWorkflowLionTv() {
       const response = await executeActivation(buildActivationPayload(activation, options, true));
       setResult(response);
       setPreview(response?.summary || preview);
-      enqueueSnackbar(t('salesWorkflow.messages.created', 'New account created successfully.'), { variant: 'success' });
+      enqueueSnackbar(
+        activation.customerMode === CUSTOMER_USE_EXISTING
+          ? t('salesWorkflow.messages.existingAccountCreated', 'New account added to existing customer successfully.')
+          : t('salesWorkflow.messages.created', 'New account created successfully.'),
+        { variant: 'success' }
+      );
     } catch (error) {
       enqueueSnackbar(extractError(error, t('salesWorkflow.messages.activationError', 'Could not execute activation.')), { variant: 'error' });
     } finally {
@@ -1714,7 +1768,12 @@ export default function SalesWorkflowLionTv() {
   };
 
   const canGoActivationNext = () => {
-    if (activeStep === 0) return Boolean(activation.customer.customerFullname && activation.customer.channel && (activation.customer.customerMail || activation.customer.customerPhone));
+    if (activeStep === 0) {
+      if (activation.customerMode === CUSTOMER_USE_EXISTING) {
+        return Boolean(activation.customer.customerId);
+      }
+      return Boolean(activation.customer.customerFullname && activation.customer.channel && (activation.customer.customerMail || activation.customer.customerPhone));
+    }
     if (activeStep === 1) {
       if (activation.linePlusEnabled && !Boolean(activation.linePlus.provider && activation.linePlus.packageId)) return false;
       if (activation.mainLineMode === MAIN_LINE_USE_EXISTING) {
@@ -1793,86 +1852,207 @@ export default function SalesWorkflowLionTv() {
                     icon={<PersonSearchIcon fontSize="small" />}
                     color="primary"
                   >
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          required
-	                          label={t('salesWorkflow.fields.fullName', 'Full name')}
-                          sx={fieldSx}
-                          value={activation.customer.customerFullname}
-                          onChange={(e) => setNestedValue(setActivation, 'customer', 'customerFullname', e.target.value)}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <FormControl fullWidth required sx={fieldSx}>
-                          <InputLabel shrink>{t('salesWorkflow.fields.customerChannel', 'Customer channel')}</InputLabel>
-                          <Select
-                            label={t('salesWorkflow.fields.customerChannel', 'Customer channel')}
-                            value={activation.customer.channel}
-                            onChange={(e) => setNestedValue(setActivation, 'customer', 'channel', e.target.value)}
-                            displayEmpty
-                          >
-                            <MenuItem value="" disabled>
-                              {t('salesWorkflow.messages.selectCustomerChannel', 'Select a channel')}
-                            </MenuItem>
-                            {customerChannelOptions.map((option) => (
-                              <MenuItem key={option.code} value={option.code}>
-                                {customerChannelLabel(option.code)}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={3}>
-                        <FormControl fullWidth sx={fieldSx}>
-                          <InputLabel>{t('salesWorkflow.fields.gender', 'Gender')}</InputLabel>
-                          <Select
-                            label={t('salesWorkflow.fields.gender', 'Gender')}
-                            value={activation.customer.gender}
-                            onChange={(e) => setNestedValue(setActivation, 'customer', 'gender', e.target.value)}
-                          >
-                            <MenuItem value="M">{t('salesWorkflow.options.male', 'Male')}</MenuItem>
-                            <MenuItem value="F">{t('salesWorkflow.options.female', 'Female')}</MenuItem>
-                            <MenuItem value="O">{t('salesWorkflow.options.other', 'Other')}</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={3}>
-                        <TextField
-                          fullWidth
-                          type="date"
-                          label={t('salesWorkflow.fields.openingDate', 'Opening date')}
-                          sx={fieldSx}
-                          value={activation.customer.openingDate}
-                          onChange={(e) => setNestedValue(setActivation, 'customer', 'openingDate', e.target.value)}
-                          InputLabelProps={{ shrink: true }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          label={t('salesWorkflow.fields.email', 'Email')}
-                          sx={fieldSx}
-                          value={activation.customer.customerMail}
-                          onChange={(e) => setNestedValue(setActivation, 'customer', 'customerMail', e.target.value)}
-                        />
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField
-                          fullWidth
-                          label={t('salesWorkflow.fields.phone', 'Phone / WhatsApp')}
-                          sx={fieldSx}
-                          value={activation.customer.customerPhone}
-                          onChange={(e) => setNestedValue(setActivation, 'customer', 'customerPhone', e.target.value)}
-                        />
-                      </Grid>
-                    </Grid>
-                    {duplicateCustomers.length ? (
-                      <Alert severity="warning" icon={<WarningAmberIcon />}>
-                        {t('salesWorkflow.messages.possibleExistingCustomer', 'Possible existing customer')}: {duplicateCustomers.map((item) => `${item.label || item.email} (#${item.id})`).join(', ')}.
-                      </Alert>
-                    ) : null}
+                    <Stack spacing={2}>
+                      <FormControl fullWidth sx={fieldSx}>
+                        <InputLabel>{t('salesWorkflow.fields.customerMode', 'Customer mode')}</InputLabel>
+                        <Select
+                          label={t('salesWorkflow.fields.customerMode', 'Customer mode')}
+                          value={activation.customerMode}
+                          onChange={(e) => handleActivationCustomerModeChange(e.target.value)}
+                        >
+                          <MenuItem value={CUSTOMER_CREATE_NEW}>{t('salesWorkflow.options.createNewCustomer', 'Create new customer')}</MenuItem>
+                          <MenuItem value={CUSTOMER_USE_EXISTING}>{t('salesWorkflow.options.useExistingCustomer', 'Use existing customer')}</MenuItem>
+                        </Select>
+                      </FormControl>
+
+                      {activation.customerMode === CUSTOMER_USE_EXISTING ? (
+                        <Stack spacing={1.5}>
+                          <Autocomplete
+                            fullWidth
+                            options={customers}
+                            loading={optionsLoading}
+                            value={selectedExistingActivationCustomer}
+                            onChange={(_, value) => handleExistingActivationCustomerSelect(value)}
+                            getOptionLabel={(option) =>
+                              [option?.label, option?.email, option?.phone].filter(Boolean).join(' · ') || ''
+                            }
+                            isOptionEqualToValue={(option, value) => String(option?.id) === String(value?.id)}
+                            renderOption={(props, option) => (
+                              <Box component="li" {...props}>
+                                <Stack spacing={0.25} sx={{ minWidth: 0 }}>
+                                  <Typography variant="body2" fontWeight={850} sx={{ overflowWrap: 'anywhere' }}>
+                                    {option.label || option.email || option.phone || t('salesWorkflow.common.customerFallback', 'Customer')}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    #{option.id || '-'} · {option.email || '-'} · {option.phone || '-'}
+                                  </Typography>
+                                </Stack>
+                              </Box>
+                            )}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                required
+                                label={t('salesWorkflow.fields.searchExistingCustomer', 'Search existing customer')}
+                                placeholder={t('salesWorkflow.fields.searchExistingCustomerPlaceholder', 'Name, email or phone')}
+                                sx={fieldSx}
+                              />
+                            )}
+                          />
+                          {selectedExistingActivationCustomer ? (
+                            <Paper
+                              variant="outlined"
+                              sx={(theme) => ({
+                                p: 1.5,
+                                borderRadius: 2,
+                                borderColor: alpha(paletteMain(theme, 'primary'), 0.28),
+                                background:
+                                  theme.palette.mode === 'light'
+                                    ? `linear-gradient(145deg, ${alpha(paletteMain(theme, 'primary'), 0.08)}, ${theme.palette.background.paper})`
+                                    : `linear-gradient(145deg, ${alpha(paletteMain(theme, 'primary'), 0.14)}, ${theme.palette.background.paper})`
+                              })}
+                            >
+                              <Stack spacing={1.5}>
+                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }} justifyContent="space-between">
+                                  <Typography variant="subtitle2" fontWeight={900}>
+                                    {t('salesWorkflow.messages.existingCustomerSelected', 'Existing customer selected')}
+                                  </Typography>
+                                  <Chip size="small" color="primary" label={`#${selectedExistingActivationCustomer.id}`} sx={optionChipSx} />
+                                </Stack>
+                                <Grid container spacing={1.5}>
+                                  <Grid item xs={12} sm={6}>
+                                    <MiniMetric
+                                      label={t('salesWorkflow.metrics.client', 'Customer')}
+                                      value={selectedExistingActivationCustomer.label}
+                                      icon={<PersonSearchIcon fontSize="small" />}
+                                      color="primary"
+                                    />
+                                  </Grid>
+                                  <Grid item xs={12} sm={6}>
+                                    <MiniMetric
+                                      label={t('salesWorkflow.metrics.status', 'Status')}
+                                      value={selectedExistingActivationCustomer.status}
+                                      icon={<CheckCircleOutlineIcon fontSize="small" />}
+                                      color="success"
+                                    />
+                                  </Grid>
+                                  <Grid item xs={12} sm={6}>
+                                    <MiniMetric
+                                      label={t('salesWorkflow.fields.email', 'Email')}
+                                      value={selectedExistingActivationCustomer.email}
+                                      icon={<PersonSearchIcon fontSize="small" />}
+                                      color="info"
+                                    />
+                                  </Grid>
+                                  <Grid item xs={12} sm={6}>
+                                    <MiniMetric
+                                      label={t('salesWorkflow.fields.phone', 'Phone / WhatsApp')}
+                                      value={selectedExistingActivationCustomer.phone}
+                                      icon={<PersonSearchIcon fontSize="small" />}
+                                      color="secondary"
+                                    />
+                                  </Grid>
+                                </Grid>
+                                <Alert severity="info">
+                                  {t(
+                                    'salesWorkflow.messages.existingCustomerNoMutation',
+                                    'This customer will not be created again. The workflow only creates the new line/subscription, invoice and licenses.'
+                                  )}
+                                </Alert>
+                              </Stack>
+                            </Paper>
+                          ) : (
+                            <Alert severity="info">
+                              {t('salesWorkflow.messages.selectExistingCustomer', 'Select an existing customer to add a new account.')}
+                            </Alert>
+                          )}
+                        </Stack>
+                      ) : (
+                        <>
+                          <Grid container spacing={2}>
+                            <Grid item xs={12} md={6}>
+                              <TextField
+                                fullWidth
+                                required
+                                label={t('salesWorkflow.fields.fullName', 'Full name')}
+                                sx={fieldSx}
+                                value={activation.customer.customerFullname}
+                                onChange={(e) => setNestedValue(setActivation, 'customer', 'customerFullname', e.target.value)}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <FormControl fullWidth required sx={fieldSx}>
+                                <InputLabel shrink>{t('salesWorkflow.fields.customerChannel', 'Customer channel')}</InputLabel>
+                                <Select
+                                  label={t('salesWorkflow.fields.customerChannel', 'Customer channel')}
+                                  value={activation.customer.channel}
+                                  onChange={(e) => setNestedValue(setActivation, 'customer', 'channel', e.target.value)}
+                                  displayEmpty
+                                >
+                                  <MenuItem value="" disabled>
+                                    {t('salesWorkflow.messages.selectCustomerChannel', 'Select a channel')}
+                                  </MenuItem>
+                                  {customerChannelOptions.map((option) => (
+                                    <MenuItem key={option.code} value={option.code}>
+                                      {customerChannelLabel(option.code)}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                              <FormControl fullWidth sx={fieldSx}>
+                                <InputLabel>{t('salesWorkflow.fields.gender', 'Gender')}</InputLabel>
+                                <Select
+                                  label={t('salesWorkflow.fields.gender', 'Gender')}
+                                  value={activation.customer.gender}
+                                  onChange={(e) => setNestedValue(setActivation, 'customer', 'gender', e.target.value)}
+                                >
+                                  <MenuItem value="M">{t('salesWorkflow.options.male', 'Male')}</MenuItem>
+                                  <MenuItem value="F">{t('salesWorkflow.options.female', 'Female')}</MenuItem>
+                                  <MenuItem value="O">{t('salesWorkflow.options.other', 'Other')}</MenuItem>
+                                </Select>
+                              </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                              <TextField
+                                fullWidth
+                                type="date"
+                                label={t('salesWorkflow.fields.openingDate', 'Opening date')}
+                                sx={fieldSx}
+                                value={activation.customer.openingDate}
+                                onChange={(e) => setNestedValue(setActivation, 'customer', 'openingDate', e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <TextField
+                                fullWidth
+                                label={t('salesWorkflow.fields.email', 'Email')}
+                                sx={fieldSx}
+                                value={activation.customer.customerMail}
+                                onChange={(e) => setNestedValue(setActivation, 'customer', 'customerMail', e.target.value)}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                              <TextField
+                                fullWidth
+                                label={t('salesWorkflow.fields.phone', 'Phone / WhatsApp')}
+                                sx={fieldSx}
+                                value={activation.customer.customerPhone}
+                                onChange={(e) => setNestedValue(setActivation, 'customer', 'customerPhone', e.target.value)}
+                              />
+                            </Grid>
+                          </Grid>
+                          {duplicateCustomers.length ? (
+                            <Alert severity="warning" icon={<WarningAmberIcon />}>
+                              {t('salesWorkflow.messages.possibleExistingCustomer', 'Possible existing customer')}:{' '}
+                              {duplicateCustomers.map((item) => `${item.label || item.email} (#${item.id})`).join(', ')}.
+                            </Alert>
+                          ) : null}
+                        </>
+                      )}
+                    </Stack>
                   </Section>
                 </Grid>
                 <Grid item xs={12} lg={4}>
@@ -1883,8 +2063,20 @@ export default function SalesWorkflowLionTv() {
                     color="success"
                   >
                     <Stack spacing={1.5}>
+                      <MiniMetric
+                        label={t('salesWorkflow.metrics.customerMode', 'Customer mode')}
+                        value={
+                          activation.customerMode === CUSTOMER_USE_EXISTING
+                            ? t('salesWorkflow.options.useExistingCustomer', 'Use existing customer')
+                            : t('salesWorkflow.options.createNewCustomer', 'Create new customer')
+                        }
+                        icon={<PersonSearchIcon fontSize="small" />}
+                        color="primary"
+                      />
                       <MiniMetric label={t('salesWorkflow.metrics.status', 'Status')} value={activation.customer.customerStatus} icon={<CheckCircleOutlineIcon fontSize="small" />} color="success" />
-                      <MiniMetric label={t('salesWorkflow.metrics.channel', 'Channel')} value={customerChannelLabel(activation.customer.channel)} icon={<LanIcon fontSize="small" />} color="info" />
+                      {activation.customerMode === CUSTOMER_CREATE_NEW ? (
+                        <MiniMetric label={t('salesWorkflow.metrics.channel', 'Channel')} value={customerChannelLabel(activation.customer.channel)} icon={<LanIcon fontSize="small" />} color="info" />
+                      ) : null}
                     </Stack>
                   </Section>
                 </Grid>
@@ -2044,7 +2236,7 @@ export default function SalesWorkflowLionTv() {
                               <Alert severity="info">
                                 {t(
                                   'salesWorkflow.messages.existingLineNoMutation',
-                                  'This line will not be modified. The workflow only creates the customer, subscription, invoice and licenses.'
+                                  'This line will not be modified. The workflow only uses it to create the subscription, invoice and licenses.'
                                 )}
                               </Alert>
                             </Stack>
@@ -2375,8 +2567,22 @@ export default function SalesWorkflowLionTv() {
 	                        <MiniMetric label={t('salesWorkflow.metrics.client', 'Customer')} value={activation.customer.customerFullname} icon={<PersonSearchIcon fontSize="small" />} color="primary" />
 	                      </Grid>
                       <Grid item xs={12} sm={6}>
-                        <MiniMetric label={t('salesWorkflow.metrics.channel', 'Channel')} value={customerChannelLabel(activation.customer.channel)} icon={<LanIcon fontSize="small" />} color="info" />
+                        <MiniMetric
+                          label={t('salesWorkflow.metrics.customerMode', 'Customer mode')}
+                          value={
+                            activation.customerMode === CUSTOMER_USE_EXISTING
+                              ? t('salesWorkflow.options.useExistingCustomer', 'Use existing customer')
+                              : t('salesWorkflow.options.createNewCustomer', 'Create new customer')
+                          }
+                          icon={<PersonSearchIcon fontSize="small" />}
+                          color="primary"
+                        />
                       </Grid>
+                      {activation.customerMode === CUSTOMER_CREATE_NEW ? (
+                        <Grid item xs={12} sm={6}>
+                          <MiniMetric label={t('salesWorkflow.metrics.channel', 'Channel')} value={customerChannelLabel(activation.customer.channel)} icon={<LanIcon fontSize="small" />} color="info" />
+                        </Grid>
+                      ) : null}
 	                      <Grid item xs={12} sm={6}>
 		                        <MiniMetric label={t('salesWorkflow.metrics.subscriptionPackage', 'Subscription package')} value={selectedActivationPackage?.name} icon={<Inventory2Icon fontSize="small" />} color="secondary" />
 	                      </Grid>
@@ -2405,7 +2611,25 @@ export default function SalesWorkflowLionTv() {
                             {t('salesWorkflow.messages.existingLineSelected', 'Existing line selected')}: {activation.line.lineId || '-'}
                           </Typography>
                           <Typography variant="body2">
-                            {t('salesWorkflow.messages.existingLineNoMutation', 'This line will not be modified. The workflow only creates the customer, subscription, invoice and licenses.')}
+                            {t(
+                              'salesWorkflow.messages.existingLineNoMutation',
+                              'This line will not be modified. The workflow only uses it to create the subscription, invoice and licenses.'
+                            )}
+                          </Typography>
+                        </Stack>
+                      </Alert>
+                    ) : null}
+                    {activation.customerMode === CUSTOMER_USE_EXISTING ? (
+                      <Alert severity="success">
+                        <Stack spacing={0.5}>
+                          <Typography variant="body2" fontWeight={800}>
+                            {t('salesWorkflow.messages.existingCustomerSelected', 'Existing customer selected')}: {activation.customer.customerFullname || '-'}
+                          </Typography>
+                          <Typography variant="body2">
+                            {t(
+                              'salesWorkflow.messages.existingCustomerNoMutation',
+                              'This customer will not be created again. The workflow only creates the new line/subscription, invoice and licenses.'
+                            )}
                           </Typography>
                         </Stack>
                       </Alert>
