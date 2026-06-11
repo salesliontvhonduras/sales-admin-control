@@ -54,6 +54,7 @@ import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 import { hasPermissionExact, isResellerConsoleUser } from 'utils/rbac';
+import CustomerAutocomplete from 'views/liontv/components/CustomerAutocomplete';
 
 const providerStatusOptions = ['ACTIVE', 'INACTIVE'];
 const accountStatusOptions = ['ACTIVE', 'SUSPENDED', 'EXPIRED', 'PENDING', 'CANCELLED'];
@@ -426,7 +427,7 @@ export default function ManagedAccountsLionTv() {
   }, [headers]);
 
   const loadCustomers = useCallback(async () => {
-    const res = await lionTvApi.get('/customers/v1', { headers, params: { index: 0, size: 5000 }, skipAuthRedirect: true });
+    const res = await lionTvApi.get('/customers/v1', { headers, params: { index: 0, size: 100 }, skipAuthRedirect: true });
     const payload = unwrap(res) || {};
     const rows = Array.isArray(payload.data) ? payload.data : [];
     const normalized = rows.map((row) => ({
@@ -1863,21 +1864,12 @@ export default function ManagedAccountsLionTv() {
                     </TextField>
                   </Grid>
                   <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      select
-                      label={t('managedAccounts.table.customer', 'Customer')}
-                      sx={fieldSx}
+                    <CustomerAutocomplete
                       value={accountForm.customerId}
-                      onChange={(event) => setAccountForm((prev) => ({ ...prev, customerId: event.target.value }))}
-                    >
-                      {customers.map((c) => (
-                        <MenuItem key={c.customerId} value={c.customerId}>
-                          {c.customerId} - {c.customerFullname}
-                        </MenuItem>
-                      ))}
-                    </TextField>
+                      onChange={(_, id) => setAccountForm((prev) => ({ ...prev, customerId: id }))}
+                      label={t('managedAccounts.table.customer', 'Customer')}
+                      textFieldSx={fieldSx}
+                    />
                   </Grid>
                   <Grid item xs={12} md={6}>
                     <TextField

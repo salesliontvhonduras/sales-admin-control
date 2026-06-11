@@ -7672,6 +7672,28 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
   }
 };
 
+resources.en.translation.customerAutocomplete = {
+  label: 'Search customer',
+  placeholder: 'Name, email, phone or ID',
+  helper: 'Search customer by name, email, phone or ID.',
+  typeToSearch: 'Type to search customers.',
+  noResults: 'No customers match that search.',
+  loadError: 'Could not load customers.',
+  customerFallback: 'Customer',
+  noContact: 'No email or phone registered'
+};
+
+resources.es.translation.customerAutocomplete = {
+  label: 'Buscar cliente',
+  placeholder: 'Nombre, correo, teléfono o ID',
+  helper: 'Buscar cliente por nombre, correo, teléfono o ID.',
+  typeToSearch: 'Escribe para buscar clientes.',
+  noResults: 'No hay clientes con esa búsqueda.',
+  loadError: 'No se pudieron cargar los clientes.',
+  customerFallback: 'Cliente',
+  noContact: 'Sin correo o teléfono registrado'
+};
+
 const missingWordDictionary = {
   es: {
     active: 'activo',

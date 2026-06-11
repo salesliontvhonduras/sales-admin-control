@@ -73,6 +73,7 @@ import { gridSpacing } from 'store/constant';
 import { listCountryPhoneCodes } from 'api/catalog-admin';
 import { lionTvApi } from 'utils/api';
 import { withAlpha } from 'utils/colorUtils';
+import CustomerAutocomplete from 'views/liontv/components/CustomerAutocomplete';
 
 const statusColors = {
   ACTIVE: 'success',
@@ -633,7 +634,7 @@ export default function SubscriptionsLionTv() {
     try {
       const res = await lionTvApi.get('/customers/v1', {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: 0, size: 5000 },
+        params: { index: 0, size: 100 },
         skipAuthRedirect: true
       });
       const payload = res?.data?.data ?? res?.data ?? {};
@@ -1268,32 +1269,15 @@ export default function SubscriptionsLionTv() {
                 ))}
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 240 }, '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}>
-              <InputLabel>{t('subscriptions.filters.customer', 'Customer')}</InputLabel>
-              <Select
+            <Box sx={{ minWidth: { xs: '100%', md: 280 } }}>
+              <CustomerAutocomplete
                 value={customerFilter}
+                onChange={(_, id) => setCustomerFilter(id || '')}
                 label={t('subscriptions.filters.customer', 'Customer')}
-                onChange={(e) => setCustomerFilter(e.target.value)}
-                startAdornment={
-                  <InputAdornment position="start" sx={{ pl: 1 }}>
-                    <PersonOutlineIcon fontSize="small" color="action" />
-                  </InputAdornment>
-                }
-              >
-                <MenuItem value="">
-                  <em>{t('subscriptions.filters.allCustomers', 'All customers')}</em>
-                </MenuItem>
-                {customers.map((customer) => {
-                  const value = customer.customerId ?? customer.id;
-                  if (!value) return null;
-                  return (
-                    <MenuItem key={value} value={value}>
-                      {customer.customerFullname || customer.fullName || customer.username || customer.customerMail || `#${value}`}
-                    </MenuItem>
-                  );
-                })}
-              </Select>
-            </FormControl>
+                helperText={t('subscriptions.filters.allCustomers', 'All customers')}
+                size="small"
+              />
+            </Box>
             <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 220 }, '& .MuiOutlinedInput-root': { minHeight: 46, borderRadius: 2 } }}>
               <InputLabel>{t('subscriptions.form.line', 'Line')}</InputLabel>
               <Select
@@ -1895,53 +1879,14 @@ export default function SubscriptionsLionTv() {
             >
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={4} md={4}>
-                  <FormControl fullWidth required sx={fieldSx} disabled={customersLoading}>
-                    <InputLabel shrink>{t('subscriptions.form.customer', 'Customer')}</InputLabel>
-                    <Select
-                      displayEmpty
-                      value={form.customerId}
-                      label={t('subscriptions.form.customer', 'Customer')}
-                      onChange={handleFormChange('customerId')}
-                      renderValue={(value) => {
-                        const c = customers.find((cust) => (cust.customerId || cust.id) === value);
-                        const label =
-                          c?.customerFullname || c?.fullName || c?.username || c?.customerMail || value || t('common.selectOption', 'Select an option');
-                        return (
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <PersonOutlineIcon fontSize="small" color="primary" />
-                            <Typography variant="body2" color={value ? 'text.primary' : 'text.secondary'}>
-                              {label}
-                            </Typography>
-                          </Stack>
-                        );
-                      }}
-                    >
-                      <MenuItem value="">
-                        <em>{t('common.selectOption', 'Select an option')}</em>
-                      </MenuItem>
-                      {customers.length === 0 ? (
-                        <MenuItem value="" disabled>
-                          {t('subscriptions.form.noCustomers', 'No customers available')}
-                        </MenuItem>
-                      ) : (
-                        customers.map((c) => (
-                          <MenuItem key={c.customerId || c.id} value={c.customerId || c.id}>
-                            <ListItemIcon>
-                              <PersonOutlineIcon fontSize="small" color="primary" />
-                            </ListItemIcon>
-                            <Typography variant="body2">
-                              {c.customerFullname || c.fullName || c.username || c.customerMail}
-                            </Typography>
-                          </MenuItem>
-                        ))
-                      )}
-                    </Select>
-                    <FormHelperText>
-                      {customersLoading
-                        ? t('subscriptions.form.loadingCustomers', 'Loading customers...')
-                        : t('subscriptions.form.customerHint', 'Choose the subscription customer.')}
-                    </FormHelperText>
-                  </FormControl>
+                  <CustomerAutocomplete
+                    value={form.customerId}
+                    onChange={(_, id) => handleFormChange('customerId')({ target: { value: id } })}
+                    label={t('subscriptions.form.customer', 'Customer')}
+                    helperText={t('subscriptions.form.customerHint', 'Choose the subscription customer.')}
+                    required
+                    textFieldSx={fieldSx}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl fullWidth required sx={fieldSx} disabled={packagesLoading}>

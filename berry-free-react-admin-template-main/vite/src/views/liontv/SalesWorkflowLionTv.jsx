@@ -55,6 +55,8 @@ import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
 import { listBanks, listServices } from 'api/catalog-admin';
 import { getLoyaltyConfig, getLoyaltyCustomerBalance } from 'api/liontv-engagement';
+import { listCustomerOptions } from 'api/liontv-customers';
+import CustomerAutocomplete from 'views/liontv/components/CustomerAutocomplete';
 import {
   executeActivation,
   executeRenewal,
@@ -1141,7 +1143,8 @@ export default function SalesWorkflowLionTv() {
   const [renewalStep, setRenewalStep] = useState(0);
   const [options, setOptions] = useState(defaultOptions);
   const [optionsLoading, setOptionsLoading] = useState(true);
-  const [customers, setCustomers] = useState([]);
+  const [duplicateCustomers, setDuplicateCustomers] = useState([]);
+  const [selectedExistingActivationCustomer, setSelectedExistingActivationCustomer] = useState(null);
   const [lineOptions, setLineOptions] = useState([]);
   const [linesLoading, setLinesLoading] = useState(false);
   const [lineIdLoading, setLineIdLoading] = useState({ main: false, plus: false });
@@ -1184,10 +1187,6 @@ export default function SalesWorkflowLionTv() {
     () => lineOptions.find((item) => String(item.lineId) === String(activation.line.lineId)) || null,
     [activation.line.lineId, lineOptions]
   );
-  const selectedExistingActivationCustomer = useMemo(
-    () => customers.find((item) => String(item.id) === String(activation.customer.customerId)) || null,
-    [activation.customer.customerId, customers]
-  );
   const selectedRenewalPackage = useMemo(
     () => packages.find((item) => String(item.packageId) === String(renewal.subscription.packageId)) || null,
     [packages, renewal.subscription.packageId]
@@ -1225,17 +1224,6 @@ export default function SalesWorkflowLionTv() {
     }),
     [renewalLoyaltyPointsRequested, renewalLoyaltyPreviewAmount]
   );
-  const duplicateCustomers = useMemo(() => {
-    if (activation.customerMode === CUSTOMER_USE_EXISTING) return [];
-    const email = normalizeText(activation.customer.customerMail);
-    const phone = normalizePhone(activation.customer.customerPhone);
-    if (!email && !phone) return [];
-    return customers.filter((customer) => {
-      const sameEmail = email && normalizeText(customer.email) === email;
-      const samePhone = phone && normalizePhone(customer.phone) === phone;
-      return sameEmail || samePhone;
-    });
-  }, [activation.customer.customerMail, activation.customer.customerPhone, activation.customerMode, customers]);
   const activationRequiresBank = paymentRequiresBank(options, activation.invoice.paymentMethod);
   const renewalRequiresBank = paymentRequiresBank(options, renewal.invoice.paymentMethod);
   const activationSteps = useMemo(
@@ -1359,11 +1347,10 @@ export default function SalesWorkflowLionTv() {
   const loadOptions = useCallback(async () => {
     setOptionsLoading(true);
     try {
-      const [workflowResult, bankResult, serviceResult, customerResult] = await Promise.allSettled([
+      const [workflowResult, bankResult, serviceResult] = await Promise.allSettled([
         getSalesWorkflowOptions(),
         listBanks(),
-        listServices(),
-        lionTvApi.get('/customers/v1', { params: { index: 0, size: 5000 } })
+        listServices()
       ]);
 
       const workflowOptions = workflowResult.status === 'fulfilled' && workflowResult.value ? workflowResult.value : defaultOptions;
@@ -1375,12 +1362,6 @@ export default function SalesWorkflowLionTv() {
         serviceResult.status === 'fulfilled'
           ? unwrapArray(serviceResult.value).map((item) => normalizeServiceOption(item, t('salesWorkflow.fallbacks.service', 'Service')))
           : workflowOptions.services || [];
-      const customersPayload =
-        customerResult.status === 'fulfilled'
-          ? customerResult.value?.data?.data ?? customerResult.value?.data ?? {}
-          : [];
-      const normalizedCustomers = unwrapArray(customersPayload).map(normalizeCustomer);
-
       const nextOptions = {
         ...defaultOptions,
         ...workflowOptions,
@@ -1393,7 +1374,6 @@ export default function SalesWorkflowLionTv() {
       };
 
       setOptions(nextOptions);
-      setCustomers(normalizedCustomers);
       setActivation((prev) => ({
         ...prev,
         customer: {
@@ -1434,6 +1414,51 @@ export default function SalesWorkflowLionTv() {
   useEffect(() => {
     loadOptions();
   }, [loadOptions]);
+
+  useEffect(() => {
+    if (activation.customerMode === CUSTOMER_USE_EXISTING) {
+      setDuplicateCustomers([]);
+      return undefined;
+    }
+
+    const email = normalizeText(activation.customer.customerMail);
+    const phone = normalizePhone(activation.customer.customerPhone);
+    const terms = [email, phone].filter(Boolean);
+
+    if (!terms.length) {
+      setDuplicateCustomers([]);
+      return undefined;
+    }
+
+    let active = true;
+    const timer = window.setTimeout(() => {
+      Promise.all(terms.map((term) => listCustomerOptions({ search: term, index: 0, size: 10 })))
+        .then((responses) => {
+          if (!active) return;
+          const unique = new Map();
+          responses
+            .flatMap((payload) => payload?.data || [])
+            .filter((customer) => {
+              const sameEmail = email && normalizeText(customer.email) === email;
+              const samePhone = phone && normalizePhone(customer.phone) === phone;
+              return sameEmail || samePhone;
+            })
+            .forEach((customer) => {
+              const id = customer.id ?? customer.customerId;
+              if (id != null) unique.set(String(id), customer);
+            });
+          setDuplicateCustomers(Array.from(unique.values()));
+        })
+        .catch(() => {
+          if (active) setDuplicateCustomers([]);
+        });
+    }, 300);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [activation.customer.customerMail, activation.customer.customerPhone, activation.customerMode]);
 
   useEffect(() => {
     loadLoyaltyConfig();
@@ -1543,6 +1568,9 @@ export default function SalesWorkflowLionTv() {
   };
 
   const handleActivationCustomerModeChange = (mode) => {
+    if (mode === CUSTOMER_CREATE_NEW) {
+      setSelectedExistingActivationCustomer(null);
+    }
     setActivation((prev) => ({
       ...prev,
       customerMode: mode,
@@ -1561,6 +1589,7 @@ export default function SalesWorkflowLionTv() {
   };
 
   const handleExistingActivationCustomerSelect = (customer) => {
+    setSelectedExistingActivationCustomer(customer || null);
     setActivation((prev) => ({
       ...prev,
       customer: {
@@ -1867,37 +1896,14 @@ export default function SalesWorkflowLionTv() {
 
                       {activation.customerMode === CUSTOMER_USE_EXISTING ? (
                         <Stack spacing={1.5}>
-                          <Autocomplete
-                            fullWidth
-                            options={customers}
-                            loading={optionsLoading}
-                            value={selectedExistingActivationCustomer}
-                            onChange={(_, value) => handleExistingActivationCustomerSelect(value)}
-                            getOptionLabel={(option) =>
-                              [option?.label, option?.email, option?.phone].filter(Boolean).join(' · ') || ''
-                            }
-                            isOptionEqualToValue={(option, value) => String(option?.id) === String(value?.id)}
-                            renderOption={(props, option) => (
-                              <Box component="li" {...props}>
-                                <Stack spacing={0.25} sx={{ minWidth: 0 }}>
-                                  <Typography variant="body2" fontWeight={850} sx={{ overflowWrap: 'anywhere' }}>
-                                    {option.label || option.email || option.phone || t('salesWorkflow.common.customerFallback', 'Customer')}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary">
-                                    #{option.id || '-'} · {option.email || '-'} · {option.phone || '-'}
-                                  </Typography>
-                                </Stack>
-                              </Box>
-                            )}
-                            renderInput={(params) => (
-                              <TextField
-                                {...params}
-                                required
-                                label={t('salesWorkflow.fields.searchExistingCustomer', 'Search existing customer')}
-                                placeholder={t('salesWorkflow.fields.searchExistingCustomerPlaceholder', 'Name, email or phone')}
-                                sx={fieldSx}
-                              />
-                            )}
+                          <CustomerAutocomplete
+                            value={activation.customer.customerId}
+                            onChange={(customer) => handleExistingActivationCustomerSelect(customer)}
+                            label={t('salesWorkflow.fields.searchExistingCustomer', 'Search existing customer')}
+                            placeholder={t('salesWorkflow.fields.searchExistingCustomerPlaceholder', 'Name, email or phone')}
+                            helperText={t('customerAutocomplete.helper', 'Buscar cliente por nombre, correo, teléfono o ID.')}
+                            required
+                            textFieldSx={fieldSx}
                           />
                           {selectedExistingActivationCustomer ? (
                             <Paper

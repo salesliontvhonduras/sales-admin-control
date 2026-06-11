@@ -65,6 +65,7 @@ import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi } from 'utils/api';
+import CustomerAutocomplete from 'views/liontv/components/CustomerAutocomplete';
 
 const buildStatusOptions = (t) => [
   { value: '', label: t('paymentCommitments.filters.all') },
@@ -307,7 +308,7 @@ export default function PaymentCommitmentsLionTv() {
     try {
       const response = await lionTvApi.get(endpointPath, {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: 0, size: 5000 },
+        params: { index: 0, size: 100 },
         skipAuthRedirect: true
       });
 
@@ -332,7 +333,7 @@ export default function PaymentCommitmentsLionTv() {
     try {
       const response = await lionTvApi.get('/customers/v1', {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: 0, size: 5000 },
+        params: { index: 0, size: 100 },
         skipAuthRedirect: true
       });
       const payload = response?.data?.data ?? response?.data ?? {};
@@ -896,32 +897,13 @@ export default function PaymentCommitmentsLionTv() {
               <Grid item xs={12} md={6}>
                 <FormSection title={t('paymentCommitments.form.main.title')} helper={t('paymentCommitments.form.main.helper')}>
                   <Stack spacing={2}>
-                    <FormControl fullWidth sx={fieldSx}>
-                      <InputLabel id="customer-select-label">{t('paymentCommitments.form.customer')}</InputLabel>
-                      <Select
-                        labelId="customer-select-label"
-                        value={form.customerId}
-                        label={t('paymentCommitments.form.customer')}
-                        onChange={handleFormChange('customerId')}
-                      >
-                        {customersLoading ? (
-                          <MenuItem value="" disabled>
-                            {t('paymentCommitments.form.loadingCustomers')}
-                          </MenuItem>
-                        ) : customers.length ? (
-                          customers.map((customer) => (
-                            <MenuItem key={customer.customerId} value={String(customer.customerId)}>
-                              #{customer.customerId} - {customer.customerFullname}
-                            </MenuItem>
-                          ))
-                        ) : (
-                          <MenuItem value="" disabled>
-                            {t('paymentCommitments.form.noCustomers')}
-                          </MenuItem>
-                        )}
-                      </Select>
-                      <FormHelperText>{t('paymentCommitments.form.customerHelper')}</FormHelperText>
-                    </FormControl>
+                    <CustomerAutocomplete
+                      value={form.customerId}
+                      onChange={(_, id) => handleFormChange('customerId')({ target: { value: id } })}
+                      label={t('paymentCommitments.form.customer')}
+                      helperText={t('paymentCommitments.form.customerHelper')}
+                      textFieldSx={fieldSx}
+                    />
 
                     <TextField
                       label={t('paymentCommitments.form.promisedDate')}

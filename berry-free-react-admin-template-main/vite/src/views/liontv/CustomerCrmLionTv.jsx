@@ -82,6 +82,7 @@ import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi, catalogsApi } from 'utils/api';
 import { listLoyaltyCustomers, listLoyaltyLedger, listVipCustomers } from 'api/liontv-engagement';
+import CustomerAutocomplete from 'views/liontv/components/CustomerAutocomplete';
 
 const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 48 },
@@ -570,7 +571,7 @@ export default function CustomerCrmLionTv() {
   );
 
   useEffect(() => {
-    fetchCollection('/customers/v1', setCustomers, normalizeCustomer, 'customers');
+    fetchCollection('/customers/v1', setCustomers, normalizeCustomer, 'customers', { size: 100 });
     fetchCollection('/subscriptions/v1', setSubscriptions, normalizeSubscription, 'subscriptions');
     fetchCollection('/invoices/v1', setInvoices, normalizeInvoice, 'invoices');
     fetchCollection('/licenses/v1', setLicenses, normalizeLicense, 'licenses');
@@ -1154,13 +1155,12 @@ export default function CustomerCrmLionTv() {
           </Stack>
           <ResponsiveFilters paperSx={{ width: '100%' }}>
             <Box sx={{ width: '100%', minWidth: 0, flex: 1 }}>
-              <Autocomplete
-                fullWidth
-                options={customers}
-                value={selectedCustomer}
-                onChange={(e, value) => setSelectedCustomer(value)}
-                getOptionLabel={(option) => option?.fullName || option?.mail || option?.username || option?.id?.toString() || ''}
-                isOptionEqualToValue={(opt, val) => (opt?.id ?? opt?.customerId) === (val?.id ?? val?.customerId)}
+              <CustomerAutocomplete
+                value={selectedCustomer?.id ?? selectedCustomer?.customerId ?? ''}
+                onChange={(customer) => setSelectedCustomer(customer)}
+                label={t('crm.search.label', 'Buscar cliente')}
+                placeholder={t('crm.search.placeholder', 'Nombre, correo o usuario')}
+                textFieldSx={fieldSx}
                 sx={{
                   width: '100%',
                   minWidth: 0,
@@ -1169,23 +1169,6 @@ export default function CustomerCrmLionTv() {
                     borderRadius: 2.5
                   }
                 }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label={t('crm.search.label', 'Buscar cliente')}
-                    placeholder={t('crm.search.placeholder', 'Nombre, correo o usuario')}
-                    size="small"
-                    sx={fieldSx}
-                    InputProps={{
-                      ...params.InputProps,
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon color="primary" />
-                        </InputAdornment>
-                      )
-                    }}
-                  />
-                )}
               />
             </Box>
             <ResponsiveActionBar sx={{ width: { xs: '100%', md: 'auto' }, flexShrink: 0 }}>

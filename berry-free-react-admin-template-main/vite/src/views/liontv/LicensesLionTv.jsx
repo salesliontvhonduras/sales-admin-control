@@ -76,6 +76,7 @@ import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { listLicenseApps } from 'api/catalog-admin';
 import { lionTvApi } from 'utils/api';
+import CustomerAutocomplete from 'views/liontv/components/CustomerAutocomplete';
 import {
   clearLicenseBobSession,
   completeLicenseBobCaptcha,
@@ -823,7 +824,7 @@ export default function LicensesLionTv() {
     try {
       const all = [];
       let idx = 0;
-      const size = 5000;
+      const size = 100;
       while (true) {
         const res = await lionTvApi.get('/customers/v1', {
           headers: { Authorization: `Bearer ${accessToken}` },
@@ -1884,41 +1885,15 @@ export default function LicensesLionTv() {
               </Select>
             </FormControl>
 
-            <FormControl
-              size="small"
-              sx={{
-                minWidth: 220,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  backgroundColor: 'background.paper'
-                }
-              }}
-            >
-              <InputLabel>{t('licenses.filters.customer', 'Customer')}</InputLabel>
-              <Select
+            <Box sx={{ minWidth: { xs: '100%', sm: 280 } }}>
+              <CustomerAutocomplete
                 value={customerFilter}
+                onChange={(_, id) => setCustomerFilter(id || '')}
                 label={t('licenses.filters.customer', 'Customer')}
-                onChange={(e) => setCustomerFilter(e.target.value)}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <PersonOutlineIcon fontSize="small" color="action" />
-                  </InputAdornment>
-                }
-              >
-                <MenuItem value="">
-                  <em>{t('licenses.filters.allCustomers', 'All customers')}</em>
-                </MenuItem>
-                {customers.map((customer) => {
-                  const value = customer.customerId ?? customer.id;
-                  if (!value) return null;
-                  return (
-                    <MenuItem key={value} value={value}>
-                      {customer.customerFullname || customer.fullName || customer.username || customer.customerMail || `#${value}`}
-                    </MenuItem>
-                  );
-                })}
-              </Select>
-            </FormControl>
+                helperText={t('licenses.filters.allCustomers', 'All customers')}
+                size="small"
+              />
+            </Box>
           </ResponsiveFilters>
         }
       >
@@ -2416,35 +2391,19 @@ export default function LicensesLionTv() {
                 </Grid>
 
                 <Grid item xs={12} sm={3}>
-                  <FormControl fullWidth required sx={fieldSx} disabled={customersLoading || Boolean(form.licenseId)}>
-                    <InputLabel>{t('licenses.form.customer', 'Customer')}</InputLabel>
-                    <Select
-                      value={form.customerId}
-                      label={t('licenses.form.customer', 'Customer')}
-                      onChange={handleFormChange('customerId')}
-                      startAdornment={
-                        <InputAdornment position="start">
-                          <PersonIcon fontSize="small" color="secondary" />
-                        </InputAdornment>
-                      }
-                    >
-                      <MenuItem value="">
-                        <em>{t('licenses.form.select', 'Select')}</em>
-                      </MenuItem>
-                      {(customers || []).map((c) => (
-                        <MenuItem key={c.customerId || c.id} value={c.customerId || c.id}>
-                          {c.customerFullname || c.fullName || c.username || c.customerMail}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    <FormHelperText>
-                      {form.licenseId
+                  <CustomerAutocomplete
+                    value={form.customerId}
+                    onChange={(_, id) => handleFormChange('customerId')({ target: { value: id } })}
+                    label={t('licenses.form.customer', 'Customer')}
+                    helperText={
+                      form.licenseId
                         ? t('licenses.form.customerLocked', 'Use transfer to change the customer of an existing license.')
-                        : customersLoading
-                        ? t('licenses.form.loadingCustomers', 'Loading customers...')
-                        : t('licenses.form.customerHelper', 'Customer linked to this license')}
-                    </FormHelperText>
-                  </FormControl>
+                        : t('licenses.form.customerHelper', 'Customer linked to this license')
+                    }
+                    required
+                    disabled={Boolean(form.licenseId)}
+                    textFieldSx={fieldSx}
+                  />
                 </Grid>
 
                 <Grid item xs={12} sm={6}>
@@ -3204,28 +3163,13 @@ export default function LicensesLionTv() {
               {t('licenses.transfer.license', 'License')}: {openTransfer.row?.name}
             </Typography>
 
-            <FormControl fullWidth sx={fieldSx} disabled={customersLoading}>
-              <InputLabel>{t('licenses.transfer.newCustomer', 'New customer')}</InputLabel>
-              <Select
-                value={openTransfer.toCustomerId}
-                label={t('licenses.transfer.newCustomer', 'New customer')}
-                onChange={(e) => setOpenTransfer((p) => ({ ...p, toCustomerId: e.target.value, destinationSubscriptionId: '' }))}
-              >
-                <MenuItem value="">
-                  <em>{t('licenses.form.select', 'Select')}</em>
-                </MenuItem>
-                {(customers || []).map((c) => (
-                  <MenuItem key={c.customerId || c.id} value={c.customerId || c.id}>
-                    {c.customerFullname || c.fullName || c.username || c.customerMail}
-                  </MenuItem>
-                ))}
-              </Select>
-              <FormHelperText>
-                {customersLoading
-                  ? t('licenses.transfer.loadingCustomers', 'Loading customers...')
-                  : t('licenses.transfer.helperCustomer', 'New license owner')}
-              </FormHelperText>
-            </FormControl>
+            <CustomerAutocomplete
+              value={openTransfer.toCustomerId}
+              onChange={(_, id) => setOpenTransfer((p) => ({ ...p, toCustomerId: id, destinationSubscriptionId: '' }))}
+              label={t('licenses.transfer.newCustomer', 'New customer')}
+              helperText={t('licenses.transfer.helperCustomer', 'New license owner')}
+              textFieldSx={fieldSx}
+            />
 
             {isManagedLicenseRecord(openTransfer.row) ? (
               <FormControl fullWidth sx={fieldSx} disabled={!openTransfer.toCustomerId}>

@@ -77,6 +77,7 @@ import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { gridSpacing } from 'store/constant';
 import { lionTvApi, catalogsApi } from 'utils/api';
 import { getLoyaltyConfig, getLoyaltyCustomerBalance } from 'api/liontv-engagement';
+import CustomerAutocomplete from 'views/liontv/components/CustomerAutocomplete';
 
 const statusColors = {
   PAID: 'success',
@@ -417,7 +418,7 @@ export default function InvoicesLionTv() {
     try {
       const res = await lionTvApi.get('/invoices/v1', {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: 0, size: 5000 },
+        params: { index: 0, size: 100 },
         skipAuthRedirect: true
       });
       const payload = res?.data?.data ?? res?.data ?? {};
@@ -445,7 +446,7 @@ export default function InvoicesLionTv() {
     try {
       const res = await lionTvApi.get('/customers/v1', {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { index: 0, size: 5000 },
+        params: { index: 0, size: 100 },
         skipAuthRedirect: true
       });
       const payload = res?.data?.data ?? res?.data ?? {};
@@ -691,8 +692,8 @@ export default function InvoicesLionTv() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleCustomerChange = async (event) => {
-    const value = event.target.value;
+  const handleCustomerChange = async (eventOrCustomer, selectedCustomerId) => {
+    const value = selectedCustomerId !== undefined ? selectedCustomerId : eventOrCustomer?.target?.value;
     setForm((prev) => ({
       ...prev,
       customerId: value,
@@ -988,47 +989,16 @@ export default function InvoicesLionTv() {
                 ))}
               </Select>
             </FormControl>
-            <FormControl
-              size="small"
-              sx={{
-                minWidth: 220,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  backgroundColor: 'background.paper'
-                }
-              }}
-              disabled={customersLoading}
-            >
-              <InputLabel>{t('invoices.filters.customer', 'Customer')}</InputLabel>
-              <Select
+            <Box sx={{ minWidth: { xs: '100%', sm: 280 } }}>
+              <CustomerAutocomplete
                 value={customerFilter}
+                onChange={(_, id) => setCustomerFilter(id ? String(id) : '')}
                 label={t('invoices.filters.customer', 'Customer')}
-                onChange={(e) => setCustomerFilter(e.target.value)}
-                renderValue={(val) => {
-                  if (!val) return t('invoices.filters.allCustomers', 'All customers');
-                  const found = customers.find((customer) => String(customer.customerId || customer.id) === String(val));
-                  return found?.customerFullname || found?.fullName || found?.username || found?.customerMail || t('invoices.filters.customer', 'Customer');
-                }}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <PersonAddAlt1Icon fontSize="small" />
-                  </InputAdornment>
-                }
-              >
-                <MenuItem value="">
-                  <em>{t('invoices.filters.allCustomers', 'All customers')}</em>
-                </MenuItem>
-                {(customers || []).map((customer) => {
-                  const customerId = customer.customerId || customer.id;
-                  const customerLabel = customer.customerFullname || customer.fullName || customer.username || customer.customerMail || customerId;
-                  return (
-                    <MenuItem key={customerId} value={String(customerId)}>
-                      {customerLabel}
-                    </MenuItem>
-                  );
-                })}
-              </Select>
-            </FormControl>
+                placeholder={t('customerAutocomplete.placeholder', 'Nombre, correo, teléfono o ID')}
+                helperText={t('invoices.filters.allCustomers', 'All customers')}
+                size="small"
+              />
+            </Box>
           </ResponsiveFilters>
         }
       >
@@ -1479,31 +1449,14 @@ export default function InvoicesLionTv() {
             <FormSection title={t('invoices.form.sections.assignment')} helper={t('invoices.form.sections.assignmentHelper')}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={3} md={3}>
-                  <FormControl fullWidth required sx={fieldSx} disabled={customersLoading}>
-                    <InputLabel>{t('invoices.form.customer')}</InputLabel>
-                    <Select
-                      value={form.customerId}
-                      label={t('invoices.form.customer')}
-                      onChange={handleCustomerChange}
-                      startAdornment={
-                        <InputAdornment position="start">
-                          <PersonAddAlt1Icon fontSize="small" color="secondary" />
-                        </InputAdornment>
-                      }
-                    >
-                      <MenuItem value="">
-                        <em>{t('invoices.form.placeholderSelect')}</em>
-                      </MenuItem>
-                      {(customers || []).map((c) => (
-                        <MenuItem key={c.customerId || c.id} value={c.customerId || c.id}>
-                          {c.customerFullname || c.fullName || c.username || c.customerMail}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    <FormHelperText>
-                      {customersLoading ? t('invoices.form.helperLoading') : t('invoices.form.helperCustomer')}
-                    </FormHelperText>
-                  </FormControl>
+                  <CustomerAutocomplete
+                    value={form.customerId}
+                    onChange={handleCustomerChange}
+                    label={t('invoices.form.customer')}
+                    helperText={t('invoices.form.helperCustomer')}
+                    required
+                    textFieldSx={fieldSx}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={3} md={3}>
                   <FormControl fullWidth required sx={fieldSx} disabled={servicesLoading}>
