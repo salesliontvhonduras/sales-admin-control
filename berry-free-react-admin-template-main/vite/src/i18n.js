@@ -7917,6 +7917,7 @@ resources.en.translation.salesWorkflow = {
     replacementPlusLine: 'Replacement Plus line',
     mainLineUpdateMode: 'Main line update',
     plusLineUpdateMode: 'Plus line update',
+    renewPlusLine: 'Renew Plus line',
     loyaltyPointsUsed: 'Points to use',
     loyaltyAmountRedeemed: 'Redeemed amount'
   },
@@ -8067,6 +8068,7 @@ resources.en.translation.salesWorkflow = {
     selectReplacementMainLine: 'Select the replacement main line.',
     selectReplacementPlusLine: 'Select the replacement Plus line.',
     sameReplacementLines: 'Main line and Plus line cannot be the same.',
+    renewPlusLineHelper: 'Keep it off if this Plus line is reused with other customers.',
     removePlusLineWarning: 'The previous Plus line will not be modified; only the subscription will be left without Plus line.'
 	  },
   workflowTypes: {
@@ -8202,6 +8204,7 @@ resources.es.translation.salesWorkflow = {
     replacementPlusLine: 'Nueva línea Plus',
     mainLineUpdateMode: 'Actualización línea principal',
     plusLineUpdateMode: 'Actualización línea Plus',
+    renewPlusLine: 'Renovar línea Plus',
     loyaltyPointsUsed: 'Puntos a usar',
     loyaltyAmountRedeemed: 'Monto redimido'
   },
@@ -8352,6 +8355,7 @@ resources.es.translation.salesWorkflow = {
     selectReplacementMainLine: 'Selecciona la nueva línea principal.',
     selectReplacementPlusLine: 'Selecciona la nueva línea Plus.',
     sameReplacementLines: 'La línea principal y la línea Plus no pueden ser la misma.',
+    renewPlusLineHelper: 'Déjalo apagado si esta línea Plus se reutiliza con otros clientes.',
     removePlusLineWarning: 'La línea Plus anterior no será modificada; solo la suscripción quedará sin línea Plus.'
 	  },
   workflowTypes: {

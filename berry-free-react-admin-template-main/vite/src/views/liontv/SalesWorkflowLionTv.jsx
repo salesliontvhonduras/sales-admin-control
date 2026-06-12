@@ -388,7 +388,7 @@ const defaultRenewal = (options = defaultOptions) => ({
   mainLineReplacementMode: RENEWAL_LINE_KEEP_CURRENT,
   mainLineUpdateMode: RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION,
   plusLineReplacementMode: RENEWAL_LINE_KEEP_CURRENT,
-  plusLineUpdateMode: RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION,
+  plusLineUpdateMode: RENEWAL_LINE_ASSOCIATE_ONLY,
   line: {
     lineId: ''
   },
@@ -637,7 +637,7 @@ function buildRenewalPayload(form, options, withIdempotency = false, invoiceOver
     mainLineReplacementMode: form.mainLineReplacementMode || RENEWAL_LINE_KEEP_CURRENT,
     mainLineUpdateMode: form.mainLineUpdateMode || RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION,
     plusLineReplacementMode: form.plusLineReplacementMode || RENEWAL_LINE_KEEP_CURRENT,
-    plusLineUpdateMode: form.plusLineUpdateMode || RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION,
+    plusLineUpdateMode: form.plusLineUpdateMode || RENEWAL_LINE_ASSOCIATE_ONLY,
     line:
       form.mainLineReplacementMode === RENEWAL_LINE_USE_EXISTING
         ? {
@@ -1273,6 +1273,9 @@ export default function SalesWorkflowLionTv() {
     () => lineOptions.find((item) => String(item.lineId) === String(renewal.linePlus?.lineId)) || null,
     [lineOptions, renewal.linePlus?.lineId]
   );
+  const showRenewPlusLineSwitch =
+    renewal.plusLineReplacementMode !== RENEWAL_PLUS_REMOVE &&
+    (Boolean(selectedSubscription?.linePlusId) || renewal.plusLineReplacementMode === RENEWAL_LINE_USE_EXISTING);
   const selectedRenewalCustomerId = Number(selectedSubscription?.customerId || 0);
   const selectedRenewalLoyalty = selectedRenewalCustomerId ? loyaltyByCustomerId[selectedRenewalCustomerId] || null : null;
   const renewalLoyaltyPointsRequested = useMemo(() => {
@@ -1773,8 +1776,7 @@ export default function SalesWorkflowLionTv() {
     setRenewal((prev) => ({
       ...prev,
       plusLineReplacementMode: mode,
-      plusLineUpdateMode:
-        mode === RENEWAL_LINE_USE_EXISTING ? prev.plusLineUpdateMode || RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION : RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION,
+      plusLineUpdateMode: RENEWAL_LINE_ASSOCIATE_ONLY,
       linePlus:
         mode === RENEWAL_LINE_USE_EXISTING
           ? prev.linePlus
@@ -3180,19 +3182,6 @@ export default function SalesWorkflowLionTv() {
                                   />
                                 )}
                               />
-                              <FormControl fullWidth sx={fieldSx}>
-                                <InputLabel>{t('salesWorkflow.fields.plusLineUpdateMode', 'Plus line update')}</InputLabel>
-                                <Select
-                                  label={t('salesWorkflow.fields.plusLineUpdateMode', 'Plus line update')}
-                                  value={renewal.plusLineUpdateMode}
-                                  onChange={(e) => setRenewal((prev) => ({ ...prev, plusLineUpdateMode: e.target.value }))}
-                                >
-                                  <MenuItem value={RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION}>
-                                    {t('salesWorkflow.options.associateAndUpdateExpiration', 'Associate and update expiration')}
-                                  </MenuItem>
-                                  <MenuItem value={RENEWAL_LINE_ASSOCIATE_ONLY}>{t('salesWorkflow.options.associateOnly', 'Associate only')}</MenuItem>
-                                </Select>
-                              </FormControl>
                               {selectedRenewalPlusLine ? (
                                 <Grid container spacing={1}>
                                   <Grid item xs={12} sm={6}>
@@ -3204,6 +3193,45 @@ export default function SalesWorkflowLionTv() {
                                 </Grid>
                               ) : null}
                             </>
+                          ) : null}
+                          {showRenewPlusLineSwitch ? (
+                            <Paper
+                              variant="outlined"
+                              sx={{
+                                p: 1.5,
+                                borderRadius: 2,
+                                bgcolor: alpha(theme.palette.warning.main, 0.06),
+                                borderColor: alpha(theme.palette.warning.main, 0.28)
+                              }}
+                            >
+                              <FormControlLabel
+                                sx={{ m: 0, alignItems: 'flex-start' }}
+                                control={
+                                  <Switch
+                                    checked={renewal.plusLineUpdateMode === RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION}
+                                    onChange={(e) => {
+                                      setRenewal((prev) => ({
+                                        ...prev,
+                                        plusLineUpdateMode: e.target.checked
+                                          ? RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION
+                                          : RENEWAL_LINE_ASSOCIATE_ONLY
+                                      }));
+                                      clearPreview();
+                                    }}
+                                  />
+                                }
+                                label={
+                                  <Stack spacing={0.25}>
+                                    <Typography variant="subtitle2" fontWeight={800}>
+                                      {t('salesWorkflow.fields.renewPlusLine', 'Renew Plus line')}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                      {t('salesWorkflow.messages.renewPlusLineHelper', 'Keep it off if this Plus line is reused with other customers.')}
+                                    </Typography>
+                                  </Stack>
+                                }
+                              />
+                            </Paper>
                           ) : null}
                           {renewal.plusLineReplacementMode === RENEWAL_PLUS_REMOVE ? (
                             <Alert severity="warning">
