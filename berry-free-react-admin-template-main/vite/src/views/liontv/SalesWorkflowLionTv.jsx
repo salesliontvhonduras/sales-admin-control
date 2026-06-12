@@ -72,6 +72,11 @@ const MAIN_LINE_CREATE_NEW = 'CREATE_NEW';
 const MAIN_LINE_USE_EXISTING = 'USE_EXISTING';
 const CUSTOMER_CREATE_NEW = 'CREATE_NEW';
 const CUSTOMER_USE_EXISTING = 'USE_EXISTING';
+const RENEWAL_LINE_KEEP_CURRENT = 'KEEP_CURRENT';
+const RENEWAL_LINE_USE_EXISTING = 'USE_EXISTING';
+const RENEWAL_PLUS_REMOVE = 'REMOVE_PLUS';
+const RENEWAL_LINE_ASSOCIATE_ONLY = 'ASSOCIATE_ONLY';
+const RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION = 'ASSOCIATE_AND_UPDATE_EXPIRATION';
 const RENEWAL_BASE_CURRENT_EXPIRATION = 'CURRENT_EXPIRATION';
 const RENEWAL_BASE_TODAY = 'TODAY';
 
@@ -380,6 +385,16 @@ const defaultRenewal = (options = defaultOptions) => ({
   currentDeviceCount: 0,
   desiredDeviceCount: 1,
   renewalBaseMode: RENEWAL_BASE_CURRENT_EXPIRATION,
+  mainLineReplacementMode: RENEWAL_LINE_KEEP_CURRENT,
+  mainLineUpdateMode: RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION,
+  plusLineReplacementMode: RENEWAL_LINE_KEEP_CURRENT,
+  plusLineUpdateMode: RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION,
+  line: {
+    lineId: ''
+  },
+  linePlus: {
+    lineId: ''
+  },
   subscription: {
     billing: options.defaults?.billing || 'MONTHLY',
     amount: '',
@@ -619,6 +634,22 @@ function buildRenewalPayload(form, options, withIdempotency = false, invoiceOver
     subscriptionId: toNumberOrNull(form.subscriptionId),
     desiredDeviceCount: toNumberOrNull(form.desiredDeviceCount) || 0,
     renewalBaseMode: form.renewalBaseMode || RENEWAL_BASE_CURRENT_EXPIRATION,
+    mainLineReplacementMode: form.mainLineReplacementMode || RENEWAL_LINE_KEEP_CURRENT,
+    mainLineUpdateMode: form.mainLineUpdateMode || RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION,
+    plusLineReplacementMode: form.plusLineReplacementMode || RENEWAL_LINE_KEEP_CURRENT,
+    plusLineUpdateMode: form.plusLineUpdateMode || RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION,
+    line:
+      form.mainLineReplacementMode === RENEWAL_LINE_USE_EXISTING
+        ? {
+            lineId: form.line?.lineId || ''
+          }
+        : null,
+    linePlus:
+      form.plusLineReplacementMode === RENEWAL_LINE_USE_EXISTING
+        ? {
+            lineId: form.linePlus?.lineId || ''
+          }
+        : null,
     subscription: {
       ...form.subscription,
       packageId,
@@ -777,6 +808,11 @@ function PackageCard({ option, selected, onClick, t }) {
 function PreviewCard({ preview }) {
   const { t } = useTranslation();
   if (!preview) return null;
+  const isRenewal = preview.workflowType === 'RENEWAL';
+  const updateModeLabel = (mode) =>
+    mode === RENEWAL_LINE_ASSOCIATE_ONLY
+      ? t('salesWorkflow.options.associateOnly', 'Associate only')
+      : t('salesWorkflow.options.associateAndUpdateExpiration', 'Associate and update expiration');
 
   return (
     <Card variant="outlined" sx={{ p: { xs: 1.5, sm: 2 }, borderRadius: 2.5 }}>
@@ -806,6 +842,28 @@ function PreviewCard({ preview }) {
             <Grid item xs={12} sm={6} md={4}>
               <MiniMetric label={t('salesWorkflow.metrics.linePackage', 'Line package')} value={preview.linePackageName || preview.linePackageId} icon={<LanIcon fontSize="small" />} color="info" />
             </Grid>
+          ) : null}
+          {isRenewal ? (
+            <>
+              <Grid item xs={12} sm={6} md={4}>
+                <MiniMetric label={t('salesWorkflow.metrics.currentMainLine', 'Current main line')} value={preview.currentLineId || '-'} icon={<LanIcon fontSize="small" />} color="info" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <MiniMetric label={t('salesWorkflow.metrics.newMainLine', 'New main line')} value={preview.lineId || '-'} icon={<LanIcon fontSize="small" />} color="primary" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <MiniMetric label={t('salesWorkflow.metrics.mainLineUpdateMode', 'Main line update')} value={updateModeLabel(preview.mainLineUpdateMode)} icon={<AutorenewIcon fontSize="small" />} color="secondary" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <MiniMetric label={t('salesWorkflow.metrics.currentPlusLine', 'Current Plus line')} value={preview.currentLinePlusId || t('salesWorkflow.common.none', 'None')} icon={<LanIcon fontSize="small" />} color="info" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <MiniMetric label={t('salesWorkflow.metrics.newPlusLine', 'New Plus line')} value={preview.linePlusId || t('salesWorkflow.common.none', 'None')} icon={<LanIcon fontSize="small" />} color="primary" />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <MiniMetric label={t('salesWorkflow.metrics.plusLineUpdateMode', 'Plus line update')} value={preview.plusLineReplacementMode === RENEWAL_PLUS_REMOVE ? t('salesWorkflow.options.removePlusLine', 'Remove Plus line') : updateModeLabel(preview.plusLineUpdateMode)} icon={<AutorenewIcon fontSize="small" />} color="secondary" />
+              </Grid>
+            </>
           ) : null}
           <Grid item xs={12} sm={6} md={4}>
             <MiniMetric label={t('salesWorkflow.metrics.newDate', 'New date')} value={formatDate(preview.newRenewalDate)} icon={<AutorenewIcon fontSize="small" />} color="info" />
@@ -1207,6 +1265,14 @@ export default function SalesWorkflowLionTv() {
     () => lookup?.subscriptions?.find((item) => String(item.subscriptionId) === String(renewal.subscriptionId)),
     [lookup?.subscriptions, renewal.subscriptionId]
   );
+  const selectedRenewalMainLine = useMemo(
+    () => lineOptions.find((item) => String(item.lineId) === String(renewal.line?.lineId)) || null,
+    [lineOptions, renewal.line?.lineId]
+  );
+  const selectedRenewalPlusLine = useMemo(
+    () => lineOptions.find((item) => String(item.lineId) === String(renewal.linePlus?.lineId)) || null,
+    [lineOptions, renewal.linePlus?.lineId]
+  );
   const selectedRenewalCustomerId = Number(selectedSubscription?.customerId || 0);
   const selectedRenewalLoyalty = selectedRenewalCustomerId ? loyaltyByCustomerId[selectedRenewalCustomerId] || null : null;
   const renewalLoyaltyPointsRequested = useMemo(() => {
@@ -1500,6 +1566,12 @@ export default function SalesWorkflowLionTv() {
     }
   }, [activation.mainLineMode, activeStep, lineOptions.length, linesLoading, loadLineOptions, tab]);
 
+  useEffect(() => {
+    if (tab === 1 && renewalStep === 2 && !lineOptions.length && !linesLoading) {
+      loadLineOptions();
+    }
+  }, [lineOptions.length, linesLoading, loadLineOptions, renewalStep, tab]);
+
   const clearPreview = () => {
     setPreview(null);
     setResult(null);
@@ -1678,6 +1750,55 @@ export default function SalesWorkflowLionTv() {
     clearPreview();
   };
 
+  const handleRenewalMainLineReplacementChange = (mode) => {
+    setRenewal((prev) => ({
+      ...prev,
+      mainLineReplacementMode: mode,
+      mainLineUpdateMode:
+        mode === RENEWAL_LINE_USE_EXISTING ? prev.mainLineUpdateMode || RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION : RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION,
+      line:
+        mode === RENEWAL_LINE_USE_EXISTING
+          ? prev.line
+          : {
+              lineId: ''
+            }
+    }));
+    clearPreview();
+    if (mode === RENEWAL_LINE_USE_EXISTING && !lineOptions.length) {
+      loadLineOptions();
+    }
+  };
+
+  const handleRenewalPlusLineReplacementChange = (mode) => {
+    setRenewal((prev) => ({
+      ...prev,
+      plusLineReplacementMode: mode,
+      plusLineUpdateMode:
+        mode === RENEWAL_LINE_USE_EXISTING ? prev.plusLineUpdateMode || RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION : RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION,
+      linePlus:
+        mode === RENEWAL_LINE_USE_EXISTING
+          ? prev.linePlus
+          : {
+              lineId: ''
+            }
+    }));
+    clearPreview();
+    if (mode === RENEWAL_LINE_USE_EXISTING && !lineOptions.length) {
+      loadLineOptions();
+    }
+  };
+
+  const handleRenewalLineSelect = (target, line) => {
+    setRenewal((prev) => ({
+      ...prev,
+      [target]: {
+        ...prev[target],
+        lineId: line?.lineId || ''
+      }
+    }));
+    clearPreview();
+  };
+
   const handleLookup = async () => {
     if (!lookupQuery.trim()) return;
     setBusy(true);
@@ -1744,6 +1865,24 @@ export default function SalesWorkflowLionTv() {
     return true;
   };
 
+  const validateRenewalLines = () => {
+    const replacingMain = renewal.mainLineReplacementMode === RENEWAL_LINE_USE_EXISTING;
+    const replacingPlus = renewal.plusLineReplacementMode === RENEWAL_LINE_USE_EXISTING;
+    if (replacingMain && !renewal.line?.lineId) {
+      enqueueSnackbar(t('salesWorkflow.messages.selectReplacementMainLine', 'Select the replacement main line.'), { variant: 'warning' });
+      return false;
+    }
+    if (replacingPlus && !renewal.linePlus?.lineId) {
+      enqueueSnackbar(t('salesWorkflow.messages.selectReplacementPlusLine', 'Select the replacement Plus line.'), { variant: 'warning' });
+      return false;
+    }
+    if (replacingMain && replacingPlus && renewal.line?.lineId && renewal.line?.lineId === renewal.linePlus?.lineId) {
+      enqueueSnackbar(t('salesWorkflow.messages.sameReplacementLines', 'Main line and Plus line cannot be the same.'), { variant: 'warning' });
+      return false;
+    }
+    return true;
+  };
+
   const handleActivationPreview = async () => {
     setBusy(true);
     setResult(null);
@@ -1778,6 +1917,7 @@ export default function SalesWorkflowLionTv() {
 
   const handleRenewalPreview = async () => {
     if (!validateRenewalLoyalty()) return;
+    if (!validateRenewalLines()) return;
     setBusy(true);
     setResult(null);
     try {
@@ -1792,6 +1932,7 @@ export default function SalesWorkflowLionTv() {
 
   const handleRenewalExecute = async () => {
     if (!validateRenewalLoyalty()) return;
+    if (!validateRenewalLines()) return;
     setBusy(true);
     try {
       const response = await executeRenewal(buildRenewalPayload(renewal, options, true, renewalInvoiceLoyaltyOverrides));
@@ -2919,6 +3060,157 @@ export default function SalesWorkflowLionTv() {
                           onChange={(e) => setNestedValue(setRenewal, 'subscription', 'renewalDate', e.target.value)}
                           InputLabelProps={{ shrink: true }}
                         />
+                      </Grid>
+                    </Grid>
+                  </Section>
+                </Grid>
+                <Grid item xs={12}>
+                  <Section
+                    title={t('salesWorkflow.sections.renewalLinesTitle', 'Subscription lines')}
+                    helper={t('salesWorkflow.sections.renewalLinesHelper', 'Keep the current lines or associate this subscription with other existing lines.')}
+                    icon={<LanIcon fontSize="small" />}
+                    color="primary"
+                  >
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} lg={6}>
+                        <Stack spacing={1.5}>
+                          <MiniMetric
+                            label={t('salesWorkflow.metrics.currentMainLine', 'Current main line')}
+                            value={selectedSubscription?.lineId || '-'}
+                            icon={<LanIcon fontSize="small" />}
+                            color="info"
+                          />
+                          <FormControl fullWidth sx={fieldSx}>
+                            <InputLabel>{t('salesWorkflow.fields.mainLineReplacementMode', 'Main line action')}</InputLabel>
+                            <Select
+                              label={t('salesWorkflow.fields.mainLineReplacementMode', 'Main line action')}
+                              value={renewal.mainLineReplacementMode}
+                              onChange={(e) => handleRenewalMainLineReplacementChange(e.target.value)}
+                            >
+                              <MenuItem value={RENEWAL_LINE_KEEP_CURRENT}>{t('salesWorkflow.options.keepCurrentMainLine', 'Keep current main line')}</MenuItem>
+                              <MenuItem value={RENEWAL_LINE_USE_EXISTING}>{t('salesWorkflow.options.useExistingMainLine', 'Use another existing line')}</MenuItem>
+                            </Select>
+                          </FormControl>
+                          {renewal.mainLineReplacementMode === RENEWAL_LINE_USE_EXISTING ? (
+                            <>
+                              <Autocomplete
+                                options={lineOptions}
+                                loading={linesLoading}
+                                value={selectedRenewalMainLine}
+                                onChange={(_, value) => handleRenewalLineSelect('line', value)}
+                                getOptionLabel={buildLineOptionLabel}
+                                isOptionEqualToValue={(option, value) => option.lineId === value?.lineId}
+                                renderInput={(params) => (
+                                  <TextField
+                                    {...params}
+                                    required
+                                    label={t('salesWorkflow.fields.replacementMainLine', 'Replacement main line')}
+                                    sx={fieldSx}
+                                  />
+                                )}
+                              />
+                              <FormControl fullWidth sx={fieldSx}>
+                                <InputLabel>{t('salesWorkflow.fields.mainLineUpdateMode', 'Main line update')}</InputLabel>
+                                <Select
+                                  label={t('salesWorkflow.fields.mainLineUpdateMode', 'Main line update')}
+                                  value={renewal.mainLineUpdateMode}
+                                  onChange={(e) => setRenewal((prev) => ({ ...prev, mainLineUpdateMode: e.target.value }))}
+                                >
+                                  <MenuItem value={RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION}>
+                                    {t('salesWorkflow.options.associateAndUpdateExpiration', 'Associate and update expiration')}
+                                  </MenuItem>
+                                  <MenuItem value={RENEWAL_LINE_ASSOCIATE_ONLY}>{t('salesWorkflow.options.associateOnly', 'Associate only')}</MenuItem>
+                                </Select>
+                              </FormControl>
+                              {selectedRenewalMainLine ? (
+                                <Grid container spacing={1}>
+                                  <Grid item xs={12} sm={6}>
+                                    <MiniMetric label={t('salesWorkflow.metrics.newMainLine', 'New main line')} value={selectedRenewalMainLine.lineId} icon={<LanIcon fontSize="small" />} color="primary" />
+                                  </Grid>
+                                  <Grid item xs={12} sm={6}>
+                                    <MiniMetric label={t('salesWorkflow.metrics.linePackage', 'Line package')} value={selectedRenewalMainLine.packageName || '-'} icon={<Inventory2Icon fontSize="small" />} color="secondary" />
+                                  </Grid>
+                                </Grid>
+                              ) : null}
+                            </>
+                          ) : null}
+                        </Stack>
+                      </Grid>
+                      <Grid item xs={12} lg={6}>
+                        <Stack spacing={1.5}>
+                          <MiniMetric
+                            label={t('salesWorkflow.metrics.currentPlusLine', 'Current Plus line')}
+                            value={selectedSubscription?.linePlusId || t('salesWorkflow.common.none', 'None')}
+                            icon={<LanIcon fontSize="small" />}
+                            color="secondary"
+                          />
+                          <FormControl fullWidth sx={fieldSx}>
+                            <InputLabel>{t('salesWorkflow.fields.plusLineReplacementMode', 'Plus line action')}</InputLabel>
+                            <Select
+                              label={t('salesWorkflow.fields.plusLineReplacementMode', 'Plus line action')}
+                              value={renewal.plusLineReplacementMode}
+                              onChange={(e) => handleRenewalPlusLineReplacementChange(e.target.value)}
+                            >
+                              <MenuItem value={RENEWAL_LINE_KEEP_CURRENT}>
+                                {selectedSubscription?.linePlusId
+                                  ? t('salesWorkflow.options.keepCurrentPlusLine', 'Keep current Plus line')
+                                  : t('salesWorkflow.options.keepNoPlusLine', 'Keep without Plus line')}
+                              </MenuItem>
+                              <MenuItem value={RENEWAL_LINE_USE_EXISTING}>{t('salesWorkflow.options.useExistingPlusLine', 'Use another existing Plus line')}</MenuItem>
+                              {selectedSubscription?.linePlusId ? (
+                                <MenuItem value={RENEWAL_PLUS_REMOVE}>{t('salesWorkflow.options.removePlusLine', 'Remove Plus line')}</MenuItem>
+                              ) : null}
+                            </Select>
+                          </FormControl>
+                          {renewal.plusLineReplacementMode === RENEWAL_LINE_USE_EXISTING ? (
+                            <>
+                              <Autocomplete
+                                options={lineOptions}
+                                loading={linesLoading}
+                                value={selectedRenewalPlusLine}
+                                onChange={(_, value) => handleRenewalLineSelect('linePlus', value)}
+                                getOptionLabel={buildLineOptionLabel}
+                                isOptionEqualToValue={(option, value) => option.lineId === value?.lineId}
+                                renderInput={(params) => (
+                                  <TextField
+                                    {...params}
+                                    required
+                                    label={t('salesWorkflow.fields.replacementPlusLine', 'Replacement Plus line')}
+                                    sx={fieldSx}
+                                  />
+                                )}
+                              />
+                              <FormControl fullWidth sx={fieldSx}>
+                                <InputLabel>{t('salesWorkflow.fields.plusLineUpdateMode', 'Plus line update')}</InputLabel>
+                                <Select
+                                  label={t('salesWorkflow.fields.plusLineUpdateMode', 'Plus line update')}
+                                  value={renewal.plusLineUpdateMode}
+                                  onChange={(e) => setRenewal((prev) => ({ ...prev, plusLineUpdateMode: e.target.value }))}
+                                >
+                                  <MenuItem value={RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION}>
+                                    {t('salesWorkflow.options.associateAndUpdateExpiration', 'Associate and update expiration')}
+                                  </MenuItem>
+                                  <MenuItem value={RENEWAL_LINE_ASSOCIATE_ONLY}>{t('salesWorkflow.options.associateOnly', 'Associate only')}</MenuItem>
+                                </Select>
+                              </FormControl>
+                              {selectedRenewalPlusLine ? (
+                                <Grid container spacing={1}>
+                                  <Grid item xs={12} sm={6}>
+                                    <MiniMetric label={t('salesWorkflow.metrics.newPlusLine', 'New Plus line')} value={selectedRenewalPlusLine.lineId} icon={<LanIcon fontSize="small" />} color="primary" />
+                                  </Grid>
+                                  <Grid item xs={12} sm={6}>
+                                    <MiniMetric label={t('salesWorkflow.metrics.linePackage', 'Line package')} value={selectedRenewalPlusLine.packageName || '-'} icon={<Inventory2Icon fontSize="small" />} color="secondary" />
+                                  </Grid>
+                                </Grid>
+                              ) : null}
+                            </>
+                          ) : null}
+                          {renewal.plusLineReplacementMode === RENEWAL_PLUS_REMOVE ? (
+                            <Alert severity="warning">
+                              {t('salesWorkflow.messages.removePlusLineWarning', 'The previous Plus line will not be modified; only the subscription will be left without Plus line.')}
+                            </Alert>
+                          ) : null}
+                        </Stack>
                       </Grid>
                     </Grid>
                   </Section>

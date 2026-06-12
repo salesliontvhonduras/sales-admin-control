@@ -7815,7 +7815,8 @@ resources.en.translation.salesWorkflow = {
   title: 'Sales & Renewals',
   common: {
     customerFallback: 'Customer',
-    noPackage: 'No package'
+    noPackage: 'No package',
+    none: 'None'
   },
   tabs: {
     activation: 'New account',
@@ -7854,6 +7855,8 @@ resources.en.translation.salesWorkflow = {
     selectSubscriptionHelper: 'The renewal uses the existing customer; it does not create a new customer.',
     selectedSubscriptionTitle: 'Selected subscription',
     selectedSubscriptionHelper: 'Adjust package, renewal base and devices.',
+    renewalLinesTitle: 'Subscription lines',
+    renewalLinesHelper: 'Keep the current lines or associate this subscription with other existing lines.',
     renewalPaymentTitle: 'Payment and confirmation',
     renewalPaymentHelper: 'Preview shows the new date, plan change and missing licenses before executing.',
     loyaltyTitle: 'Loyalty points',
@@ -7908,6 +7911,12 @@ resources.en.translation.salesWorkflow = {
     planPackage: 'Plan / package',
     renewalBase: 'Base if expired',
     manualRenewalDate: 'Optional manual date',
+    mainLineReplacementMode: 'Main line action',
+    plusLineReplacementMode: 'Plus line action',
+    replacementMainLine: 'Replacement main line',
+    replacementPlusLine: 'Replacement Plus line',
+    mainLineUpdateMode: 'Main line update',
+    plusLineUpdateMode: 'Plus line update',
     loyaltyPointsUsed: 'Points to use',
     loyaltyAmountRedeemed: 'Redeemed amount'
   },
@@ -7924,6 +7933,14 @@ resources.en.translation.salesWorkflow = {
     addPlusLine: 'Add Plus line',
     createNewLine: 'Create new line',
     useExistingLine: 'Use existing line',
+    keepCurrentMainLine: 'Keep current main line',
+    useExistingMainLine: 'Use another existing line',
+    keepCurrentPlusLine: 'Keep current Plus line',
+    keepNoPlusLine: 'Keep without Plus line',
+    useExistingPlusLine: 'Use another existing Plus line',
+    removePlusLine: 'Remove Plus line',
+    associateOnly: 'Associate only',
+    associateAndUpdateExpiration: 'Associate and update expiration',
     currentExpiration: 'From current expiration',
     today: 'From today'
   },
@@ -7967,6 +7984,12 @@ resources.en.translation.salesWorkflow = {
     capacity: 'Capacity',
     newDate: 'New date',
     invoiceAmount: 'Invoice amount',
+    currentMainLine: 'Current main line',
+    newMainLine: 'New main line',
+    currentPlusLine: 'Current Plus line',
+    newPlusLine: 'New Plus line',
+    mainLineUpdateMode: 'Main line update',
+    plusLineUpdateMode: 'Plus line update',
     availablePoints: 'Available points',
     loyaltyApplied: 'Points applied',
     invoiceNetAmount: 'Net invoice'
@@ -8040,7 +8063,11 @@ resources.en.translation.salesWorkflow = {
 	    lineIdGenerateError: 'Could not generate Line ID.',
     lineConnectionsHelper: 'Capacity configured on the line. It is independent from licenses.',
     existingLineConnectionsReadonly: 'Existing line capacity is read-only.',
-    licensesToCreateHelper: 'Licenses to create now. Use 0 when the customer will receive licenses later.'
+    licensesToCreateHelper: 'Licenses to create now. Use 0 when the customer will receive licenses later.',
+    selectReplacementMainLine: 'Select the replacement main line.',
+    selectReplacementPlusLine: 'Select the replacement Plus line.',
+    sameReplacementLines: 'Main line and Plus line cannot be the same.',
+    removePlusLineWarning: 'The previous Plus line will not be modified; only the subscription will be left without Plus line.'
 	  },
   workflowTypes: {
     renewal: 'renewal',
@@ -8073,7 +8100,8 @@ resources.es.translation.salesWorkflow = {
   title: 'Ventas y Renovaciones',
   common: {
     customerFallback: 'Cliente',
-    noPackage: 'Sin paquete'
+    noPackage: 'Sin paquete',
+    none: 'Ninguna'
   },
   tabs: {
     activation: 'Nueva cuenta',
@@ -8112,6 +8140,8 @@ resources.es.translation.salesWorkflow = {
     selectSubscriptionHelper: 'La renovación usa el cliente existente; no se crea cliente nuevo.',
     selectedSubscriptionTitle: 'Suscripción seleccionada',
     selectedSubscriptionHelper: 'Ajusta paquete, base de renovación y dispositivos.',
+    renewalLinesTitle: 'Líneas de la suscripción',
+    renewalLinesHelper: 'Mantén las líneas actuales o asocia esta suscripción con otras líneas existentes.',
     renewalPaymentTitle: 'Pago y confirmación',
     renewalPaymentHelper: 'El preview muestra fecha nueva, cambio de plan y licencias faltantes antes de ejecutar.',
     loyaltyTitle: 'Puntos de lealtad',
@@ -8166,6 +8196,12 @@ resources.es.translation.salesWorkflow = {
     planPackage: 'Plan / paquete',
     renewalBase: 'Base si venció',
     manualRenewalDate: 'Fecha manual opcional',
+    mainLineReplacementMode: 'Acción línea principal',
+    plusLineReplacementMode: 'Acción línea Plus',
+    replacementMainLine: 'Nueva línea principal',
+    replacementPlusLine: 'Nueva línea Plus',
+    mainLineUpdateMode: 'Actualización línea principal',
+    plusLineUpdateMode: 'Actualización línea Plus',
     loyaltyPointsUsed: 'Puntos a usar',
     loyaltyAmountRedeemed: 'Monto redimido'
   },
@@ -8182,6 +8218,14 @@ resources.es.translation.salesWorkflow = {
     addPlusLine: 'Agregar línea Plus',
     createNewLine: 'Crear línea nueva',
     useExistingLine: 'Usar línea existente',
+    keepCurrentMainLine: 'Mantener línea principal actual',
+    useExistingMainLine: 'Usar otra línea existente',
+    keepCurrentPlusLine: 'Mantener línea Plus actual',
+    keepNoPlusLine: 'Mantener sin línea Plus',
+    useExistingPlusLine: 'Usar otra línea Plus existente',
+    removePlusLine: 'Quitar línea Plus',
+    associateOnly: 'Solo asociar',
+    associateAndUpdateExpiration: 'Asociar y actualizar expiración',
     currentExpiration: 'Desde vencimiento actual',
     today: 'Desde hoy'
   },
@@ -8225,6 +8269,12 @@ resources.es.translation.salesWorkflow = {
     capacity: 'Capacidad',
     newDate: 'Fecha nueva',
     invoiceAmount: 'Monto factura',
+    currentMainLine: 'Línea principal actual',
+    newMainLine: 'Nueva línea principal',
+    currentPlusLine: 'Línea Plus actual',
+    newPlusLine: 'Nueva línea Plus',
+    mainLineUpdateMode: 'Actualización línea principal',
+    plusLineUpdateMode: 'Actualización línea Plus',
     availablePoints: 'Puntos disponibles',
     loyaltyApplied: 'Puntos aplicados',
     invoiceNetAmount: 'Neto factura'
@@ -8298,7 +8348,11 @@ resources.es.translation.salesWorkflow = {
 	    lineIdGenerateError: 'No se pudo generar Line ID.',
     lineConnectionsHelper: 'Capacidad configurada en la línea. Es independiente de las licencias.',
     existingLineConnectionsReadonly: 'La capacidad de una línea existente es de solo lectura.',
-    licensesToCreateHelper: 'Licencias a crear ahora. Usa 0 cuando el cliente recibirá licencias después.'
+    licensesToCreateHelper: 'Licencias a crear ahora. Usa 0 cuando el cliente recibirá licencias después.',
+    selectReplacementMainLine: 'Selecciona la nueva línea principal.',
+    selectReplacementPlusLine: 'Selecciona la nueva línea Plus.',
+    sameReplacementLines: 'La línea principal y la línea Plus no pueden ser la misma.',
+    removePlusLineWarning: 'La línea Plus anterior no será modificada; solo la suscripción quedará sin línea Plus.'
 	  },
   workflowTypes: {
     renewal: 'renovación',
