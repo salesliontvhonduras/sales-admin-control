@@ -62,6 +62,27 @@ const DEFAULT_PLAN_SPECS = [
   }
 ];
 
+const PLAN_RATING_SPECS = {
+  BASIC: [
+    { id: 'ratingChannels', label: { es: 'Canales', en: 'Channels' }, rating: 3, order: 20 },
+    { id: 'ratingSports', label: { es: 'Deportes', en: 'Sports' }, rating: 3, order: 21 },
+    { id: 'ratingSeries', label: { es: 'Series', en: 'Series' }, rating: 3, order: 22 },
+    { id: 'ratingMovies', label: { es: 'Películas', en: 'Movies' }, rating: 4, order: 23 }
+  ],
+  PRIME: [
+    { id: 'ratingChannels', label: { es: 'Canales', en: 'Channels' }, rating: 5, order: 20 },
+    { id: 'ratingSports', label: { es: 'Deportes', en: 'Sports' }, rating: 5, order: 21 },
+    { id: 'ratingSeries', label: { es: 'Series', en: 'Series' }, rating: 4.5, order: 22 },
+    { id: 'ratingMovies', label: { es: 'Películas', en: 'Movies' }, rating: 3.5, order: 23 }
+  ],
+  PREMIUM: [
+    { id: 'ratingChannels', label: { es: 'Canales', en: 'Channels' }, rating: 4.5, order: 20 },
+    { id: 'ratingSports', label: { es: 'Deportes', en: 'Sports' }, rating: 4, order: 21 },
+    { id: 'ratingSeries', label: { es: 'Series', en: 'Series' }, rating: 5, order: 22 },
+    { id: 'ratingMovies', label: { es: 'Películas', en: 'Movies' }, rating: 5, order: 23 }
+  ]
+};
+
 const TOUR_TARGET_OPTIONS = [
   { value: 'email-capture', label: 'Campo de correo' },
   { value: 'start-button', label: 'Botón Comenzar' },
@@ -300,7 +321,7 @@ const DEFAULT_CONFIG = {
       name: 'Básico',
       description: 'Acceso mensual Lion TV Premium',
       featured: false,
-      specs: clone(DEFAULT_PLAN_SPECS),
+      specs: getDefaultPlanSpecs('BASIC'),
       variants: [4.99, 5.99, 6.99, 7.99, 8.99].map((price, index) => ({
         connections: index + 1,
         price,
@@ -316,7 +337,7 @@ const DEFAULT_CONFIG = {
       name: 'Prime',
       description: 'Acceso mensual Lion TV Premium',
       featured: true,
-      specs: clone(DEFAULT_PLAN_SPECS),
+      specs: getDefaultPlanSpecs('PRIME'),
       variants: [9.99, 10.99, 11.99, 13.99, 15.99].map((price, index) => ({
         connections: index + 1,
         price,
@@ -332,7 +353,7 @@ const DEFAULT_CONFIG = {
       name: 'Premium',
       description: 'Acceso mensual Lion TV Premium',
       featured: false,
-      specs: clone(DEFAULT_PLAN_SPECS),
+      specs: getDefaultPlanSpecs('PREMIUM'),
       variants: [10.99, 11.99, 12.99, 14.99, 16.99].map((price, index) => ({
         connections: index + 1,
         price,
@@ -348,6 +369,26 @@ const DEFAULT_CONFIG = {
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
+}
+
+function getDefaultPlanSpecs(planCode) {
+  const ratingSpecs = (PLAN_RATING_SPECS[String(planCode || '').toUpperCase()] || []).map((spec) => ({
+    ...spec,
+    type: 'rating',
+    value: { es: '', en: '' },
+    maxRating: 5,
+    active: true
+  }));
+  return clone([...DEFAULT_PLAN_SPECS, ...ratingSpecs]);
+}
+
+function mergeRatingDefaults(specs, planCode) {
+  const currentSpecs = Array.isArray(specs) && specs.length ? specs : clone(DEFAULT_PLAN_SPECS);
+  const currentIds = new Set(currentSpecs.map((spec) => String(spec?.id || '').toLowerCase()));
+  const missingRatingSpecs = getDefaultPlanSpecs(planCode)
+    .filter((spec) => spec.type === 'rating')
+    .filter((spec) => !currentIds.has(String(spec.id || '').toLowerCase()));
+  return [...currentSpecs, ...missingRatingSpecs];
 }
 
 function localized(value, fallback) {
@@ -395,13 +436,19 @@ function normalizePlanSpec(spec = {}, index = 0) {
     id: `spec-${index + 1}`,
     label: { es: '', en: '' },
     value: { es: '', en: '' },
+    type: 'text',
     order: index + 1,
     active: true
   };
+  const type = spec.type === 'rating' ? 'rating' : 'text';
+  const rating = Math.min(5, Math.max(0, Number(spec.rating ?? fallback.rating ?? 0)));
   return {
     id: spec.id || fallback.id,
+    type,
     label: localized(spec.label, fallback.label),
     value: localized(spec.value, fallback.value),
+    rating,
+    maxRating: Number(spec.maxRating || fallback.maxRating || 5),
     order: Number(spec.order || fallback.order || index + 1),
     active: spec.active !== false
   };
@@ -411,7 +458,7 @@ function normalizePlan(plan = {}, index = 0) {
   const fallback = DEFAULT_CONFIG.plans[index] || {};
   const code = plan.code || fallback.code || `PLAN_${index + 1}`;
   const variants = Array.isArray(plan.variants) && plan.variants.length ? plan.variants : fallback.variants || [];
-  const specs = Array.isArray(plan.specs) && plan.specs.length ? plan.specs : DEFAULT_PLAN_SPECS;
+  const specs = mergeRatingDefaults(Array.isArray(plan.specs) && plan.specs.length ? plan.specs : fallback.specs, code);
   return {
     ...fallback,
     ...plan,
@@ -623,8 +670,11 @@ export default function EcommerceSettingsLionTv() {
       const specs = next.plans[planIndex].specs || [];
       specs.push({
         id: `spec-${Date.now()}`,
+        type: 'text',
         label: { es: 'Nueva opción', en: 'New option' },
         value: { es: '', en: '' },
+        rating: 0,
+        maxRating: 5,
         order: specs.length + 1,
         active: true
       });
@@ -1832,6 +1882,18 @@ export default function EcommerceSettingsLionTv() {
 	                              <Grid item xs={12} md={2}>
 	                                <TextField fullWidth label="ID" value={spec.id} onChange={(event) => updatePlanSpec(planIndex, specIndex, ['id'], event.target.value)} />
 	                              </Grid>
+	                              <Grid item xs={12} sm={6} md={2}>
+	                                <TextField
+	                                  select
+	                                  fullWidth
+	                                  label="Tipo"
+	                                  value={spec.type || 'text'}
+	                                  onChange={(event) => updatePlanSpec(planIndex, specIndex, ['type'], event.target.value)}
+	                                >
+	                                  <MenuItem value="text">Texto</MenuItem>
+	                                  <MenuItem value="rating">Rating</MenuItem>
+	                                </TextField>
+	                              </Grid>
 	                              <Grid item xs={6} md={1}>
 	                                <TextField
 	                                  fullWidth
@@ -1847,7 +1909,7 @@ export default function EcommerceSettingsLionTv() {
 	                                  label="Activa"
 	                                />
 	                              </Grid>
-	                              <Grid item xs={12} md={3}>
+	                              <Grid item xs={12} md={2}>
 	                                <TextField
 	                                  fullWidth
 	                                  label="Label ES"
@@ -1855,7 +1917,7 @@ export default function EcommerceSettingsLionTv() {
 	                                  onChange={(event) => updatePlanSpec(planIndex, specIndex, ['label', 'es'], event.target.value)}
 	                                />
 	                              </Grid>
-	                              <Grid item xs={12} md={3}>
+	                              <Grid item xs={12} md={2}>
 	                                <TextField
 	                                  fullWidth
 	                                  label="Label EN"
@@ -1872,22 +1934,50 @@ export default function EcommerceSettingsLionTv() {
 	                                  </span>
 	                                </Tooltip>
 	                              </Grid>
-	                              <Grid item xs={12} md={6}>
-	                                <TextField
-	                                  fullWidth
-	                                  label="Valor ES"
-	                                  value={spec.value?.es || ''}
-	                                  onChange={(event) => updatePlanSpec(planIndex, specIndex, ['value', 'es'], event.target.value)}
-	                                />
-	                              </Grid>
-	                              <Grid item xs={12} md={6}>
-	                                <TextField
-	                                  fullWidth
-	                                  label="Valor EN"
-	                                  value={spec.value?.en || ''}
-	                                  onChange={(event) => updatePlanSpec(planIndex, specIndex, ['value', 'en'], event.target.value)}
-	                                />
-	                              </Grid>
+	                              {(spec.type || 'text') === 'rating' ? (
+	                                <>
+	                                  <Grid item xs={12} md={6}>
+	                                    <TextField
+	                                      fullWidth
+	                                      type="number"
+	                                      label="Rating"
+	                                      value={spec.rating ?? 0}
+	                                      inputProps={{ min: 0, max: 5, step: 0.5 }}
+	                                      helperText="Acepta medias estrellas, por ejemplo 3.5 o 4.5."
+	                                      onChange={(event) => updatePlanSpec(planIndex, specIndex, ['rating'], Number(event.target.value || 0))}
+	                                    />
+	                                  </Grid>
+	                                  <Grid item xs={12} md={6}>
+	                                    <TextField
+	                                      fullWidth
+	                                      type="number"
+	                                      label="Máximo"
+	                                      value={spec.maxRating || 5}
+	                                      inputProps={{ min: 1, max: 5, step: 1 }}
+	                                      onChange={(event) => updatePlanSpec(planIndex, specIndex, ['maxRating'], Number(event.target.value || 5))}
+	                                    />
+	                                  </Grid>
+	                                </>
+	                              ) : (
+	                                <>
+	                                  <Grid item xs={12} md={6}>
+	                                    <TextField
+	                                      fullWidth
+	                                      label="Valor ES"
+	                                      value={spec.value?.es || ''}
+	                                      onChange={(event) => updatePlanSpec(planIndex, specIndex, ['value', 'es'], event.target.value)}
+	                                    />
+	                                  </Grid>
+	                                  <Grid item xs={12} md={6}>
+	                                    <TextField
+	                                      fullWidth
+	                                      label="Valor EN"
+	                                      value={spec.value?.en || ''}
+	                                      onChange={(event) => updatePlanSpec(planIndex, specIndex, ['value', 'en'], event.target.value)}
+	                                    />
+	                                  </Grid>
+	                                </>
+	                              )}
 	                            </Grid>
 	                          </CardContent>
 	                        </Card>
