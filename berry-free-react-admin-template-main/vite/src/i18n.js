@@ -7919,7 +7919,8 @@ resources.en.translation.salesWorkflow = {
     plusLineUpdateMode: 'Plus line update',
     renewPlusLine: 'Renew Plus line',
     loyaltyPointsUsed: 'Points to use',
-    loyaltyAmountRedeemed: 'Redeemed amount'
+    loyaltyAmountRedeemed: 'Redeemed amount',
+    paymentCommitmentDate: 'Payment commitment date'
   },
   options: {
     createNewCustomer: 'Create new customer',
@@ -7959,6 +7960,7 @@ resources.en.translation.salesWorkflow = {
 	    openSubscription: 'Open subscription',
 	    openInvoice: 'Open invoice',
 	    openLicenses: 'Open licenses',
+	    openPaymentCommitment: 'Open payment commitment',
 	    generateLineId: 'Generate Line ID',
 	    regenerateLineId: 'Regenerate'
 	  },
@@ -7993,7 +7995,9 @@ resources.en.translation.salesWorkflow = {
     plusLineUpdateMode: 'Plus line update',
     availablePoints: 'Available points',
     loyaltyApplied: 'Points applied',
-    invoiceNetAmount: 'Net invoice'
+    invoiceNetAmount: 'Net invoice',
+    paymentCommitmentDate: 'Promise date',
+    paymentCommitmentAmount: 'Credit amount'
   },
   status: {
     available: 'Available',
@@ -8011,6 +8015,7 @@ resources.en.translation.salesWorkflow = {
     line: 'Line',
     subscription: 'Subscription',
     invoice: 'Invoice',
+    paymentCommitment: 'Payment commitment',
     newLicenses: 'New licenses'
   },
   messages: {
@@ -8069,7 +8074,13 @@ resources.en.translation.salesWorkflow = {
     selectReplacementPlusLine: 'Select the replacement Plus line.',
     sameReplacementLines: 'Main line and Plus line cannot be the same.',
     renewPlusLineHelper: 'Keep it off if this Plus line is reused with other customers.',
-    removePlusLineWarning: 'The previous Plus line will not be modified; only the subscription will be left without Plus line.'
+    removePlusLineWarning: 'The previous Plus line will not be modified; only the subscription will be left without Plus line.',
+    paymentCommitmentDateHelper: 'The invoice remains pending until the commitment is closed.',
+    paymentCommitmentDateRequired: 'Select a payment commitment date.',
+    paymentCommitmentAmountInvalid: 'Credit amount must be greater than zero.',
+    creditFiadoFormSummary: 'This will create a pending invoice and a payment commitment for {{amount}}. Loyalty points will not be awarded.',
+    creditFiadoNoLoyalty: 'Credit / Fiado payments do not accrue or redeem loyalty points.',
+    creditFiadoPreview: 'This operation will create a pending invoice and a payment commitment. Loyalty points are not awarded for credit payments.'
 	  },
   workflowTypes: {
     renewal: 'renewal',
@@ -8088,7 +8099,8 @@ resources.en.translation.salesWorkflow = {
     'Link pago': 'Payment link',
     'Debito Automatico': 'Automatic debit',
     Cryptocurrency: 'Cryptocurrency',
-    'Loyalty Points': 'Loyalty points'
+    'Loyalty Points': 'Loyalty points',
+    CREDIT_FIADO: 'Credit / Fiado'
   },
   fallbacks: {
     bank: 'Bank',
@@ -8206,7 +8218,8 @@ resources.es.translation.salesWorkflow = {
     plusLineUpdateMode: 'Actualización línea Plus',
     renewPlusLine: 'Renovar línea Plus',
     loyaltyPointsUsed: 'Puntos a usar',
-    loyaltyAmountRedeemed: 'Monto redimido'
+    loyaltyAmountRedeemed: 'Monto redimido',
+    paymentCommitmentDate: 'Fecha de compromiso de pago'
   },
   options: {
     createNewCustomer: 'Crear cliente nuevo',
@@ -8246,6 +8259,7 @@ resources.es.translation.salesWorkflow = {
 	    openSubscription: 'Abrir suscripción',
 	    openInvoice: 'Abrir factura',
 	    openLicenses: 'Abrir licencias',
+	    openPaymentCommitment: 'Abrir compromiso de pago',
 	    generateLineId: 'Generar Line ID',
 	    regenerateLineId: 'Regenerar'
 	  },
@@ -8280,7 +8294,9 @@ resources.es.translation.salesWorkflow = {
     plusLineUpdateMode: 'Actualización línea Plus',
     availablePoints: 'Puntos disponibles',
     loyaltyApplied: 'Puntos aplicados',
-    invoiceNetAmount: 'Neto factura'
+    invoiceNetAmount: 'Neto factura',
+    paymentCommitmentDate: 'Fecha prometida',
+    paymentCommitmentAmount: 'Monto fiado'
   },
   status: {
     available: 'Disponible',
@@ -8298,6 +8314,7 @@ resources.es.translation.salesWorkflow = {
     line: 'Línea',
     subscription: 'Suscripción',
     invoice: 'Factura',
+    paymentCommitment: 'Compromiso de pago',
     newLicenses: 'Licencias nuevas'
   },
   messages: {
@@ -8356,7 +8373,13 @@ resources.es.translation.salesWorkflow = {
     selectReplacementPlusLine: 'Selecciona la nueva línea Plus.',
     sameReplacementLines: 'La línea principal y la línea Plus no pueden ser la misma.',
     renewPlusLineHelper: 'Déjalo apagado si esta línea Plus se reutiliza con otros clientes.',
-    removePlusLineWarning: 'La línea Plus anterior no será modificada; solo la suscripción quedará sin línea Plus.'
+    removePlusLineWarning: 'La línea Plus anterior no será modificada; solo la suscripción quedará sin línea Plus.',
+    paymentCommitmentDateHelper: 'La factura queda pendiente hasta cerrar el compromiso.',
+    paymentCommitmentDateRequired: 'Selecciona una fecha de compromiso de pago.',
+    paymentCommitmentAmountInvalid: 'El monto fiado debe ser mayor que cero.',
+    creditFiadoFormSummary: 'Esto creará una factura pendiente y un compromiso de pago por {{amount}}. No acreditará puntos.',
+    creditFiadoNoLoyalty: 'Los pagos Crédito / Fiado no acumulan ni redimen puntos de lealtad.',
+    creditFiadoPreview: 'Esta operación creará una factura pendiente y un compromiso de pago. Los pagos fiados no acreditan puntos.'
 	  },
   workflowTypes: {
     renewal: 'renovación',
@@ -8375,7 +8398,8 @@ resources.es.translation.salesWorkflow = {
     'Link pago': 'Link de pago',
     'Debito Automatico': 'Débito automático',
     Cryptocurrency: 'Criptomoneda',
-    'Loyalty Points': 'Puntos de lealtad'
+    'Loyalty Points': 'Puntos de lealtad',
+    CREDIT_FIADO: 'Crédito / Fiado'
   },
   fallbacks: {
     bank: 'Banco',

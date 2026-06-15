@@ -79,6 +79,7 @@ const RENEWAL_LINE_ASSOCIATE_ONLY = 'ASSOCIATE_ONLY';
 const RENEWAL_LINE_ASSOCIATE_AND_UPDATE_EXPIRATION = 'ASSOCIATE_AND_UPDATE_EXPIRATION';
 const RENEWAL_BASE_CURRENT_EXPIRATION = 'CURRENT_EXPIRATION';
 const RENEWAL_BASE_TODAY = 'TODAY';
+const PAYMENT_METHOD_CREDIT_FIADO = 'CREDIT_FIADO';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -297,6 +298,7 @@ const defaultOptions = {
   ],
   paymentMethods: [
     { code: 'Bank Transfer', label: 'Transferencia bancaria', requiresBank: true, active: true, order: 10 },
+    { code: PAYMENT_METHOD_CREDIT_FIADO, label: 'Crédito / Fiado', requiresBank: false, requiresPaymentCommitment: true, active: true, order: 15 },
     { code: 'Paypal', label: 'PayPal', requiresBank: false, active: true, order: 20 },
     { code: 'Ecommerce', label: 'Ecommerce', requiresBank: false, active: true, order: 30 },
     { code: 'Link pago', label: 'Link de pago', requiresBank: false, active: true, order: 40 },
@@ -377,6 +379,10 @@ const defaultActivation = (options = defaultOptions) => ({
     bankId: '',
     notes: ''
   },
+  paymentCommitment: {
+    promisedPaymentDate: '',
+    notes: ''
+  },
   desiredDeviceCount: 1
 });
 
@@ -416,6 +422,10 @@ const defaultRenewal = (options = defaultOptions) => ({
     packageId: '',
     paymentMethod: options.defaults?.paymentMethod || 'Ecommerce',
     bankId: '',
+    notes: ''
+  },
+  paymentCommitment: {
+    promisedPaymentDate: '',
     notes: ''
   }
 });
@@ -469,6 +479,17 @@ function normalizeServiceOption(item = {}, fallbackPrefix = 'Servicio') {
 
 function normalizeWorkflowOption(item = {}, fallbackPrefix = 'Opción') {
   return normalizeCatalogOption(item, fallbackPrefix);
+}
+
+function mergeOptionsByCode(primary = [], fallback = []) {
+  const merged = new Map();
+  fallback.forEach((item) => {
+    if (item?.code) merged.set(String(item.code), item);
+  });
+  primary.forEach((item) => {
+    if (item?.code) merged.set(String(item.code), item);
+  });
+  return Array.from(merged.values());
 }
 
 function normalizeLineOption(item = {}) {
@@ -554,6 +575,11 @@ function paymentRequiresBank(options, code) {
   return Boolean(method?.requiresBank) || code === 'Bank Transfer';
 }
 
+function paymentRequiresCommitment(options, code) {
+  const method = selectedPaymentMethod(options, code);
+  return Boolean(method?.requiresPaymentCommitment) || code === PAYMENT_METHOD_CREDIT_FIADO;
+}
+
 function setNestedValue(setState, section, field, value) {
   setState((prev) => ({
     ...prev,
@@ -579,6 +605,7 @@ function makeLicenses(count, billing) {
 
 function buildInvoice(invoice, packageId, amount, options, overrides = {}) {
   const requiresBank = paymentRequiresBank(options, invoice.paymentMethod);
+  const requiresCommitment = paymentRequiresCommitment(options, invoice.paymentMethod);
   return {
     ...invoice,
     ...overrides,
@@ -586,15 +613,34 @@ function buildInvoice(invoice, packageId, amount, options, overrides = {}) {
     packageId: toNumberOrNull(invoice.packageId) || toNumberOrNull(packageId),
     amountPaid: cleanMoney(invoice.amountPaid) ?? cleanMoney(amount) ?? 0,
     amountDiscount: cleanMoney(invoice.amountDiscount) ?? 0,
-    loyaltyPointsUsed: toNumberOrNull(overrides.loyaltyPointsUsed ?? invoice.loyaltyPointsUsed) || 0,
-    loyaltyAmountRedeemed: cleanMoney(overrides.loyaltyAmountRedeemed ?? invoice.loyaltyAmountRedeemed) ?? 0,
+    status: requiresCommitment ? 'PENDING' : invoice.status || options.defaults?.paymentStatus || 'PAID',
+    loyaltyPointsUsed: requiresCommitment ? 0 : toNumberOrNull(overrides.loyaltyPointsUsed ?? invoice.loyaltyPointsUsed) || 0,
+    loyaltyAmountRedeemed: requiresCommitment ? 0 : cleanMoney(overrides.loyaltyAmountRedeemed ?? invoice.loyaltyAmountRedeemed) ?? 0,
     bankId: requiresBank ? toNumberOrNull(invoice.bankId) : null
+  };
+}
+
+function paymentCommitmentAmountDue(invoice = {}) {
+  const amountPaid = cleanMoney(invoice.amountPaid) ?? 0;
+  const discount = cleanMoney(invoice.amountDiscount) ?? 0;
+  return Number((amountPaid - discount).toFixed(2));
+}
+
+function buildPaymentCommitment(form, builtInvoice, options) {
+  if (!paymentRequiresCommitment(options, builtInvoice?.paymentMethod)) return null;
+  return {
+    ...(form.paymentCommitment || {}),
+    promisedPaymentDate: form.paymentCommitment?.promisedPaymentDate || '',
+    amountDue: paymentCommitmentAmountDue(builtInvoice),
+    amountPaid: 0,
+    status: 'PENDING'
   };
 }
 
 function buildActivationPayload(form, options, withIdempotency = false) {
   const subscriptionPackageId = toNumberOrNull(form.subscription.packageId);
   const amount = cleanMoney(form.subscription.amount);
+  const invoice = buildInvoice(form.invoice, subscriptionPackageId, amount, options);
   return {
     ...(withIdempotency ? { idempotencyKey: newIdempotencyKey() } : {}),
     customerMode: form.customerMode || CUSTOMER_CREATE_NEW,
@@ -621,7 +667,8 @@ function buildActivationPayload(form, options, withIdempotency = false) {
       discount: cleanMoney(form.subscription.discount) ?? 0,
       automaticPay: Boolean(form.subscription.automaticPay)
     },
-    invoice: buildInvoice(form.invoice, subscriptionPackageId, amount, options),
+    invoice,
+    paymentCommitment: buildPaymentCommitment(form, invoice, options),
     licenses: makeLicenses(form.desiredDeviceCount, form.subscription.billing)
   };
 }
@@ -629,6 +676,7 @@ function buildActivationPayload(form, options, withIdempotency = false) {
 function buildRenewalPayload(form, options, withIdempotency = false, invoiceOverrides = {}) {
   const packageId = toNumberOrNull(form.subscription.packageId);
   const amount = cleanMoney(form.subscription.amount);
+  const invoice = buildInvoice(form.invoice, packageId, amount, options, invoiceOverrides);
   return {
     ...(withIdempotency ? { idempotencyKey: newIdempotencyKey() } : {}),
     subscriptionId: toNumberOrNull(form.subscriptionId),
@@ -658,7 +706,8 @@ function buildRenewalPayload(form, options, withIdempotency = false, invoiceOver
       renewalDate: form.subscription.renewalDate || null,
       automaticPay: Boolean(form.subscription.automaticPay)
     },
-    invoice: buildInvoice(form.invoice, packageId, amount, options, invoiceOverrides),
+    invoice,
+    paymentCommitment: buildPaymentCommitment(form, invoice, options),
     newLicenses: []
   };
 }
@@ -900,7 +949,35 @@ function PreviewCard({ preview }) {
               <MiniMetric label={t('salesWorkflow.metrics.invoiceNetAmount', 'Net invoice')} value={formatMoney(preview.invoiceNetAmount)} icon={<PaidOutlinedIcon fontSize="small" />} color="info" />
             </Grid>
           ) : null}
+          {preview.creditPayment ? (
+            <>
+              <Grid item xs={12} sm={6} md={4}>
+                <MiniMetric
+                  label={t('salesWorkflow.metrics.paymentCommitmentDate', 'Promise date')}
+                  value={formatDate(preview.paymentCommitmentDate)}
+                  icon={<CreditScoreIcon fontSize="small" />}
+                  color="warning"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <MiniMetric
+                  label={t('salesWorkflow.metrics.paymentCommitmentAmount', 'Credit amount')}
+                  value={formatMoney(preview.paymentCommitmentAmountDue)}
+                  icon={<PaidOutlinedIcon fontSize="small" />}
+                  color="warning"
+                />
+              </Grid>
+            </>
+          ) : null}
         </Grid>
+        {preview.creditPayment ? (
+          <Alert severity="warning" icon={<CreditScoreIcon />}>
+            {t(
+              'salesWorkflow.messages.creditFiadoPreview',
+              'This operation will create a pending invoice and a payment commitment. Loyalty points are not awarded for credit payments.'
+            )}
+          </Alert>
+        ) : null}
         {preview.currentPackageName && preview.currentPackageName !== preview.newPackageName ? (
           <Alert severity="info">
             {t('salesWorkflow.messages.changedPlan', 'Subscription package change')}: {preview.currentPackageName} → {preview.newPackageName}
@@ -1169,9 +1246,10 @@ function ResultCard({ result }) {
             [t('salesWorkflow.result.line', 'Line'), result.lineId],
             [t('salesWorkflow.result.subscription', 'Subscription'), result.subscriptionId],
             [t('salesWorkflow.result.invoice', 'Invoice'), result.invoiceId],
+            [t('salesWorkflow.result.paymentCommitment', 'Payment commitment'), result.paymentCommitmentId],
             [t('salesWorkflow.result.newLicenses', 'New licenses'), result.createdLicenseIds?.length || 0]
           ].map(([label, value]) => (
-            <Grid item xs={12} sm={6} md={2.4} key={label}>
+            <Grid item xs={12} sm={6} md={2} key={label}>
               <Typography variant="caption" color="text.secondary">
                 {label}
               </Typography>
@@ -1194,6 +1272,11 @@ function ResultCard({ result }) {
           <Button size="small" sx={actionButtonSx} onClick={() => navigate('/liontv/licenses')}>
             {t('salesWorkflow.buttons.openLicenses', 'Open licenses')}
           </Button>
+          {result.paymentCommitmentId ? (
+            <Button size="small" sx={actionButtonSx} onClick={() => navigate('/liontv/payment-commitments')}>
+              {t('salesWorkflow.buttons.openPaymentCommitment', 'Open payment commitment')}
+            </Button>
+          ) : null}
           <Button size="small" sx={actionButtonSx} startIcon={<ContentCopyIcon />} onClick={copyMessage}>
             {t('salesWorkflow.buttons.copyWhatsapp', 'Copy WhatsApp')}
           </Button>
@@ -1298,12 +1381,16 @@ export default function SalesWorkflowLionTv() {
   const renewalLoyaltyPointsExceeded = renewalLoyaltyPointsRequested > selectedRenewalAvailablePoints;
   const renewalLoyaltyProgramInactive = Boolean(selectedRenewalCustomerId) && !loyaltyConfigLoading && !loyaltyConfig?.active;
   const renewalLoyaltyAmountExceeded = renewalInvoiceNetAfterLoyalty < 0;
+  const activationRequiresPaymentCommitment = paymentRequiresCommitment(options, activation.invoice.paymentMethod);
+  const renewalRequiresPaymentCommitment = paymentRequiresCommitment(options, renewal.invoice.paymentMethod);
+  const activationCreditAmountDue = useMemo(() => paymentCommitmentAmountDue(activation.invoice), [activation.invoice.amountDiscount, activation.invoice.amountPaid]);
+  const renewalCreditAmountDue = useMemo(() => paymentCommitmentAmountDue(renewal.invoice), [renewal.invoice.amountDiscount, renewal.invoice.amountPaid]);
   const renewalInvoiceLoyaltyOverrides = useMemo(
     () => ({
-      loyaltyPointsUsed: renewalLoyaltyPointsRequested,
-      loyaltyAmountRedeemed: renewalLoyaltyPreviewAmount
+      loyaltyPointsUsed: renewalRequiresPaymentCommitment ? 0 : renewalLoyaltyPointsRequested,
+      loyaltyAmountRedeemed: renewalRequiresPaymentCommitment ? 0 : renewalLoyaltyPreviewAmount
     }),
-    [renewalLoyaltyPointsRequested, renewalLoyaltyPreviewAmount]
+    [renewalLoyaltyPointsRequested, renewalLoyaltyPreviewAmount, renewalRequiresPaymentCommitment]
   );
   const activationRequiresBank = paymentRequiresBank(options, activation.invoice.paymentMethod);
   const renewalRequiresBank = paymentRequiresBank(options, renewal.invoice.paymentMethod);
@@ -1340,6 +1427,44 @@ export default function SalesWorkflowLionTv() {
       return value ? option?.label || value : t('salesWorkflow.messages.selectLineProvider', 'Select a provider');
     },
     [lineProviderOptions, t]
+  );
+
+  const normalizeInvoiceForPaymentMethod = useCallback(
+    (invoice, method) => {
+      const requiresCommitment = paymentRequiresCommitment(options, method);
+      const requiresBank = paymentRequiresBank(options, method);
+      return {
+        ...invoice,
+        paymentMethod: method,
+        status: requiresCommitment ? 'PENDING' : invoice.status === 'PENDING' ? options.defaults?.paymentStatus || 'PAID' : invoice.status,
+        bankId: requiresBank ? invoice.bankId : '',
+        loyaltyPointsUsed: requiresCommitment ? 0 : invoice.loyaltyPointsUsed,
+        loyaltyAmountRedeemed: requiresCommitment ? 0 : invoice.loyaltyAmountRedeemed
+      };
+    },
+    [options]
+  );
+
+  const handleActivationPaymentMethodChange = useCallback(
+    (method) => {
+      setActivation((prev) => ({
+        ...prev,
+        invoice: normalizeInvoiceForPaymentMethod(prev.invoice, method)
+      }));
+      clearPreview();
+    },
+    [normalizeInvoiceForPaymentMethod]
+  );
+
+  const handleRenewalPaymentMethodChange = useCallback(
+    (method) => {
+      setRenewal((prev) => ({
+        ...prev,
+        invoice: normalizeInvoiceForPaymentMethod(prev.invoice, method)
+      }));
+      clearPreview();
+    },
+    [normalizeInvoiceForPaymentMethod]
   );
 
   const loadLineOptions = useCallback(async () => {
@@ -1450,7 +1575,7 @@ export default function SalesWorkflowLionTv() {
         services: loadedServices.length ? loadedServices : workflowOptions.services || [],
         customerChannels: workflowOptions.customerChannels?.length ? workflowOptions.customerChannels : defaultOptions.customerChannels,
         lineProviders: workflowOptions.lineProviders?.length ? workflowOptions.lineProviders : defaultOptions.lineProviders,
-        paymentMethods: workflowOptions.paymentMethods?.length ? workflowOptions.paymentMethods : defaultOptions.paymentMethods,
+        paymentMethods: mergeOptionsByCode(workflowOptions.paymentMethods || [], defaultOptions.paymentMethods),
         defaults: { ...defaultOptions.defaults, ...(workflowOptions.defaults || {}) }
       };
 
@@ -1562,6 +1687,58 @@ export default function SalesWorkflowLionTv() {
       }
     }));
   }, [loyaltyConfig?.active, loyaltyConfigLoading, renewal.invoice.loyaltyAmountRedeemed, renewal.invoice.loyaltyPointsUsed]);
+
+  useEffect(() => {
+    if (!activationRequiresPaymentCommitment) return;
+    if (
+      activation.invoice.status === 'PENDING' &&
+      !Number(activation.invoice.loyaltyPointsUsed || 0) &&
+      !Number(activation.invoice.loyaltyAmountRedeemed || 0)
+    ) {
+      return;
+    }
+    setActivation((prev) => ({
+      ...prev,
+      invoice: {
+        ...prev.invoice,
+        status: 'PENDING',
+        loyaltyPointsUsed: 0,
+        loyaltyAmountRedeemed: 0,
+        bankId: ''
+      }
+    }));
+  }, [
+    activation.invoice.loyaltyAmountRedeemed,
+    activation.invoice.loyaltyPointsUsed,
+    activation.invoice.status,
+    activationRequiresPaymentCommitment
+  ]);
+
+  useEffect(() => {
+    if (!renewalRequiresPaymentCommitment) return;
+    if (
+      renewal.invoice.status === 'PENDING' &&
+      !Number(renewal.invoice.loyaltyPointsUsed || 0) &&
+      !Number(renewal.invoice.loyaltyAmountRedeemed || 0)
+    ) {
+      return;
+    }
+    setRenewal((prev) => ({
+      ...prev,
+      invoice: {
+        ...prev.invoice,
+        status: 'PENDING',
+        loyaltyPointsUsed: 0,
+        loyaltyAmountRedeemed: 0,
+        bankId: ''
+      }
+    }));
+  }, [
+    renewal.invoice.loyaltyAmountRedeemed,
+    renewal.invoice.loyaltyPointsUsed,
+    renewal.invoice.status,
+    renewalRequiresPaymentCommitment
+  ]);
 
   useEffect(() => {
     if (tab === 0 && activeStep === 1 && activation.mainLineMode === MAIN_LINE_USE_EXISTING && !lineOptions.length && !linesLoading) {
@@ -1846,6 +2023,7 @@ export default function SalesWorkflowLionTv() {
   };
 
   const validateRenewalLoyalty = () => {
+    if (renewalRequiresPaymentCommitment) return true;
     if (renewalLoyaltyProgramInactive && renewalLoyaltyPointsRequested > 0) {
       enqueueSnackbar(t('salesWorkflow.messages.loyaltyInactive', 'The loyalty program is inactive for this account.'), {
         variant: 'warning'
@@ -1862,6 +2040,19 @@ export default function SalesWorkflowLionTv() {
       enqueueSnackbar(t('salesWorkflow.messages.loyaltyAmountExceeded', 'Points exceed the net invoice amount.'), {
         variant: 'warning'
       });
+      return false;
+    }
+    return true;
+  };
+
+  const validatePaymentCommitment = (form, requiresCommitment, amountDue) => {
+    if (!requiresCommitment) return true;
+    if (!form.paymentCommitment?.promisedPaymentDate) {
+      enqueueSnackbar(t('salesWorkflow.messages.paymentCommitmentDateRequired', 'Select a payment commitment date.'), { variant: 'warning' });
+      return false;
+    }
+    if (Number(amountDue || 0) <= 0) {
+      enqueueSnackbar(t('salesWorkflow.messages.paymentCommitmentAmountInvalid', 'Credit amount must be greater than zero.'), { variant: 'warning' });
       return false;
     }
     return true;
@@ -1886,6 +2077,7 @@ export default function SalesWorkflowLionTv() {
   };
 
   const handleActivationPreview = async () => {
+    if (!validatePaymentCommitment(activation, activationRequiresPaymentCommitment, activationCreditAmountDue)) return;
     setBusy(true);
     setResult(null);
     try {
@@ -1899,6 +2091,7 @@ export default function SalesWorkflowLionTv() {
   };
 
   const handleActivationExecute = async () => {
+    if (!validatePaymentCommitment(activation, activationRequiresPaymentCommitment, activationCreditAmountDue)) return;
     setBusy(true);
     try {
       const response = await executeActivation(buildActivationPayload(activation, options, true));
@@ -1920,6 +2113,7 @@ export default function SalesWorkflowLionTv() {
   const handleRenewalPreview = async () => {
     if (!validateRenewalLoyalty()) return;
     if (!validateRenewalLines()) return;
+    if (!validatePaymentCommitment(renewal, renewalRequiresPaymentCommitment, renewalCreditAmountDue)) return;
     setBusy(true);
     setResult(null);
     try {
@@ -1935,6 +2129,7 @@ export default function SalesWorkflowLionTv() {
   const handleRenewalExecute = async () => {
     if (!validateRenewalLoyalty()) return;
     if (!validateRenewalLines()) return;
+    if (!validatePaymentCommitment(renewal, renewalRequiresPaymentCommitment, renewalCreditAmountDue)) return;
     setBusy(true);
     try {
       const response = await executeRenewal(buildRenewalPayload(renewal, options, true, renewalInvoiceLoyaltyOverrides));
@@ -2702,10 +2897,10 @@ export default function SalesWorkflowLionTv() {
 	                          renderInput={(params) => <TextField {...params} label={t('salesWorkflow.fields.service', 'Service')} sx={fieldSx} />}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={activationRequiresBank ? 6 : 12} lg={activationRequiresBank ? 3 : 6}>
+                      <Grid item xs={12} sm={activationRequiresBank || activationRequiresPaymentCommitment ? 6 : 12} lg={activationRequiresBank || activationRequiresPaymentCommitment ? 3 : 6}>
                         <FormControl fullWidth sx={fieldSx}>
 	                          <InputLabel>{t('salesWorkflow.fields.paymentMethod', 'Payment method')}</InputLabel>
-	                          <Select label={t('salesWorkflow.fields.paymentMethod', 'Payment method')} value={activation.invoice.paymentMethod} onChange={(e) => setNestedValue(setActivation, 'invoice', 'paymentMethod', e.target.value)}>
+	                          <Select label={t('salesWorkflow.fields.paymentMethod', 'Payment method')} value={activation.invoice.paymentMethod} onChange={(e) => handleActivationPaymentMethodChange(e.target.value)}>
 	                            {paymentMethods.map((method) => (
 	                              <MenuItem key={method.code} value={method.code}>
 	                                {paymentMethodLabel(method)}
@@ -2725,26 +2920,56 @@ export default function SalesWorkflowLionTv() {
                           />
                         </Grid>
                       ) : null}
+                      {activationRequiresPaymentCommitment ? (
+                        <Grid item xs={12} sm={6} lg={3}>
+                          <TextField
+                            fullWidth
+                            required
+                            type="date"
+                            label={t('salesWorkflow.fields.paymentCommitmentDate', 'Payment commitment date')}
+                            sx={fieldSx}
+                            value={activation.paymentCommitment?.promisedPaymentDate || ''}
+                            onChange={(e) => setNestedValue(setActivation, 'paymentCommitment', 'promisedPaymentDate', e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                            helperText={t('salesWorkflow.messages.paymentCommitmentDateHelper', 'The invoice remains pending until the commitment is closed.')}
+                          />
+                        </Grid>
+                      ) : null}
                       <Grid item xs={12}>
 	                        <TextField fullWidth multiline minRows={2} label={t('salesWorkflow.fields.notes', 'Invoice notes')} sx={fieldSx} value={activation.invoice.notes} onChange={(e) => setNestedValue(setActivation, 'invoice', 'notes', e.target.value)} />
 	                      </Grid>
+                      {activationRequiresPaymentCommitment ? (
+                        <Grid item xs={12}>
+                          <Alert severity="warning" icon={<CreditScoreIcon />}>
+                            {t('salesWorkflow.messages.creditFiadoFormSummary', 'This will create a pending invoice and a payment commitment for {{amount}}. Loyalty points will not be awarded.', {
+                              amount: formatMoney(activationCreditAmountDue)
+                            })}
+                          </Alert>
+                        </Grid>
+                      ) : null}
 	                    </Grid>
-                    <LoyaltyRedemptionPanel
-                      t={t}
-                      config={loyaltyConfig}
-                      configLoading={loyaltyConfigLoading}
-                      balanceLoading={false}
-                      customerId={null}
-                      availablePoints={0}
-                      pointsValue={0}
-                      onPointsChange={() => {}}
-                      previewAmount={0}
-                      netAmount={Number(activation.invoice.amountPaid || 0) - Number(activation.invoice.amountDiscount || 0)}
-                      pointsExceeded={false}
-                      amountExceeded={false}
-                      programInactive={false}
-                      disabledInfo
-                    />
+                    {activationRequiresPaymentCommitment ? (
+                      <Alert severity="info" icon={<AutoAwesomeIcon />}>
+                        {t('salesWorkflow.messages.creditFiadoNoLoyalty', 'Credit / Fiado payments do not accrue or redeem loyalty points.')}
+                      </Alert>
+                    ) : (
+                      <LoyaltyRedemptionPanel
+                        t={t}
+                        config={loyaltyConfig}
+                        configLoading={loyaltyConfigLoading}
+                        balanceLoading={false}
+                        customerId={null}
+                        availablePoints={0}
+                        pointsValue={0}
+                        onPointsChange={() => {}}
+                        previewAmount={0}
+                        netAmount={Number(activation.invoice.amountPaid || 0) - Number(activation.invoice.amountDiscount || 0)}
+                        pointsExceeded={false}
+                        amountExceeded={false}
+                        programInactive={false}
+                        disabledInfo
+                      />
+                    )}
 	                  </Section>
                 </Grid>
                 <Grid item xs={12} lg={4}>
@@ -3293,10 +3518,10 @@ export default function SalesWorkflowLionTv() {
 	                          renderInput={(params) => <TextField {...params} label={t('salesWorkflow.fields.service', 'Service')} sx={fieldSx} />}
                         />
                       </Grid>
-                      <Grid item xs={12} sm={renewalRequiresBank ? 6 : 12} lg={renewalRequiresBank ? 3 : 6}>
+                      <Grid item xs={12} sm={renewalRequiresBank || renewalRequiresPaymentCommitment ? 6 : 12} lg={renewalRequiresBank || renewalRequiresPaymentCommitment ? 3 : 6}>
                         <FormControl fullWidth sx={fieldSx}>
                           <InputLabel>{t('salesWorkflow.fields.paymentMethod', 'Payment method')}</InputLabel>
-                          <Select label={t('salesWorkflow.fields.paymentMethod', 'Payment method')} value={renewal.invoice.paymentMethod} onChange={(e) => setNestedValue(setRenewal, 'invoice', 'paymentMethod', e.target.value)}>
+                          <Select label={t('salesWorkflow.fields.paymentMethod', 'Payment method')} value={renewal.invoice.paymentMethod} onChange={(e) => handleRenewalPaymentMethodChange(e.target.value)}>
                             {paymentMethods.map((method) => (
                               <MenuItem key={method.code} value={method.code}>
                                 {paymentMethodLabel(method)}
@@ -3316,25 +3541,55 @@ export default function SalesWorkflowLionTv() {
                           />
                         </Grid>
                       ) : null}
+                      {renewalRequiresPaymentCommitment ? (
+                        <Grid item xs={12} sm={6} lg={3}>
+                          <TextField
+                            fullWidth
+                            required
+                            type="date"
+                            label={t('salesWorkflow.fields.paymentCommitmentDate', 'Payment commitment date')}
+                            sx={fieldSx}
+                            value={renewal.paymentCommitment?.promisedPaymentDate || ''}
+                            onChange={(e) => setNestedValue(setRenewal, 'paymentCommitment', 'promisedPaymentDate', e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                            helperText={t('salesWorkflow.messages.paymentCommitmentDateHelper', 'The invoice remains pending until the commitment is closed.')}
+                          />
+                        </Grid>
+                      ) : null}
 	                      <Grid item xs={12}>
 	                        <TextField fullWidth multiline minRows={2} label={t('salesWorkflow.fields.notes', 'Invoice notes')} sx={fieldSx} value={renewal.invoice.notes} onChange={(e) => setNestedValue(setRenewal, 'invoice', 'notes', e.target.value)} />
 	                      </Grid>
+                      {renewalRequiresPaymentCommitment ? (
+                        <Grid item xs={12}>
+                          <Alert severity="warning" icon={<CreditScoreIcon />}>
+                            {t('salesWorkflow.messages.creditFiadoFormSummary', 'This will create a pending invoice and a payment commitment for {{amount}}. Loyalty points will not be awarded.', {
+                              amount: formatMoney(renewalCreditAmountDue)
+                            })}
+                          </Alert>
+                        </Grid>
+                      ) : null}
 	                    </Grid>
-                    <LoyaltyRedemptionPanel
-                      t={t}
-                      config={loyaltyConfig}
-                      configLoading={loyaltyConfigLoading}
-                      balanceLoading={loyaltyCustomerLoading}
-                      customerId={selectedRenewalCustomerId}
-                      availablePoints={selectedRenewalAvailablePoints}
-                      pointsValue={renewal.invoice.loyaltyPointsUsed}
-                      onPointsChange={(e) => setNestedValue(setRenewal, 'invoice', 'loyaltyPointsUsed', e.target.value)}
-                      previewAmount={renewalLoyaltyPreviewAmount}
-                      netAmount={renewalInvoiceNetAfterLoyalty}
-                      pointsExceeded={renewalLoyaltyPointsExceeded}
-                      amountExceeded={renewalLoyaltyAmountExceeded}
-                      programInactive={renewalLoyaltyProgramInactive}
-                    />
+                    {renewalRequiresPaymentCommitment ? (
+                      <Alert severity="info" icon={<AutoAwesomeIcon />}>
+                        {t('salesWorkflow.messages.creditFiadoNoLoyalty', 'Credit / Fiado payments do not accrue or redeem loyalty points.')}
+                      </Alert>
+                    ) : (
+                      <LoyaltyRedemptionPanel
+                        t={t}
+                        config={loyaltyConfig}
+                        configLoading={loyaltyConfigLoading}
+                        balanceLoading={loyaltyCustomerLoading}
+                        customerId={selectedRenewalCustomerId}
+                        availablePoints={selectedRenewalAvailablePoints}
+                        pointsValue={renewal.invoice.loyaltyPointsUsed}
+                        onPointsChange={(e) => setNestedValue(setRenewal, 'invoice', 'loyaltyPointsUsed', e.target.value)}
+                        previewAmount={renewalLoyaltyPreviewAmount}
+                        netAmount={renewalInvoiceNetAfterLoyalty}
+                        pointsExceeded={renewalLoyaltyPointsExceeded}
+                        amountExceeded={renewalLoyaltyAmountExceeded}
+                        programInactive={renewalLoyaltyProgramInactive}
+                      />
+                    )}
                     {Number(renewal.desiredDeviceCount || 0) < Number(renewal.currentDeviceCount || 0) ? (
                       <Alert severity="warning">
                         {t('salesWorkflow.messages.decreaseDevicesWarning', 'You are reducing devices. The system does not remove licenses automatically; this will remain for manual review.')}
