@@ -229,6 +229,13 @@ const DEFAULT_CONFIG = {
     }
   },
   features: { demoOnlineEnabled: true, referralsEnabled: true },
+  deviceSetup: {
+    enabled: true,
+    additionalLicensePayments: {
+      ONE_YEAR: { paypalUrl: '', cardUrl: '' },
+      LIFETIME: { paypalUrl: '', cardUrl: '' }
+    }
+  },
   content: { newMoviesUrl: '', newFutbolEventsUrl: '', featuredSportsEventsUrl: '' },
   stories: {
     enabled: true,
@@ -523,6 +530,20 @@ function normalizeConfig(payload) {
     home: { ...DEFAULT_CONFIG.home, ...(payload?.home || {}) },
     whatsapp: { ...DEFAULT_CONFIG.whatsapp, ...(payload?.whatsapp || {}) },
     features: { ...DEFAULT_CONFIG.features, ...(payload?.features || {}) },
+    deviceSetup: {
+      ...DEFAULT_CONFIG.deviceSetup,
+      ...(payload?.deviceSetup || {}),
+      additionalLicensePayments: {
+        ONE_YEAR: {
+          ...DEFAULT_CONFIG.deviceSetup.additionalLicensePayments.ONE_YEAR,
+          ...(payload?.deviceSetup?.additionalLicensePayments?.ONE_YEAR || {})
+        },
+        LIFETIME: {
+          ...DEFAULT_CONFIG.deviceSetup.additionalLicensePayments.LIFETIME,
+          ...(payload?.deviceSetup?.additionalLicensePayments?.LIFETIME || {})
+        }
+      }
+    },
     content: { ...DEFAULT_CONFIG.content, ...(payload?.content || {}) },
     stories: {
       ...DEFAULT_CONFIG.stories,
@@ -1775,6 +1796,77 @@ export default function EcommerceSettingsLionTv() {
               />
             </Grid>
           </Grid>
+        </SettingsSection>
+
+        <SettingsSection
+          title="Configuración de dispositivos"
+          description="Controla el módulo del ecommerce para que clientes registren dispositivos y links de pago para licencias adicionales."
+        >
+          <Stack spacing={2}>
+            <FormControlLabel
+              control={<Switch checked={Boolean(form.deviceSetup.enabled)} onChange={(event) => setPath(['deviceSetup', 'enabled'], event.target.checked)} />}
+              label="Permitir configuración autónoma de dispositivos"
+            />
+            <Alert severity={form.deviceSetup.enabled ? 'success' : 'info'}>
+              {form.deviceSetup.enabled
+                ? 'El ecommerce mostrará Configurar dispositivo y permitirá registrar solicitudes.'
+                : 'El ecommerce ocultará el módulo de configuración de dispositivos.'}
+            </Alert>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Stack spacing={2}>
+                      <Box>
+                        <Typography variant="h4">Licencia 1 Year</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Links que verá el cliente cuando no tenga cupos incluidos y seleccione licencia anual.
+                        </Typography>
+                      </Box>
+                      <TextField
+                        fullWidth
+                        label="PayPal 1 Year"
+                        value={form.deviceSetup.additionalLicensePayments.ONE_YEAR.paypalUrl}
+                        onChange={(event) => setPath(['deviceSetup', 'additionalLicensePayments', 'ONE_YEAR', 'paypalUrl'], event.target.value)}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Tarjeta 1 Year"
+                        value={form.deviceSetup.additionalLicensePayments.ONE_YEAR.cardUrl}
+                        onChange={(event) => setPath(['deviceSetup', 'additionalLicensePayments', 'ONE_YEAR', 'cardUrl'], event.target.value)}
+                      />
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Stack spacing={2}>
+                      <Box>
+                        <Typography variant="h4">Licencia Lifetime</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Links que verá el cliente cuando no tenga cupos incluidos y seleccione licencia lifetime.
+                        </Typography>
+                      </Box>
+                      <TextField
+                        fullWidth
+                        label="PayPal Lifetime"
+                        value={form.deviceSetup.additionalLicensePayments.LIFETIME.paypalUrl}
+                        onChange={(event) => setPath(['deviceSetup', 'additionalLicensePayments', 'LIFETIME', 'paypalUrl'], event.target.value)}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Tarjeta Lifetime"
+                        value={form.deviceSetup.additionalLicensePayments.LIFETIME.cardUrl}
+                        onChange={(event) => setPath(['deviceSetup', 'additionalLicensePayments', 'LIFETIME', 'cardUrl'], event.target.value)}
+                      />
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          </Stack>
         </SettingsSection>
 
         <SettingsSection title="Pagos y redirecciones" description="Links default y parámetros post-pago. Los links por variante se editan en cada plan.">

@@ -349,6 +349,15 @@ const liontv = {
           permission: { any: ['LIONTV_LICENSES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] }
         },
         {
+          id: 'liontv-device-setup-requests',
+          title: 'menu.deviceSetupRequests',
+          type: 'item',
+          url: '/liontv/device-setup-requests',
+          resellerVisible: false,
+          breadcrumbs: true,
+          permission: { any: ['ROLE_ADMIN', 'ADMIN'] }
+        },
+        {
           id: 'liontv-managed-accounts',
           title: 'menu.managedAccounts',
           type: 'item',

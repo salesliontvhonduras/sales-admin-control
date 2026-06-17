@@ -36,6 +36,7 @@ const ResellerWalletLionTv = Loadable(lazy(() => import('views/liontv/ResellerWa
 const ResellerSupportLionTv = Loadable(lazy(() => import('views/liontv/ResellerSupportLionTv')));
 const EcommerceContactRoutingLionTv = Loadable(lazy(() => import('views/liontv/EcommerceContactRoutingLionTv')));
 const EcommerceSettingsLionTv = Loadable(lazy(() => import('views/liontv/EcommerceSettingsLionTv')));
+const EcommerceDeviceSetupRequestsLionTv = Loadable(lazy(() => import('views/liontv/EcommerceDeviceSetupRequestsLionTv')));
 const VipCustomersLionTv = Loadable(lazy(() => import('views/liontv/VipCustomersLionTv')));
 const LoyaltyLionTv = Loadable(lazy(() => import('views/liontv/LoyaltyLionTv')));
 const RafflesLionTv = Loadable(lazy(() => import('views/liontv/RafflesLionTv')));
@@ -333,6 +334,10 @@ const MainRoutes = {
         {
           path: '/liontv/ecommerce-settings',
           element: protectPage({ any: ['ROLE_ADMIN', 'ADMIN'] }, <EcommerceSettingsLionTv />, '/liontv/dashboard', true)
+        },
+        {
+          path: '/liontv/device-setup-requests',
+          element: protectPage({ any: ['ROLE_ADMIN', 'ADMIN'] }, <EcommerceDeviceSetupRequestsLionTv />, '/liontv/dashboard', true)
         },
         {
           path: '/liontv/business-purchases',

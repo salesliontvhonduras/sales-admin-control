@@ -18,3 +18,15 @@ export async function uploadAdminEcommerceStoryMedia(file, config = {}) {
   formData.append('file', file, file.name || 'story-media');
   return unwrap(await lionTvFormApi.post('/ecommerce-site/v1/admin/story-media', formData, config));
 }
+
+export async function listAdminDeviceSetupRequests(params = {}, config = {}) {
+  return unwrap(await lionTvApi.get('/ecommerce-site/v1/admin/device-setup-requests', { ...config, params }));
+}
+
+export async function confirmAdminDeviceSetupPayment(requestId, config = {}) {
+  return unwrap(await lionTvApi.post(`/ecommerce-site/v1/admin/device-setup-requests/${requestId}/confirm-payment`, null, config));
+}
+
+export async function retryAdminDeviceSetupRequest(requestId, config = {}) {
+  return unwrap(await lionTvApi.post(`/ecommerce-site/v1/admin/device-setup-requests/${requestId}/retry`, null, config));
+}
