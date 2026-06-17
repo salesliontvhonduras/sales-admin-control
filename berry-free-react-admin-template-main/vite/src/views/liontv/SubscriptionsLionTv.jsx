@@ -170,6 +170,7 @@ function normalizeSubscription(item = {}) {
     customerId: item.customerId ?? null,
     lineId: item.lineId ?? '',
     linePlusId: item.linePlusId ?? item.line_plus_id ?? '',
+    subscriptionAlias: item.subscriptionAlias ?? item.subscription_alias ?? '',
     billing: item.billing ?? '',
     amount: item.amount ?? item.totalAmount ?? 0,
     discount: item.discount ?? 0,
@@ -387,6 +388,7 @@ const defaultForm = {
   customerId: '',
   lineId: '',
   linePlusId: '',
+  subscriptionAlias: '',
   billing: '',
   amount: '',
   discount: '',
@@ -792,6 +794,7 @@ export default function SubscriptionsLionTv() {
         rowLineLabel.toLowerCase().includes(term) ||
         rowLinePlusId.toLowerCase().includes(term) ||
         rowLinePlusLabel.toLowerCase().includes(term) ||
+        (row.subscriptionAlias || '').toLowerCase().includes(term) ||
         (row.billing || '').toLowerCase().includes(term) ||
         (row.status || '').toLowerCase().includes(term) ||
         String(row.packageId || '').toLowerCase().includes(term) ||
@@ -887,6 +890,7 @@ export default function SubscriptionsLionTv() {
       customerId: row.customerId ?? '',
       lineId: row.lineId ?? '',
       linePlusId: row.linePlusId ?? '',
+      subscriptionAlias: row.subscriptionAlias ?? '',
       billing: row.billing ?? '',
       amount: row.amount ?? '',
       discount: row.discount ?? '',
@@ -1058,6 +1062,7 @@ export default function SubscriptionsLionTv() {
       customerId: Number(form.customerId),
       lineId: form.lineId,
       linePlusId: form.linePlusId || null,
+      subscriptionAlias: form.subscriptionAlias?.trim() || null,
       billing: form.billing,
       amount: form.amount ? Number(form.amount) : 0,
       discount: form.discount ? Number(form.discount) : 0,
@@ -1498,6 +1503,10 @@ export default function SubscriptionsLionTv() {
                       <MobileFieldGrid
                         fields={[
                           {
+                            label: t('subscriptions.headers.alias', 'Alias'),
+                            value: row.subscriptionAlias || '-'
+                          },
+                          {
                             label: t('subscriptions.headers.line'),
                             value: lineNameMap[String(row.lineId ?? row.username_line ?? '')] || row.username_line || row.lineId || '-'
                           },
@@ -1539,6 +1548,7 @@ export default function SubscriptionsLionTv() {
                 <TableHead>
                   <TableRow>
                     <TableCell>{t('subscriptions.headers.id')}</TableCell>
+                    <TableCell>{t('subscriptions.headers.alias', 'Alias')}</TableCell>
                     <TableCell>{t('subscriptions.headers.customer')}</TableCell>
                     <TableCell>{t('subscriptions.headers.line')}</TableCell>
                     <TableCell>{t('subscriptions.headers.linePlus', 'Line plus')}</TableCell>
@@ -1557,7 +1567,7 @@ export default function SubscriptionsLionTv() {
                   {loading &&
                     Array.from({ length: 4 }).map((_, idx) => (
                       <TableRow key={`sub-skel-${idx}`}>
-                        {Array.from({ length: 13 }).map((__, cidx) => (
+                        {Array.from({ length: 14 }).map((__, cidx) => (
                           <TableCell key={cidx}>
                             <Skeleton variant="text" />
                           </TableCell>
@@ -1587,6 +1597,11 @@ export default function SubscriptionsLionTv() {
                               {row.subscriptionId}
                             </Typography>
                           </Stack>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: row.subscriptionAlias ? 700 : 400 }}>
+                            {row.subscriptionAlias || '-'}
+                          </Typography>
                         </TableCell>
                         <TableCell>
                           <Stack direction="row" spacing={0.75} alignItems="center">
@@ -1944,6 +1959,17 @@ export default function SubscriptionsLionTv() {
                         : t('subscriptions.form.packagesHint', 'Packages (DEMO excluded)')}
                     </FormHelperText>
                   </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4} md={4}>
+                  <TextField
+                    fullWidth
+                    label={t('subscriptions.form.alias', 'Subscription alias')}
+                    value={form.subscriptionAlias}
+                    onChange={handleFormChange('subscriptionAlias')}
+                    inputProps={{ maxLength: 100 }}
+                    helperText={t('subscriptions.form.aliasHint', 'Friendly name shown to the customer in ecommerce.')}
+                    sx={fieldSx}
+                  />
                 </Grid>
                 <Grid item xs={12} sm={4} md={4}>
                   <FormControl fullWidth required sx={fieldSx}>

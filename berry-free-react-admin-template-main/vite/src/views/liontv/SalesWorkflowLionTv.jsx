@@ -363,6 +363,7 @@ const defaultActivation = (options = defaultOptions) => ({
     startDate: today(),
     renewalDate: plusMonths(today()),
     packageId: '',
+    subscriptionAlias: '',
     automaticPay: false,
     linkAutomatic: ''
   },
@@ -408,6 +409,7 @@ const defaultRenewal = (options = defaultOptions) => ({
     status: 'ACTIVE',
     renewalDate: '',
     packageId: '',
+    subscriptionAlias: '',
     automaticPay: false,
     linkAutomatic: ''
   },
@@ -663,6 +665,7 @@ function buildActivationPayload(form, options, withIdempotency = false) {
     subscription: {
       ...form.subscription,
       packageId: subscriptionPackageId,
+      subscriptionAlias: form.subscription.subscriptionAlias?.trim() || null,
       amount: amount ?? 0,
       discount: cleanMoney(form.subscription.discount) ?? 0,
       automaticPay: Boolean(form.subscription.automaticPay)
@@ -701,6 +704,7 @@ function buildRenewalPayload(form, options, withIdempotency = false, invoiceOver
     subscription: {
       ...form.subscription,
       packageId,
+      subscriptionAlias: form.subscription.subscriptionAlias?.trim() || null,
       amount: amount ?? 0,
       discount: cleanMoney(form.subscription.discount) ?? 0,
       renewalDate: form.subscription.renewalDate || null,
@@ -2008,6 +2012,7 @@ export default function SalesWorkflowLionTv() {
         status: 'ACTIVE',
         renewalDate: '',
         packageId: subscription.packageId || '',
+        subscriptionAlias: subscription.subscriptionAlias || '',
         automaticPay: false,
         linkAutomatic: ''
       },
@@ -2820,6 +2825,17 @@ export default function SalesWorkflowLionTv() {
                   >
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={6} lg={4}>
+                        <TextField
+                          fullWidth
+                          label={t('salesWorkflow.fields.subscriptionAlias', 'Subscription alias')}
+                          sx={fieldSx}
+                          value={activation.subscription.subscriptionAlias}
+                          onChange={(e) => setNestedValue(setActivation, 'subscription', 'subscriptionAlias', e.target.value)}
+                          inputProps={{ maxLength: 100 }}
+                          helperText={t('salesWorkflow.messages.subscriptionAliasHelper', 'Friendly name shown to the customer in ecommerce.')}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6} lg={4}>
                         <FormControl fullWidth sx={fieldSx}>
                           <InputLabel>{t('salesWorkflow.fields.billing', 'Billing')}</InputLabel>
                           <Select label={t('salesWorkflow.fields.billing', 'Billing')} value={activation.subscription.billing} onChange={(e) => setNestedValue(setActivation, 'subscription', 'billing', e.target.value)}>
@@ -3003,6 +3019,16 @@ export default function SalesWorkflowLionTv() {
 	                      <Grid item xs={12} sm={6}>
 		                        <MiniMetric label={t('salesWorkflow.metrics.subscriptionPackage', 'Subscription package')} value={selectedActivationPackage?.name} icon={<Inventory2Icon fontSize="small" />} color="secondary" />
 	                      </Grid>
+                      {activation.subscription.subscriptionAlias ? (
+                        <Grid item xs={12} sm={6}>
+                          <MiniMetric
+                            label={t('salesWorkflow.fields.subscriptionAlias', 'Subscription alias')}
+                            value={activation.subscription.subscriptionAlias}
+                            icon={<CreditScoreIcon fontSize="small" />}
+                            color="secondary"
+                          />
+                        </Grid>
+                      ) : null}
 	                      <Grid item xs={12} sm={6}>
 		                        <MiniMetric label={t('salesWorkflow.metrics.linePackage', 'Line package')} value={activation.line.packageName || activation.line.packageId} icon={<LanIcon fontSize="small" />} color="info" />
 	                      </Grid>
@@ -3192,6 +3218,14 @@ export default function SalesWorkflowLionTv() {
 	                                <Typography variant="body2" color="text.secondary">
 	                                  {t('salesWorkflow.preview.subscription', 'Subscription')} #{subscription.subscriptionId} · {t('salesWorkflow.metrics.line', 'Line')} {subscription.lineId || '-'}
 	                                </Typography>
+                                  {subscription.subscriptionAlias ? (
+                                    <Chip
+                                      size="small"
+                                      variant="outlined"
+                                      label={`${t('salesWorkflow.fields.subscriptionAlias', 'Subscription alias')}: ${subscription.subscriptionAlias}`}
+                                      sx={{ alignSelf: 'flex-start', borderRadius: 1.5, fontWeight: 700 }}
+                                    />
+                                  ) : null}
 	                                <Grid container spacing={1}>
 	                                  <Grid item xs={6}>
 	                                    <MiniMetric label={t('salesWorkflow.metrics.currentPlan', 'Current plan')} value={subscription.packageName || subscription.packageId} icon={<Inventory2Icon fontSize="small" />} color="primary" />
@@ -3245,6 +3279,15 @@ export default function SalesWorkflowLionTv() {
                       getOptionLabel={(option) => option?.displayName || option?.name || ''}
                       isOptionEqualToValue={(option, value) => String(option?.packageId) === String(value?.packageId)}
                       renderInput={(params) => <TextField {...params} label={t('salesWorkflow.fields.subscriptionPackage', 'Subscription package')} sx={fieldSx} />}
+                    />
+                    <TextField
+                      fullWidth
+                      label={t('salesWorkflow.fields.subscriptionAlias', 'Subscription alias')}
+                      sx={fieldSx}
+                      value={renewal.subscription.subscriptionAlias}
+                      onChange={(e) => setNestedValue(setRenewal, 'subscription', 'subscriptionAlias', e.target.value)}
+                      inputProps={{ maxLength: 100 }}
+                      helperText={t('salesWorkflow.messages.subscriptionAliasHelper', 'Friendly name shown to the customer in ecommerce.')}
                     />
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={6} lg={3}>

@@ -1003,10 +1003,13 @@ const resources = {
           copyM3uPlus: 'Copy Plus M3U'
         },
         form: {
+          alias: 'Subscription alias',
+          aliasHint: 'Friendly name shown to the customer in ecommerce.',
           autopayLinkPlaceholder: 'https://...'
         },
         headers: {
           id: 'ID',
+          alias: 'Alias',
           customer: 'Customer',
           line: 'Line',
           package: 'Package',
@@ -5243,10 +5246,13 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           copyM3uPlus: 'Copiar M3U Plus'
         },
         form: {
+          alias: 'Alias de suscripción',
+          aliasHint: 'Nombre amigable que verá el cliente en ecommerce.',
           autopayLinkPlaceholder: 'https://...'
         },
         headers: {
           id: 'ID',
+          alias: 'Alias',
           customer: 'Cliente',
           line: 'Línea',
           package: 'Paquete',
@@ -7888,6 +7894,7 @@ resources.en.translation.salesWorkflow = {
     password: 'Password',
     expires: 'Expires',
     desiredDevices: 'Desired devices',
+    subscriptionAlias: 'Subscription alias',
     mainLineConnections: 'Main line connections',
     linePlusConnections: 'Plus line connections',
     licensesToCreate: 'Licenses/devices to create',
@@ -8027,6 +8034,7 @@ resources.en.translation.salesWorkflow = {
   messages: {
     flowInfo:
       'Guided flow for activations and renewals. Packages, banks, services and payment methods come from catalogs/API; manual CRUD remains as backup.',
+    subscriptionAliasHelper: 'Friendly name shown to the customer in ecommerce.',
     packageDevices: '{{count}} suggested device(s)',
     possibleExistingCustomer: 'Possible existing customer',
     existingCustomerSelected: 'Existing customer selected',
@@ -8187,6 +8195,7 @@ resources.es.translation.salesWorkflow = {
     password: 'Password',
     expires: 'Expira',
     desiredDevices: 'Dispositivos deseados',
+    subscriptionAlias: 'Alias de suscripción',
     mainLineConnections: 'Conexiones línea principal',
     linePlusConnections: 'Conexiones línea Plus',
     licensesToCreate: 'Licencias/dispositivos a crear',
@@ -8326,6 +8335,7 @@ resources.es.translation.salesWorkflow = {
   messages: {
     flowInfo:
       'Flujo guiado para activaciones y renovaciones. Los paquetes, bancos, servicios y métodos salen de catálogos/API; el CRUD manual queda como respaldo.',
+    subscriptionAliasHelper: 'Nombre amigable que verá el cliente en ecommerce.',
     packageDevices: '{{count}} dispositivo(s) sugeridos',
     possibleExistingCustomer: 'Posible cliente existente',
     existingCustomerSelected: 'Cliente existente seleccionado',

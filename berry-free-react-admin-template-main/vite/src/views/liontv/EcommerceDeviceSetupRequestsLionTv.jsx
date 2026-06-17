@@ -51,6 +51,12 @@ import {
 } from 'api/liontv-ecommerce-site';
 
 const STATUS_OPTIONS = ['', 'PAYMENT_REQUIRED', 'PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'];
+const APP_OPTIONS = [
+  { value: '', label: 'Todas las apps' },
+  { value: 'VIVO_PLAYER', label: 'Vivo Player' },
+  { value: 'NINEXTREAM', label: '9Xtream' },
+  { value: 'IPTV_4K_SMARTERS', label: 'IPTV 4K Smarters' }
+];
 
 const statusColor = (status) => {
   const value = String(status || '').toUpperCase();
@@ -100,6 +106,7 @@ export default function EcommerceDeviceSetupRequestsLionTv() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
+  const [appCode, setAppCode] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
 
   const loadRows = useCallback(async () => {
@@ -107,7 +114,7 @@ export default function EcommerceDeviceSetupRequestsLionTv() {
     setLoading(true);
     try {
       const payload = await listAdminDeviceSetupRequests(
-        { index: page, size: rowsPerPage, status: status || undefined, search: search || undefined },
+        { index: page, size: rowsPerPage, status: status || undefined, appCode: appCode || undefined, search: search || undefined },
         { skipAuthRedirect: true }
       );
       setRows(Array.isArray(payload?.data) ? payload.data : []);
@@ -119,7 +126,7 @@ export default function EcommerceDeviceSetupRequestsLionTv() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar, page, rowsPerPage, search, status]);
+  }, [accessToken, appCode, enqueueSnackbar, page, rowsPerPage, search, status]);
 
   useEffect(() => {
     loadRows();
@@ -227,7 +234,7 @@ export default function EcommerceDeviceSetupRequestsLionTv() {
       <MainCard
         title="Bandeja de solicitudes"
         secondary={
-          <ResponsiveFilters paperSx={{ width: { xs: '100%', md: 720 } }}>
+          <ResponsiveFilters paperSx={{ width: { xs: '100%', md: 960 } }}>
             <TextField
               size="small"
               fullWidth
@@ -259,6 +266,23 @@ export default function EcommerceDeviceSetupRequestsLionTv() {
               {STATUS_OPTIONS.map((option) => (
                 <MenuItem key={option || 'ALL'} value={option}>
                   {option || 'Todos'}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              select
+              size="small"
+              label="App"
+              value={appCode}
+              onChange={(event) => {
+                setAppCode(event.target.value);
+                setPage(0);
+              }}
+              sx={{ minWidth: { xs: '100%', sm: 230 } }}
+            >
+              {APP_OPTIONS.map((option) => (
+                <MenuItem key={option.value || 'ALL'} value={option.value}>
+                  {option.label}
                 </MenuItem>
               ))}
             </TextField>
