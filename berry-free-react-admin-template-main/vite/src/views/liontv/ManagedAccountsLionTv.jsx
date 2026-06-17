@@ -61,6 +61,22 @@ const accountStatusOptions = ['ACTIVE', 'SUSPENDED', 'EXPIRED', 'PENDING', 'CANC
 const retryModes = ['FORWARD_ALL', 'FORWARD_SUMMARY', 'FORWARD_EXTRACTED_TEXT', 'STORE_ONLY'];
 
 const defaultProviderForm = { id: null, code: '', name: '', description: '' };
+function generateManagedAccountCode() {
+  const bytes = new Uint8Array(4);
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i += 1) {
+      bytes[i] = Math.floor(Math.random() * 256);
+    }
+  }
+  const suffix = Array.from(bytes)
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase();
+  return `MA-${suffix}`;
+}
+
 const defaultAccountForm = {
   id: null,
   accountCode: '',
@@ -552,7 +568,6 @@ export default function ManagedAccountsLionTv() {
 
   const saveAccount = async () => {
     if (
-      !accountForm.accountCode ||
       !accountForm.displayName ||
       !accountForm.providerId ||
       !accountForm.customerId ||
@@ -566,7 +581,7 @@ export default function ManagedAccountsLionTv() {
     setAccountSaving(true);
     try {
       const payload = {
-        accountCode: accountForm.accountCode,
+        accountCode: accountForm.accountCode || null,
         displayName: accountForm.displayName,
         providerId: Number(accountForm.providerId),
         customerId: Number(accountForm.customerId),
@@ -1145,6 +1160,7 @@ export default function ManagedAccountsLionTv() {
                             onClick={() => {
                               setAccountForm({
                                 ...defaultAccountForm,
+                                accountCode: generateManagedAccountCode(),
                                 providerId: providers[0]?.id || '',
                                 customerId: customers[0]?.customerId || ''
                               });
@@ -1830,10 +1846,26 @@ export default function ManagedAccountsLionTv() {
                     <TextField
                       fullWidth
                       size="small"
-                      label={t('managedAccounts.account.accountCode', 'Account Code')}
+                      label={t('managedAccounts.account.accountCode', 'Internal ID')}
                       sx={fieldSx}
                       value={accountForm.accountCode}
-                      onChange={(event) => setAccountForm((prev) => ({ ...prev, accountCode: event.target.value }))}
+                      helperText={t(
+                        'managedAccounts.account.accountCodeHelper',
+                        'This ID does not depend on email and allows related accounts with the same email.'
+                      )}
+                      InputProps={{
+                        readOnly: true,
+                        endAdornment: !accountForm.id ? (
+                          <InputAdornment position="end">
+                            <Button
+                              size="small"
+                              onClick={() => setAccountForm((prev) => ({ ...prev, accountCode: generateManagedAccountCode() }))}
+                            >
+                              {t('managedAccounts.actions.regenerateId', 'Regenerate ID')}
+                            </Button>
+                          </InputAdornment>
+                        ) : null
+                      }}
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>

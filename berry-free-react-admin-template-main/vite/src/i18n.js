@@ -765,7 +765,8 @@ const resources = {
           saveProvider: 'Save Provider',
           saveAccount: 'Save Account',
           processing: 'Processing...',
-          processInbound: 'Process inbound'
+          processInbound: 'Process inbound',
+          regenerateId: 'Regenerate ID'
         },
         hero: {
           title: 'Operational tracking for accounts, expirations and mail distribution',
@@ -906,7 +907,8 @@ const resources = {
           subtitle: 'Configure identity, expiration and alias distribution rules.',
           sectionIdentity: 'Identity and relationship',
           sectionOperation: 'Validity and operation',
-          accountCode: 'Account Code',
+          accountCode: 'Internal ID',
+          accountCodeHelper: 'This ID does not depend on email and allows related accounts with the same email.',
           displayName: 'Display Name',
           aliasEmail: 'Alias Email',
           principalReference: 'Principal Reference',
@@ -5001,7 +5003,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           saveProvider: 'Guardar proveedor',
           saveAccount: 'Guardar cuenta',
           processing: 'Procesando...',
-          processInbound: 'Procesar entrada'
+          processInbound: 'Procesar entrada',
+          regenerateId: 'Regenerar ID'
         },
         hero: {
           title: 'Monitoreo operativo de cuentas, vencimientos y distribución de correos',
@@ -5143,7 +5146,8 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           subtitle: 'Configura identidad, vencimiento y reglas de distribución del alias.',
           sectionIdentity: 'Identidad y relación',
           sectionOperation: 'Vigencia y operación',
-          accountCode: 'Código de cuenta',
+          accountCode: 'ID interno',
+          accountCodeHelper: 'Este ID no depende del correo y permite registrar cuentas relacionadas con el mismo email.',
           displayName: 'Nombre visible',
           aliasEmail: 'Correo alias',
           principalReference: 'Referencia principal',
