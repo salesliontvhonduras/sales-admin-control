@@ -64,6 +64,7 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import PlaylistRemoveIcon from '@mui/icons-material/PlaylistRemove';
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
+import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
 
 import MainCard from 'ui-component/cards/MainCard';
 import LionMetricCard from 'ui-component/cards/LionMetricCard';
@@ -122,6 +123,10 @@ function isNineXtreamLicenseRecord(record = {}) {
   return normalized === 'NINEXTREAM' || normalized === LICENSE_APP_IPTV_4K_SMARTERS;
 }
 
+function isVivoPlayerLicenseRecord(record = {}) {
+  return normalizeManagedLicenseAppCode(record?.app) === DEFAULT_MANAGED_LICENSE_APP;
+}
+
 function supportsSpainAutoServerOption(record = {}) {
   return !isBobLicenseRecord(record) && !isNineXtreamLicenseRecord(record);
 }
@@ -134,10 +139,11 @@ function requiresSubscriptionLink(record = {}) {
   return isManagedLicenseRecord(record) && !hasSubscriptionLink(record);
 }
 
-function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onHistory, onDelete, onBobAuth, onBobSync, t }) {
+function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onDeviceRecovery, onHistory, onDelete, onBobAuth, onBobSync, t }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const supportsRemoteActions = isManagedLicenseRecord(row) && hasSubscriptionLink(row);
+  const supportsDeviceRecovery = supportsRemoteActions && isVivoPlayerLicenseRecord(row);
   const supportsBobAuth = isBobLicenseRecord(row);
   const supportsBobSync = supportsBobAuth && hasSubscriptionLink(row);
   return (
@@ -224,6 +230,18 @@ function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onHi
         >
           <PlaylistRemoveIcon fontSize="small" style={{ marginRight: 8, color: '#fb8c00' }} />
           {t('licenses.actions.removePlaylists', 'Remove all playlists')}
+        </MenuItem>
+        <MenuItem
+          disabled={!supportsDeviceRecovery}
+          onClick={() => {
+            setAnchorEl(null);
+            if (supportsDeviceRecovery) {
+              onDeviceRecovery?.(row);
+            }
+          }}
+        >
+          <SettingsBackupRestoreIcon fontSize="small" style={{ marginRight: 8, color: '#00897b' }} />
+          {t('licenses.actions.recoverMac', 'Recovery MAC')}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -609,6 +627,14 @@ export default function LicensesLionTv() {
   const [historyOpen, setHistoryOpen] = useState({ open: false, row: null });
   const [openServerChange, setOpenServerChange] = useState({ open: false, row: null });
   const [openRemovePlaylists, setOpenRemovePlaylists] = useState({ open: false, row: null });
+  const [openDeviceRecovery, setOpenDeviceRecovery] = useState({
+    open: false,
+    row: null,
+    currentMacAddress: '',
+    newMacAddress: '',
+    newDeviceKey: '',
+    result: null
+  });
   const [bobSyncDialog, setBobSyncDialog] = useState({
     open: false,
     row: null,
@@ -1341,6 +1367,34 @@ export default function LicensesLionTv() {
     }
   };
 
+  const handleOpenDeviceRecovery = (row) => {
+    if (requiresSubscriptionLink(row)) {
+      enqueueSnackbar(t('licenses.labels.requiresSubscriptionLink', 'Requires subscription link'), { variant: 'warning' });
+      return;
+    }
+    if (!isVivoPlayerLicenseRecord(row)) {
+      enqueueSnackbar(t('licenses.recovery.onlyVivo', 'Recovery MAC is only available for Vivo Player licenses.'), { variant: 'warning' });
+      return;
+    }
+    setOpenDeviceRecovery({
+      open: true,
+      row,
+      currentMacAddress: maskMacAddressInput(row?.macAddress || ''),
+      newMacAddress: '',
+      newDeviceKey: '',
+      result: null
+    });
+  };
+
+  const handleDeviceRecoveryChange = (field) => (event) => {
+    const value = event?.target?.value ?? '';
+    setOpenDeviceRecovery((prev) => ({
+      ...prev,
+      [field]: field === 'newMacAddress' ? maskMacAddressInput(value) : value,
+      result: null
+    }));
+  };
+
   const handleLineSourceSelect = (value) => {
     const subscription = serverForm.subscriptionId ? subscriptionMap[String(serverForm.subscriptionId)] : null;
     const context = resolveServerLineContext(subscription, value);
@@ -1355,6 +1409,55 @@ export default function LicensesLionTv() {
       password: context.password,
       playlistName: context.source === 'PLUS' ? 'Plus' : prev.playlistName === 'Plus' ? 'Lion Tv Premium' : prev.playlistName
     }));
+  };
+
+  const handleDeviceRecoverySubmit = async () => {
+    const licenseId = openDeviceRecovery.row?.licenseId;
+    const currentMacAddress = maskMacAddressInput(openDeviceRecovery.currentMacAddress);
+    const newMacAddress = maskMacAddressInput(openDeviceRecovery.newMacAddress);
+    const newDeviceKey = openDeviceRecovery.newDeviceKey?.trim();
+
+    if (!licenseId) {
+      enqueueSnackbar(t('licenses.recovery.licenseRequired', 'License id is required.'), { variant: 'warning' });
+      return;
+    }
+    if (!isValidMacAddress(currentMacAddress) || !isValidMacAddress(newMacAddress)) {
+      enqueueSnackbar(t('licenses.recovery.macInvalid', 'Enter a valid MAC address.'), { variant: 'warning' });
+      return;
+    }
+    if (currentMacAddress === newMacAddress) {
+      enqueueSnackbar(t('licenses.recovery.macSame', 'The new MAC address must be different from the current MAC.'), { variant: 'warning' });
+      return;
+    }
+    if (!newDeviceKey) {
+      enqueueSnackbar(t('licenses.recovery.deviceKeyRequired', 'New device key is required.'), { variant: 'warning' });
+      return;
+    }
+
+    setSending(true);
+    try {
+      const res = await lionTvApi.post(
+        `/licenses/v1/${licenseId}/device-recovery`,
+        {
+          currentMacAddress,
+          newMacAddress,
+          newDeviceKey
+        },
+        { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
+      );
+      const data = res?.data?.data || null;
+      setOpenDeviceRecovery((prev) => ({ ...prev, result: data }));
+      enqueueSnackbar(data?.message || t('licenses.recovery.success', 'Recovery MAC completed.'), { variant: 'success' });
+      setRefreshKey((v) => v + 1);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        enqueueSnackbar(err?.response?.data?.message || err.message || t('licenses.recovery.error', 'Could not complete Recovery MAC.'), {
+          variant: 'error'
+        });
+      }
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleServerSubmit = async () => {
@@ -1974,6 +2077,7 @@ export default function LicensesLionTv() {
                           onTransfer={handleTransfer}
                           onServer={handleOpenServerChange}
                           onRemovePlaylists={handleOpenRemovePlaylists}
+                          onDeviceRecovery={handleOpenDeviceRecovery}
                           onHistory={openHistory}
                           onDelete={handleDelete}
                           onBobAuth={openBobAuth}
@@ -2180,6 +2284,7 @@ export default function LicensesLionTv() {
                           onTransfer={handleTransfer}
                           onServer={handleOpenServerChange}
                           onRemovePlaylists={handleOpenRemovePlaylists}
+                          onDeviceRecovery={handleOpenDeviceRecovery}
                           onHistory={openHistory}
                           onDelete={handleDelete}
                           onBobAuth={openBobAuth}
@@ -3037,6 +3142,144 @@ export default function LicensesLionTv() {
           </Button>
           <Button onClick={confirmRemovePlaylists} color="warning" variant="contained" disabled={sending || !bobRemoveReady}>
             {sending ? t('actions.sending', 'Sending...') : t('licenses.server.removeSubmit', 'Remove playlists')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* DEVICE RECOVERY */}
+      <Dialog
+        open={openDeviceRecovery.open}
+        onClose={() => setOpenDeviceRecovery({ open: false, row: null, currentMacAddress: '', newMacAddress: '', newDeviceKey: '', result: null })}
+        fullWidth
+        maxWidth="sm"
+        fullScreen={isMobile}
+      >
+        <DialogTitleWithClose
+          onClose={() => setOpenDeviceRecovery({ open: false, row: null, currentMacAddress: '', newMacAddress: '', newDeviceKey: '', result: null })}
+        >
+          {t('licenses.recovery.title', 'Recovery MAC')}
+        </DialogTitleWithClose>
+        <DialogContent dividers>
+          <Stack spacing={2}>
+            <Alert severity="info" icon={<SettingsBackupRestoreIcon fontSize="small" />}>
+              {t(
+                'licenses.recovery.localMacPreserved',
+                'This process recovers the MAC in Vivo Player. Sales Admin will keep the original MAC on the license and will only update the new device key.'
+              )}
+            </Alert>
+
+            <Box
+              sx={(theme) => ({
+                p: 1.75,
+                borderRadius: 2.5,
+                border: '1px solid',
+                borderColor: 'divider',
+                bgcolor: theme.palette.mode === 'dark' ? 'background.default' : 'grey.50'
+              })}
+            >
+              <Stack spacing={0.75}>
+                <Typography variant="subtitle2">{t('licenses.recovery.summaryTitle', 'Recovery context')}</Typography>
+                <Typography variant="body2">
+                  {t('licenses.server.customer', 'Customer')}: <strong>{customerNameMap[openDeviceRecovery.row?.customerId] || '-'}</strong>
+                </Typography>
+                <Typography variant="body2">
+                  {t('licenses.server.subscription', 'Subscription')}: <strong>{openDeviceRecovery.row?.subscriptionId ? `#${openDeviceRecovery.row.subscriptionId}` : '-'}</strong>
+                </Typography>
+                <Typography variant="body2">
+                  {t('licenses.server.targetApp', 'Target app')}: <strong>{getLicenseAppLabel(openDeviceRecovery.row?.app)}</strong>
+                </Typography>
+              </Stack>
+            </Box>
+
+            <Grid container spacing={1.5}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  disabled
+                  label={t('licenses.recovery.currentMac', 'Current MAC address')}
+                  value={openDeviceRecovery.currentMacAddress || '-'}
+                  sx={fieldSx}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  required
+                  label={t('licenses.recovery.newMac', 'New MAC address')}
+                  value={openDeviceRecovery.newMacAddress}
+                  onChange={handleDeviceRecoveryChange('newMacAddress')}
+                  error={Boolean(openDeviceRecovery.newMacAddress) && !isValidMacAddress(openDeviceRecovery.newMacAddress)}
+                  helperText={t('licenses.recovery.newMacHelper', 'Example: 2b:10:96:80:d6:5c')}
+                  sx={fieldSx}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  required
+                  label={t('licenses.recovery.newDeviceKey', 'New device key')}
+                  value={openDeviceRecovery.newDeviceKey}
+                  onChange={handleDeviceRecoveryChange('newDeviceKey')}
+                  helperText={t('licenses.recovery.deviceKeyHelper', 'This is the only local license field that will be updated.')}
+                  sx={fieldSx}
+                />
+              </Grid>
+            </Grid>
+
+            <Alert severity="warning">
+              <Stack spacing={0.5}>
+                <Typography variant="subtitle2">{t('licenses.recovery.stepsTitle', 'What will happen')}</Typography>
+                <Typography variant="body2">
+                  {t(
+                    'licenses.recovery.steps',
+                    'The system will rename the current Vivo Player device, remove its playlists, run Recovery MAC with the new MAC, and then save only the new device key locally.'
+                  )}
+                </Typography>
+              </Stack>
+            </Alert>
+
+            {openDeviceRecovery.result ? (
+              <Alert severity="success">
+                <Stack spacing={0.5}>
+                  <Typography variant="subtitle2">{t('licenses.recovery.completed', 'Recovery completed')}</Typography>
+                  <Typography variant="body2">
+                    {t('licenses.recovery.previousMac', 'Original local MAC')}: <strong>{openDeviceRecovery.result.previousMacAddress || '-'}</strong>
+                  </Typography>
+                  <Typography variant="body2">
+                    {t('licenses.recovery.recoveredMac', 'Recovered MAC in Vivo Player')}: <strong>{openDeviceRecovery.result.recoveredMacAddress || '-'}</strong>
+                  </Typography>
+                  <Typography variant="body2">
+                    {t('licenses.recovery.savedDeviceKey', 'Saved device key')}: <strong>{openDeviceRecovery.result.newDeviceKey || '-'}</strong>
+                  </Typography>
+                  <Typography variant="body2">
+                    {t('licenses.recovery.removedPlaylists', 'Removed playlists')}: <strong>{openDeviceRecovery.result.removedPlaylists ?? 0}</strong>
+                  </Typography>
+                </Stack>
+              </Alert>
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setOpenDeviceRecovery({ open: false, row: null, currentMacAddress: '', newMacAddress: '', newDeviceKey: '', result: null })}
+            disabled={sending}
+          >
+            {t('actions.cancel', 'Cancel')}
+          </Button>
+          <Button
+            color="secondary"
+            variant="contained"
+            startIcon={<SettingsBackupRestoreIcon fontSize="small" />}
+            onClick={handleDeviceRecoverySubmit}
+            disabled={
+              sending ||
+              !isValidMacAddress(openDeviceRecovery.currentMacAddress) ||
+              !isValidMacAddress(openDeviceRecovery.newMacAddress) ||
+              openDeviceRecovery.currentMacAddress === openDeviceRecovery.newMacAddress ||
+              !openDeviceRecovery.newDeviceKey?.trim()
+            }
+          >
+            {sending ? t('actions.sending', 'Sending...') : t('licenses.recovery.submit', 'Run recovery')}
           </Button>
         </DialogActions>
       </Dialog>
