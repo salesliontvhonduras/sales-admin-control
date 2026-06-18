@@ -83,6 +83,44 @@ const PLAN_RATING_SPECS = {
   ]
 };
 
+const DEFAULT_DEMO_APPS = [
+  {
+    code: 'VIVO_PLAYER',
+    label: { es: 'Vivo Player', en: 'Vivo Player' },
+    iconUrl: 'https://play-lh.googleusercontent.com/wrPb4PMamAVMDlB3enhOkHJpiFLx2Cppl9a_EbMxKiJ9Wd2NVOfd9oGOu2L0ubkfw3k=s96-rw',
+    downloaderCode: '6947699',
+    requiresDeviceKey: false,
+    active: true,
+    order: 1,
+    installLinks: {
+      androidApkUrl: 'https://drive.google.com/uc?export=download&id=1So_FuKnx85mPRjB_SlaR60lSlvquvOak',
+      androidBrowserUrl: 'https://webtv.vivo-player.com/',
+      browserDemoUrl: 'https://webtv.vivo-player.com/',
+      macosAppUrl: 'https://apps.apple.com/us/app/vivo-player-smart-iptv-player/id6479256394'
+    }
+  },
+  {
+    code: 'NINEXTREAM',
+    label: { es: '9Xtream 4K', en: '9Xtream 4K' },
+    iconUrl: '',
+    downloaderCode: '1728201',
+    requiresDeviceKey: true,
+    active: true,
+    order: 2,
+    installLinks: {}
+  },
+  {
+    code: 'IPTV_4K_SMARTERS',
+    label: { es: 'IPTV 4K Smarters', en: 'IPTV 4K Smarters' },
+    iconUrl: '',
+    downloaderCode: '9852150',
+    requiresDeviceKey: true,
+    active: true,
+    order: 3,
+    installLinks: {}
+  }
+];
+
 const TOUR_TARGET_OPTIONS = [
   { value: 'email-capture', label: 'Campo de correo' },
   { value: 'start-button', label: 'Botón Comenzar' },
@@ -270,9 +308,10 @@ const DEFAULT_CONFIG = {
     appCode: 'VIVO_PLAYER',
     appIconUrl: 'https://play-lh.googleusercontent.com/wrPb4PMamAVMDlB3enhOkHJpiFLx2Cppl9a_EbMxKiJ9Wd2NVOfd9oGOu2L0ubkfw3k=s96-rw',
     androidApkUrl: 'https://drive.google.com/uc?export=download&id=1So_FuKnx85mPRjB_SlaR60lSlvquvOak',
-    androidBrowserUrl: 'http://webtv.vivo-player.com/',
-    browserDemoUrl: 'http://webtv.vivo-player.com/',
-    macosAppUrl: 'https://apps.apple.com/us/app/vivo-player-smart-iptv-player/id6479256394'
+    androidBrowserUrl: 'https://webtv.vivo-player.com/',
+    browserDemoUrl: 'https://webtv.vivo-player.com/',
+    macosAppUrl: 'https://apps.apple.com/us/app/vivo-player-smart-iptv-player/id6479256394',
+    apps: clone(DEFAULT_DEMO_APPS)
   },
   referrals: { apiBaseUrl: '' },
   payment: {
@@ -521,6 +560,51 @@ function normalizeTourStep(step = {}, index = 0) {
   };
 }
 
+function normalizeDemoAppCode(value) {
+  const code = String(value || '').trim().toUpperCase().replace(/[-\s]/g, '_');
+  if (['9XTREAM', '9XTREAM4K', '9XTREAM_4K', 'NINEXTREAM'].includes(code)) return 'NINEXTREAM';
+  if (['IPTV4K', 'IPTV_4K', 'IPTVSMARTERS', 'IPTV_SMARTERS', 'IPTV4KSMARTERS', 'IPTV_4K_SMARTERS'].includes(code)) {
+    return 'IPTV_4K_SMARTERS';
+  }
+  return 'VIVO_PLAYER';
+}
+
+function normalizeDemoApps(apps, demoConfig = {}) {
+  const source = Array.isArray(apps) && apps.length ? apps : DEFAULT_DEMO_APPS;
+  const byCode = new Map(DEFAULT_DEMO_APPS.map((app) => [app.code, app]));
+  return source
+    .map((app = {}, index) => {
+      const code = normalizeDemoAppCode(app.code);
+      const fallback = byCode.get(code) || DEFAULT_DEMO_APPS[0];
+      const legacyLinks =
+        code === 'VIVO_PLAYER'
+          ? {
+              androidApkUrl: demoConfig.androidApkUrl || fallback.installLinks?.androidApkUrl || '',
+              androidBrowserUrl: demoConfig.androidBrowserUrl || fallback.installLinks?.androidBrowserUrl || '',
+              browserDemoUrl: demoConfig.browserDemoUrl || fallback.installLinks?.browserDemoUrl || '',
+              macosAppUrl: demoConfig.macosAppUrl || fallback.installLinks?.macosAppUrl || ''
+            }
+          : {};
+      return {
+        ...fallback,
+        ...app,
+        code,
+        label: localized(app.label, fallback.label || { es: '', en: '' }),
+        iconUrl: app.iconUrl || (code === 'VIVO_PLAYER' ? demoConfig.appIconUrl || fallback.iconUrl : fallback.iconUrl || ''),
+        downloaderCode: app.downloaderCode || fallback.downloaderCode || '',
+        requiresDeviceKey: Boolean(app.requiresDeviceKey ?? fallback.requiresDeviceKey),
+        active: app.active !== false,
+        order: Number(app.order || fallback.order || index + 1),
+        installLinks: {
+          ...(fallback.installLinks || {}),
+          ...legacyLinks,
+          ...(app.installLinks || {})
+        }
+      };
+    })
+    .sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+}
+
 function normalizeConfig(payload) {
   const next = {
     ...clone(DEFAULT_CONFIG),
@@ -561,7 +645,11 @@ function normalizeConfig(payload) {
           ? payload.guidedTour.steps
           : clone(DEFAULT_CONFIG.guidedTour.steps)
     },
-    demo: { ...DEFAULT_CONFIG.demo, ...(payload?.demo || {}) },
+    demo: {
+      ...DEFAULT_CONFIG.demo,
+      ...(payload?.demo || {}),
+      apps: normalizeDemoApps(payload?.demo?.apps, { ...DEFAULT_CONFIG.demo, ...(payload?.demo || {}) })
+    },
     referrals: { ...DEFAULT_CONFIG.referrals, ...(payload?.referrals || {}) },
     payment: { ...DEFAULT_CONFIG.payment, ...(payload?.payment || {}) },
     points: { ...DEFAULT_CONFIG.points, ...(payload?.points || {}) },
@@ -647,6 +735,19 @@ export default function EcommerceSettingsLionTv() {
     setForm((prev) => {
       const next = clone(prev);
       let cursor = next;
+      path.slice(0, -1).forEach((key) => {
+        if (!cursor[key] || typeof cursor[key] !== 'object') cursor[key] = {};
+        cursor = cursor[key];
+      });
+      cursor[path[path.length - 1]] = value;
+      return next;
+    });
+  };
+
+  const updateDemoApp = (appIndex, path, value) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      let cursor = next.demo.apps[appIndex];
       path.slice(0, -1).forEach((key) => {
         if (!cursor[key] || typeof cursor[key] !== 'object') cursor[key] = {};
         cursor = cursor[key];
@@ -1763,6 +1864,132 @@ export default function EcommerceSettingsLionTv() {
                 onChange={(event) => setPath(['demo', 'macosAppUrl'], event.target.value)}
               />
             </Grid>
+            <Grid item xs={12}>
+              <Divider sx={{ my: 1 }} />
+              <Stack spacing={1}>
+                <Typography variant="subtitle1" fontWeight={800}>
+                  Apps disponibles para demo
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Configura las cards visibles en el ecommerce, logos y códigos Downloader. Los endpoints de API se configuran por variables de entorno del backend.
+                </Typography>
+              </Stack>
+            </Grid>
+            {(form.demo.apps || []).map((app, appIndex) => (
+              <Grid item xs={12} key={app.code || appIndex}>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Grid container spacing={2} alignItems="center">
+                      <Grid item xs={12} md={2}>
+                        <TextField
+                          select
+                          fullWidth
+                          label="Código"
+                          value={app.code}
+                          onChange={(event) => updateDemoApp(appIndex, ['code'], normalizeDemoAppCode(event.target.value))}
+                        >
+                          {DEFAULT_DEMO_APPS.map((option) => (
+                            <MenuItem key={option.code} value={option.code}>
+                              {option.label.es}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} md={2}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="Orden"
+                          value={app.order}
+                          onChange={(event) => updateDemoApp(appIndex, ['order'], Number(event.target.value || 0))}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <TextField
+                          fullWidth
+                          label="Nombre ES"
+                          value={app.label?.es || ''}
+                          onChange={(event) => updateDemoApp(appIndex, ['label', 'es'], event.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <TextField
+                          fullWidth
+                          label="Nombre EN"
+                          value={app.label?.en || ''}
+                          onChange={(event) => updateDemoApp(appIndex, ['label', 'en'], event.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={2}>
+                        <Stack spacing={1}>
+                          <FormControlLabel
+                            control={<Switch checked={app.active !== false} onChange={(event) => updateDemoApp(appIndex, ['active'], event.target.checked)} />}
+                            label="Activa"
+                          />
+                          <Chip
+                            size="small"
+                            color={app.requiresDeviceKey ? 'warning' : 'success'}
+                            label={app.requiresDeviceKey ? 'Requiere Device Key' : 'Sin Device Key'}
+                          />
+                        </Stack>
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Logo / icono URL"
+                          value={app.iconUrl || ''}
+                          onChange={(event) => updateDemoApp(appIndex, ['iconUrl'], event.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <TextField
+                          fullWidth
+                          label="Código Downloader"
+                          value={app.downloaderCode || ''}
+                          onChange={(event) => updateDemoApp(appIndex, ['downloaderCode'], event.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <TextField
+                          fullWidth
+                          label="Browser URL"
+                          value={app.installLinks?.browserDemoUrl || ''}
+                          onChange={(event) => updateDemoApp(appIndex, ['installLinks', 'browserDemoUrl'], event.target.value)}
+                        />
+                      </Grid>
+                      {app.code === 'VIVO_PLAYER' && (
+                        <>
+                          <Grid item xs={12} md={4}>
+                            <TextField
+                              fullWidth
+                              label="Android APK URL"
+                              value={app.installLinks?.androidApkUrl || ''}
+                              onChange={(event) => updateDemoApp(appIndex, ['installLinks', 'androidApkUrl'], event.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <TextField
+                              fullWidth
+                              label="Android navegador URL"
+                              value={app.installLinks?.androidBrowserUrl || ''}
+                              onChange={(event) => updateDemoApp(appIndex, ['installLinks', 'androidBrowserUrl'], event.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <TextField
+                              fullWidth
+                              label="macOS URL"
+                              value={app.installLinks?.macosAppUrl || ''}
+                              onChange={(event) => updateDemoApp(appIndex, ['installLinks', 'macosAppUrl'], event.target.value)}
+                            />
+                          </Grid>
+                        </>
+                      )}
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
