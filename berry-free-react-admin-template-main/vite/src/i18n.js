@@ -1672,7 +1672,7 @@ const resources = {
       demos: {
         title: 'Lion TV demos',
         listTitle: 'Demo list',
-        search: 'Search (phone, user, package, app)',
+        search: 'Search (phone, customer, MAC, device key, app)',
         status: {
           ACTIVE: 'ACTIVE',
           ACTIVATED: 'ACTIVATED',
@@ -1685,6 +1685,7 @@ const resources = {
           email: 'Email',
           country: 'Country code',
           package: 'Package',
+          deviceKey: 'Device key',
           app: 'App',
           status: 'Status',
           created: 'Created',
@@ -5921,7 +5922,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
       demos: {
         title: 'Demos Lion TV',
         listTitle: 'Listado de demos',
-        search: 'Buscar (celular, usuario, paquete, app)',
+        search: 'Buscar (celular, cliente, MAC, device key, app)',
         status: {
           ACTIVE: 'ACTIVA',
           ACTIVATED: 'ACTIVADA',
@@ -5934,6 +5935,7 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           email: 'Email',
           country: 'Código país',
           package: 'Paquete',
+          deviceKey: 'Device key',
           app: 'App',
           status: 'Estado',
           created: 'Creado',

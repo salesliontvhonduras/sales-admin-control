@@ -100,18 +100,21 @@ export const lionTvProfessionalTranslations = {
         body: 'Delete demo with MAC {{mac}}?'
       },
       headers: {
-        mac: 'MAC'
+        mac: 'MAC',
+        deviceKey: 'Device key'
       },
       form: {
         customer: 'Customer',
         customerHelper: 'Contact details for the demo owner.',
         device: 'Device',
         deviceHelper: 'Access identifier for the trial device.',
+        deviceKeyHelper: 'Required for 9Xtream/IPTV; optional for Vivo Player.',
         note: 'Note',
         stateHelper: 'Track validity, lifecycle and internal notes.'
       },
       messages: {
         required: 'Complete phone, MAC, name and email before saving the demo.',
+        deviceKeyRequired: 'Device Key is required for the selected app.',
         created: 'Demo created.',
         updated: 'Demo updated.',
         deleted: 'Demo deleted.',
@@ -1377,18 +1380,21 @@ export const lionTvProfessionalTranslations = {
         body: '¿Eliminar la demo con MAC {{mac}}?'
       },
       headers: {
-        mac: 'MAC'
+        mac: 'MAC',
+        deviceKey: 'Device key'
       },
       form: {
         customer: 'Cliente',
         customerHelper: 'Datos de contacto del dueño de la demo.',
         device: 'Dispositivo',
         deviceHelper: 'Identificador de acceso del dispositivo de prueba.',
+        deviceKeyHelper: 'Requerido para 9Xtream/IPTV; opcional para Vivo Player.',
         note: 'Nota',
         stateHelper: 'Control de vigencia, ciclo de vida y notas internas.'
       },
       messages: {
         required: 'Completa celular, MAC, nombre y correo antes de guardar la demo.',
+        deviceKeyRequired: 'Device Key es requerido para la aplicación seleccionada.',
         created: 'Demo creada.',
         updated: 'Demo actualizada.',
         deleted: 'Demo eliminada.',

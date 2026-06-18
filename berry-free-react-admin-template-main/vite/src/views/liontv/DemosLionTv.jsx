@@ -51,6 +51,7 @@ import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import PendingOutlinedIcon from '@mui/icons-material/PendingOutlined';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
 import LionMetricCard from 'ui-component/cards/LionMetricCard';
@@ -125,9 +126,13 @@ const statusTokens = (theme) => ({
 
 const appOptions = [
   { value: 'VIVO_PLAYER', label: 'Vivo Player' },
+  { value: 'NINEXTREAM', label: '9Xtream 4K' },
+  { value: 'IPTV_4K_SMARTERS', label: 'IPTV 4K Smarters' },
   { value: 'SMART_ONE', label: 'Smart One IPTV' },
   { value: 'IBO_PRO', label: 'IboPro Player' }
 ];
+
+const appRequiresDeviceKey = (appCode = '') => ['NINEXTREAM', 'IPTV_4K_SMARTERS'].includes(String(appCode || '').toUpperCase());
 
 const defaultForm = {
   macAddress: '',
@@ -135,6 +140,7 @@ const defaultForm = {
   customerName: '',
   email: '',
   appCode: 'VIVO_PLAYER',
+  deviceKey: '',
   status: 'PENDING',
   note: '',
   originalMac: ''
@@ -316,6 +322,7 @@ function normalizeDemo(item = {}) {
     customerName: item.customerName ?? item.name ?? '',
     email: item.email ?? '',
     appCode: item.appCode ?? item.app_code ?? '',
+    deviceKey: item.deviceKey ?? item.device_key ?? '',
     status: (item.status ?? '').toUpperCase(),
     note: item.note ?? '',
     createdAt: item.createdAt ?? item.created_at ?? null,
@@ -459,7 +466,8 @@ export default function DemosLionTv() {
         (row.customerName || '').toLowerCase().includes(term) ||
         (row.macAddress || '').toLowerCase().includes(term) ||
         (row.email || '').toLowerCase().includes(term) ||
-        (row.appCode || '').toLowerCase().includes(term)
+        (row.appCode || '').toLowerCase().includes(term) ||
+        (row.deviceKey || '').toLowerCase().includes(term)
       );
     });
   }, [rows, search, statusFilter]);
@@ -546,6 +554,7 @@ export default function DemosLionTv() {
       customerName: row.customerName || '',
       email: row.email || '',
       appCode: row.appCode || 'VIVO_PLAYER',
+      deviceKey: row.deviceKey || '',
       status: row.status || 'PENDING',
       note: row.note || ''
     });
@@ -578,6 +587,10 @@ export default function DemosLionTv() {
       enqueueSnackbar(t('demos.messages.required', 'Completa celular, MAC, nombre y correo.'), { variant: 'warning' });
       return;
     }
+    if (appRequiresDeviceKey(form.appCode) && !form.deviceKey?.trim()) {
+      enqueueSnackbar(t('demos.messages.deviceKeyRequired', 'Device Key es requerido para la aplicación seleccionada.'), { variant: 'warning' });
+      return;
+    }
 
     const payload = {
       cellphone: form.cellphone,
@@ -585,6 +598,7 @@ export default function DemosLionTv() {
       customerName: form.customerName,
       email: form.email,
       appCode: form.appCode,
+      deviceKey: form.deviceKey?.trim() || null,
       status: form.status,
       note: form.note
     };
@@ -880,6 +894,7 @@ export default function DemosLionTv() {
                       fields={[
                         { label: t('demos.headers.phone', 'Teléfono'), value: row.cellphone || '-' },
                         { label: t('demos.headers.mac', 'MAC'), value: row.macAddress || '-' },
+                        { label: t('demos.headers.deviceKey', 'Device Key'), value: row.deviceKey || '-' },
                         { label: t('demos.headers.created', 'Creado'), value: formatDate(row.createdAt) }
                       ]}
                     />
@@ -911,7 +926,7 @@ export default function DemosLionTv() {
                 borderColor: 'divider'
               }}
             >
-              <Table size="small" sx={{ minWidth: { xs: 1040, md: '100%' } }}>
+              <Table size="small" sx={{ minWidth: { xs: 1160, md: '100%' } }}>
                 <TableHead>
                   <TableRow
                     sx={(theme) => ({
@@ -922,6 +937,7 @@ export default function DemosLionTv() {
                     <TableCell>{t('customers.headers.customer')}</TableCell>
                     <TableCell>{t('demos.headers.phone', 'Teléfono')}</TableCell>
                     <TableCell>{t('demos.headers.mac', 'MAC')}</TableCell>
+                    <TableCell>{t('demos.headers.deviceKey', 'Device Key')}</TableCell>
                     <TableCell>{t('demos.headers.app', 'App')}</TableCell>
                     <TableCell>{t('demos.headers.status', 'Estado')}</TableCell>
                     <TableCell>{t('demos.headers.created', 'Creado')}</TableCell>
@@ -988,6 +1004,23 @@ export default function DemosLionTv() {
                         </Stack>
                       </TableCell>
                       <TableCell>
+                        <Stack direction="row" spacing={0.75} alignItems="center">
+                          <VpnKeyOutlinedIcon fontSize="small" color="action" />
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              maxWidth: 140,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                            title={row.deviceKey || ''}
+                          >
+                            {row.deviceKey || '-'}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
                         <Chip
                           size="small"
                           icon={<AppsIcon fontSize="small" />}
@@ -1026,7 +1059,7 @@ export default function DemosLionTv() {
                   ))}
                   {!loading && filteredRows.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
+                      <TableCell colSpan={9} align="center" sx={{ py: 6 }}>
                         <Stack spacing={1} alignItems="center">
                           <Avatar sx={{ bgcolor: 'primary.lighter', color: 'primary.main' }}>
                             <AppsIcon />
@@ -1041,7 +1074,7 @@ export default function DemosLionTv() {
                   )}
                   {loading && (
                     <TableRow>
-                      <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                      <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                         <Stack spacing={1} alignItems="center">
                           <Skeleton variant="circular" width={40} height={40} />
                           <Typography variant="body2" color="text.secondary">
@@ -1214,7 +1247,7 @@ export default function DemosLionTv() {
 
             <SectionCard title={t('demos.form.device', 'Dispositivo')} helper={t('demos.form.deviceHelper', 'Identificador de acceso')}>
               <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={4}>
                   <TextField
                     required
                     label={t('demos.form.macAddress', 'MAC Address')}
@@ -1232,7 +1265,24 @@ export default function DemosLionTv() {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    label={t('demos.headers.deviceKey', 'Device Key')}
+                    value={form.deviceKey}
+                    onChange={(e) => setForm((p) => ({ ...p, deviceKey: e.target.value }))}
+                    fullWidth
+                    sx={fieldSx}
+                    helperText={t('demos.form.deviceKeyHelper', 'Requerido para 9Xtream/IPTV; opcional para Vivo Player.')}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <VpnKeyOutlinedIcon color="info" />
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
                   <FormControl fullWidth required sx={fieldSx}>
                     <InputLabel>{t('demos.headers.app', 'Aplicación')}</InputLabel>
                     <Select
