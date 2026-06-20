@@ -146,6 +146,7 @@ const countryOptions = [
 const lineProviderOptions = [
   'LION_TV',
   'TITAN',
+  'TITAN_PLUS',
   'NEXOLAT',
   'GOL TV',
   'LION_PLUS+',
@@ -158,6 +159,7 @@ const lineProviderOptions = [
 
 const m3uProviderConfigMap = {
   TITAN: { label: 'Titan', baseUrl: 'http://supremeplay.fun:80/get.php', playlistType: 'm3u_plus', outputFormat: 'ts' },
+  TITANPLUS: { label: 'Titan', baseUrl: 'http://supremeplay.fun:80/get.php', playlistType: 'm3u_plus', outputFormat: 'ts' },
   NEXOLAT: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php', playlistType: 'm3u', outputFormat: 'mpegts' },
   NEXOLATV: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php', playlistType: 'm3u', outputFormat: 'mpegts' },
   FLOWZY: { label: 'NexoLat', baseUrl: 'http://flowzy.work:8080/get.php', playlistType: 'm3u', outputFormat: 'mpegts' },
