@@ -127,6 +127,10 @@ function isVivoPlayerLicenseRecord(record = {}) {
   return normalizeManagedLicenseAppCode(record?.app) === DEFAULT_MANAGED_LICENSE_APP;
 }
 
+function supportsDeviceRecoveryRecord(record = {}) {
+  return isVivoPlayerLicenseRecord(record) || isNineXtreamLicenseRecord(record);
+}
+
 function supportsSpainAutoServerOption(record = {}) {
   return !isBobLicenseRecord(record) && !isNineXtreamLicenseRecord(record);
 }
@@ -143,7 +147,7 @@ function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onDe
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const supportsRemoteActions = isManagedLicenseRecord(row) && hasSubscriptionLink(row);
-  const supportsDeviceRecovery = supportsRemoteActions && isVivoPlayerLicenseRecord(row);
+  const supportsDeviceRecovery = supportsRemoteActions && supportsDeviceRecoveryRecord(row);
   const supportsBobAuth = isBobLicenseRecord(row);
   const supportsBobSync = supportsBobAuth && hasSubscriptionLink(row);
   return (
@@ -1378,8 +1382,8 @@ export default function LicensesLionTv() {
       enqueueSnackbar(t('licenses.labels.requiresSubscriptionLink', 'Requires subscription link'), { variant: 'warning' });
       return;
     }
-    if (!isVivoPlayerLicenseRecord(row)) {
-      enqueueSnackbar(t('licenses.recovery.onlyVivo', 'Recovery MAC is only available for Vivo Player licenses.'), { variant: 'warning' });
+    if (!supportsDeviceRecoveryRecord(row)) {
+      enqueueSnackbar(t('licenses.recovery.onlySupportedApps', 'Recovery MAC is only available for Vivo Player, 9Xtream and IPTV 4K Smarters licenses.'), { variant: 'warning' });
       return;
     }
     setOpenDeviceRecovery({
@@ -3193,7 +3197,7 @@ export default function LicensesLionTv() {
             <Alert severity="info" icon={<SettingsBackupRestoreIcon fontSize="small" />}>
               {t(
                 'licenses.recovery.localMacPreserved',
-                'This process recovers the MAC in Vivo Player. Sales Admin will keep the original MAC on the license and will only update the new device key.'
+                'This process recovers the MAC in the selected app, reconfigures playlists, keeps the original MAC on the license and updates only the new device key.'
               )}
             </Alert>
 
@@ -3261,7 +3265,7 @@ export default function LicensesLionTv() {
                 <Typography variant="body2">
                   {t(
                     'licenses.recovery.steps',
-                    'The system will rename the current Vivo Player device, remove its playlists, run Recovery MAC with the new MAC, and then save only the new device key locally.'
+                    'The system will run Recovery MAC with the new MAC, remove existing playlists on the recovered device, recreate the subscription playlists, and then save only the new device key locally.'
                   )}
                 </Typography>
               </Stack>
@@ -3275,7 +3279,7 @@ export default function LicensesLionTv() {
                     {t('licenses.recovery.previousMac', 'Original local MAC')}: <strong>{openDeviceRecovery.result.previousMacAddress || '-'}</strong>
                   </Typography>
                   <Typography variant="body2">
-                    {t('licenses.recovery.recoveredMac', 'Recovered MAC in Vivo Player')}: <strong>{openDeviceRecovery.result.recoveredMacAddress || '-'}</strong>
+                    {t('licenses.recovery.recoveredMac', 'Recovered MAC in app')}: <strong>{openDeviceRecovery.result.recoveredMacAddress || '-'}</strong>
                   </Typography>
                   <Typography variant="body2">
                     {t('licenses.recovery.savedDeviceKey', 'Saved device key')}: <strong>{openDeviceRecovery.result.newDeviceKey || '-'}</strong>
