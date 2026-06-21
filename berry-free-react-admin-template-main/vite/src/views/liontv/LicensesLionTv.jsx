@@ -593,6 +593,7 @@ export default function LicensesLionTv() {
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
   const [customerFilter, setCustomerFilter] = useState('');
+  const [appFilter, setAppFilter] = useState('');
 
   const [customers, setCustomers] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
@@ -828,7 +829,12 @@ export default function LicensesLionTv() {
       while (true) {
         const res = await lionTvApi.get('/licenses/v1', {
           headers: { Authorization: `Bearer ${accessToken}` },
-          params: { index, size: pageSize, ...(customerFilter ? { customerId: customerFilter } : {}) },
+          params: {
+            index,
+            size: pageSize,
+            ...(customerFilter ? { customerId: customerFilter } : {}),
+            ...(appFilter ? { app: appFilter } : {})
+          },
           skipAuthRedirect: true
         });
         const payload = res?.data?.data ?? res?.data ?? {};
@@ -849,7 +855,7 @@ export default function LicensesLionTv() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, customerFilter, enqueueSnackbar, t]);
+  }, [accessToken, appFilter, customerFilter, enqueueSnackbar, t]);
 
   const loadCustomers = useCallback(async () => {
     if (!accessToken) return;
@@ -1023,6 +1029,26 @@ export default function LicensesLionTv() {
     [licenseApps]
   );
 
+  const licenseAppFilterOptions = useMemo(() => {
+    const options = new Map();
+    activeLicenseAppOptions.forEach((option) => {
+      if (option.value) {
+        options.set(normalizeManagedLicenseAppCode(option.value), { value: normalizeManagedLicenseAppCode(option.value), label: option.label });
+      }
+    });
+    rows.forEach((row) => {
+      const normalized = normalizeManagedLicenseAppCode(row.app);
+      if (normalized && !options.has(normalized)) {
+        options.set(normalized, { value: normalized, label: getLicenseAppLabel(row.app) });
+      }
+    });
+    const selected = normalizeManagedLicenseAppCode(appFilter);
+    if (selected && !options.has(selected)) {
+      options.set(selected, { value: selected, label: getLicenseAppLabel(appFilter) });
+    }
+    return Array.from(options.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [activeLicenseAppOptions, appFilter, getLicenseAppLabel, rows]);
+
   const defaultLicenseApp = useMemo(
     () =>
       activeLicenseAppOptions.find((option) => normalizeManagedLicenseAppCode(option.value) === DEFAULT_MANAGED_LICENSE_APP)?.value ??
@@ -1046,13 +1072,14 @@ export default function LicensesLionTv() {
 
   // Nota: busca en todas las licencias cargadas, incluye filtro por status y pago
   const filteredRows = useMemo(() => {
-    if (!search && !statusFilter && !paymentFilter && !customerFilter) return rows;
+    if (!search && !statusFilter && !paymentFilter && !customerFilter && !appFilter) return rows;
     const term = search.toLowerCase();
     return rows.filter((row) => {
       if (statusFilter && (row.status || '').toLowerCase() !== statusFilter.toLowerCase()) return false;
       if (paymentFilter === 'PAID' && !row.isPaid) return false;
       if (paymentFilter === 'PENDING' && row.isPaid) return false;
       if (customerFilter && !idsMatch(row.customerId, customerFilter)) return false;
+      if (appFilter && normalizeManagedLicenseAppCode(row.app) !== normalizeManagedLicenseAppCode(appFilter)) return false;
       const paidLabel = row.isPaid ? 'paid pagada' : 'pending pendiente no pagada';
       const subscription = row.subscriptionId ? subscriptionMap[String(row.subscriptionId)] : null;
       const subscriptionSearch = `${row.subscriptionId || ''} ${subscription?.lineId || ''} ${subscription?.lineUsername || ''} ${subscription?.status || ''}`.toLowerCase();
@@ -1071,7 +1098,7 @@ export default function LicensesLionTv() {
         (row.customerName || customerNameMap[row.customerId] || '').toLowerCase().includes(term)
       );
     });
-  }, [rows, search, customerNameMap, statusFilter, paymentFilter, customerFilter, subscriptionMap, getLicenseAppLabel]);
+  }, [rows, search, customerNameMap, statusFilter, paymentFilter, customerFilter, appFilter, subscriptionMap, getLicenseAppLabel]);
 
   const paginatedRows = useMemo(() => {
     const start = page * rowsPerPage;
@@ -2014,6 +2041,41 @@ export default function LicensesLionTv() {
                 {PAYMENT_FILTER_OPTIONS.map((value) => (
                   <MenuItem key={value} value={value}>
                     {value === 'PAID' ? t('licenses.paid.paid', 'Paid') : t('licenses.paid.pending', 'Pending')}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl
+              size="small"
+              sx={{
+                minWidth: 190,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  backgroundColor: 'background.paper'
+                }
+              }}
+            >
+              <InputLabel>{t('licenses.filters.app', 'Aplicación')}</InputLabel>
+              <Select
+                value={appFilter}
+                label={t('licenses.filters.app', 'Aplicación')}
+                onChange={(e) => {
+                  setAppFilter(e.target.value);
+                  setPage(0);
+                }}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <AppsIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                }
+              >
+                <MenuItem value="">
+                  <em>{t('licenses.filters.allApps', 'Todas las apps')}</em>
+                </MenuItem>
+                {licenseAppFilterOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
                   </MenuItem>
                 ))}
               </Select>

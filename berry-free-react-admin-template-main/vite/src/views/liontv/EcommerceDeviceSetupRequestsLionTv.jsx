@@ -57,6 +57,44 @@ const APP_OPTIONS = [
   { value: 'NINEXTREAM', label: '9Xtream' },
   { value: 'IPTV_4K_SMARTERS', label: 'IPTV 4K Smarters' }
 ];
+const DATE_FILTER_OPTIONS = [
+  { value: 'ALL', labelKey: 'deviceSetupRequests.filters.allDates', fallback: 'Todas' },
+  { value: 'TODAY', labelKey: 'deviceSetupRequests.filters.today', fallback: 'Hoy' },
+  { value: 'YESTERDAY', labelKey: 'deviceSetupRequests.filters.yesterday', fallback: 'Ayer' },
+  { value: 'LAST_7_DAYS', labelKey: 'deviceSetupRequests.filters.last7Days', fallback: 'Últimos 7 días' },
+  { value: 'CUSTOM', labelKey: 'deviceSetupRequests.filters.customRange', fallback: 'Rango personalizado' }
+];
+const HONDURAS_TIME_ZONE = 'America/Tegucigalpa';
+
+const getHondurasDateString = () => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: HONDURAS_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+};
+
+const addDaysToDateString = (value, days) => {
+  if (!value) return '';
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day + days));
+  return date.toISOString().slice(0, 10);
+};
+
+const resolveDateFilterRange = (preset, customFrom, customTo) => {
+  const today = getHondurasDateString();
+  if (preset === 'TODAY') return { createdFrom: today, createdTo: today };
+  if (preset === 'YESTERDAY') {
+    const yesterday = addDaysToDateString(today, -1);
+    return { createdFrom: yesterday, createdTo: yesterday };
+  }
+  if (preset === 'LAST_7_DAYS') return { createdFrom: addDaysToDateString(today, -6), createdTo: today };
+  if (preset === 'CUSTOM') return { createdFrom: customFrom || undefined, createdTo: customTo || undefined };
+  return {};
+};
 
 const statusColor = (status) => {
   const value = String(status || '').toUpperCase();
@@ -107,14 +145,25 @@ export default function EcommerceDeviceSetupRequestsLionTv() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [appCode, setAppCode] = useState('');
+  const [datePreset, setDatePreset] = useState('ALL');
+  const [customDateFrom, setCustomDateFrom] = useState('');
+  const [customDateTo, setCustomDateTo] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
 
   const loadRows = useCallback(async () => {
     if (!accessToken) return;
     setLoading(true);
     try {
+      const dateParams = resolveDateFilterRange(datePreset, customDateFrom, customDateTo);
       const payload = await listAdminDeviceSetupRequests(
-        { index: page, size: rowsPerPage, status: status || undefined, appCode: appCode || undefined, search: search || undefined },
+        {
+          index: page,
+          size: rowsPerPage,
+          status: status || undefined,
+          appCode: appCode || undefined,
+          search: search || undefined,
+          ...dateParams
+        },
         { skipAuthRedirect: true }
       );
       setRows(Array.isArray(payload?.data) ? payload.data : []);
@@ -126,7 +175,7 @@ export default function EcommerceDeviceSetupRequestsLionTv() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, appCode, enqueueSnackbar, page, rowsPerPage, search, status]);
+  }, [accessToken, appCode, customDateFrom, customDateTo, datePreset, enqueueSnackbar, page, rowsPerPage, search, status]);
 
   useEffect(() => {
     loadRows();
@@ -234,7 +283,7 @@ export default function EcommerceDeviceSetupRequestsLionTv() {
       <MainCard
         title="Bandeja de solicitudes"
         secondary={
-          <ResponsiveFilters paperSx={{ width: { xs: '100%', md: 960 } }}>
+          <ResponsiveFilters paperSx={{ width: { xs: '100%', md: 1180 } }}>
             <TextField
               size="small"
               fullWidth
@@ -272,7 +321,7 @@ export default function EcommerceDeviceSetupRequestsLionTv() {
             <TextField
               select
               size="small"
-              label="App"
+              label={t('deviceSetupRequests.filters.app', 'Aplicación')}
               value={appCode}
               onChange={(event) => {
                 setAppCode(event.target.value);
@@ -286,6 +335,51 @@ export default function EcommerceDeviceSetupRequestsLionTv() {
                 </MenuItem>
               ))}
             </TextField>
+            <TextField
+              select
+              size="small"
+              label={t('deviceSetupRequests.filters.date', 'Fecha')}
+              value={datePreset}
+              onChange={(event) => {
+                setDatePreset(event.target.value);
+                setPage(0);
+              }}
+              sx={{ minWidth: { xs: '100%', sm: 210 } }}
+            >
+              {DATE_FILTER_OPTIONS.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {t(option.labelKey, option.fallback)}
+                </MenuItem>
+              ))}
+            </TextField>
+            {datePreset === 'CUSTOM' ? (
+              <>
+                <TextField
+                  size="small"
+                  type="date"
+                  label={t('deviceSetupRequests.filters.from', 'Desde')}
+                  value={customDateFrom}
+                  onChange={(event) => {
+                    setCustomDateFrom(event.target.value);
+                    setPage(0);
+                  }}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ minWidth: { xs: '100%', sm: 170 } }}
+                />
+                <TextField
+                  size="small"
+                  type="date"
+                  label={t('deviceSetupRequests.filters.to', 'Hasta')}
+                  value={customDateTo}
+                  onChange={(event) => {
+                    setCustomDateTo(event.target.value);
+                    setPage(0);
+                  }}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ minWidth: { xs: '100%', sm: 170 } }}
+                />
+              </>
+            ) : null}
           </ResponsiveFilters>
         }
       >
