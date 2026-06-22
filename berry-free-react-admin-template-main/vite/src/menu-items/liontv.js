@@ -349,6 +349,15 @@ const liontv = {
           permission: { any: ['LIONTV_LICENSES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] }
         },
         {
+          id: 'liontv-smarttube-premium',
+          title: 'menu.smartTubePremium',
+          type: 'item',
+          url: '/liontv/smarttube-premium',
+          resellerVisible: false,
+          breadcrumbs: true,
+          permission: { any: ['ROLE_ADMIN', 'ADMIN'] }
+        },
+        {
           id: 'liontv-device-setup-requests',
           title: 'menu.deviceSetupRequests',
           type: 'item',
