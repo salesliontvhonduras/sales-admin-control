@@ -51,3 +51,21 @@ export async function updateSmartTubePremiumDeviceLimit(userId, deviceLimit, con
   const response = await authApi.patch(`/auth/v1/admin/smarttube-premium/users/${userId}/device-limit`, { deviceLimit }, config);
   return unwrap(response);
 }
+
+export async function listSmartTubePremiumAccountRequests(params = {}, config = {}) {
+  const response = await authApi.get('/auth/v1/admin/smarttube-premium/account-requests', {
+    ...config,
+    params
+  });
+  return unwrap(response);
+}
+
+export async function confirmSmartTubePremiumAccountRequest(requestId, payload, config = {}) {
+  const response = await authApi.post(`/auth/v1/admin/smarttube-premium/account-requests/${requestId}/confirm-payment`, payload, config);
+  return unwrap(response);
+}
+
+export async function rejectSmartTubePremiumAccountRequest(requestId, reason, config = {}) {
+  const response = await authApi.post(`/auth/v1/admin/smarttube-premium/account-requests/${requestId}/reject`, { reason }, config);
+  return unwrap(response);
+}

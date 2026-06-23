@@ -9,7 +9,9 @@ import Chip from '@mui/material/Chip';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
+import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
+import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
@@ -25,8 +27,12 @@ import { useTheme } from '@mui/material/styles';
 
 import AddIcon from '@mui/icons-material/Add';
 import BlockIcon from '@mui/icons-material/Block';
+import CancelIcon from '@mui/icons-material/Cancel';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DevicesOtherIcon from '@mui/icons-material/DevicesOther';
 import KeyIcon from '@mui/icons-material/Key';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import PaymentIcon from '@mui/icons-material/Payment';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
 import SmartDisplayIcon from '@mui/icons-material/SmartDisplay';
@@ -41,9 +47,12 @@ import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { withAlpha } from 'utils/colorUtils';
 import {
+  confirmSmartTubePremiumAccountRequest,
   createSmartTubePremiumUser,
+  listSmartTubePremiumAccountRequests,
   listSmartTubePremiumDevices,
   listSmartTubePremiumUsers,
+  rejectSmartTubePremiumAccountRequest,
   renewSmartTubePremiumLicense,
   resetSmartTubePremiumDevices,
   resetSmartTubePremiumPassword,
@@ -69,11 +78,26 @@ const statusOptions = [
   { value: 'SUSPENDED', label: 'Suspendidas' }
 ];
 
+const requestStatusOptions = [
+  { value: '', label: 'Todas' },
+  { value: 'PENDING_PAYMENT', label: 'Pendientes de pago' },
+  { value: 'ACTIVATED', label: 'Activadas' },
+  { value: 'REJECTED', label: 'Rechazadas' }
+];
+
 const statusColor = (status) => {
   const value = String(status || '').toUpperCase();
   if (value === 'ACTIVE') return 'success';
   if (value === 'EXPIRED') return 'warning';
   if (value === 'SUSPENDED') return 'default';
+  return 'info';
+};
+
+const requestStatusColor = (status) => {
+  const value = String(status || '').toUpperCase();
+  if (value === 'PENDING_PAYMENT') return 'warning';
+  if (value === 'ACTIVATED') return 'success';
+  if (value === 'REJECTED') return 'default';
   return 'info';
 };
 
@@ -147,6 +171,18 @@ export default function SmartTubePremiumAdmin() {
   const [limitTarget, setLimitTarget] = useState(null);
   const [deviceLimitValue, setDeviceLimitValue] = useState(1);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [requestRows, setRequestRows] = useState([]);
+  const [requestTotal, setRequestTotal] = useState(0);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [requestPage, setRequestPage] = useState(0);
+  const [requestRowsPerPage, setRequestRowsPerPage] = useState(10);
+  const [requestSearch, setRequestSearch] = useState('');
+  const [requestStatus, setRequestStatus] = useState('PENDING_PAYMENT');
+  const [requestRefreshKey, setRequestRefreshKey] = useState(0);
+  const [confirmRequestTarget, setConfirmRequestTarget] = useState(null);
+  const [confirmRequestForm, setConfirmRequestForm] = useState({ durationDays: 30, expiresAt: '', deviceLimit: 1 });
+  const [rejectRequestTarget, setRejectRequestTarget] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   const loadRows = useCallback(async () => {
     setLoading(true);
@@ -172,6 +208,31 @@ export default function SmartTubePremiumAdmin() {
   useEffect(() => {
     loadRows();
   }, [loadRows, refreshKey]);
+
+  const loadRequests = useCallback(async () => {
+    setRequestsLoading(true);
+    try {
+      const payload = await listSmartTubePremiumAccountRequests(
+        {
+          index: requestPage,
+          size: requestRowsPerPage,
+          search: requestSearch || undefined,
+          status: requestStatus || undefined
+        },
+        { skipAuthRedirect: true }
+      );
+      setRequestRows(Array.isArray(payload?.data) ? payload.data : []);
+      setRequestTotal(Number(payload?.total || 0));
+    } catch (error) {
+      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudieron cargar solicitudes SmartTube.', { variant: 'error' });
+    } finally {
+      setRequestsLoading(false);
+    }
+  }, [enqueueSnackbar, requestPage, requestRowsPerPage, requestSearch, requestStatus]);
+
+  useEffect(() => {
+    loadRequests();
+  }, [loadRequests, requestRefreshKey]);
 
   const metrics = useMemo(() => {
     const counts = rows.reduce((acc, row) => {
@@ -208,6 +269,55 @@ export default function SmartTubePremiumAdmin() {
       setRefreshKey((value) => value + 1);
     } catch (error) {
       enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo crear el usuario.', { variant: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openConfirmRequest = (row) => {
+    setConfirmRequestTarget(row);
+    setConfirmRequestForm({
+      durationDays: Number(row.requestedDurationDays || 30),
+      expiresAt: '',
+      deviceLimit: Number(row.requestedDeviceLimit || 1)
+    });
+  };
+
+  const handleConfirmRequest = async () => {
+    if (!confirmRequestTarget?.requestId) return;
+    setSaving(true);
+    try {
+      await confirmSmartTubePremiumAccountRequest(
+        confirmRequestTarget.requestId,
+        {
+          durationDays: confirmRequestForm.expiresAt ? undefined : Number(confirmRequestForm.durationDays || 30),
+          expiresAt: confirmRequestForm.expiresAt || undefined,
+          deviceLimit: Number(confirmRequestForm.deviceLimit || 1)
+        },
+        { skipAuthRedirect: true }
+      );
+      enqueueSnackbar('Pago confirmado. Licencia SmartTube activada.', { variant: 'success' });
+      setConfirmRequestTarget(null);
+      setRefreshKey((value) => value + 1);
+      setRequestRefreshKey((value) => value + 1);
+    } catch (error) {
+      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo confirmar el pago.', { variant: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRejectRequest = async () => {
+    if (!rejectRequestTarget?.requestId) return;
+    setSaving(true);
+    try {
+      await rejectSmartTubePremiumAccountRequest(rejectRequestTarget.requestId, rejectReason, { skipAuthRedirect: true });
+      enqueueSnackbar('Solicitud rechazada.', { variant: 'success' });
+      setRejectRequestTarget(null);
+      setRejectReason('');
+      setRequestRefreshKey((value) => value + 1);
+    } catch (error) {
+      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo rechazar la solicitud.', { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -365,6 +475,150 @@ export default function SmartTubePremiumAdmin() {
             <LionMetricCard key={metric.title} {...metric} />
           ))}
         </ResponsiveMetricGrid>
+
+        <Divider />
+
+        <Stack spacing={1.75}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between">
+            <Box>
+              <Typography variant="h4">Solicitudes de creación</Typography>
+              <Typography variant="body2" color="text.secondary">
+                Clientes que pagaron o están por pagar desde Banrural/PayPal y esperan activación.
+              </Typography>
+            </Box>
+            <Button
+              startIcon={<RefreshIcon />}
+              variant="outlined"
+              onClick={() => setRequestRefreshKey((value) => value + 1)}
+              disabled={requestsLoading}
+            >
+              Actualizar solicitudes
+            </Button>
+          </Stack>
+
+          <ResponsiveFilters>
+            <TextField
+              label="Buscar solicitud"
+              value={requestSearch}
+              onChange={(event) => {
+                setRequestSearch(event.target.value);
+                setRequestPage(0);
+              }}
+              placeholder="Nombre o correo"
+              InputProps={{ startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} /> }}
+            />
+            <TextField
+              select
+              label="Estado de solicitud"
+              value={requestStatus}
+              onChange={(event) => {
+                setRequestStatus(event.target.value);
+                setRequestPage(0);
+              }}
+            >
+              {requestStatusOptions.map((option) => (
+                <MenuItem key={option.value || 'all'} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          </ResponsiveFilters>
+
+          <TableContainer sx={{ borderRadius: 2, border: `1px solid ${theme.palette.divider}`, overflowX: 'auto' }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Cliente</TableCell>
+                  <TableCell>Pago</TableCell>
+                  <TableCell>Estado</TableCell>
+                  <TableCell>Solicitado</TableCell>
+                  <TableCell>Dispositivos</TableCell>
+                  <TableCell align="right">Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {requestRows.map((row) => (
+                  <TableRow key={row.requestId} hover>
+                    <TableCell>
+                      <Stack spacing={0.2}>
+                        <Typography variant="subtitle2">{row.name || '-'}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {row.email}
+                        </Typography>
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <Stack spacing={0.4}>
+                        <Chip size="small" icon={<PaymentIcon />} label={row.paymentMethod || 'PENDING'} />
+                        {row.paymentUrl ? (
+                          <Link href={row.paymentUrl} target="_blank" rel="noreferrer" underline="hover" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.4 }}>
+                            Abrir link <OpenInNewIcon sx={{ fontSize: 14 }} />
+                          </Link>
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">
+                            Link no seleccionado
+                          </Typography>
+                        )}
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <Chip size="small" color={requestStatusColor(row.status)} label={row.status || '-'} />
+                    </TableCell>
+                    <TableCell>{formatDateTime(row.createdAt, locale)}</TableCell>
+                    <TableCell>{Number(row.requestedDeviceLimit || 1)}</TableCell>
+                    <TableCell align="right">
+                      <Stack direction="row" spacing={0.75} justifyContent="flex-end" flexWrap="wrap">
+                        <Button
+                          size="small"
+                          startIcon={<CheckCircleIcon />}
+                          color="success"
+                          variant="outlined"
+                          disabled={row.status !== 'PENDING_PAYMENT'}
+                          onClick={() => openConfirmRequest(row)}
+                        >
+                          Confirmar pago
+                        </Button>
+                        <Button
+                          size="small"
+                          startIcon={<CancelIcon />}
+                          color="warning"
+                          variant="outlined"
+                          disabled={row.status !== 'PENDING_PAYMENT'}
+                          onClick={() => setRejectRequestTarget(row)}
+                        >
+                          Rechazar
+                        </Button>
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!requestsLoading && requestRows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6}>
+                      <Box sx={{ py: 4, textAlign: 'center' }}>
+                        <Typography color="text.secondary">No hay solicitudes SmartTube Premium.</Typography>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <TablePagination
+            component="div"
+            count={requestTotal}
+            page={requestPage}
+            rowsPerPage={requestRowsPerPage}
+            onPageChange={(event, nextPage) => setRequestPage(nextPage)}
+            onRowsPerPageChange={(event) => {
+              setRequestRowsPerPage(parseInt(event.target.value, 10));
+              setRequestPage(0);
+            }}
+          />
+        </Stack>
+
+        <Divider />
 
         <ResponsiveFilters>
           <TextField
@@ -542,6 +796,77 @@ export default function SmartTubePremiumAdmin() {
           <Button onClick={() => setCreateOpen(false)}>Cancelar</Button>
           <Button variant="contained" onClick={handleCreate} disabled={saving}>
             Crear usuario
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={Boolean(confirmRequestTarget)} onClose={() => setConfirmRequestTarget(null)} fullWidth maxWidth="xs" PaperProps={{ sx: modalPaperSx }}>
+        <DialogTitleWithClose onClose={() => setConfirmRequestTarget(null)} title="Confirmar pago SmartTube" />
+        <DialogContent sx={modalContentSx}>
+          <Stack spacing={2}>
+            <Alert severity="warning" variant="outlined">
+              Al confirmar, se creará o renovará el usuario y la licencia quedará activa.
+            </Alert>
+            <Typography variant="body2" color="text.secondary">
+              {confirmRequestTarget?.email}
+            </Typography>
+            <TextField
+              label="Duración en días"
+              type="number"
+              value={confirmRequestForm.durationDays}
+              onChange={(event) => setConfirmRequestForm((form) => ({ ...form, durationDays: event.target.value }))}
+              disabled={Boolean(confirmRequestForm.expiresAt)}
+            />
+            <TextField
+              label="Vencimiento exacto"
+              type="datetime-local"
+              value={confirmRequestForm.expiresAt}
+              onChange={(event) => setConfirmRequestForm((form) => ({ ...form, expiresAt: event.target.value }))}
+              InputLabelProps={{ shrink: true }}
+              helperText="Opcional. Si lo llenas, reemplaza la duración en días."
+            />
+            <TextField
+              label="Límite de dispositivos"
+              type="number"
+              value={confirmRequestForm.deviceLimit}
+              onChange={(event) => setConfirmRequestForm((form) => ({ ...form, deviceLimit: event.target.value }))}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={modalActionsSx}>
+          <Button onClick={() => setConfirmRequestTarget(null)}>Cancelar</Button>
+          <Button
+            color="success"
+            variant="contained"
+            onClick={handleConfirmRequest}
+            disabled={saving || Number(confirmRequestForm.deviceLimit || 0) < 1}
+          >
+            Confirmar y activar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={Boolean(rejectRequestTarget)} onClose={() => setRejectRequestTarget(null)} fullWidth maxWidth="xs" PaperProps={{ sx: modalPaperSx }}>
+        <DialogTitleWithClose onClose={() => setRejectRequestTarget(null)} title="Rechazar solicitud" />
+        <DialogContent sx={modalContentSx}>
+          <Stack spacing={2}>
+            <Typography variant="body2" color="text.secondary">
+              {rejectRequestTarget?.email}
+            </Typography>
+            <TextField
+              label="Motivo"
+              multiline
+              minRows={3}
+              value={rejectReason}
+              onChange={(event) => setRejectReason(event.target.value)}
+              placeholder="Pago no encontrado, datos incorrectos, etc."
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={modalActionsSx}>
+          <Button onClick={() => setRejectRequestTarget(null)}>Cancelar</Button>
+          <Button color="warning" variant="contained" onClick={handleRejectRequest} disabled={saving}>
+            Rechazar
           </Button>
         </DialogActions>
       </Dialog>
