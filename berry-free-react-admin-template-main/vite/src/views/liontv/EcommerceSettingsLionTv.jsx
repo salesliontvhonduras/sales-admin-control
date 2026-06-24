@@ -325,7 +325,15 @@ const DEFAULT_CONFIG = {
   points: { enabled: true, renewalMessage: 'Puedes aplicar tus puntos disponibles al renovar con nuestro equipo.' },
   externalLinks: {
     speedTestUrl: 'https://fast.com',
-    whatsappChannelUrl: 'https://whatsapp.com/channel/0029Vb74eCk9Bb61cxYPCN1J'
+    whatsappChannelUrl: 'https://whatsapp.com/channel/0029Vb74eCk9Bb61cxYPCN1J',
+    apkDownloadUrl: ''
+  },
+  appUpdate: {
+    enabled: false,
+    latestVersionCode: 0,
+    latestVersionName: '',
+    downloadUrl: '',
+    message: 'Hay una nueva actualizacion disponible.'
   },
   messages: {
     existingCustomerTitle: 'Tu cuenta Lion TV Premium',
@@ -654,6 +662,7 @@ function normalizeConfig(payload) {
     payment: { ...DEFAULT_CONFIG.payment, ...(payload?.payment || {}) },
     points: { ...DEFAULT_CONFIG.points, ...(payload?.points || {}) },
     externalLinks: { ...DEFAULT_CONFIG.externalLinks, ...(payload?.externalLinks || {}) },
+    appUpdate: { ...DEFAULT_CONFIG.appUpdate, ...(payload?.appUpdate || {}) },
     messages: { ...DEFAULT_CONFIG.messages, ...(payload?.messages || {}) },
     moreReasons: {
       ...DEFAULT_CONFIG.moreReasons,
@@ -1247,6 +1256,73 @@ export default function EcommerceSettingsLionTv() {
                 value={form.externalLinks.whatsappChannelUrl}
                 onChange={(event) => setPath(['externalLinks', 'whatsappChannelUrl'], event.target.value)}
                 helperText="Se muestra como link horizontal en el footer del ecommerce."
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="URL descarga APK"
+                value={form.externalLinks.apkDownloadUrl}
+                onChange={(event) => setPath(['externalLinks', 'apkDownloadUrl'], event.target.value)}
+                helperText="Si está vacío, el ecommerce oculta el botón Descargar APK."
+              />
+            </Grid>
+          </Grid>
+        </SettingsSection>
+
+        <SettingsSection
+          title="Actualización APK"
+          description="Aviso opcional para que la APK Lion TV Premium descargue e instale una versión nueva."
+        >
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={Boolean(form.appUpdate.enabled)}
+                    onChange={(event) => setPath(['appUpdate', 'enabled'], event.target.checked)}
+                  />
+                }
+                label="Aviso de actualización activo"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Version code nueva"
+                value={form.appUpdate.latestVersionCode}
+                onChange={(event) => setPath(['appUpdate', 'latestVersionCode'], Number(event.target.value || 0))}
+                inputProps={{ min: 0, step: 1 }}
+                helperText="Debe ser mayor al versionCode instalado. La APK actual usa 2387."
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Versión visible"
+                value={form.appUpdate.latestVersionName}
+                onChange={(event) => setPath(['appUpdate', 'latestVersionName'], event.target.value)}
+                helperText="Ejemplo: 31.98. Si queda vacío, se usará el versionCode."
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="URL directa APK"
+                value={form.appUpdate.downloadUrl}
+                onChange={(event) => setPath(['appUpdate', 'downloadUrl'], event.target.value)}
+                helperText="Debe apuntar directamente a un archivo .apk compatible para que Android pueda instalarlo."
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                label="Mensaje de actualización"
+                value={form.appUpdate.message}
+                onChange={(event) => setPath(['appUpdate', 'message'], event.target.value)}
               />
             </Grid>
           </Grid>
