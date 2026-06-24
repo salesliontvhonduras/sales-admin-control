@@ -191,6 +191,20 @@ function normalizeSubscription(item = {}) {
   };
 }
 
+const plusLineProviderCodes = new Set(['LIONPLUS', 'LIONPLUSPLUS', 'TITANPLUS', 'TITANPLUSPLUS']);
+
+function normalizeLineProvider(provider) {
+  return String(provider || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[\s_-]+/g, '')
+    .replace(/\+/g, 'PLUS');
+}
+
+function isPlusLineProvider(provider) {
+  return plusLineProviderCodes.has(normalizeLineProvider(provider));
+}
+
 function RowActions({
   row,
   onEdit,
@@ -518,8 +532,8 @@ export default function SubscriptionsLionTv() {
 
   const plusLines = useMemo(() => {
     return lines.filter((line) => {
-      const provider = (line.provider ?? line.line_provider ?? line.lineProvider ?? '').toString().trim().toUpperCase();
-      return provider === 'LION_PLUS+';
+      const provider = line.provider ?? line.line_provider ?? line.lineProvider ?? '';
+      return isPlusLineProvider(provider);
     });
   }, [lines]);
 
@@ -2102,7 +2116,7 @@ export default function SubscriptionsLionTv() {
                       </MenuItem>
                       {plusLines.length === 0 ? (
                         <MenuItem value="" disabled>
-                          {t('subscriptions.form.noPlusLines', 'No LION_PLUS+ lines available')}
+                          {t('subscriptions.form.noPlusLines', 'No LionPlus/TitanPlus lines available')}
                         </MenuItem>
                       ) : (
                         plusLines.map((l) => (
@@ -2129,7 +2143,7 @@ export default function SubscriptionsLionTv() {
                       )}
                     </Select>
                     <FormHelperText>
-                      {t('subscriptions.form.linesPlusHint', 'Only LION_PLUS+ lines (optional)')}
+                      {t('subscriptions.form.linesPlusHint', 'Only LionPlus and TitanPlus lines are shown here.')}
                     </FormHelperText>
                   </FormControl>
                 </Grid>
