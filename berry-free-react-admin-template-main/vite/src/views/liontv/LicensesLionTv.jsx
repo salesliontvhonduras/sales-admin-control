@@ -63,6 +63,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import PlaylistRemoveIcon from '@mui/icons-material/PlaylistRemove';
+import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
 import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
 
@@ -143,7 +144,20 @@ function requiresSubscriptionLink(record = {}) {
   return isManagedLicenseRecord(record) && !hasSubscriptionLink(record);
 }
 
-function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onDeviceRecovery, onHistory, onDelete, onBobAuth, onBobSync, t }) {
+function RowActions({
+  row,
+  onEdit,
+  onTransfer,
+  onServer,
+  onRemovePlaylists,
+  onReconfigurePlaylists,
+  onDeviceRecovery,
+  onHistory,
+  onDelete,
+  onBobAuth,
+  onBobSync,
+  t
+}) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const supportsRemoteActions = isManagedLicenseRecord(row) && hasSubscriptionLink(row);
@@ -236,6 +250,18 @@ function RowActions({ row, onEdit, onTransfer, onServer, onRemovePlaylists, onDe
           {t('licenses.actions.removePlaylists', 'Remove all playlists')}
         </MenuItem>
         <MenuItem
+          disabled={!supportsRemoteActions}
+          onClick={() => {
+            setAnchorEl(null);
+            if (supportsRemoteActions) {
+              onReconfigurePlaylists?.(row);
+            }
+          }}
+        >
+          <PlaylistAddCheckIcon fontSize="small" style={{ marginRight: 8, color: '#2e7d32' }} />
+          {t('licenses.actions.reconfigurePlaylists', 'Reconfigure playlists')}
+        </MenuItem>
+        <MenuItem
           disabled={!supportsDeviceRecovery}
           onClick={() => {
             setAnchorEl(null);
@@ -292,6 +318,20 @@ function maskMacAddressInput(value) {
 
 function isValidMacAddress(value) {
   return MAC_ADDRESS_REGEX.test(String(value ?? '').toLowerCase());
+}
+
+function createTransferState(row = null) {
+  return {
+    open: Boolean(row),
+    row,
+    toCustomerId: '',
+    destinationSubscriptionId: '',
+    typeLicense: 'USED',
+    deviceTransferMode: 'SAME_DEVICE',
+    newMacAddress: '',
+    newDeviceKey: '',
+    result: null
+  };
 }
 
 function parsePaidValue(value) {
@@ -622,18 +662,13 @@ export default function LicensesLionTv() {
 
   const [openModal, setOpenModal] = useState(false);
   const [openDelete, setOpenDelete] = useState({ open: false, row: null });
-  const [openTransfer, setOpenTransfer] = useState({
-    open: false,
-    row: null,
-    toCustomerId: '',
-    destinationSubscriptionId: '',
-    typeLicense: 'USED'
-  });
+  const [openTransfer, setOpenTransfer] = useState(createTransferState());
 
   const [history, setHistory] = useState([]);
   const [historyOpen, setHistoryOpen] = useState({ open: false, row: null });
   const [openServerChange, setOpenServerChange] = useState({ open: false, row: null });
   const [openRemovePlaylists, setOpenRemovePlaylists] = useState({ open: false, row: null });
+  const [openReconfigurePlaylists, setOpenReconfigurePlaylists] = useState({ open: false, row: null, result: null });
   const [openDeviceRecovery, setOpenDeviceRecovery] = useState({
     open: false,
     row: null,
@@ -1362,7 +1397,7 @@ export default function LicensesLionTv() {
   };
 
   const handleTransfer = (row) => {
-    setOpenTransfer({ open: true, row, toCustomerId: '', destinationSubscriptionId: '', typeLicense: 'USED' });
+    setOpenTransfer(createTransferState(row));
   };
 
   const handleOpenServerChange = (row) => {
@@ -1399,6 +1434,17 @@ export default function LicensesLionTv() {
       return;
     }
     setOpenRemovePlaylists({ open: true, row });
+    if (isBobLicenseRecord(row) && row.licenseId) {
+      void refreshBobSessionStatus(row.licenseId, { silent: true });
+    }
+  };
+
+  const handleOpenReconfigurePlaylists = (row) => {
+    if (requiresSubscriptionLink(row)) {
+      enqueueSnackbar(t('licenses.labels.requiresSubscriptionLink', 'Requires subscription link'), { variant: 'warning' });
+      return;
+    }
+    setOpenReconfigurePlaylists({ open: true, row, result: null });
     if (isBobLicenseRecord(row) && row.licenseId) {
       void refreshBobSessionStatus(row.licenseId, { silent: true });
     }
@@ -1591,6 +1637,51 @@ export default function LicensesLionTv() {
     }
   };
 
+  const confirmReconfigurePlaylists = async () => {
+    const licenseId = openReconfigurePlaylists.row?.licenseId;
+    if (!licenseId) {
+      enqueueSnackbar(t('licenses.reconfigure.licenseRequired', 'License id is required.'), { variant: 'warning' });
+      return;
+    }
+    if (isBobLicenseRecord(openReconfigurePlaylists.row) && !isBobSessionReady(openReconfigurePlaylists.row?.bobSessionStatus)) {
+      enqueueSnackbar(t('licenses.server.bobSessionRequired', 'Authenticate Bob Player before changing server.'), { variant: 'warning' });
+      return;
+    }
+
+    setSending(true);
+    try {
+      const res = await lionTvApi.post(
+        `/licenses/v1/${licenseId}/playlists/reconfigure`,
+        {},
+        { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
+      );
+      const data = res?.data?.data || null;
+      const configuredCount = data?.configuredPlaylists?.length ?? 0;
+      setOpenReconfigurePlaylists((prev) => ({ ...prev, result: data }));
+      enqueueSnackbar(
+        data?.message ||
+          t('licenses.reconfigure.success', 'Playlists reconfigured.') + (configuredCount ? ` (${configuredCount})` : ''),
+        { variant: 'success' }
+      );
+      setRefreshKey((v) => v + 1);
+    } catch (err) {
+      if (!handleUnauthorized(err)) {
+        const isBob = isBobLicenseRecord(openReconfigurePlaylists.row);
+        if (isBob && licenseId) {
+          void refreshBobSessionStatus(licenseId, { silent: true });
+        }
+        enqueueSnackbar(
+          err?.response?.data?.message ||
+            err.message ||
+            t('licenses.reconfigure.error', 'Could not reconfigure playlists for this license.'),
+          { variant: 'error' }
+        );
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
   const handleRemovePlaylistsDirect = async () => {
     const licenseId = openServerChange.row?.licenseId;
     if (!licenseId) {
@@ -1635,25 +1726,49 @@ export default function LicensesLionTv() {
   };
 
   const submitTransfer = async () => {
-    const { row, toCustomerId, destinationSubscriptionId, typeLicense } = openTransfer;
+    const { row, toCustomerId, destinationSubscriptionId, typeLicense, deviceTransferMode, newMacAddress, newDeviceKey } = openTransfer;
     const managedLicense = isManagedLicenseRecord(row);
+    const transferMode = managedLicense ? deviceTransferMode || 'SAME_DEVICE' : 'SAME_DEVICE';
+    const normalizedNewMacAddress = maskMacAddressInput(newMacAddress);
+    const trimmedNewDeviceKey = newDeviceKey?.trim();
     if (!row?.licenseId || !toCustomerId || !typeLicense || (managedLicense && !destinationSubscriptionId)) {
       enqueueSnackbar(t('licenses.transfer.required', 'Select customer and type.'), { variant: 'warning' });
       return;
     }
+    if (managedLicense && transferMode === 'NEW_DEVICE') {
+      if (!supportsDeviceRecoveryRecord(row)) {
+        enqueueSnackbar(
+          t('licenses.transfer.newDeviceUnsupported', 'New device transfer is only available for Vivo Player, 9Xtream and IPTV 4K Smarters licenses.'),
+          { variant: 'warning' }
+        );
+        return;
+      }
+      if (!isValidMacAddress(normalizedNewMacAddress) || !trimmedNewDeviceKey) {
+        enqueueSnackbar(t('licenses.transfer.newDeviceRequired', 'Enter the new MAC address and device key.'), { variant: 'warning' });
+        return;
+      }
+    }
     setSending(true);
     try {
-      await lionTvApi.post(
+      const res = await lionTvApi.post(
         `/licenses/v1/${row.licenseId}/transfer`,
         {
           toCustomerId: Number(toCustomerId),
           destinationSubscriptionId: managedLicense ? Number(destinationSubscriptionId) : null,
-          typeLicense
+          typeLicense,
+          deviceTransferMode: transferMode,
+          newMacAddress: managedLicense && transferMode === 'NEW_DEVICE' ? normalizedNewMacAddress : null,
+          newDeviceKey: managedLicense && transferMode === 'NEW_DEVICE' ? trimmedNewDeviceKey : null
         },
         { headers: { Authorization: `Bearer ${accessToken}` }, skipAuthRedirect: true }
       );
-      enqueueSnackbar(t('licenses.transfer.done', 'License transferred.'), { variant: 'success' });
-      setOpenTransfer({ open: false, row: null, toCustomerId: '', destinationSubscriptionId: '', typeLicense: 'USED' });
+      const data = res?.data?.data || null;
+      const configuredCount = data?.configuredPlaylists?.length ?? 0;
+      const successMessage = data?.message || t('licenses.transfer.done', 'License transferred.');
+      enqueueSnackbar(configuredCount ? `${successMessage} ${t('licenses.transfer.configuredCount', 'Playlists')}: ${configuredCount}` : successMessage, {
+        variant: 'success'
+      });
+      setOpenTransfer(createTransferState());
       setRefreshKey((v) => v + 1);
     } catch (err) {
       if (!handleUnauthorized(err)) {
@@ -1904,8 +2019,10 @@ export default function LicensesLionTv() {
 
   const isBobServerChange = isBobLicenseRecord(openServerChange.row);
   const isBobRemoveDialog = isBobLicenseRecord(openRemovePlaylists.row);
+  const isBobReconfigureDialog = isBobLicenseRecord(openReconfigurePlaylists.row);
   const bobServerChangeReady = !isBobServerChange || isBobSessionReady(openServerChange.row?.bobSessionStatus);
   const bobRemoveReady = !isBobRemoveDialog || isBobSessionReady(openRemovePlaylists.row?.bobSessionStatus);
+  const bobReconfigureReady = !isBobReconfigureDialog || isBobSessionReady(openReconfigurePlaylists.row?.bobSessionStatus);
   const selectedBobPlaylist = useMemo(
     () => bobSyncDialog.playlists.find((playlist) => playlist.playlistId === bobSyncDialog.selectedPlaylistId) || null,
     [bobSyncDialog.playlists, bobSyncDialog.selectedPlaylistId]
@@ -2149,6 +2266,7 @@ export default function LicensesLionTv() {
                           onTransfer={handleTransfer}
                           onServer={handleOpenServerChange}
                           onRemovePlaylists={handleOpenRemovePlaylists}
+                          onReconfigurePlaylists={handleOpenReconfigurePlaylists}
                           onDeviceRecovery={handleOpenDeviceRecovery}
                           onHistory={openHistory}
                           onDelete={handleDelete}
@@ -2360,6 +2478,7 @@ export default function LicensesLionTv() {
                           onTransfer={handleTransfer}
                           onServer={handleOpenServerChange}
                           onRemovePlaylists={handleOpenRemovePlaylists}
+                          onReconfigurePlaylists={handleOpenReconfigurePlaylists}
                           onDeviceRecovery={handleOpenDeviceRecovery}
                           onHistory={openHistory}
                           onDelete={handleDelete}
@@ -3241,6 +3360,77 @@ export default function LicensesLionTv() {
         </DialogActions>
       </Dialog>
 
+      {/* RECONFIGURE PLAYLISTS */}
+      <Dialog
+        open={openReconfigurePlaylists.open}
+        onClose={() => setOpenReconfigurePlaylists({ open: false, row: null, result: null })}
+        maxWidth="sm"
+        fullWidth
+        fullScreen={isMobile}
+      >
+        <DialogTitleWithClose onClose={() => setOpenReconfigurePlaylists({ open: false, row: null, result: null })}>
+          {t('licenses.reconfigure.title', 'Reconfigure playlists')}
+        </DialogTitleWithClose>
+        <DialogContent dividers>
+          <Stack spacing={1.5}>
+            <Alert
+              severity={isBobReconfigureDialog && !bobReconfigureReady ? 'error' : 'info'}
+              icon={<PlaylistAddCheckIcon fontSize="small" />}
+              action={
+                isBobReconfigureDialog && !bobReconfigureReady ? (
+                  <Button color="inherit" size="small" onClick={() => openReconfigurePlaylists.row && openBobAuth(openReconfigurePlaylists.row)}>
+                    {t('licenses.actions.authenticateBob', 'Authenticate Bob Player')}
+                  </Button>
+                ) : null
+              }
+            >
+              <Stack spacing={0.5}>
+                <Typography variant="subtitle2">
+                  {t('licenses.reconfigure.summaryTitle', 'Repair empty playlists')}
+                </Typography>
+                <Typography variant="body2">
+                  {isBobReconfigureDialog && !bobReconfigureReady
+                    ? t('licenses.server.bobSessionRequired', 'Authenticate Bob Player before changing server.')
+                    : t(
+                        'licenses.reconfigure.body',
+                        'This will remove/recreate the remote playlists using the license current subscription without transferring the license again.'
+                      )}
+                </Typography>
+              </Stack>
+            </Alert>
+            <Typography variant="body2">
+              {t('licenses.server.mac', 'Mac')}: <strong>{openReconfigurePlaylists.row?.macAddress || '-'}</strong>
+            </Typography>
+            <Typography variant="body2">
+              {t('licenses.server.subscription', 'Subscription')}:{' '}
+              <strong>{openReconfigurePlaylists.row?.subscriptionId ? `#${openReconfigurePlaylists.row.subscriptionId}` : '-'}</strong>
+            </Typography>
+            <Typography variant="body2">
+              {t('licenses.server.targetApp', 'Target app')}: <strong>{getLicenseAppLabel(openReconfigurePlaylists.row?.app)}</strong>
+            </Typography>
+            {openReconfigurePlaylists.result ? (
+              <Alert severity="success">
+                {t('licenses.reconfigure.configured', 'Configured playlists')}: {openReconfigurePlaylists.result.configuredPlaylists?.length ?? 0}
+              </Alert>
+            ) : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenReconfigurePlaylists({ open: false, row: null, result: null })} disabled={sending}>
+            {t('actions.cancel', 'Cancel')}
+          </Button>
+          <Button
+            onClick={confirmReconfigurePlaylists}
+            color="success"
+            variant="contained"
+            startIcon={<PlaylistAddCheckIcon fontSize="small" />}
+            disabled={sending || !bobReconfigureReady}
+          >
+            {sending ? t('actions.sending', 'Sending...') : t('licenses.reconfigure.submit', 'Reconfigure')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* DEVICE RECOVERY */}
       <Dialog
         open={openDeviceRecovery.open}
@@ -3506,14 +3696,12 @@ export default function LicensesLionTv() {
       {/* TRANSFER */}
       <Dialog
         open={openTransfer.open}
-        onClose={() => setOpenTransfer({ open: false, row: null, toCustomerId: '', destinationSubscriptionId: '', typeLicense: 'USED' })}
+        onClose={() => setOpenTransfer(createTransferState())}
         fullWidth
         maxWidth="sm"
         fullScreen={isMobile}
       >
-        <DialogTitleWithClose
-          onClose={() => setOpenTransfer({ open: false, row: null, toCustomerId: '', destinationSubscriptionId: '', typeLicense: 'USED' })}
-        >
+        <DialogTitleWithClose onClose={() => setOpenTransfer(createTransferState())}>
           {t('licenses.transfer.title', 'Transfer license')}
         </DialogTitleWithClose>
         <DialogContent dividers>
@@ -3521,6 +3709,14 @@ export default function LicensesLionTv() {
             <Typography variant="body2">
               {t('licenses.transfer.license', 'License')}: {openTransfer.row?.name}
             </Typography>
+            {isManagedLicenseRecord(openTransfer.row) ? (
+              <Alert severity="info" icon={<PlaylistAddCheckIcon fontSize="small" />}>
+                {t(
+                  'licenses.transfer.reconfigureInfo',
+                  'Managed licenses will be transferred only after the destination subscription playlists are configured.'
+                )}
+              </Alert>
+            ) : null}
 
             <CustomerAutocomplete
               value={openTransfer.toCustomerId}
@@ -3531,30 +3727,88 @@ export default function LicensesLionTv() {
             />
 
             {isManagedLicenseRecord(openTransfer.row) ? (
-              <FormControl fullWidth sx={fieldSx} disabled={!openTransfer.toCustomerId}>
-                <InputLabel>{t('licenses.transfer.subscription', 'Destination subscription')}</InputLabel>
-                <Select
-                  value={openTransfer.destinationSubscriptionId}
-                  label={t('licenses.transfer.subscription', 'Destination subscription')}
-                  onChange={(e) => setOpenTransfer((p) => ({ ...p, destinationSubscriptionId: e.target.value }))}
-                >
-                  <MenuItem value="">
-                    <em>{t('licenses.form.select', 'Select')}</em>
-                  </MenuItem>
-                  {transferCustomerSubscriptions.map((subscription) => (
-                    <MenuItem key={subscription.id} value={subscription.id}>
-                      {formatSubscriptionLabel(subscription)}
+              <>
+                <FormControl fullWidth sx={fieldSx} disabled={!openTransfer.toCustomerId}>
+                  <InputLabel>{t('licenses.transfer.subscription', 'Destination subscription')}</InputLabel>
+                  <Select
+                    value={openTransfer.destinationSubscriptionId}
+                    label={t('licenses.transfer.subscription', 'Destination subscription')}
+                    onChange={(e) => setOpenTransfer((p) => ({ ...p, destinationSubscriptionId: e.target.value, result: null }))}
+                  >
+                    <MenuItem value="">
+                      <em>{t('licenses.form.select', 'Select')}</em>
                     </MenuItem>
-                  ))}
-                </Select>
-                <FormHelperText>
-                  {!openTransfer.toCustomerId
-                    ? t('licenses.transfer.subscriptionSelectCustomer', 'Select the new customer first.')
-                    : transferCustomerSubscriptions.length
-                      ? t('licenses.transfer.subscriptionHelper', 'Choose the subscription that will own this managed license.')
-                      : t('licenses.transfer.subscriptionEmpty', 'This customer has no subscriptions available.')}
-                </FormHelperText>
-              </FormControl>
+                    {transferCustomerSubscriptions.map((subscription) => (
+                      <MenuItem key={subscription.id} value={subscription.id}>
+                        {formatSubscriptionLabel(subscription)}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <FormHelperText>
+                    {!openTransfer.toCustomerId
+                      ? t('licenses.transfer.subscriptionSelectCustomer', 'Select the new customer first.')
+                      : transferCustomerSubscriptions.length
+                        ? t('licenses.transfer.subscriptionHelper', 'Choose the subscription that will own this managed license.')
+                        : t('licenses.transfer.subscriptionEmpty', 'This customer has no subscriptions available.')}
+                  </FormHelperText>
+                </FormControl>
+
+                <FormControl fullWidth sx={fieldSx}>
+                  <InputLabel>{t('licenses.transfer.deviceMode', 'Device mode')}</InputLabel>
+                  <Select
+                    value={openTransfer.deviceTransferMode}
+                    label={t('licenses.transfer.deviceMode', 'Device mode')}
+                    onChange={(e) =>
+                      setOpenTransfer((p) => ({
+                        ...p,
+                        deviceTransferMode: e.target.value,
+                        newMacAddress: '',
+                        newDeviceKey: '',
+                        result: null
+                      }))
+                    }
+                  >
+                    <MenuItem value="SAME_DEVICE">{t('licenses.transfer.sameDevice', 'Same device')}</MenuItem>
+                    <MenuItem value="NEW_DEVICE" disabled={!supportsDeviceRecoveryRecord(openTransfer.row)}>
+                      {t('licenses.transfer.newDevice', 'New device / Recovery MAC')}
+                    </MenuItem>
+                  </Select>
+                  <FormHelperText>
+                    {openTransfer.deviceTransferMode === 'NEW_DEVICE'
+                      ? t('licenses.transfer.newDeviceHelper', 'The system will recover the MAC and configure playlists on the new device.')
+                      : t('licenses.transfer.sameDeviceHelper', 'The system will recreate playlists on the currently registered device.')}
+                  </FormHelperText>
+                </FormControl>
+
+                {openTransfer.deviceTransferMode === 'NEW_DEVICE' ? (
+                  <Grid container spacing={1.5}>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        required
+                        label={t('licenses.recovery.newMac', 'New MAC address')}
+                        value={openTransfer.newMacAddress}
+                        onChange={(e) =>
+                          setOpenTransfer((p) => ({ ...p, newMacAddress: maskMacAddressInput(e.target.value), result: null }))
+                        }
+                        error={Boolean(openTransfer.newMacAddress) && !isValidMacAddress(openTransfer.newMacAddress)}
+                        helperText={t('licenses.recovery.newMacHelper', 'Example: 2b:10:96:80:d6:5c')}
+                        sx={fieldSx}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        required
+                        label={t('licenses.recovery.newDeviceKey', 'New device key')}
+                        value={openTransfer.newDeviceKey}
+                        onChange={(e) => setOpenTransfer((p) => ({ ...p, newDeviceKey: e.target.value, result: null }))}
+                        sx={fieldSx}
+                      />
+                    </Grid>
+                  </Grid>
+                ) : null}
+              </>
             ) : null}
 
             <FormControl fullWidth sx={fieldSx}>
@@ -3575,13 +3829,19 @@ export default function LicensesLionTv() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => setOpenTransfer({ open: false, row: null, toCustomerId: '', destinationSubscriptionId: '', typeLicense: 'USED' })}
-            disabled={sending}
-          >
+          <Button onClick={() => setOpenTransfer(createTransferState())} disabled={sending}>
             {t('actions.cancel', 'Cancel')}
           </Button>
-          <Button variant="contained" onClick={submitTransfer} disabled={sending}>
+          <Button
+            variant="contained"
+            onClick={submitTransfer}
+            disabled={
+              sending ||
+              (isManagedLicenseRecord(openTransfer.row) &&
+                openTransfer.deviceTransferMode === 'NEW_DEVICE' &&
+                (!isValidMacAddress(openTransfer.newMacAddress) || !openTransfer.newDeviceKey?.trim()))
+            }
+          >
             {sending ? t('licenses.transfer.sending', 'Transferring...') : t('licenses.transfer.submit', 'Transfer')}
           </Button>
         </DialogActions>
