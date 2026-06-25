@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 
+import useAuth from 'hooks/useAuth';
+
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -46,6 +48,7 @@ import ResponsiveActionBar from 'ui-component/responsive/ResponsiveActionBar';
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 import ResponsiveMetricGrid from 'ui-component/responsive/ResponsiveMetricGrid';
 import { withAlpha } from 'utils/colorUtils';
+import { hasPermissionExact } from 'utils/rbac';
 import {
   confirmSmartTubePremiumAccountRequest,
   createSmartTubePremiumUser,
@@ -83,6 +86,17 @@ const requestStatusOptions = [
   { value: 'PENDING_PAYMENT', label: 'Pendientes de pago' },
   { value: 'ACTIVATED', label: 'Activadas' },
   { value: 'REJECTED', label: 'Rechazadas' }
+];
+
+const statusUpdatePermissions = [
+  'ROLE_ADMIN',
+  'ADMIN',
+  'USER_MANAGEMENT_DISABLE_USER',
+  'ROLE_USER_MANAGEMENT_DISABLE_USER',
+  'USER_MANAGEMENT_EDIT_USER',
+  'ROLE_USER_MANAGEMENT_EDIT_USER',
+  'USER_MANAGEMENT_CREATE_USER',
+  'ROLE_USER_MANAGEMENT_CREATE_USER'
 ];
 
 const statusColor = (status) => {
@@ -148,8 +162,10 @@ const modalActionsSx = (theme) => ({
 export default function SmartTubePremiumAdmin() {
   const { t, i18n } = useTranslation();
   const { enqueueSnackbar } = useSnackbar();
+  const { user } = useAuth();
   const theme = useTheme();
   const locale = (i18n?.resolvedLanguage || i18n?.language || 'es').startsWith('en') ? 'en-US' : 'es-HN';
+  const canUpdateStatus = hasPermissionExact(user, { any: statusUpdatePermissions });
 
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
@@ -362,13 +378,24 @@ export default function SmartTubePremiumAdmin() {
   };
 
   const toggleStatus = async (row) => {
+    if (!canUpdateStatus) {
+      enqueueSnackbar('No tienes permiso para cambiar el estado de esta cuenta.', { variant: 'warning' });
+      return;
+    }
+
     setSaving(true);
     try {
       await updateSmartTubePremiumUserStatus(row.userId, !row.active, { skipAuthRedirect: true });
       enqueueSnackbar(row.active ? 'Usuario suspendido.' : 'Usuario activado.', { variant: 'success' });
       setRefreshKey((value) => value + 1);
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || error.message || 'No se pudo actualizar el usuario.', { variant: 'error' });
+      const status = error?.response?.status || error?.request?.status;
+      enqueueSnackbar(
+        status === 403
+          ? 'No tienes permiso para cambiar el estado de esta cuenta.'
+          : error?.response?.data?.message || error.message || 'No se pudo actualizar el usuario.',
+        { variant: 'error' }
+      );
     } finally {
       setSaving(false);
     }
@@ -711,7 +738,14 @@ export default function SmartTubePremiumAdmin() {
                       <Button size="small" startIcon={<KeyIcon />} variant="outlined" onClick={() => setPasswordTarget(row)}>
                         Password
                       </Button>
-                      <Button size="small" color={row.active ? 'warning' : 'success'} variant="outlined" onClick={() => toggleStatus(row)}>
+                      <Button
+                        size="small"
+                        color={row.active ? 'warning' : 'success'}
+                        variant="outlined"
+                        disabled={!canUpdateStatus}
+                        title={!canUpdateStatus ? 'No tienes permiso para cambiar el estado de esta cuenta.' : undefined}
+                        onClick={() => toggleStatus(row)}
+                      >
                         {row.active ? 'Suspender' : 'Activar'}
                       </Button>
                     </Stack>
