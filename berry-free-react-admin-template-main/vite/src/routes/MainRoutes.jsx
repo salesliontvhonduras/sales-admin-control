@@ -50,6 +50,7 @@ const LinesLionTv = Loadable(lazy(() => import('views/liontv/LinesLionTv')));
 const SubscriptionExpirationLionTv = Loadable(lazy(() => import('views/liontv/SubscriptionExpirationLionTv')));
 const PlusLinesExplorer = Loadable(lazy(() => import('views/liontv/PlusLinesExplorer')));
 const UserAccessAdmin = Loadable(lazy(() => import('views/security/UserAccessAdmin')));
+const AuthLicensesAdmin = Loadable(lazy(() => import('views/security/AuthLicensesAdmin')));
 const PanelAuthMultiAppAdmin = Loadable(lazy(() => import('views/security/PanelAuthMultiAppAdmin')));
 const BanksCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/BanksCatalogAdmin')));
 const ServicesCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/ServicesCatalogAdmin')));
@@ -421,11 +422,30 @@ const MainRoutes = {
           ]
         },
         {
-          element: <RequirePermission permission={{ any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] }} />,
+          element: (
+            <RequirePermission
+              permission={{
+                any: [
+                  'USER_MANAGEMENT_VIEW',
+                  'ROLE_USER_MANAGEMENT_VIEW',
+                  'USER_MANAGEMENT_CREATE_USER',
+                  'ROLE_USER_MANAGEMENT_CREATE_USER',
+                  'USER_MANAGEMENT_EDIT_USER',
+                  'ROLE_USER_MANAGEMENT_EDIT_USER',
+                  'ROLE_ADMIN',
+                  'ADMIN'
+                ]
+              }}
+            />
+          ),
           children: [
             {
               path: '/admin/users-access',
               element: <UserAccessAdmin />
+            },
+            {
+              path: '/admin/auth-licenses',
+              element: <AuthLicensesAdmin />
             },
             {
               path: '/admin/catalogs/banks',

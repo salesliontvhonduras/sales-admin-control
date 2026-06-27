@@ -11,7 +11,18 @@ const security = {
   title: 'menu.security',
   type: 'group',
   permission: {
-    any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER']
+    any: [
+      'USER_MANAGEMENT_VIEW',
+      'ROLE_USER_MANAGEMENT_VIEW',
+      'USER_MANAGEMENT_CREATE_USER',
+      'ROLE_USER_MANAGEMENT_CREATE_USER',
+      'USER_MANAGEMENT_EDIT_USER',
+      'ROLE_USER_MANAGEMENT_EDIT_USER',
+      'ROLE_ADMIN',
+      'ADMIN',
+      'ROLE_LIONTV_RESELLER_OWNER',
+      'LIONTV_RESELLER_OWNER'
+    ]
   },
   children: [
     {
@@ -23,6 +34,27 @@ const security = {
       icon: icons.IconShieldLock,
       breadcrumbs: true,
       permission: { any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN'] }
+    },
+    {
+      id: 'security-auth-licenses',
+      title: 'menu.authLicenses',
+      caption: 'menu.authLicensesCaption',
+      type: 'item',
+      url: '/admin/auth-licenses',
+      icon: icons.IconKey,
+      breadcrumbs: true,
+      permission: {
+        any: [
+          'USER_MANAGEMENT_VIEW',
+          'ROLE_USER_MANAGEMENT_VIEW',
+          'USER_MANAGEMENT_CREATE_USER',
+          'ROLE_USER_MANAGEMENT_CREATE_USER',
+          'USER_MANAGEMENT_EDIT_USER',
+          'ROLE_USER_MANAGEMENT_EDIT_USER',
+          'ROLE_ADMIN',
+          'ADMIN'
+        ]
+      }
     },
     {
       id: 'security-panel-auths',

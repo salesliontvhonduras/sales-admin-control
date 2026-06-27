@@ -762,6 +762,7 @@ export default function UserAccessAdmin() {
                   label={t('userAccess.form.serialCode')}
                   value={createForm.serialCode}
                   onChange={(e) => setCreateForm((prev) => ({ ...prev, serialCode: e.target.value }))}
+                  helperText="Debe existir como licencia disponible en Licencias Auth."
                 />
               </Box>
               <Box>
