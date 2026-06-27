@@ -5,6 +5,7 @@ import RequireInternalLionTv from '../routes/RequireInternalLionTv';
 
 // project imports
 import MainLayout from 'layout/MainLayout';
+import ResellerLayout from 'layout/ResellerLayout';
 import Loadable from 'ui-component/Loadable';
 
 // dashboard routing
@@ -34,6 +35,7 @@ const SubscriptionSharingLionTv = Loadable(lazy(() => import('views/liontv/Subsc
 const InvoicesLionTv = Loadable(lazy(() => import('views/liontv/InvoicesLionTv')));
 const ResellerWalletLionTv = Loadable(lazy(() => import('views/liontv/ResellerWalletLionTv')));
 const ResellerSupportLionTv = Loadable(lazy(() => import('views/liontv/ResellerSupportLionTv')));
+const ResellerAdminLionTv = Loadable(lazy(() => import('views/liontv/ResellerAdminLionTv')));
 const EcommerceContactRoutingLionTv = Loadable(lazy(() => import('views/liontv/EcommerceContactRoutingLionTv')));
 const EcommerceSettingsLionTv = Loadable(lazy(() => import('views/liontv/EcommerceSettingsLionTv')));
 const EcommerceDeviceSetupRequestsLionTv = Loadable(lazy(() => import('views/liontv/EcommerceDeviceSetupRequestsLionTv')));
@@ -54,6 +56,7 @@ const ServicesCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs
 const LicenseAppsCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/LicenseAppsCatalogAdmin')));
 const CountryPhoneCodesCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/CountryPhoneCodesCatalogAdmin')));
 const PackagesCatalogAdmin = Loadable(lazy(() => import('views/security/catalogs/PackagesCatalogAdmin')));
+const ResellerPortal = Loadable(lazy(() => import('views/reseller/ResellerPortal')));
 
 const protectPage = (permission, element, fallbackPath = '/dashboard/default', hideForReseller = false) => (
   <RequirePermission permission={permission} fallbackPath={fallbackPath}>
@@ -359,6 +362,13 @@ const MainRoutes = {
           )
         },
         {
+          path: '/liontv/resellers',
+          element: protectPage(
+            { any: ['ROLE_ADMIN', 'ADMIN', 'LIONTV_SUPER_RESELLER_MANAGE', 'ROLE_LIONTV_SUPER_RESELLER_MANAGE'] },
+            <ResellerAdminLionTv />
+          )
+        },
+        {
           path: '/liontv/smarttube-premium',
           element: protectPage({ any: ['ROLE_ADMIN', 'ADMIN'] }, <SmartTubePremiumAdmin />, '/liontv/dashboard', true)
         },
@@ -442,6 +452,29 @@ const MainRoutes = {
               element: <PanelAuthMultiAppAdmin />
             }
           ]
+        }
+      ]
+    },
+    {
+      path: 'reseller',
+      element: <ResellerLayout />,
+      children: [
+        {
+          index: true,
+          element: protectPage(
+            {
+              any: [
+                'LIONTV_RESELLER_PORTAL_VIEW',
+                'ROLE_LIONTV_RESELLER_PORTAL_VIEW',
+                'ROLE_LIONTV_RESELLER_OWNER',
+                'LIONTV_RESELLER_OWNER',
+                'ROLE_LIONTV_SUPER_RESELLER',
+                'LIONTV_SUPER_RESELLER'
+              ]
+            },
+            <ResellerPortal />,
+            '/reseller/login'
+          )
         }
       ]
     }

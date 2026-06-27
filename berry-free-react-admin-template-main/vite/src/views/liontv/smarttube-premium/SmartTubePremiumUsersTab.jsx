@@ -134,10 +134,12 @@ export default function SmartTubePremiumUsersTab({
   rowsPerPage,
   search,
   status,
+  resellerUsername,
   locale,
   canUpdateStatus,
   onSearchChange,
   onStatusChange,
+  onResellerUsernameChange,
   onPageChange,
   onRowsPerPageChange,
   onOpenDevices,
@@ -165,6 +167,12 @@ export default function SmartTubePremiumUsersTab({
             </MenuItem>
           ))}
         </TextField>
+        <TextField
+          label="Reseller"
+          value={resellerUsername}
+          onChange={(event) => onResellerUsernameChange(event.target.value)}
+          placeholder="username reseller"
+        />
       </ResponsiveFilters>
 
       <Box sx={{ display: { xs: 'none', md: 'block' } }}>
@@ -173,6 +181,7 @@ export default function SmartTubePremiumUsersTab({
             <TableHead>
               <TableRow>
                 <TableCell>Cliente</TableCell>
+                <TableCell>Reseller</TableCell>
                 <TableCell>Estado</TableCell>
                 <TableCell>Vence</TableCell>
                 <TableCell>Dispositivos</TableCell>
@@ -192,6 +201,7 @@ export default function SmartTubePremiumUsersTab({
                       </Typography>
                     </Stack>
                   </TableCell>
+                  <TableCell>{row.resellerUsername || '-'}</TableCell>
                   <TableCell>
                     <Chip size="small" color={statusColor(row.licenseStatus)} label={row.licenseStatus || '-'} />
                   </TableCell>
@@ -224,7 +234,7 @@ export default function SmartTubePremiumUsersTab({
               ))}
               {!loading && rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7}>
+                  <TableCell colSpan={8}>
                     <Box sx={{ py: 5, textAlign: 'center' }}>
                       <Typography color="text.secondary">No hay cuentas SmartTube Premium con esos filtros.</Typography>
                     </Box>

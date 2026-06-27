@@ -53,6 +53,15 @@ const liontv = {
           permission: { any: ['LIONTV_DASHBOARD_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] }
         },
         {
+          id: 'liontv-reseller-admin',
+          title: 'Resellers',
+          type: 'item',
+          url: '/liontv/resellers',
+          resellerVisible: false,
+          breadcrumbs: true,
+          permission: { any: ['ROLE_ADMIN', 'ADMIN', 'LIONTV_SUPER_RESELLER_MANAGE', 'ROLE_LIONTV_SUPER_RESELLER_MANAGE'] }
+        },
+        {
           id: 'liontv-reseller-wallet',
           title: 'menu.resellerWallet',
           type: 'item',

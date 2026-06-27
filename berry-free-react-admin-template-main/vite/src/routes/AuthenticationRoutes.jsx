@@ -8,6 +8,7 @@ import MinimalLayout from 'layout/MinimalLayout';
 const LoginPage = Loadable(lazy(() => import('views/pages/authentication/Login')));
 const RegisterPage = Loadable(lazy(() => import('views/pages/authentication/Register')));
 const ForgotPasswordPage = Loadable(lazy(() => import('views/pages/authentication/ForgotPassword')));
+const ResellerLogin = Loadable(lazy(() => import('views/reseller/ResellerLogin')));
 
 // ==============================|| AUTHENTICATION ROUTING ||============================== //
 
@@ -26,6 +27,10 @@ const AuthenticationRoutes = {
     {
       path: '/pages/forgot-password',
       element: <ForgotPasswordPage />
+    },
+    {
+      path: '/reseller/login',
+      element: <ResellerLogin />
     }
   ]
 };

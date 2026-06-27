@@ -172,6 +172,7 @@ export default function SmartTubePremiumAdmin() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
+  const [resellerUsername, setResellerUsername] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
 
   const [requestRows, setRequestRows] = useState([]);
@@ -214,7 +215,7 @@ export default function SmartTubePremiumAdmin() {
     setLoading(true);
     try {
       const payload = await listSmartTubePremiumUsers(
-        { index: page, size: rowsPerPage, search: search || undefined, status: status || undefined },
+        { index: page, size: rowsPerPage, search: search || undefined, status: status || undefined, resellerUsername: resellerUsername || undefined },
         { skipAuthRedirect: true }
       );
       setRows(Array.isArray(payload?.data) ? payload.data : []);
@@ -224,7 +225,7 @@ export default function SmartTubePremiumAdmin() {
     } finally {
       setLoading(false);
     }
-  }, [enqueueSnackbar, page, rowsPerPage, search, status]);
+  }, [enqueueSnackbar, page, rowsPerPage, search, status, resellerUsername]);
 
   const loadRequests = useCallback(async () => {
     setRequestsLoading(true);
@@ -614,6 +615,7 @@ export default function SmartTubePremiumAdmin() {
             rowsPerPage={rowsPerPage}
             search={search}
             status={status}
+            resellerUsername={resellerUsername}
             locale={locale}
             canUpdateStatus={canUpdateStatus}
             onSearchChange={(value) => {
@@ -622,6 +624,10 @@ export default function SmartTubePremiumAdmin() {
             }}
             onStatusChange={(value) => {
               setStatus(value);
+              setPage(0);
+            }}
+            onResellerUsernameChange={(value) => {
+              setResellerUsername(value);
               setPage(0);
             }}
             onPageChange={setPage}
