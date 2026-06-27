@@ -20,7 +20,18 @@ export const sessionStatusOptions = [
   { value: 'REVOKED', label: 'Desconectadas' }
 ];
 
-export const statusUpdatePermissions = [
+export const viewPermissions = ['ROLE_ADMIN', 'ADMIN', 'USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW'];
+
+export const writePermissions = [
+  'ROLE_ADMIN',
+  'ADMIN',
+  'USER_MANAGEMENT_CREATE_USER',
+  'ROLE_USER_MANAGEMENT_CREATE_USER',
+  'USER_MANAGEMENT_EDIT_USER',
+  'ROLE_USER_MANAGEMENT_EDIT_USER'
+];
+
+export const operatePermissions = [
   'ROLE_ADMIN',
   'ADMIN',
   'USER_MANAGEMENT_DISABLE_USER',
@@ -31,7 +42,9 @@ export const statusUpdatePermissions = [
   'ROLE_USER_MANAGEMENT_CREATE_USER'
 ];
 
-export const viewPermissions = ['ROLE_ADMIN', 'ADMIN', 'USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW'];
+export const statusUpdatePermissions = operatePermissions;
+
+export const smartTubePermissionMessage = 'No tienes permiso para realizar esta acción en SmartTube Premium.';
 
 export function statusColor(status) {
   const value = String(status || '').toUpperCase();
@@ -71,6 +84,11 @@ export function maskDeviceHash(value) {
 
 export function getErrorMessage(error, fallback) {
   return error?.response?.data?.message || error?.message || fallback;
+}
+
+export function getSmartTubeAdminErrorMessage(error, fallback) {
+  const responseStatus = error?.response?.status || error?.request?.status;
+  return responseStatus === 403 ? smartTubePermissionMessage : getErrorMessage(error, fallback);
 }
 
 export const surfaceSx = (theme) => ({

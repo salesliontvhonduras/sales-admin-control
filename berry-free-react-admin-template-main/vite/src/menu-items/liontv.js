@@ -364,7 +364,20 @@ const liontv = {
           url: '/liontv/smarttube-premium',
           resellerVisible: false,
           breadcrumbs: true,
-          permission: { any: ['ROLE_ADMIN', 'ADMIN'] }
+          permission: {
+            any: [
+              'ROLE_ADMIN',
+              'ADMIN',
+              'USER_MANAGEMENT_VIEW',
+              'ROLE_USER_MANAGEMENT_VIEW',
+              'USER_MANAGEMENT_CREATE_USER',
+              'ROLE_USER_MANAGEMENT_CREATE_USER',
+              'USER_MANAGEMENT_EDIT_USER',
+              'ROLE_USER_MANAGEMENT_EDIT_USER',
+              'USER_MANAGEMENT_DISABLE_USER',
+              'ROLE_USER_MANAGEMENT_DISABLE_USER'
+            ]
+          }
         },
         {
           id: 'liontv-device-setup-requests',

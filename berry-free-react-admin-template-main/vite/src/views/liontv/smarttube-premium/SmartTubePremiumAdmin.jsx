@@ -76,17 +76,19 @@ import SmartTubePremiumSessionsTab from './SmartTubePremiumSessionsTab';
 import SmartTubePremiumUsersTab from './SmartTubePremiumUsersTab';
 import {
   formatDateTime,
-  getErrorMessage,
+  getSmartTubeAdminErrorMessage,
   maskDeviceHash,
   modalActionsSx,
   modalContentSx,
   modalPaperSx,
+  operatePermissions,
   sessionStatusColor,
   statusColor,
-  statusUpdatePermissions,
+  smartTubePermissionMessage,
   surfaceSx,
   tableContainerSx,
-  tabsSx
+  tabsSx,
+  writePermissions
 } from './shared';
 
 const defaultCreateForm = {
@@ -160,7 +162,8 @@ export default function SmartTubePremiumAdmin() {
   const { user } = useAuth();
   const theme = useTheme();
   const locale = (i18n?.resolvedLanguage || i18n?.language || 'es').startsWith('en') ? 'en-US' : 'es-HN';
-  const canUpdateStatus = hasPermissionExact(user, { any: statusUpdatePermissions });
+  const canWrite = hasPermissionExact(user, { any: writePermissions });
+  const canOperate = hasPermissionExact(user, { any: operatePermissions });
 
   const [tab, setTab] = useState('users');
   const [saving, setSaving] = useState(false);
@@ -221,7 +224,7 @@ export default function SmartTubePremiumAdmin() {
       setRows(Array.isArray(payload?.data) ? payload.data : []);
       setTotal(Number(payload?.total || 0));
     } catch (error) {
-      enqueueSnackbar(getErrorMessage(error, 'No se pudieron cargar cuentas SmartTube.'), { variant: 'error' });
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudieron cargar cuentas SmartTube.'), { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -242,7 +245,7 @@ export default function SmartTubePremiumAdmin() {
       setRequestRows(Array.isArray(payload?.data) ? payload.data : []);
       setRequestTotal(Number(payload?.total || 0));
     } catch (error) {
-      enqueueSnackbar(getErrorMessage(error, 'No se pudieron cargar solicitudes SmartTube.'), { variant: 'error' });
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudieron cargar solicitudes SmartTube.'), { variant: 'error' });
     } finally {
       setRequestsLoading(false);
     }
@@ -264,7 +267,7 @@ export default function SmartTubePremiumAdmin() {
       setSessionRows(Array.isArray(payload?.data) ? payload.data : []);
       setSessionTotal(Number(payload?.total || 0));
     } catch (error) {
-      enqueueSnackbar(getErrorMessage(error, 'No se pudieron cargar sesiones SmartTube.'), { variant: 'error' });
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudieron cargar sesiones SmartTube.'), { variant: 'error' });
     } finally {
       setSessionsLoading(false);
     }
@@ -310,6 +313,10 @@ export default function SmartTubePremiumAdmin() {
   const resetCreateForm = () => setCreateForm(defaultCreateForm);
 
   const handleCreate = async () => {
+    if (!canWrite) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
+      return;
+    }
     setSaving(true);
     try {
       await createSmartTubePremiumUser(
@@ -329,13 +336,17 @@ export default function SmartTubePremiumAdmin() {
       resetCreateForm();
       refreshAll();
     } catch (error) {
-      enqueueSnackbar(getErrorMessage(error, 'No se pudo crear la cuenta.'), { variant: 'error' });
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudo crear la cuenta.'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
   };
 
   const openConfirmRequest = (row) => {
+    if (!canWrite) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
+      return;
+    }
     setConfirmRequestTarget(row);
     setConfirmRequestForm({
       durationDays: Number(row.requestedDurationDays || 30),
@@ -346,6 +357,10 @@ export default function SmartTubePremiumAdmin() {
 
   const handleConfirmRequest = async () => {
     if (!confirmRequestTarget?.requestId) return;
+    if (!canWrite) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
+      return;
+    }
     setSaving(true);
     try {
       await confirmSmartTubePremiumAccountRequest(
@@ -361,7 +376,7 @@ export default function SmartTubePremiumAdmin() {
       setConfirmRequestTarget(null);
       refreshAll();
     } catch (error) {
-      enqueueSnackbar(getErrorMessage(error, 'No se pudo confirmar el pago.'), { variant: 'error' });
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudo confirmar el pago.'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -369,6 +384,10 @@ export default function SmartTubePremiumAdmin() {
 
   const handleRejectRequest = async () => {
     if (!rejectRequestTarget?.requestId) return;
+    if (!canOperate) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
+      return;
+    }
     setSaving(true);
     try {
       await rejectSmartTubePremiumAccountRequest(rejectRequestTarget.requestId, rejectReason, { skipAuthRedirect: true });
@@ -377,19 +396,27 @@ export default function SmartTubePremiumAdmin() {
       setRejectReason('');
       setRequestRefreshKey((value) => value + 1);
     } catch (error) {
-      enqueueSnackbar(getErrorMessage(error, 'No se pudo rechazar la solicitud.'), { variant: 'error' });
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudo rechazar la solicitud.'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
   };
 
   const openRenew = (row) => {
+    if (!canWrite) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
+      return;
+    }
     setRenewTarget(row);
     setRenewForm({ durationDays: 30, expiresAt: '', deviceLimit: Number(row.deviceLimit || 1) });
   };
 
   const handleRenew = async () => {
     if (!renewTarget?.userId) return;
+    if (!canWrite) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
+      return;
+    }
     setSaving(true);
     try {
       await renewSmartTubePremiumLicense(
@@ -405,7 +432,7 @@ export default function SmartTubePremiumAdmin() {
       setRenewTarget(null);
       refreshAll();
     } catch (error) {
-      enqueueSnackbar(getErrorMessage(error, 'No se pudo renovar la licencia.'), { variant: 'error' });
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudo renovar la licencia.'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -413,6 +440,10 @@ export default function SmartTubePremiumAdmin() {
 
   const handleResetPassword = async () => {
     if (!passwordTarget?.userId) return;
+    if (!canWrite) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
+      return;
+    }
     setSaving(true);
     try {
       await resetSmartTubePremiumPassword(passwordTarget.userId, newPassword, { skipAuthRedirect: true });
@@ -420,7 +451,7 @@ export default function SmartTubePremiumAdmin() {
       setPasswordTarget(null);
       setNewPassword('');
     } catch (error) {
-      enqueueSnackbar(getErrorMessage(error, 'No se pudo actualizar el password.'), { variant: 'error' });
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudo actualizar el password.'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -437,8 +468,8 @@ export default function SmartTubePremiumAdmin() {
   };
 
   const toggleStatus = async (row) => {
-    if (!canUpdateStatus) {
-      enqueueSnackbar('No tienes permiso para cambiar el estado de esta cuenta.', { variant: 'warning' });
+    if (!canOperate) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
       return;
     }
 
@@ -448,23 +479,27 @@ export default function SmartTubePremiumAdmin() {
       enqueueSnackbar(row.active ? 'Cuenta suspendida.' : 'Cuenta activada.', { variant: 'success' });
       refreshAll();
     } catch (error) {
-      const responseStatus = error?.response?.status || error?.request?.status;
-      enqueueSnackbar(
-        responseStatus === 403 ? 'No tienes permiso para cambiar el estado de esta cuenta.' : getErrorMessage(error, 'No se pudo actualizar la cuenta.'),
-        { variant: 'error' }
-      );
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudo actualizar la cuenta.'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
   };
 
   const openLimit = (row) => {
+    if (!canWrite) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
+      return;
+    }
     setLimitTarget(row);
     setDeviceLimitValue(Number(row.deviceLimit || 1));
   };
 
   const handleUpdateDeviceLimit = async () => {
     if (!limitTarget?.userId) return;
+    if (!canWrite) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
+      return;
+    }
     setSaving(true);
     try {
       await updateSmartTubePremiumDeviceLimit(limitTarget.userId, Number(deviceLimitValue || 1), { skipAuthRedirect: true });
@@ -472,7 +507,7 @@ export default function SmartTubePremiumAdmin() {
       setLimitTarget(null);
       refreshAll();
     } catch (error) {
-      enqueueSnackbar(getErrorMessage(error, 'No se pudo actualizar el límite.'), { variant: 'error' });
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudo actualizar el límite.'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -488,7 +523,7 @@ export default function SmartTubePremiumAdmin() {
         const payload = await listSmartTubePremiumDevices(row.userId, { skipAuthRedirect: true });
         setDevices(Array.isArray(payload) ? payload : []);
       } catch (error) {
-        enqueueSnackbar(getErrorMessage(error, 'No se pudieron cargar dispositivos.'), { variant: 'error' });
+        enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudieron cargar dispositivos.'), { variant: 'error' });
       } finally {
         setDevicesLoading(false);
       }
@@ -498,6 +533,10 @@ export default function SmartTubePremiumAdmin() {
 
   const handleRevokeDevice = async (device) => {
     if (!deviceTarget?.userId || !device?.id) return;
+    if (!canOperate) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
+      return;
+    }
     setSaving(true);
     try {
       await revokeSmartTubePremiumDevice(deviceTarget.userId, device.id, { skipAuthRedirect: true });
@@ -505,7 +544,7 @@ export default function SmartTubePremiumAdmin() {
       await loadDevices(deviceTarget);
       refreshAll();
     } catch (error) {
-      enqueueSnackbar(getErrorMessage(error, 'No se pudo desvincular el dispositivo.'), { variant: 'error' });
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudo desvincular el dispositivo.'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -513,6 +552,10 @@ export default function SmartTubePremiumAdmin() {
 
   const handleResetDevices = async () => {
     if (!deviceTarget?.userId) return;
+    if (!canOperate) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
+      return;
+    }
     setSaving(true);
     try {
       await resetSmartTubePremiumDevices(deviceTarget.userId, { skipAuthRedirect: true });
@@ -520,7 +563,7 @@ export default function SmartTubePremiumAdmin() {
       await loadDevices(deviceTarget);
       refreshAll();
     } catch (error) {
-      enqueueSnackbar(getErrorMessage(error, 'No se pudieron resetear los dispositivos.'), { variant: 'error' });
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudieron resetear los dispositivos.'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -535,6 +578,10 @@ export default function SmartTubePremiumAdmin() {
 
   const handleRevokeSession = async () => {
     if (!sessionRevokeTarget?.sessionId) return;
+    if (!canOperate) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
+      return;
+    }
     setSaving(true);
     try {
       const updated = await revokeSmartTubePremiumSession(sessionRevokeTarget.sessionId, { skipAuthRedirect: true });
@@ -545,13 +592,17 @@ export default function SmartTubePremiumAdmin() {
       setSessionRevokeTarget(null);
       setSessionRefreshKey((value) => value + 1);
     } catch (error) {
-      enqueueSnackbar(getErrorMessage(error, 'No se pudo desconectar la sesión.'), { variant: 'error' });
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudo desconectar la sesión.'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
   };
 
   const openPassword = (row) => {
+    if (!canWrite) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
+      return;
+    }
     setPasswordTarget(row);
     setNewPassword('');
   };
@@ -566,9 +617,11 @@ export default function SmartTubePremiumAdmin() {
           <Button startIcon={<RefreshIcon />} variant="outlined" onClick={refreshAll} disabled={anyLoading}>
             Actualizar
           </Button>
-          <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>
-            Crear cuenta
-          </Button>
+          {canWrite ? (
+            <Button startIcon={<AddIcon />} variant="contained" onClick={() => setCreateOpen(true)}>
+              Crear cuenta
+            </Button>
+          ) : null}
         </ResponsiveActionBar>
       }
     >
@@ -617,7 +670,8 @@ export default function SmartTubePremiumAdmin() {
             status={status}
             resellerUsername={resellerUsername}
             locale={locale}
-            canUpdateStatus={canUpdateStatus}
+            canWrite={canWrite}
+            canOperate={canOperate}
             onSearchChange={(value) => {
               setSearch(value);
               setPage(0);
@@ -653,6 +707,8 @@ export default function SmartTubePremiumAdmin() {
             search={requestSearch}
             status={requestStatus}
             locale={locale}
+            canWrite={canWrite}
+            canOperate={canOperate}
             onSearchChange={(value) => {
               setRequestSearch(value);
               setRequestPage(0);
@@ -682,7 +738,7 @@ export default function SmartTubePremiumAdmin() {
             status={sessionStatus}
             userId={sessionUserId}
             locale={locale}
-            canRevokeSession={canUpdateStatus}
+            canRevokeSession={canOperate}
             onSearchChange={(value) => {
               setSessionSearch(value);
               setSessionPage(0);
@@ -965,9 +1021,11 @@ export default function SmartTubePremiumAdmin() {
                       <TableCell>{formatDateTime(device.firstSeenAt, locale)}</TableCell>
                       <TableCell>{formatDateTime(device.lastSeenAt, locale)}</TableCell>
                       <TableCell align="right">
-                        <Button size="small" color="warning" variant="outlined" disabled={saving || device.status !== 'ACTIVE'} onClick={() => handleRevokeDevice(device)}>
-                          Desvincular
-                        </Button>
+                        {canOperate ? (
+                          <Button size="small" color="warning" variant="outlined" disabled={saving || device.status !== 'ACTIVE'} onClick={() => handleRevokeDevice(device)}>
+                            Desvincular
+                          </Button>
+                        ) : null}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -992,9 +1050,11 @@ export default function SmartTubePremiumAdmin() {
           <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => deviceTarget && loadDevices(deviceTarget)} disabled={devicesLoading}>
             Actualizar
           </Button>
-          <Button color="warning" variant="contained" onClick={handleResetDevices} disabled={saving || !deviceTarget}>
-            Resetear dispositivos
-          </Button>
+          {canOperate ? (
+            <Button color="warning" variant="contained" onClick={handleResetDevices} disabled={saving || !deviceTarget}>
+              Resetear dispositivos
+            </Button>
+          ) : null}
         </DialogActions>
       </Dialog>
 

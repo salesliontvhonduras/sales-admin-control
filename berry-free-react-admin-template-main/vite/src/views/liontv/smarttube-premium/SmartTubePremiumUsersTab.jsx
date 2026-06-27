@@ -33,7 +33,7 @@ import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 
 import { formatDateTime, statusColor, statusOptions, surfaceSx, tableContainerSx } from './shared';
 
-function UserActions({ row, canUpdateStatus, onOpenDevices, onOpenRenew, onOpenPassword, onOpenLimit, onToggleStatus }) {
+function UserActions({ row, canWrite, canOperate, onOpenDevices, onOpenRenew, onOpenPassword, onOpenLimit, onToggleStatus }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -53,28 +53,36 @@ function UserActions({ row, canUpdateStatus, onOpenDevices, onOpenRenew, onOpenP
           <DevicesOtherIcon fontSize="small" sx={{ mr: 1 }} />
           Dispositivos
         </MenuItem>
-        <MenuItem onClick={() => run(onOpenRenew)}>
-          <UpdateIcon fontSize="small" sx={{ mr: 1 }} />
-          Renovar licencia
-        </MenuItem>
-        <MenuItem onClick={() => run(onOpenPassword)}>
-          <KeyIcon fontSize="small" sx={{ mr: 1 }} />
-          Resetear password
-        </MenuItem>
-        <MenuItem onClick={() => run(onOpenLimit)}>
-          <TuneIcon fontSize="small" sx={{ mr: 1 }} />
-          Cambiar límite
-        </MenuItem>
-        <MenuItem disabled={!canUpdateStatus} onClick={() => run(onToggleStatus)}>
-          {row.active ? <BlockIcon fontSize="small" sx={{ mr: 1 }} /> : <CheckCircleIcon fontSize="small" sx={{ mr: 1 }} />}
-          {row.active ? 'Suspender' : 'Activar'}
-        </MenuItem>
+        {canWrite ? (
+          <MenuItem onClick={() => run(onOpenRenew)}>
+            <UpdateIcon fontSize="small" sx={{ mr: 1 }} />
+            Renovar licencia
+          </MenuItem>
+        ) : null}
+        {canWrite ? (
+          <MenuItem onClick={() => run(onOpenPassword)}>
+            <KeyIcon fontSize="small" sx={{ mr: 1 }} />
+            Resetear password
+          </MenuItem>
+        ) : null}
+        {canWrite ? (
+          <MenuItem onClick={() => run(onOpenLimit)}>
+            <TuneIcon fontSize="small" sx={{ mr: 1 }} />
+            Cambiar límite
+          </MenuItem>
+        ) : null}
+        {canOperate ? (
+          <MenuItem onClick={() => run(onToggleStatus)}>
+            {row.active ? <BlockIcon fontSize="small" sx={{ mr: 1 }} /> : <CheckCircleIcon fontSize="small" sx={{ mr: 1 }} />}
+            {row.active ? 'Suspender' : 'Activar'}
+          </MenuItem>
+        ) : null}
       </Menu>
     </>
   );
 }
 
-function UserCard({ row, locale, canUpdateStatus, onOpenDevices, onOpenRenew, onOpenPassword, onOpenLimit, onToggleStatus }) {
+function UserCard({ row, locale, canWrite, canOperate, onOpenDevices, onOpenRenew, onOpenPassword, onOpenLimit, onToggleStatus }) {
   return (
     <Card variant="outlined" sx={(theme) => surfaceSx(theme)}>
       <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
@@ -101,24 +109,31 @@ function UserCard({ row, locale, canUpdateStatus, onOpenDevices, onOpenRenew, on
             <Button size="small" variant="outlined" startIcon={<DevicesOtherIcon />} onClick={() => onOpenDevices(row)}>
               Dispositivos
             </Button>
-            <Button size="small" variant="outlined" startIcon={<UpdateIcon />} onClick={() => onOpenRenew(row)}>
-              Renovar
-            </Button>
-            <Button size="small" variant="outlined" startIcon={<KeyIcon />} onClick={() => onOpenPassword(row)}>
-              Password
-            </Button>
-            <Button size="small" variant="outlined" startIcon={<TuneIcon />} onClick={() => onOpenLimit(row)}>
-              Límite
-            </Button>
-            <Button
-              size="small"
-              color={row.active ? 'warning' : 'success'}
-              variant="outlined"
-              disabled={!canUpdateStatus}
-              onClick={() => onToggleStatus(row)}
-            >
-              {row.active ? 'Suspender' : 'Activar'}
-            </Button>
+            {canWrite ? (
+              <Button size="small" variant="outlined" startIcon={<UpdateIcon />} onClick={() => onOpenRenew(row)}>
+                Renovar
+              </Button>
+            ) : null}
+            {canWrite ? (
+              <Button size="small" variant="outlined" startIcon={<KeyIcon />} onClick={() => onOpenPassword(row)}>
+                Password
+              </Button>
+            ) : null}
+            {canWrite ? (
+              <Button size="small" variant="outlined" startIcon={<TuneIcon />} onClick={() => onOpenLimit(row)}>
+                Límite
+              </Button>
+            ) : null}
+            {canOperate ? (
+              <Button
+                size="small"
+                color={row.active ? 'warning' : 'success'}
+                variant="outlined"
+                onClick={() => onToggleStatus(row)}
+              >
+                {row.active ? 'Suspender' : 'Activar'}
+              </Button>
+            ) : null}
           </Stack>
         </Stack>
       </CardContent>
@@ -136,7 +151,8 @@ export default function SmartTubePremiumUsersTab({
   status,
   resellerUsername,
   locale,
-  canUpdateStatus,
+  canWrite,
+  canOperate,
   onSearchChange,
   onStatusChange,
   onResellerUsernameChange,
@@ -222,7 +238,8 @@ export default function SmartTubePremiumUsersTab({
                   <TableCell align="right">
                     <UserActions
                       row={row}
-                      canUpdateStatus={canUpdateStatus}
+                      canWrite={canWrite}
+                      canOperate={canOperate}
                       onOpenDevices={onOpenDevices}
                       onOpenRenew={onOpenRenew}
                       onOpenPassword={onOpenPassword}
@@ -252,7 +269,8 @@ export default function SmartTubePremiumUsersTab({
             key={row.userId}
             row={row}
             locale={locale}
-            canUpdateStatus={canUpdateStatus}
+            canWrite={canWrite}
+            canOperate={canOperate}
             onOpenDevices={onOpenDevices}
             onOpenRenew={onOpenRenew}
             onOpenPassword={onOpenPassword}

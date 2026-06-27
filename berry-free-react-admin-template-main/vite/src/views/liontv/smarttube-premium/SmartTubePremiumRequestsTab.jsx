@@ -39,21 +39,25 @@ function PaymentLink({ row }) {
   );
 }
 
-function RequestActions({ row, onConfirm, onReject }) {
+function RequestActions({ row, canWrite, canOperate, onConfirm, onReject }) {
   const disabled = row.status !== 'PENDING_PAYMENT';
   return (
     <Stack direction="row" spacing={0.75} justifyContent="flex-end" useFlexGap flexWrap="wrap">
-      <Button size="small" startIcon={<CheckCircleIcon />} color="success" variant="outlined" disabled={disabled} onClick={() => onConfirm(row)}>
-        Confirmar pago
-      </Button>
-      <Button size="small" startIcon={<CancelIcon />} color="warning" variant="outlined" disabled={disabled} onClick={() => onReject(row)}>
-        Rechazar
-      </Button>
+      {canWrite ? (
+        <Button size="small" startIcon={<CheckCircleIcon />} color="success" variant="outlined" disabled={disabled} onClick={() => onConfirm(row)}>
+          Confirmar pago
+        </Button>
+      ) : null}
+      {canOperate ? (
+        <Button size="small" startIcon={<CancelIcon />} color="warning" variant="outlined" disabled={disabled} onClick={() => onReject(row)}>
+          Rechazar
+        </Button>
+      ) : null}
     </Stack>
   );
 }
 
-function RequestCard({ row, locale, onConfirm, onReject }) {
+function RequestCard({ row, locale, canWrite, canOperate, onConfirm, onReject }) {
   return (
     <Card variant="outlined" sx={(theme) => surfaceSx(theme)}>
       <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
@@ -78,7 +82,7 @@ function RequestCard({ row, locale, onConfirm, onReject }) {
             Solicitado: {formatDateTime(row.createdAt, locale)}
           </Typography>
           <PaymentLink row={row} />
-          <RequestActions row={row} onConfirm={onConfirm} onReject={onReject} />
+          <RequestActions row={row} canWrite={canWrite} canOperate={canOperate} onConfirm={onConfirm} onReject={onReject} />
         </Stack>
       </CardContent>
     </Card>
@@ -94,6 +98,8 @@ export default function SmartTubePremiumRequestsTab({
   search,
   status,
   locale,
+  canWrite,
+  canOperate,
   onSearchChange,
   onStatusChange,
   onPageChange,
@@ -158,7 +164,7 @@ export default function SmartTubePremiumRequestsTab({
                   <TableCell>{formatDateTime(row.createdAt, locale)}</TableCell>
                   <TableCell>{Number(row.requestedDeviceLimit || 1)}</TableCell>
                   <TableCell align="right">
-                    <RequestActions row={row} onConfirm={onConfirm} onReject={onReject} />
+                    <RequestActions row={row} canWrite={canWrite} canOperate={canOperate} onConfirm={onConfirm} onReject={onReject} />
                   </TableCell>
                 </TableRow>
               ))}
@@ -178,7 +184,7 @@ export default function SmartTubePremiumRequestsTab({
 
       <Stack spacing={1.25} sx={{ display: { xs: 'flex', md: 'none' } }}>
         {rows.map((row) => (
-          <RequestCard key={row.requestId} row={row} locale={locale} onConfirm={onConfirm} onReject={onReject} />
+          <RequestCard key={row.requestId} row={row} locale={locale} canWrite={canWrite} canOperate={canOperate} onConfirm={onConfirm} onReject={onReject} />
         ))}
         {!loading && rows.length === 0 ? (
           <Card variant="outlined" sx={(themeValue) => surfaceSx(themeValue)}>
