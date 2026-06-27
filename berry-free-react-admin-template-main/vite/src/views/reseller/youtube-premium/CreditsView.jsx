@@ -7,7 +7,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import EmptyState from './components/EmptyState';
 import MetricStrip from './components/MetricStrip';
-import { displayDate, formatCreditsFromUnits, ledgerDeltaUnits, rowsOf, walletCreditUnits } from './constants';
+import { cleanProductText, displayDate, formatCreditsFromUnits, ledgerDeltaUnits, ledgerMovementLabel, rowsOf, walletCreditUnits } from './constants';
 import { colors, surfaceSx } from './styles';
 
 export default function CreditsView({ ledger, onRequestTopUp, wallet }) {
@@ -65,9 +65,9 @@ export default function CreditsView({ ledger, onRequestTopUp, wallet }) {
                   }}
                 >
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography sx={{ color: colors.text, fontWeight: 900 }}>{row.movementType || row.type || 'Movimiento'}</Typography>
+                    <Typography sx={{ color: colors.text, fontWeight: 900 }}>{ledgerMovementLabel(row.movementType || row.type)}</Typography>
                     <Typography sx={{ color: colors.muted, fontSize: 13 }}>
-                      {row.reason || row.description || '-'} · {displayDate(row.createdAt)}
+                      {cleanProductText(row.reason || row.description)} · {displayDate(row.createdAt)}
                     </Typography>
                   </Box>
                   <Typography sx={{ color: delta < 0 ? colors.danger : colors.success, fontWeight: 900, fontSize: 16 }}>

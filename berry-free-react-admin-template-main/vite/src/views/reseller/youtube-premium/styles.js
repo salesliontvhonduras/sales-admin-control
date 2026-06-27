@@ -27,12 +27,28 @@ export const inputSx = {
   '& .MuiInputBase-root': {
     bgcolor: colors.surface2,
     color: colors.text,
-    borderRadius: '8px'
+    borderRadius: '8px',
+    minHeight: 48
   },
   '& .MuiInputLabel-root': { color: colors.muted },
   '& .MuiOutlinedInput-notchedOutline': { borderColor: colors.border },
   '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: colors.strongBorder },
-  '& .MuiSvgIcon-root': { color: colors.muted }
+  '& .MuiSvgIcon-root': { color: colors.muted },
+  '& .MuiFormHelperText-root': { ml: 0, color: colors.dim }
+};
+
+export const mobileButtonSx = {
+  width: { xs: '100%', sm: 'auto' },
+  minHeight: 44,
+  borderRadius: '8px',
+  textTransform: 'none',
+  fontWeight: 900
+};
+
+export const mobileActionsSx = {
+  width: '100%',
+  justifyContent: { xs: 'stretch', sm: 'flex-end' },
+  '& .MuiButton-root': mobileButtonSx
 };
 
 export const selectMenuProps = {

@@ -253,7 +253,7 @@ export default function SmartTubePremiumUsersTab({
                 <TableRow>
                   <TableCell colSpan={8}>
                     <Box sx={{ py: 5, textAlign: 'center' }}>
-                      <Typography color="text.secondary">No hay cuentas SmartTube Premium con esos filtros.</Typography>
+                      <Typography color="text.secondary">No hay cuentas YouTube Premium con esos filtros.</Typography>
                     </Box>
                   </TableCell>
                 </TableRow>
@@ -282,7 +282,7 @@ export default function SmartTubePremiumUsersTab({
           <Card variant="outlined" sx={(themeValue) => surfaceSx(themeValue)}>
             <CardContent>
               <Typography color="text.secondary" align="center">
-                No hay cuentas SmartTube Premium con esos filtros.
+                No hay cuentas YouTube Premium con esos filtros.
               </Typography>
             </CardContent>
           </Card>

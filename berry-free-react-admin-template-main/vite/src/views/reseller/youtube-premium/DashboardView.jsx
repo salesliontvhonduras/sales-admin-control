@@ -24,6 +24,8 @@ export default function DashboardView({
   dashboard,
   loading,
   onCreateAccount,
+  onDelete,
+  onDeviceLimit,
   onDisconnectSession,
   onRenew,
   onResetPassword,
@@ -102,6 +104,8 @@ export default function DashboardView({
                   <AccountCard
                     key={row.userId || row.id || row.email}
                     row={row}
+                    onDelete={onDelete}
+                    onDeviceLimit={onDeviceLimit}
                     onRenew={onRenew}
                     onResetPassword={onResetPassword}
                     onToggleStatus={onToggleAccount}
@@ -120,6 +124,8 @@ export default function DashboardView({
                   <AccountCard
                     key={row.userId || row.id || row.email}
                     row={row}
+                    onDelete={onDelete}
+                    onDeviceLimit={onDeviceLimit}
                     onRenew={onRenew}
                     onResetPassword={onResetPassword}
                     onToggleStatus={onToggleAccount}

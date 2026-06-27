@@ -44,7 +44,7 @@ export const operatePermissions = [
 
 export const statusUpdatePermissions = operatePermissions;
 
-export const smartTubePermissionMessage = 'No tienes permiso para realizar esta acción en SmartTube Premium.';
+export const smartTubePermissionMessage = 'No tienes permiso para realizar esta acción en YouTube Premium.';
 
 export function statusColor(status) {
   const value = String(status || '').toUpperCase();

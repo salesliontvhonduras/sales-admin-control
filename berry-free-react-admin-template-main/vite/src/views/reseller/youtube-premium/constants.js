@@ -74,6 +74,12 @@ export function quoteCostUnits(form) {
   return (plan.monthlyUnits + extraDevices * EXTRA_DEVICE_MONTHLY_UNITS) * pack.months;
 }
 
+export function quoteDeviceLimitChangeUnits(currentLimit, nextLimit) {
+  const current = Math.max(Number(currentLimit || 1), 1);
+  const next = Math.max(Number(nextLimit || 1), 1);
+  return Math.max(next - current, 0) * EXTRA_DEVICE_MONTHLY_UNITS;
+}
+
 export function unitsToCredits(value) {
   const numeric = Number(value || 0);
   return numeric / 100;
@@ -106,6 +112,27 @@ export function ledgerDeltaUnits(row) {
   if (units !== undefined) return Number(units || 0);
   const credits = firstValue(row, ['creditsDelta', 'creditDelta', 'amount'], 0);
   return Number(credits || 0) * 100;
+}
+
+export function ledgerMovementLabel(value) {
+  const normalized = String(value || '').trim().toUpperCase();
+  if (normalized.includes('CUSTOMER_CREATE') || normalized.includes('RESELLER_CREATE')) return 'Venta YouTube Premium';
+  if (normalized.includes('CUSTOMER_RENEW') || normalized.includes('RESELLER_RENEW')) return 'Renovación YouTube Premium';
+  if (normalized.includes('DEVICE_LIMIT')) return 'Cambio de dispositivos';
+  if (normalized.includes('OPERATION_REFUND')) return 'Reverso YouTube Premium';
+  return value || 'Movimiento';
+}
+
+export function cleanProductText(value) {
+  const legacyProductName = ['Smart', 'Tube'].join('');
+  const mixedProductPattern = new RegExp(`YouTube/${legacyProductName} Premium`, 'gi');
+  const legacyPremiumPattern = new RegExp(`${legacyProductName} Premium`, 'gi');
+  const legacyProductPattern = new RegExp(legacyProductName, 'gi');
+
+  return String(value || '-')
+    .replace(mixedProductPattern, 'YouTube Premium')
+    .replace(legacyPremiumPattern, 'YouTube Premium')
+    .replace(legacyProductPattern, 'YouTube Premium');
 }
 
 export function displayDate(value) {

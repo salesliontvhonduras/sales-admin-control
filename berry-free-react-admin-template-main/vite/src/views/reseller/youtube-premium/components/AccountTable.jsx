@@ -1,3 +1,5 @@
+import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
+import DevicesRoundedIcon from '@mui/icons-material/DevicesRounded';
 import KeyRoundedIcon from '@mui/icons-material/KeyRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import PowerSettingsNewRoundedIcon from '@mui/icons-material/PowerSettingsNewRounded';
@@ -18,7 +20,7 @@ import { accountId, accountName, accountStatus, packageLabel, planLabel, shortDa
 import { colors } from '../styles';
 import StatusBadge from './StatusBadge';
 
-export default function AccountTable({ rows = [], onRenew, onResetPassword, onToggleStatus }) {
+export default function AccountTable({ rows = [], onDelete, onDeviceLimit, onRenew, onResetPassword, onToggleStatus }) {
   const [menu, setMenu] = useState({ anchorEl: null, row: null });
 
   const closeMenu = () => setMenu({ anchorEl: null, row: null });
@@ -81,9 +83,15 @@ export default function AccountTable({ rows = [], onRenew, onResetPassword, onTo
         <MenuItem onClick={() => runAction(onResetPassword)}>
           <KeyRoundedIcon fontSize="small" style={{ marginRight: 8 }} /> Reset password
         </MenuItem>
+        <MenuItem onClick={() => runAction(onDeviceLimit)}>
+          <DevicesRoundedIcon fontSize="small" style={{ marginRight: 8 }} /> Cambiar dispositivos
+        </MenuItem>
         <MenuItem onClick={() => runAction(onToggleStatus)}>
           <PowerSettingsNewRoundedIcon fontSize="small" style={{ marginRight: 8 }} />{' '}
           {menu.row?.active === false ? 'Activar' : 'Suspender'}
+        </MenuItem>
+        <MenuItem onClick={() => runAction(onDelete)} sx={{ color: '#ff6b6b' }}>
+          <DeleteRoundedIcon fontSize="small" style={{ marginRight: 8 }} /> Eliminar cuenta
         </MenuItem>
       </Menu>
     </>

@@ -30,6 +30,21 @@ export const updateYoutubePremiumAccountStatus = async (accountId, active, confi
 export const resetYoutubePremiumAccountPassword = async (accountId, password, config = {}) =>
   unwrap(await lionTvApi.post(`${base}/accounts/${accountId}/password`, { password }, config));
 
+export const updateYoutubePremiumAccountDeviceLimit = async (accountId, deviceLimit, idempotencyKey, config = {}) =>
+  unwrap(
+    await lionTvApi.patch(
+      `${base}/accounts/${accountId}/device-limit`,
+      { deviceLimit },
+      {
+        ...config,
+        headers: { ...(config.headers || {}), ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) }
+      }
+    )
+  );
+
+export const deleteYoutubePremiumAccount = async (accountId, config = {}) =>
+  unwrap(await lionTvApi.delete(`${base}/accounts/${accountId}`, config));
+
 export const listYoutubePremiumSessions = async (params = {}, config = {}) =>
   unwrap(await lionTvApi.get(`${base}/sessions`, { ...config, params }));
 

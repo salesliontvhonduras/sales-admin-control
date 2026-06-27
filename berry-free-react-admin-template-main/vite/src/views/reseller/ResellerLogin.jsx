@@ -70,7 +70,7 @@ export default function ResellerLogin() {
               Reseller Portal
             </Typography>
             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.64)' }}>
-              Gestiona cuentas premium, créditos, sesiones y renovaciones de YouTube/SmartTube.
+              Gestiona cuentas premium, créditos, sesiones y renovaciones de YouTube Premium.
             </Typography>
           </Stack>
 

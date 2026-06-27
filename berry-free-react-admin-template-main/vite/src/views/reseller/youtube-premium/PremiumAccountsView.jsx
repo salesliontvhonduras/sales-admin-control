@@ -13,13 +13,15 @@ import AccountCard from './components/AccountCard';
 import AccountTable from './components/AccountTable';
 import EmptyState from './components/EmptyState';
 import { rowsOf } from './constants';
-import { colors, inputSx, selectMenuProps, surfaceSx } from './styles';
+import { colors, inputSx, mobileButtonSx, selectMenuProps, surfaceSx } from './styles';
 
 export default function PremiumAccountsView({
   accounts,
   filters,
   loading,
+  onDelete,
   onCreateAccount,
+  onDeviceLimit,
   onFilterChange,
   onRenew,
   onResetPassword,
@@ -36,9 +38,9 @@ export default function PremiumAccountsView({
             <Typography variant="h2" sx={{ color: colors.text }}>
               Cuentas Premium
             </Typography>
-            <Typography sx={{ color: colors.muted }}>Venta y operación de cuentas YouTube/SmartTube Premium.</Typography>
+            <Typography sx={{ color: colors.muted }}>Venta y operación de cuentas YouTube Premium.</Typography>
           </Box>
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={onCreateAccount}>
+          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={onCreateAccount} sx={mobileButtonSx}>
             Nueva cuenta
           </Button>
         </Stack>
@@ -82,6 +84,8 @@ export default function PremiumAccountsView({
               <AccountCard
                 key={row.userId || row.id || row.email}
                 row={row}
+                onDelete={onDelete}
+                onDeviceLimit={onDeviceLimit}
                 onRenew={onRenew}
                 onResetPassword={onResetPassword}
                 onToggleStatus={onToggleAccount}
@@ -89,7 +93,7 @@ export default function PremiumAccountsView({
             ))}
           </Stack>
         ) : (
-          <AccountTable rows={rows} onRenew={onRenew} onResetPassword={onResetPassword} onToggleStatus={onToggleAccount} />
+          <AccountTable rows={rows} onDelete={onDelete} onDeviceLimit={onDeviceLimit} onRenew={onRenew} onResetPassword={onResetPassword} onToggleStatus={onToggleAccount} />
         )
       ) : (
         <EmptyState

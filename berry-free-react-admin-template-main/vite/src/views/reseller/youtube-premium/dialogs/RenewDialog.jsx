@@ -19,7 +19,7 @@ import {
   quoteCostUnits,
   shortDate
 } from '../constants';
-import { colors, inputSx, selectMenuProps } from '../styles';
+import { colors, inputSx, mobileActionsSx, selectMenuProps } from '../styles';
 
 export default function RenewDialog({ account, open, onClose, onSubmit, saving }) {
   const [form, setForm] = useState(EMPTY_RENEW_FORM);
@@ -44,8 +44,8 @@ export default function RenewDialog({ account, open, onClose, onSubmit, saving }
       title="Renovar cuenta"
       subtitle={account ? accountName(account) : ''}
       actions={
-        <Stack direction="row" spacing={1} sx={{ width: '100%', justifyContent: 'flex-end' }}>
-          <Button onClick={onClose} disabled={saving}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={mobileActionsSx}>
+          <Button onClick={onClose} disabled={saving} fullWidth>
             Cancelar
           </Button>
           <Button
@@ -53,6 +53,7 @@ export default function RenewDialog({ account, open, onClose, onSubmit, saving }
             disabled={saving || Number(form.deviceLimit || 0) < 1}
             startIcon={saving ? <CircularProgress size={16} /> : <CheckCircleRoundedIcon />}
             onClick={() => onSubmit(form)}
+            fullWidth
           >
             Confirmar renovación
           </Button>
@@ -92,17 +93,25 @@ export default function RenewDialog({ account, open, onClose, onSubmit, saving }
             />
           </Grid>
         </Grid>
-        <Info label="Costo de renovación" value={`${formatCreditsFromUnits(costUnits)} créditos · ${packageLabel(form.packageCode)}`} large />
+        <Info label="Costo de renovación" value={`${formatCreditsFromUnits(costUnits)} créditos · ${packageLabel(form.packageCode)}`} large highlight />
       </Stack>
     </PremiumDialog>
   );
 }
 
-function Info({ label, value, large = false }) {
+function Info({ label, value, large = false, highlight = false }) {
   return (
-    <Stack sx={{ flex: 1, p: 1.5, bgcolor: colors.surface2, borderRadius: '8px', border: `1px solid ${colors.border}` }}>
+    <Stack
+      sx={{
+        flex: 1,
+        p: { xs: 1.5, sm: 1.75 },
+        bgcolor: highlight ? 'rgba(229,9,20,0.1)' : colors.surface2,
+        borderRadius: '8px',
+        border: `1px solid ${highlight ? 'rgba(229,9,20,0.38)' : colors.border}`
+      }}
+    >
       <Typography sx={{ color: colors.dim, fontSize: 12, fontWeight: 900, textTransform: 'uppercase' }}>{label}</Typography>
-      <Typography sx={{ color: colors.text, fontWeight: 900, fontSize: large ? 22 : 15 }}>{value || '-'}</Typography>
+      <Typography sx={{ color: colors.text, fontWeight: 900, fontSize: large ? { xs: 21, sm: 24 } : 15, lineHeight: 1.2 }}>{value || '-'}</Typography>
     </Stack>
   );
 }

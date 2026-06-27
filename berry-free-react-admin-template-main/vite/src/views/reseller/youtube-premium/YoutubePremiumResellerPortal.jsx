@@ -4,6 +4,7 @@ import useAuth from 'hooks/useAuth';
 import { getUserPermissions } from 'utils/rbac';
 import {
   createYoutubePremiumAccount,
+  deleteYoutubePremiumAccount,
   getYoutubePremiumDashboard,
   getYoutubePremiumWallet,
   getYoutubePremiumWalletLedger,
@@ -16,6 +17,7 @@ import {
   resetYoutubePremiumAccountPassword,
   revokeYoutubePremiumSession,
   transferYoutubePremiumCredits,
+  updateYoutubePremiumAccountDeviceLimit,
   updateYoutubePremiumAccountStatus,
   upsertYoutubePremiumChildReseller
 } from 'api/reseller-youtube-premium';
@@ -23,6 +25,7 @@ import PortalShell from './components/PortalShell';
 import AccountWizardDialog from './dialogs/AccountWizardDialog';
 import ChildResellerDialog from './dialogs/ChildResellerDialog';
 import ConfirmDialog from './dialogs/ConfirmDialog';
+import DeviceLimitDialog from './dialogs/DeviceLimitDialog';
 import PasswordDialog from './dialogs/PasswordDialog';
 import RenewDialog from './dialogs/RenewDialog';
 import TransferCreditsDialog from './dialogs/TransferCreditsDialog';
@@ -63,6 +66,7 @@ export default function YoutubePremiumResellerPortal() {
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [renewAccount, setRenewAccount] = useState(null);
   const [passwordAccount, setPasswordAccount] = useState(null);
+  const [deviceLimitAccount, setDeviceLimitAccount] = useState(null);
   const [childDialogOpen, setChildDialogOpen] = useState(false);
   const [transferReseller, setTransferReseller] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
@@ -182,6 +186,29 @@ export default function YoutubePremiumResellerPortal() {
     }
   };
 
+  const handleUpdateDeviceLimit = async ({ deviceLimit }) => {
+    if (!deviceLimitAccount) return;
+    const accountId = deviceLimitAccount.userId || deviceLimitAccount.id || deviceLimitAccount.accountId;
+    setSaving(true);
+    try {
+      const result = await updateYoutubePremiumAccountDeviceLimit(accountId, Number(deviceLimit || 1), idempotencyKey(`ytp-devices-${accountId}`));
+      const chargedUnits = Number(result?.chargedCreditUnits || result?.chargedUnits || 0);
+      enqueueSnackbar(
+        chargedUnits > 0
+          ? `Límite actualizado. Se cobraron ${(chargedUnits / 100).toFixed(2)} créditos.`
+          : 'Límite actualizado sin cobro adicional.',
+        { variant: 'success' }
+      );
+      setDeviceLimitAccount(null);
+      await loadView(activeView, { showLoading: false });
+      await loadWallet();
+    } catch (error) {
+      enqueueSnackbar(backendMessage(error, 'No se pudo cambiar el límite de dispositivos.'), { variant: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const requestToggleAccount = (account) => {
     const active = account?.active !== false;
     setConfirmAction({
@@ -195,6 +222,21 @@ export default function YoutubePremiumResellerPortal() {
         await updateYoutubePremiumAccountStatus(account.userId || account.id || account.accountId, !active);
         enqueueSnackbar('Estado de cuenta actualizado.', { variant: 'success' });
         await loadView(activeView, { showLoading: false });
+      }
+    });
+  };
+
+  const requestDeleteAccount = (account) => {
+    setConfirmAction({
+      title: 'Eliminar cuenta Premium',
+      message: `Esta acción eliminará la cuenta ${account?.email || ''}, cortará sus sesiones y ya no aparecerá en el portal reseller. No se devuelven créditos por cuentas eliminadas.`,
+      confirmLabel: 'Eliminar cuenta',
+      confirmColor: 'error',
+      run: async () => {
+        await deleteYoutubePremiumAccount(account.userId || account.id || account.accountId);
+        enqueueSnackbar('Cuenta Premium eliminada.', { variant: 'success' });
+        await loadView(activeView, { showLoading: false });
+        await loadWallet();
       }
     });
   };
@@ -277,7 +319,9 @@ export default function YoutubePremiumResellerPortal() {
           accounts={accounts}
           filters={accountFilters}
           loading={loading}
+          onDelete={requestDeleteAccount}
           onCreateAccount={() => setAccountDialogOpen(true)}
+          onDeviceLimit={setDeviceLimitAccount}
           onFilterChange={setAccountFilters}
           onRenew={setRenewAccount}
           onResetPassword={setPasswordAccount}
@@ -331,6 +375,8 @@ export default function YoutubePremiumResellerPortal() {
         dashboard={dashboard}
         loading={loading}
         onCreateAccount={() => setAccountDialogOpen(true)}
+        onDelete={requestDeleteAccount}
+        onDeviceLimit={setDeviceLimitAccount}
         onDisconnectSession={requestDisconnectSession}
         onRenew={setRenewAccount}
         onResetPassword={setPasswordAccount}
@@ -374,6 +420,14 @@ export default function YoutubePremiumResellerPortal() {
         onClose={() => setPasswordAccount(null)}
         onCopied={() => enqueueSnackbar('Contraseña copiada.', { variant: 'success' })}
         onSubmit={handleResetPassword}
+        saving={saving}
+      />
+
+      <DeviceLimitDialog
+        account={deviceLimitAccount}
+        open={Boolean(deviceLimitAccount)}
+        onClose={() => setDeviceLimitAccount(null)}
+        onSubmit={handleUpdateDeviceLimit}
         saving={saving}
       />
 

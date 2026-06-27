@@ -224,7 +224,7 @@ export default function SmartTubePremiumAdmin() {
       setRows(Array.isArray(payload?.data) ? payload.data : []);
       setTotal(Number(payload?.total || 0));
     } catch (error) {
-      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudieron cargar cuentas SmartTube.'), { variant: 'error' });
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudieron cargar cuentas YouTube Premium.'), { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -245,7 +245,7 @@ export default function SmartTubePremiumAdmin() {
       setRequestRows(Array.isArray(payload?.data) ? payload.data : []);
       setRequestTotal(Number(payload?.total || 0));
     } catch (error) {
-      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudieron cargar solicitudes SmartTube.'), { variant: 'error' });
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudieron cargar solicitudes YouTube Premium.'), { variant: 'error' });
     } finally {
       setRequestsLoading(false);
     }
@@ -267,7 +267,7 @@ export default function SmartTubePremiumAdmin() {
       setSessionRows(Array.isArray(payload?.data) ? payload.data : []);
       setSessionTotal(Number(payload?.total || 0));
     } catch (error) {
-      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudieron cargar sesiones SmartTube.'), { variant: 'error' });
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudieron cargar sesiones YouTube Premium.'), { variant: 'error' });
     } finally {
       setSessionsLoading(false);
     }
@@ -331,7 +331,7 @@ export default function SmartTubePremiumAdmin() {
         },
         { skipAuthRedirect: true }
       );
-      enqueueSnackbar('Cuenta SmartTube creada.', { variant: 'success' });
+      enqueueSnackbar('Cuenta YouTube Premium creada.', { variant: 'success' });
       setCreateOpen(false);
       resetCreateForm();
       refreshAll();
@@ -372,7 +372,7 @@ export default function SmartTubePremiumAdmin() {
         },
         { skipAuthRedirect: true }
       );
-      enqueueSnackbar('Pago confirmado. Licencia SmartTube activada.', { variant: 'success' });
+      enqueueSnackbar('Pago confirmado. Licencia YouTube Premium activada.', { variant: 'success' });
       setConfirmRequestTarget(null);
       refreshAll();
     } catch (error) {
@@ -611,7 +611,7 @@ export default function SmartTubePremiumAdmin() {
 
   return (
     <MainCard
-      title="SmartTube Premium"
+      title="YouTube Premium"
       secondary={
         <ResponsiveActionBar>
           <Button startIcon={<RefreshIcon />} variant="outlined" onClick={refreshAll} disabled={anyLoading}>
@@ -631,7 +631,7 @@ export default function SmartTubePremiumAdmin() {
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', md: 'center' }} justifyContent="space-between">
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="h3" sx={{ fontWeight: 850 }}>
-                  Centro operativo SmartTube Premium
+                  Centro operativo YouTube Premium
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                   Administra cuentas, solicitudes, dispositivos y sesiones activas de la APK desde una sola vista.

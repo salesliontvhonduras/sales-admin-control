@@ -122,12 +122,21 @@ export default function PortalShell({
               <Typography sx={{ color: colors.dim, fontSize: 12, fontWeight: 800, textTransform: 'uppercase' }}>
                 {activeItem.label}
               </Typography>
-              <Typography variant="h1" sx={{ color: colors.text, fontSize: { xs: 24, sm: 30 }, lineHeight: 1.05 }}>
+              <Typography variant="h1" sx={{ color: colors.text, fontSize: { xs: 22, sm: 30 }, lineHeight: 1.05 }}>
                 Consola YouTube Premium
               </Typography>
             </Box>
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: { xs: 'space-between', sm: 'flex-end' } }}>
-              <Box sx={{ px: 1.5, py: 0.75, borderRadius: '8px', bgcolor: colors.surface, border: `1px solid ${colors.border}` }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{
+                alignItems: 'center',
+                justifyContent: { xs: 'stretch', sm: 'flex-end' },
+                flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                rowGap: 1
+              }}
+            >
+              <Box sx={{ flex: { xs: '1 1 100%', sm: '0 0 auto' }, px: 1.5, py: 0.75, borderRadius: '8px', bgcolor: colors.surface, border: `1px solid ${colors.border}` }}>
                 <Typography sx={{ color: colors.dim, fontSize: 11 }}>Saldo</Typography>
                 <Typography sx={{ color: colors.text, fontWeight: 900, lineHeight: 1 }}>{availableCredits}</Typography>
               </Box>
@@ -136,7 +145,14 @@ export default function PortalShell({
                 onClick={onRefresh}
                 disabled={loading}
                 startIcon={loading ? <CircularProgress size={14} /> : <RefreshRoundedIcon />}
-                sx={{ color: colors.text, borderColor: colors.border, borderRadius: '8px', minHeight: 40 }}
+                sx={{
+                  color: colors.text,
+                  borderColor: colors.border,
+                  borderRadius: '8px',
+                  minHeight: 44,
+                  flex: { xs: '1 1 calc(50% - 8px)', sm: '0 0 auto' },
+                  px: { xs: 1, sm: 2 }
+                }}
               >
                 Actualizar
               </Button>
@@ -147,8 +163,10 @@ export default function PortalShell({
                 sx={{
                   bgcolor: colors.accent,
                   borderRadius: '8px',
-                  minHeight: 40,
+                  minHeight: 44,
                   fontWeight: 900,
+                  flex: { xs: '1 1 calc(50% - 8px)', sm: '0 0 auto' },
+                  px: { xs: 1, sm: 2 },
                   '&:hover': { bgcolor: colors.accentDark }
                 }}
               >

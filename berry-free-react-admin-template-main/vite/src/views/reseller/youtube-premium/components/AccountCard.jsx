@@ -1,3 +1,5 @@
+import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
+import DevicesRoundedIcon from '@mui/icons-material/DevicesRounded';
 import KeyRoundedIcon from '@mui/icons-material/KeyRounded';
 import PowerSettingsNewRoundedIcon from '@mui/icons-material/PowerSettingsNewRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
@@ -11,7 +13,7 @@ import { accountName, accountStatus, packageLabel, planLabel, shortDate } from '
 import { colors, surfaceSx } from '../styles';
 import StatusBadge from './StatusBadge';
 
-export default function AccountCard({ row, onRenew, onResetPassword, onToggleStatus }) {
+export default function AccountCard({ row, onDelete, onDeviceLimit, onRenew, onResetPassword, onToggleStatus }) {
   const active = row?.active !== false;
 
   return (
@@ -51,8 +53,14 @@ export default function AccountCard({ row, onRenew, onResetPassword, onToggleSta
           <Button size="small" variant="outlined" startIcon={<KeyRoundedIcon />} onClick={() => onResetPassword(row)}>
             Password
           </Button>
+          <Button size="small" variant="outlined" startIcon={<DevicesRoundedIcon />} onClick={() => onDeviceLimit(row)}>
+            Dispositivos
+          </Button>
           <Button size="small" color={active ? 'warning' : 'success'} variant="outlined" startIcon={<PowerSettingsNewRoundedIcon />} onClick={() => onToggleStatus(row)}>
             {active ? 'Suspender' : 'Activar'}
+          </Button>
+          <Button size="small" color="error" variant="outlined" startIcon={<DeleteRoundedIcon />} onClick={() => onDelete(row)}>
+            Eliminar
           </Button>
         </Stack>
       </Stack>

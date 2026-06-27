@@ -96,7 +96,7 @@ export default function ResellerAdminLionTv() {
 
   return (
     <MainCard
-      title="Resellers SmartTube Premium"
+      title="Resellers YouTube Premium"
       secondary={
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" onClick={() => setNotificationOpen(true)}>Notificación</Button>

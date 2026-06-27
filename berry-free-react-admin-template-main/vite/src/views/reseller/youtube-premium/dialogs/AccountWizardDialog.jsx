@@ -22,7 +22,7 @@ import {
   planLabel,
   quoteCostUnits
 } from '../constants';
-import { colors, inputSx, selectMenuProps } from '../styles';
+import { colors, inputSx, mobileActionsSx, selectMenuProps } from '../styles';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -40,18 +40,18 @@ export default function AccountWizardDialog({ open, onClose, onSubmit, saving })
     }
   }, [open]);
 
-  const accountValid = form.name.trim() && emailRegex.test(form.email.trim()) && form.password.trim().length >= 6;
+  const accountValid = form.name.trim() && emailRegex.test(form.email.trim()) && form.password.trim().length >= 8;
   const planValid = Number(form.deviceLimit || 0) >= 1;
   const canContinue = step === 0 ? accountValid : planValid;
 
   const update = (patch) => setForm((prev) => ({ ...prev, ...patch }));
 
   const actions = (
-    <Stack direction="row" spacing={1} sx={{ width: '100%', justifyContent: 'space-between' }}>
-      <Button onClick={onClose} disabled={saving}>
+    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ ...mobileActionsSx, justifyContent: 'space-between' }}>
+      <Button onClick={onClose} disabled={saving} fullWidth>
         Cancelar
       </Button>
-      <Stack direction="row" spacing={1}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: { xs: '100%', sm: 'auto' }, '& .MuiButton-root': { width: { xs: '100%', sm: 'auto' } } }}>
         {step > 0 ? (
           <Button onClick={() => setStep((prev) => prev - 1)} disabled={saving}>
             Atrás
@@ -80,7 +80,7 @@ export default function AccountWizardDialog({ open, onClose, onSubmit, saving })
       open={open}
       onClose={onClose}
       title="Nueva cuenta Premium"
-      subtitle="Cuenta, paquete y confirmación de créditos en un flujo claro."
+      subtitle={step === 0 ? 'Datos de acceso del cliente' : step === 1 ? 'Plan, paquete y dispositivos' : 'Revisa el costo antes de crear'}
       maxWidth="md"
       actions={actions}
     >
@@ -105,7 +105,7 @@ export default function AccountWizardDialog({ open, onClose, onSubmit, saving })
               onChange={(event) => update({ password: event.target.value })}
               fullWidth
               sx={inputSx}
-              helperText="Mínimo 6 caracteres."
+              helperText="Mínimo 8 caracteres."
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -125,13 +125,18 @@ export default function AccountWizardDialog({ open, onClose, onSubmit, saving })
 
         {step === 2 ? (
           <Stack spacing={2}>
-            <SummaryRow label="Cliente" value={`${form.name} · ${form.email}`} />
-            <SummaryRow label="Plan" value={`${planLabel(form.planCode)} · ${packageLabel(form.packageCode)}`} />
-            <SummaryRow label="Dispositivos" value={`${form.deviceLimit} permitido${Number(form.deviceLimit) === 1 ? '' : 's'}`} />
-            <Box sx={{ p: 2, borderRadius: '8px', bgcolor: colors.surface2, border: `1px solid ${colors.strongBorder}` }}>
+            <Box sx={{ p: 2, borderRadius: '8px', bgcolor: colors.surface2, border: `1px solid ${colors.border}` }}>
+              <SummaryRow label="Cliente" value={`${form.name} · ${form.email}`} />
+              <SummaryRow label="Plan" value={`${planLabel(form.planCode)} · ${packageLabel(form.packageCode)}`} />
+              <SummaryRow label="Dispositivos" value={`${form.deviceLimit} permitido${Number(form.deviceLimit) === 1 ? '' : 's'}`} last />
+            </Box>
+            <Box sx={{ p: { xs: 2, sm: 2.5 }, borderRadius: '8px', bgcolor: 'rgba(255,45,45,0.12)', border: '1px solid rgba(255,45,45,0.34)' }}>
               <Typography sx={{ color: colors.dim, fontSize: 12, fontWeight: 900, textTransform: 'uppercase' }}>Costo total</Typography>
-              <Typography variant="h2" sx={{ color: colors.text, mt: 0.5 }}>
+              <Typography variant="h2" sx={{ color: colors.text, mt: 0.5, fontSize: { xs: 32, sm: 38 }, lineHeight: 1 }}>
                 {formatCreditsFromUnits(costUnits)} créditos
+              </Typography>
+              <Typography sx={{ color: colors.muted, mt: 1, fontSize: 13 }}>
+                Se debitará del saldo disponible cuando confirmes la creación.
               </Typography>
             </Box>
           </Stack>
@@ -149,13 +154,19 @@ function Stepper({ step }) {
         <Grid item xs={4} key={label}>
           <Box
             sx={{
-              p: 1.25,
+              p: { xs: 1, sm: 1.25 },
               borderRadius: '8px',
-              bgcolor: index <= step ? 'rgba(255,255,255,0.1)' : colors.surface2,
-              border: `1px solid ${index <= step ? colors.strongBorder : colors.border}`
+              bgcolor: index <= step ? 'rgba(255,45,45,0.13)' : colors.surface2,
+              border: `1px solid ${index <= step ? 'rgba(255,45,45,0.34)' : colors.border}`,
+              minHeight: { xs: 56, sm: 62 }
             }}
           >
-            <Typography sx={{ color: index <= step ? colors.text : colors.muted, fontWeight: 900, fontSize: 12 }}>{label}</Typography>
+            <Typography sx={{ color: index <= step ? colors.text : colors.muted, fontWeight: 900, fontSize: 11 }}>
+              {String(index + 1).padStart(2, '0')}
+            </Typography>
+            <Typography sx={{ color: index <= step ? colors.text : colors.muted, fontWeight: 900, fontSize: { xs: 12, sm: 13 }, lineHeight: 1.15 }}>
+              {label}
+            </Typography>
           </Box>
         </Grid>
       ))}
@@ -222,11 +233,11 @@ function PlanFields({ form, update }) {
   );
 }
 
-function SummaryRow({ label, value }) {
+function SummaryRow({ label, value, last = false }) {
   return (
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ justifyContent: 'space-between', p: 1.25, borderBottom: `1px solid ${colors.border}` }}>
+    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={0.5} sx={{ justifyContent: 'space-between', py: 1.25, borderBottom: last ? 'none' : `1px solid ${colors.border}` }}>
       <Typography sx={{ color: colors.dim }}>{label}</Typography>
-      <Typography sx={{ color: colors.text, fontWeight: 900 }}>{value}</Typography>
+      <Typography sx={{ color: colors.text, fontWeight: 900, overflowWrap: 'anywhere' }}>{value}</Typography>
     </Stack>
   );
 }
