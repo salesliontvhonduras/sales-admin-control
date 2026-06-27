@@ -52,6 +52,19 @@ export async function updateSmartTubePremiumDeviceLimit(userId, deviceLimit, con
   return unwrap(response);
 }
 
+export async function listSmartTubePremiumSessions(params = {}, config = {}) {
+  const response = await authApi.get('/auth/v1/admin/smarttube-premium/sessions', {
+    ...config,
+    params
+  });
+  return unwrap(response);
+}
+
+export async function revokeSmartTubePremiumSession(sessionId, config = {}) {
+  const response = await authApi.post(`/auth/v1/admin/smarttube-premium/sessions/${sessionId}/revoke`, {}, config);
+  return unwrap(response);
+}
+
 export async function listSmartTubePremiumAccountRequests(params = {}, config = {}) {
   const response = await authApi.get('/auth/v1/admin/smarttube-premium/account-requests', {
     ...config,
