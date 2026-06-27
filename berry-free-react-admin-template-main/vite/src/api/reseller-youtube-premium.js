@@ -16,6 +16,14 @@ export const createYoutubePremiumAccount = async (payload, idempotencyKey, confi
     })
   );
 
+export const createYoutubePremiumDemoAccount = async (payload, idempotencyKey, config = {}) =>
+  unwrap(
+    await lionTvApi.post(`${base}/accounts/demo`, payload, {
+      ...config,
+      headers: { ...(config.headers || {}), ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) }
+    })
+  );
+
 export const renewYoutubePremiumAccount = async (accountId, payload, idempotencyKey, config = {}) =>
   unwrap(
     await lionTvApi.post(`${base}/accounts/${accountId}/renew`, payload, {

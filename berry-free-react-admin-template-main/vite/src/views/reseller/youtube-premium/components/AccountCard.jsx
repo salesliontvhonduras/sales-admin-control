@@ -1,16 +1,11 @@
-import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
-import DevicesRoundedIcon from '@mui/icons-material/DevicesRounded';
-import KeyRoundedIcon from '@mui/icons-material/KeyRounded';
-import PowerSettingsNewRoundedIcon from '@mui/icons-material/PowerSettingsNewRounded';
-import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { accountName, accountStatus, packageLabel, planLabel, shortDate } from '../constants';
+import { accountName, accountStatus, displayDate, packageLabel, planLabel } from '../constants';
 import { colors, surfaceSx } from '../styles';
+import AccountActionsGrid from './AccountActionsGrid';
 import StatusBadge from './StatusBadge';
 
 export default function AccountCard({ row, onDelete, onDeviceLimit, onRenew, onResetPassword, onToggleStatus }) {
@@ -43,26 +38,18 @@ export default function AccountCard({ row, onDelete, onDeviceLimit, onRenew, onR
 
         <Box sx={{ px: 1.25, py: 1, bgcolor: colors.surface2, borderRadius: '8px', border: `1px solid ${colors.border}` }}>
           <Typography sx={{ color: colors.dim, fontSize: 12 }}>Vencimiento</Typography>
-          <Typography sx={{ color: colors.text, fontWeight: 900 }}>{shortDate(row?.expiresAt)}</Typography>
+          <Typography sx={{ color: colors.text, fontWeight: 900 }}>{displayDate(row?.expiresAt)}</Typography>
         </Box>
 
-        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
-          <Button size="small" variant="contained" startIcon={<RefreshRoundedIcon />} onClick={() => onRenew(row)}>
-            Renovar
-          </Button>
-          <Button size="small" variant="outlined" startIcon={<KeyRoundedIcon />} onClick={() => onResetPassword(row)}>
-            Password
-          </Button>
-          <Button size="small" variant="outlined" startIcon={<DevicesRoundedIcon />} onClick={() => onDeviceLimit(row)}>
-            Dispositivos
-          </Button>
-          <Button size="small" color={active ? 'warning' : 'success'} variant="outlined" startIcon={<PowerSettingsNewRoundedIcon />} onClick={() => onToggleStatus(row)}>
-            {active ? 'Suspender' : 'Activar'}
-          </Button>
-          <Button size="small" color="error" variant="outlined" startIcon={<DeleteRoundedIcon />} onClick={() => onDelete(row)}>
-            Eliminar
-          </Button>
-        </Stack>
+        <AccountActionsGrid
+          row={row}
+          active={active}
+          onDelete={onDelete}
+          onDeviceLimit={onDeviceLimit}
+          onRenew={onRenew}
+          onResetPassword={onResetPassword}
+          onToggleStatus={onToggleStatus}
+        />
       </Stack>
     </Paper>
   );

@@ -16,7 +16,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
-import { accountId, accountName, accountStatus, packageLabel, planLabel, shortDate } from '../constants';
+import { accountId, accountName, accountStatus, displayDate, packageLabel, planLabel } from '../constants';
 import { colors } from '../styles';
 import StatusBadge from './StatusBadge';
 
@@ -56,7 +56,7 @@ export default function AccountTable({ rows = [], onDelete, onDeviceLimit, onRen
                 <TableCell sx={{ color: colors.text, borderColor: colors.border }}>
                   {row?.deviceCount || 0}/{row?.deviceLimit || 1}
                 </TableCell>
-                <TableCell sx={{ color: colors.text, borderColor: colors.border }}>{shortDate(row?.expiresAt)}</TableCell>
+                <TableCell sx={{ color: colors.text, borderColor: colors.border }}>{displayDate(row?.expiresAt)}</TableCell>
                 <TableCell sx={{ borderColor: colors.border }}>
                   <StatusBadge status={accountStatus(row)} />
                 </TableCell>

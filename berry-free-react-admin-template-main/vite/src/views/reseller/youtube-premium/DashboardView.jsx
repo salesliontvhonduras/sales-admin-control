@@ -1,4 +1,5 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
 import EventBusyRoundedIcon from '@mui/icons-material/EventBusyRounded';
 import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
@@ -24,6 +25,7 @@ export default function DashboardView({
   dashboard,
   loading,
   onCreateAccount,
+  onCreateDemo,
   onDelete,
   onDeviceLimit,
   onDisconnectSession,
@@ -79,7 +81,32 @@ export default function DashboardView({
               Vende, renueva y controla sesiones desde una sola consola.
             </Typography>
           </Box>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, 1fr))', lg: 'repeat(2, minmax(150px, 1fr))' },
+              gap: 1,
+              minWidth: { lg: 344 },
+              '& .MuiButton-root': {
+                minWidth: 0,
+                minHeight: 46,
+                px: 1,
+                borderRadius: '8px',
+                fontWeight: 900,
+                textTransform: 'none',
+                justifyContent: 'center',
+                whiteSpace: 'nowrap'
+              },
+              '& .MuiButton-startIcon': {
+                mr: 0.75,
+                ml: 0,
+                '& .MuiSvgIcon-root': { fontSize: 18 }
+              }
+            }}
+          >
+            <Button variant="outlined" startIcon={<AccessTimeRoundedIcon />} onClick={onCreateDemo}>
+              Crear demo
+            </Button>
             <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={onCreateAccount}>
               Crear cuenta
             </Button>
@@ -89,7 +116,7 @@ export default function DashboardView({
             <Button variant="outlined" onClick={() => onViewChange('credits')}>
               Créditos
             </Button>
-          </Stack>
+          </Box>
         </Stack>
       </Paper>
 
@@ -133,7 +160,7 @@ export default function DashboardView({
                 ))}
               </Stack>
             ) : (
-              <EmptyState title="No hay cuentas todavía" text="Crea la primera cuenta premium para empezar a consumir créditos." actionLabel="Nueva cuenta" onAction={onCreateAccount} />
+              <EmptyState title="No hay cuentas todavía" text="Crea la primera cuenta premium o una demo temporal para probar el app." actionLabel="Nueva cuenta" onAction={onCreateAccount} />
             )}
           </Section>
         </Stack>

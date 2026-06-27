@@ -4,6 +4,7 @@ import useAuth from 'hooks/useAuth';
 import { getUserPermissions } from 'utils/rbac';
 import {
   createYoutubePremiumAccount,
+  createYoutubePremiumDemoAccount,
   deleteYoutubePremiumAccount,
   getYoutubePremiumDashboard,
   getYoutubePremiumWallet,
@@ -25,6 +26,7 @@ import PortalShell from './components/PortalShell';
 import AccountWizardDialog from './dialogs/AccountWizardDialog';
 import ChildResellerDialog from './dialogs/ChildResellerDialog';
 import ConfirmDialog from './dialogs/ConfirmDialog';
+import DemoAccountDialog from './dialogs/DemoAccountDialog';
 import DeviceLimitDialog from './dialogs/DeviceLimitDialog';
 import PasswordDialog from './dialogs/PasswordDialog';
 import RenewDialog from './dialogs/RenewDialog';
@@ -64,6 +66,7 @@ export default function YoutubePremiumResellerPortal() {
   const [accountFilters, setAccountFilters] = useState(initialAccountFilters);
   const [sessionFilters, setSessionFilters] = useState(initialSessionFilters);
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
+  const [demoDialogOpen, setDemoDialogOpen] = useState(false);
   const [renewAccount, setRenewAccount] = useState(null);
   const [passwordAccount, setPasswordAccount] = useState(null);
   const [deviceLimitAccount, setDeviceLimitAccount] = useState(null);
@@ -152,6 +155,21 @@ export default function YoutubePremiumResellerPortal() {
       await loadView('accounts', { showLoading: false });
     } catch (error) {
       enqueueSnackbar(backendMessage(error, 'No se pudo crear la cuenta Premium.'), { variant: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCreateDemo = async (form) => {
+    setSaving(true);
+    try {
+      await createYoutubePremiumDemoAccount(form, idempotencyKey(`ytp-demo-${form.email}-${form.demoHours}`));
+      enqueueSnackbar(`Demo de ${form.demoHours} hora${Number(form.demoHours) === 1 ? '' : 's'} creada correctamente.`, { variant: 'success' });
+      setDemoDialogOpen(false);
+      setActiveView('accounts');
+      await loadView('accounts', { showLoading: false });
+    } catch (error) {
+      enqueueSnackbar(backendMessage(error, 'No se pudo crear la demo.'), { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -321,6 +339,7 @@ export default function YoutubePremiumResellerPortal() {
           loading={loading}
           onDelete={requestDeleteAccount}
           onCreateAccount={() => setAccountDialogOpen(true)}
+          onCreateDemo={() => setDemoDialogOpen(true)}
           onDeviceLimit={setDeviceLimitAccount}
           onFilterChange={setAccountFilters}
           onRenew={setRenewAccount}
@@ -375,6 +394,7 @@ export default function YoutubePremiumResellerPortal() {
         dashboard={dashboard}
         loading={loading}
         onCreateAccount={() => setAccountDialogOpen(true)}
+        onCreateDemo={() => setDemoDialogOpen(true)}
         onDelete={requestDeleteAccount}
         onDeviceLimit={setDeviceLimitAccount}
         onDisconnectSession={requestDisconnectSession}
@@ -392,6 +412,7 @@ export default function YoutubePremiumResellerPortal() {
       canSuper={canSuper}
       loading={loading}
       onCreateAccount={() => setAccountDialogOpen(true)}
+      onCreateDemo={() => setDemoDialogOpen(true)}
       onRefresh={refreshCurrent}
       onViewChange={setActiveView}
       user={user}
@@ -403,6 +424,13 @@ export default function YoutubePremiumResellerPortal() {
         open={accountDialogOpen}
         onClose={() => setAccountDialogOpen(false)}
         onSubmit={handleCreateAccount}
+        saving={saving}
+      />
+
+      <DemoAccountDialog
+        open={demoDialogOpen}
+        onClose={() => setDemoDialogOpen(false)}
+        onSubmit={handleCreateDemo}
         saving={saving}
       />
 

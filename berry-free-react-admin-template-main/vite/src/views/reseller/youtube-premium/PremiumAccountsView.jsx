@@ -1,4 +1,5 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -21,6 +22,7 @@ export default function PremiumAccountsView({
   loading,
   onDelete,
   onCreateAccount,
+  onCreateDemo,
   onDeviceLimit,
   onFilterChange,
   onRenew,
@@ -40,9 +42,14 @@ export default function PremiumAccountsView({
             </Typography>
             <Typography sx={{ color: colors.muted }}>Venta y operación de cuentas YouTube Premium.</Typography>
           </Box>
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={onCreateAccount} sx={mobileButtonSx}>
-            Nueva cuenta
-          </Button>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+            <Button variant="outlined" startIcon={<AccessTimeRoundedIcon />} onClick={onCreateDemo} sx={mobileButtonSx}>
+              Crear demo
+            </Button>
+            <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={onCreateAccount} sx={mobileButtonSx}>
+              Nueva cuenta
+            </Button>
+          </Stack>
         </Stack>
       </Paper>
 

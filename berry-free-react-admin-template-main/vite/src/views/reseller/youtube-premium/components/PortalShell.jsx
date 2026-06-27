@@ -1,4 +1,5 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -45,6 +46,7 @@ export default function PortalShell({
   children,
   loading,
   onCreateAccount,
+  onCreateDemo,
   onRefresh,
   onViewChange,
   user,
@@ -155,6 +157,22 @@ export default function PortalShell({
                 }}
               >
                 Actualizar
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={onCreateDemo}
+                startIcon={<AccessTimeRoundedIcon />}
+                sx={{
+                  color: colors.text,
+                  borderColor: colors.border,
+                  borderRadius: '8px',
+                  minHeight: 44,
+                  fontWeight: 900,
+                  flex: { xs: '1 1 calc(50% - 8px)', sm: '0 0 auto' },
+                  px: { xs: 1, sm: 2 }
+                }}
+              >
+                Demo
               </Button>
               <Button
                 variant="contained"

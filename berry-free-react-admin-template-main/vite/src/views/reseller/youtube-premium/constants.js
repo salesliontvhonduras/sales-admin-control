@@ -17,6 +17,12 @@ export const PACKAGE_OPTIONS = [
   { value: 'ANNUAL', label: 'Anual', months: 12 }
 ];
 
+export const DEMO_OPTIONS = [
+  { value: 1, label: '1 hora', packageCode: 'DEMO_1H' },
+  { value: 3, label: '3 horas', packageCode: 'DEMO_3H' },
+  { value: 6, label: '6 horas', packageCode: 'DEMO_6H' }
+];
+
 export const EXTRA_DEVICE_MONTHLY_UNITS = 50;
 
 export const NAV_ITEMS = [
@@ -63,6 +69,8 @@ export function planLabel(value) {
 }
 
 export function packageLabel(value) {
+  const demo = DEMO_OPTIONS.find((item) => item.packageCode === value);
+  if (demo) return `Demo ${demo.label}`;
   return PACKAGE_OPTIONS.find((item) => item.value === value)?.label || value || 'Mensual';
 }
 
@@ -117,6 +125,7 @@ export function ledgerDeltaUnits(row) {
 export function ledgerMovementLabel(value) {
   const normalized = String(value || '').trim().toUpperCase();
   if (normalized.includes('CUSTOMER_CREATE') || normalized.includes('RESELLER_CREATE')) return 'Venta YouTube Premium';
+  if (normalized.includes('CUSTOMER_DEMO') || normalized.includes('RESELLER_DEMO')) return 'Demo YouTube Premium';
   if (normalized.includes('CUSTOMER_RENEW') || normalized.includes('RESELLER_RENEW')) return 'Renovación YouTube Premium';
   if (normalized.includes('DEVICE_LIMIT')) return 'Cambio de dispositivos';
   if (normalized.includes('OPERATION_REFUND')) return 'Reverso YouTube Premium';
