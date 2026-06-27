@@ -1,4 +1,5 @@
 import { lazy } from 'react';
+import { Navigate } from 'react-router-dom';
 import RequireAuth from '../routes/RequireAuth';
 import RequirePermission from '../routes/RequirePermission';
 import RequireInternalLionTv from '../routes/RequireInternalLionTv';
@@ -70,7 +71,11 @@ const MainRoutes = {
   element: <RequireAuth />, // 🔒 proteger todas las rutas internas
   children: [
     {
-      element: <MainLayout />, // tu layout solo si está autenticado
+      element: (
+        <RequireInternalLionTv fallbackPath="/reseller/youtube-premium">
+          <MainLayout />
+        </RequireInternalLionTv>
+      ), // tu layout solo si está autenticado
       children: [
         {
           path: '/',
@@ -88,7 +93,7 @@ const MainRoutes = {
         {
           path: '/liontv/dashboard',
           element: protectPage(
-            { any: ['LIONTV_DASHBOARD_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            { any: ['LIONTV_DASHBOARD_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
             <LionTvDashboard />
           )
         },
@@ -102,14 +107,14 @@ const MainRoutes = {
         {
           path: '/liontv/customers',
           element: protectPage(
-            { any: ['LIONTV_CUSTOMERS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            { any: ['LIONTV_CUSTOMERS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
             <CustomersLionTv />
           )
         },
         {
           path: '/liontv/sales-workflow',
           element: protectPage(
-            { any: ['LIONTV_CUSTOMERS_VIEW', 'LIONTV_SUBSCRIPTIONS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            { any: ['LIONTV_CUSTOMERS_VIEW', 'LIONTV_SUBSCRIPTIONS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
             <SalesWorkflowLionTv />
           )
         },
@@ -195,7 +200,7 @@ const MainRoutes = {
         {
           path: '/liontv/managed-accounts',
           element: protectPage(
-            { any: ['LIONTV_MANAGED_ACCOUNTS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            { any: ['LIONTV_MANAGED_ACCOUNTS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
             <ManagedAccountsLionTv />
           )
         },
@@ -232,9 +237,7 @@ const MainRoutes = {
                 'LIONTV_CONTENT_AUTOMATION_VIEW',
                 'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW',
                 'ROLE_ADMIN',
-                'ADMIN',
-                'ROLE_LIONTV_RESELLER_OWNER',
-                'LIONTV_RESELLER_OWNER'
+                'ADMIN'
               ]
             },
             <ContentAutomationLionTv />
@@ -248,9 +251,7 @@ const MainRoutes = {
                 'LIONTV_CONTENT_AUTOMATION_VIEW',
                 'ROLE_LIONTV_CONTENT_AUTOMATION_VIEW',
                 'ROLE_ADMIN',
-                'ADMIN',
-                'ROLE_LIONTV_RESELLER_OWNER',
-                'LIONTV_RESELLER_OWNER'
+                'ADMIN'
               ]
             },
             <VodPostsLionTv />
@@ -259,7 +260,7 @@ const MainRoutes = {
         {
           path: '/liontv/subscriptions',
           element: protectPage(
-            { any: ['LIONTV_SUBSCRIPTIONS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            { any: ['LIONTV_SUBSCRIPTIONS_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
             <SubscriptionsLionTv />
           )
         },
@@ -296,7 +297,7 @@ const MainRoutes = {
         {
           path: '/liontv/invoices',
           element: protectPage(
-            { any: ['LIONTV_INVOICES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            { any: ['LIONTV_INVOICES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
             <InvoicesLionTv />
           )
         },
@@ -308,9 +309,7 @@ const MainRoutes = {
                 'LIONTV_RESELLER_WALLET_VIEW',
                 'ROLE_LIONTV_RESELLER_WALLET_VIEW',
                 'ROLE_ADMIN',
-                'ADMIN',
-                'ROLE_LIONTV_RESELLER_OWNER',
-                'LIONTV_RESELLER_OWNER'
+                'ADMIN'
               ]
             },
             <ResellerWalletLionTv />
@@ -324,9 +323,7 @@ const MainRoutes = {
                 'LIONTV_RESELLER_SUPPORT_VIEW',
                 'ROLE_LIONTV_RESELLER_SUPPORT_VIEW',
                 'ROLE_ADMIN',
-                'ADMIN',
-                'ROLE_LIONTV_RESELLER_OWNER',
-                'LIONTV_RESELLER_OWNER'
+                'ADMIN'
               ]
             },
             <ResellerSupportLionTv />
@@ -358,7 +355,7 @@ const MainRoutes = {
         {
           path: '/liontv/licenses',
           element: protectPage(
-            { any: ['LIONTV_LICENSES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            { any: ['LIONTV_LICENSES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
             <LicensesLionTv />
           )
         },
@@ -394,7 +391,7 @@ const MainRoutes = {
         {
           path: '/liontv/lines',
           element: protectPage(
-            { any: ['LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER'] },
+            { any: ['LIONTV_LINES_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
             <LinesLionTv />,
             '/liontv/dashboard'
           )
@@ -477,9 +474,7 @@ const MainRoutes = {
                   'USER_MANAGEMENT_VIEW',
                   'ROLE_USER_MANAGEMENT_VIEW',
                   'ROLE_ADMIN',
-                  'ADMIN',
-                  'ROLE_LIONTV_RESELLER_OWNER',
-                  'LIONTV_RESELLER_OWNER'
+                  'ADMIN'
                 ]
               }}
             />
@@ -499,6 +494,10 @@ const MainRoutes = {
       children: [
         {
           index: true,
+          element: <Navigate to="/reseller/youtube-premium" replace />
+        },
+        {
+          path: 'youtube-premium',
           element: protectPage(
             {
               any: [

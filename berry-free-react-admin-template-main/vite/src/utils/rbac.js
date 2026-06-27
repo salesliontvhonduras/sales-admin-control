@@ -128,6 +128,7 @@ function hasResellerPortalPermission(permissions) {
   return (
     permissions.has('ROLE_LIONTV_RESELLER_OWNER') ||
     permissions.has('ROLE_LIONTV_RESELLER_OPERATOR') ||
+    permissions.has('ROLE_LIONTV_SUPER_RESELLER') ||
     permissions.has('LIONTV_RESELLER_PORTAL_VIEW') ||
     permissions.has('ROLE_LIONTV_RESELLER_PORTAL_VIEW')
   );

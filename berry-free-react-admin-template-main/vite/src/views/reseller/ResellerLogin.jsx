@@ -32,7 +32,7 @@ export default function ResellerLogin() {
         enqueueSnackbar('Esta cuenta no tiene acceso reseller.', { variant: 'error' });
         return;
       }
-      navigate('/reseller', { replace: true });
+      navigate('/reseller/youtube-premium', { replace: true });
     } catch (error) {
       enqueueSnackbar(error?.response?.data?.message || 'Credenciales inválidas.', { variant: 'error' });
     } finally {
@@ -70,7 +70,7 @@ export default function ResellerLogin() {
               Reseller Portal
             </Typography>
             <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.64)' }}>
-              Gestiona clientes, créditos, sesiones y renovaciones de YouTube Premium.
+              Gestiona cuentas premium, créditos, sesiones y renovaciones de YouTube/SmartTube.
             </Typography>
           </Stack>
 
@@ -103,7 +103,7 @@ export default function ResellerLogin() {
             Entrar
           </Button>
           <Button component={Link} to="/pages/login" color="inherit">
-            Ir al Sales Admin
+            Acceso administrativo
           </Button>
         </Stack>
       </Box>

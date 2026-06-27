@@ -1,4 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import AddIcon from '@mui/icons-material/Add';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import KeyIcon from '@mui/icons-material/Key';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
+import WifiTetheringIcon from '@mui/icons-material/WifiTethering';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
@@ -8,73 +16,138 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { useSnackbar } from 'notistack';
 import useAuth from 'hooks/useAuth';
 import { getUserPermissions } from 'utils/rbac';
 import {
-  createResellerCustomer,
-  getResellerDashboard,
-  getResellerWalletLedger,
-  listResellerCustomers,
-  listResellerNotifications,
-  listResellerProfiles,
-  listResellerSessions,
-  renewResellerCustomer,
-  resetResellerCustomerPassword,
-  revokeResellerSession,
-  sendResellerNotification,
-  transferResellerCredits,
-  updateResellerCustomerStatus,
-  upsertResellerProfile
-} from 'api/reseller-portal';
+  createYoutubePremiumAccount,
+  getYoutubePremiumDashboard,
+  getYoutubePremiumWallet,
+  getYoutubePremiumWalletLedger,
+  listYoutubePremiumAccounts,
+  listYoutubePremiumChildResellers,
+  listYoutubePremiumNotifications,
+  listYoutubePremiumSessions,
+  renewYoutubePremiumAccount,
+  resetYoutubePremiumAccountPassword,
+  revokeYoutubePremiumSession,
+  transferYoutubePremiumCredits,
+  updateYoutubePremiumAccountStatus,
+  upsertYoutubePremiumChildReseller
+} from 'api/reseller-youtube-premium';
 
-const emptyCustomer = { name: '', email: '', password: '', planCode: 'INDIVIDUAL', packageCode: 'MONTHLY', deviceLimit: 1 };
+const emptyAccount = { name: '', email: '', password: '', planCode: 'INDIVIDUAL', packageCode: 'MONTHLY', deviceLimit: 1 };
 const emptyRenewal = { planCode: 'INDIVIDUAL', packageCode: 'MONTHLY', deviceLimit: 1 };
+const emptyNetworkAccount = { username: '', displayName: '', resellerType: 'RESELLER', active: true };
 
-function formatCredits(units = 0) {
-  return (Number(units || 0) / 100).toFixed(2);
-}
+const tabs = [
+  { value: 'dashboard', label: 'Dashboard' },
+  { value: 'accounts', label: 'Cuentas Premium' },
+  { value: 'sessions', label: 'Sesiones' },
+  { value: 'credits', label: 'Créditos' },
+  { value: 'notifications', label: 'Notificaciones' }
+];
 
 function rowsOf(payload) {
   return Array.isArray(payload?.data) ? payload.data : [];
 }
 
-function totalOf(payload) {
-  return Number(payload?.total || 0);
+function unitsToCredits(value = 0) {
+  return (Number(value || 0) / 100).toFixed(2);
 }
 
-function StatusChip({ value }) {
-  const status = String(value || '').toUpperCase();
-  const color = status === 'ACTIVE' ? 'success' : status === 'EXPIRED' ? 'warning' : 'default';
-  return <Chip size="small" label={status || 'N/A'} color={color} />;
+function displayDate(value) {
+  if (!value) return '-';
+  return String(value).replace('T', ' ').slice(0, 16);
 }
 
-function MetricCard({ label, value, helper }) {
+function statusLabel(row) {
+  if (row?.active === false) return 'Suspendida';
+  const raw = String(row?.licenseStatus || row?.status || '').toUpperCase();
+  if (raw === 'ACTIVE') return 'Activa';
+  if (raw === 'EXPIRED') return 'Expirada';
+  if (raw === 'REVOKED') return 'Revocada';
+  if (raw === 'SUSPENDED') return 'Suspendida';
+  return raw || 'N/A';
+}
+
+function StatusChip({ row, value }) {
+  const label = value || statusLabel(row);
+  const normalized = String(label).toUpperCase();
+  const color = normalized.includes('ACTIVA') || normalized === 'ACTIVE' ? 'success' : normalized.includes('EXPIR') ? 'warning' : 'default';
+  return <Chip size="small" label={label} color={color} sx={{ fontWeight: 700 }} />;
+}
+
+function MetricCard({ icon, label, value, helper }) {
   return (
-    <Paper sx={{ p: 2.5, bgcolor: '#111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2 }}>
-      <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.56)' }}>
-        {label}
-      </Typography>
-      <Typography variant="h2" sx={{ color: '#fff', mt: 0.5 }}>
-        {value}
-      </Typography>
-      {helper ? (
-        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.48)' }}>
-          {helper}
-        </Typography>
-      ) : null}
+    <Paper sx={{ p: 2.25, bgcolor: '#111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2 }}>
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+        <Box sx={{ color: '#fff', display: 'grid', placeItems: 'center' }}>{icon}</Box>
+        <Box>
+          <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.58)' }}>
+            {label}
+          </Typography>
+          <Typography variant="h2" sx={{ color: '#fff', lineHeight: 1.1 }}>
+            {value}
+          </Typography>
+          {helper ? <Typography sx={{ color: 'rgba(255,255,255,0.48)', fontSize: 12 }}>{helper}</Typography> : null}
+        </Box>
+      </Stack>
+    </Paper>
+  );
+}
+
+function Panel({ title, helper, action, children }) {
+  return (
+    <Paper sx={{ bgcolor: '#0d0d0d', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden' }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} sx={{ justifyContent: 'space-between', gap: 1.5, p: 2, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <Box>
+          <Typography variant="h3" sx={{ color: '#fff' }}>{title}</Typography>
+          {helper ? <Typography sx={{ color: 'rgba(255,255,255,0.56)' }}>{helper}</Typography> : null}
+        </Box>
+        {action}
+      </Stack>
+      <Box sx={{ p: 2 }}>{children}</Box>
+    </Paper>
+  );
+}
+
+function AccountCard({ row, onRenew, onToggle, onPassword }) {
+  return (
+    <Paper sx={{ p: 2, bgcolor: '#121212', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2 }}>
+      <Stack spacing={1.25}>
+        <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 2 }}>
+          <Box>
+            <Typography variant="h4" sx={{ color: '#fff' }}>{row.name || 'Cuenta Premium'}</Typography>
+            <Typography sx={{ color: 'rgba(255,255,255,0.56)' }}>{row.email}</Typography>
+          </Box>
+          <StatusChip row={row} />
+        </Stack>
+        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
+          <Chip size="small" label={row.planCode === 'FAMILY' ? 'Plan Family' : 'Plan Individual'} />
+          <Chip size="small" label={row.packageCode || 'MONTHLY'} />
+          <Chip size="small" label={`${row.deviceCount || 0}/${row.deviceLimit || 1} dispositivos`} />
+          <Chip size="small" label={`Expira ${row.expiresAt ? String(row.expiresAt).slice(0, 10) : '-'}`} />
+        </Stack>
+        <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
+          <Button size="small" variant="contained" startIcon={<RefreshIcon />} onClick={() => onRenew(row)}>Renovar</Button>
+          <Button size="small" variant="outlined" startIcon={<PowerSettingsNewIcon />} onClick={() => onToggle(row)}>
+            {row.active ? 'Suspender' : 'Activar'}
+          </Button>
+          <Button size="small" variant="text" startIcon={<KeyIcon />} onClick={() => onPassword(row)}>Password</Button>
+        </Stack>
+      </Stack>
     </Paper>
   );
 }
@@ -88,35 +161,44 @@ export default function ResellerPortal() {
   const [tab, setTab] = useState('dashboard');
   const [loading, setLoading] = useState(false);
   const [dashboard, setDashboard] = useState(null);
-  const [customers, setCustomers] = useState(null);
+  const [accounts, setAccounts] = useState(null);
   const [sessions, setSessions] = useState(null);
+  const [wallet, setWallet] = useState(null);
   const [ledger, setLedger] = useState(null);
   const [notifications, setNotifications] = useState([]);
-  const [resellers, setResellers] = useState(null);
-  const [customerDialog, setCustomerDialog] = useState(false);
-  const [customerForm, setCustomerForm] = useState(emptyCustomer);
+  const [network, setNetwork] = useState(null);
+  const [accountDialog, setAccountDialog] = useState(false);
+  const [accountForm, setAccountForm] = useState(emptyAccount);
   const [renewDialog, setRenewDialog] = useState(null);
   const [renewForm, setRenewForm] = useState(emptyRenewal);
   const [passwordDialog, setPasswordDialog] = useState(null);
   const [passwordValue, setPasswordValue] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [networkDialog, setNetworkDialog] = useState(false);
+  const [networkForm, setNetworkForm] = useState(emptyNetworkAccount);
   const [transferDialog, setTransferDialog] = useState(null);
   const [transferValue, setTransferValue] = useState('');
-  const [resellerDialog, setResellerDialog] = useState(false);
-  const [resellerForm, setResellerForm] = useState({ username: '', displayName: '', resellerType: 'RESELLER', parentUsername: '', active: true });
-  const [notificationDialog, setNotificationDialog] = useState(false);
-  const [notificationForm, setNotificationForm] = useState({ title: '', message: '', targetType: 'ALL', targetUsername: '' });
+
+  const visibleTabs = useMemo(() => (canSuper ? [...tabs, { value: 'network', label: 'Red de Resellers' }] : tabs), [canSuper]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      if (tab === 'dashboard') setDashboard(await getResellerDashboard());
-      if (tab === 'customers') setCustomers(await listResellerCustomers({ index: 0, size: 50 }));
-      if (tab === 'sessions') setSessions(await listResellerSessions({ status: 'ACTIVE', index: 0, size: 50 }));
-      if (tab === 'credits') setLedger(await getResellerWalletLedger({ index: 0, size: 40 }));
-      if (tab === 'notifications') setNotifications(await listResellerNotifications({ index: 0, size: 40 }));
-      if (tab === 'super' && canSuper) setResellers(await listResellerProfiles({ index: 0, size: 50 }));
+      if (tab === 'dashboard') setDashboard(await getYoutubePremiumDashboard());
+      if (tab === 'accounts') setAccounts(await listYoutubePremiumAccounts({ index: 0, size: 60 }));
+      if (tab === 'sessions') setSessions(await listYoutubePremiumSessions({ status: 'ACTIVE', index: 0, size: 60 }));
+      if (tab === 'credits') {
+        const [summary, history] = await Promise.all([
+          getYoutubePremiumWallet(),
+          getYoutubePremiumWalletLedger({ index: 0, size: 50 })
+        ]);
+        setWallet(summary);
+        setLedger(history);
+      }
+      if (tab === 'notifications') setNotifications(await listYoutubePremiumNotifications({ index: 0, size: 50 }));
+      if (tab === 'network' && canSuper) setNetwork(await listYoutubePremiumChildResellers({ index: 0, size: 60 }));
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || 'No se pudo cargar la información.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || 'No se pudo cargar el portal YouTube Premium.', { variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -126,105 +208,90 @@ export default function ResellerPortal() {
     load();
   }, [load]);
 
-  const submitCustomer = async () => {
+  const submitAccount = async () => {
     try {
-      await createResellerCustomer(customerForm, `create-${customerForm.email}-${Date.now()}`);
-      enqueueSnackbar('Cliente creado correctamente.', { variant: 'success' });
-      setCustomerDialog(false);
-      setCustomerForm(emptyCustomer);
-      setTab('customers');
+      await createYoutubePremiumAccount(accountForm, `ytp-account-${accountForm.email}-${Date.now()}`);
+      enqueueSnackbar('Cuenta Premium creada.', { variant: 'success' });
+      setAccountDialog(false);
+      setAccountForm(emptyAccount);
+      setTab('accounts');
       await load();
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || 'No se pudo crear el cliente.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || 'No se pudo crear la cuenta.', { variant: 'error' });
     }
   };
 
   const submitRenewal = async () => {
     try {
-      await renewResellerCustomer(renewDialog.userId, renewForm, `renew-${renewDialog.userId}-${Date.now()}`);
-      enqueueSnackbar('Cliente renovado correctamente.', { variant: 'success' });
+      await renewYoutubePremiumAccount(renewDialog.userId, renewForm, `ytp-renew-${renewDialog.userId}-${Date.now()}`);
+      enqueueSnackbar('Cuenta renovada.', { variant: 'success' });
       setRenewDialog(null);
       await load();
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || 'No se pudo renovar.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || 'No se pudo renovar la cuenta.', { variant: 'error' });
     }
   };
 
-  const toggleCustomer = async (row) => {
+  const toggleAccount = async (row) => {
     try {
-      await updateResellerCustomerStatus(row.userId, !row.active);
+      await updateYoutubePremiumAccountStatus(row.userId, !row.active);
       enqueueSnackbar('Estado actualizado.', { variant: 'success' });
       await load();
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || 'No se pudo actualizar.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || 'No se pudo actualizar el estado.', { variant: 'error' });
     }
-  };
-
-  const resetPassword = async (row) => {
-    setPasswordDialog(row);
-    setPasswordValue('');
   };
 
   const submitPasswordReset = async () => {
     if (!passwordDialog || !passwordValue) return;
     try {
-      await resetResellerCustomerPassword(passwordDialog.userId, passwordValue);
+      await resetYoutubePremiumAccountPassword(passwordDialog.userId, passwordValue);
       enqueueSnackbar('Contraseña actualizada.', { variant: 'success' });
       setPasswordDialog(null);
       setPasswordValue('');
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || 'No se pudo actualizar contraseña.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || 'No se pudo actualizar la contraseña.', { variant: 'error' });
     }
   };
 
   const disconnectSession = async (row) => {
     try {
-      await revokeResellerSession(row.sessionId);
+      await revokeYoutubePremiumSession(row.sessionId);
       enqueueSnackbar('Sesión desconectada.', { variant: 'success' });
       await load();
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || 'No se pudo desconectar.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || 'No se pudo desconectar la sesión.', { variant: 'error' });
     }
   };
 
-  const saveReseller = async () => {
+  const saveNetworkAccount = async () => {
     try {
-      await upsertResellerProfile(resellerForm);
+      await upsertYoutubePremiumChildReseller(networkForm);
       enqueueSnackbar('Reseller guardado.', { variant: 'success' });
-      setResellerDialog(false);
+      setNetworkDialog(false);
+      setNetworkForm(emptyNetworkAccount);
       await load();
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || 'No se pudo guardar reseller.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || 'No se pudo guardar el reseller.', { variant: 'error' });
     }
   };
 
-  const transferCredits = async (row) => {
-    setTransferDialog(row);
-    setTransferValue('');
-  };
-
-  const submitTransferCredits = async () => {
+  const submitTransfer = async () => {
     if (!transferDialog || !transferValue) return;
     try {
-      await transferResellerCredits(transferDialog.username, { credits: Number(transferValue), reason: 'Transferencia superreseller' });
+      await transferYoutubePremiumCredits(transferDialog.username, { credits: Number(transferValue), reason: 'Transferencia YouTube Premium' });
       enqueueSnackbar('Créditos transferidos.', { variant: 'success' });
       setTransferDialog(null);
       setTransferValue('');
       await load();
     } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || 'No se pudo transferir.', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || 'No se pudieron transferir los créditos.', { variant: 'error' });
     }
   };
 
-  const sendNotification = async () => {
-    try {
-      await sendResellerNotification(notificationForm);
-      enqueueSnackbar('Notificación enviada.', { variant: 'success' });
-      setNotificationDialog(false);
-      setNotificationForm({ title: '', message: '', targetType: 'ALL', targetUsername: '' });
-    } catch (error) {
-      enqueueSnackbar(error?.response?.data?.message || 'No se pudo enviar.', { variant: 'error' });
-    }
+  const openRenew = (row) => {
+    setRenewDialog(row);
+    setRenewForm({ ...emptyRenewal, deviceLimit: row.deviceLimit || 1 });
   };
 
   return (
@@ -232,13 +299,13 @@ export default function ResellerPortal() {
       <Stack spacing={3}>
         <Stack direction={{ xs: 'column', md: 'row' }} sx={{ justifyContent: 'space-between', gap: 2 }}>
           <Box>
-            <Typography variant="h1" sx={{ color: '#fff' }}>
-              Consola reseller
+            <Typography variant="h1" sx={{ color: '#fff' }}>YouTube Premium Reseller</Typography>
+            <Typography sx={{ color: 'rgba(255,255,255,0.62)' }}>
+              Portal aislado para vender cuentas premium, renovar, revisar sesiones y administrar créditos.
             </Typography>
-            <Typography sx={{ color: 'rgba(255,255,255,0.58)' }}>Ventas, sesiones, créditos y clientes SmartTube Premium.</Typography>
           </Box>
-          <Button variant="contained" onClick={() => setCustomerDialog(true)}>
-            Nuevo cliente
+          <Button variant="contained" size="large" startIcon={<AddIcon />} onClick={() => setAccountDialog(true)}>
+            Nueva cuenta premium
           </Button>
         </Stack>
 
@@ -246,138 +313,153 @@ export default function ResellerPortal() {
           value={tab}
           onChange={(_, value) => setTab(value)}
           variant="scrollable"
-          sx={{ borderBottom: '1px solid rgba(255,255,255,0.08)', '& .MuiTab-root': { color: 'rgba(255,255,255,0.68)' } }}
+          sx={{
+            minHeight: 44,
+            borderBottom: '1px solid rgba(255,255,255,0.08)',
+            '& .MuiTab-root': { minHeight: 44, color: 'rgba(255,255,255,0.66)', textTransform: 'none', fontWeight: 700 },
+            '& .Mui-selected': { color: '#fff !important' }
+          }}
         >
-          <Tab value="dashboard" label="Dashboard" />
-          <Tab value="customers" label="Clientes" />
-          <Tab value="sessions" label="Sesiones" />
-          <Tab value="credits" label="Créditos" />
-          <Tab value="notifications" label="Notificaciones" />
-          {canSuper ? <Tab value="super" label="Superreseller" /> : null}
+          {visibleTabs.map((item) => <Tab key={item.value} value={item.value} label={item.label} />)}
         </Tabs>
 
-        {loading ? <CircularProgress /> : null}
+        {loading ? <CircularProgress sx={{ color: '#fff' }} /> : null}
 
-        {tab === 'dashboard' && dashboard ? (
+        {tab === 'dashboard' ? (
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={3}>
-              <MetricCard label="Saldo" value={formatCredits(dashboard.wallet?.availableCreditUnits ?? dashboard.wallet?.availableCredits)} helper="créditos" />
+              <MetricCard icon={<AccountBalanceWalletIcon />} label="Saldo disponible" value={unitsToCredits(dashboard?.wallet?.availableCreditUnits ?? dashboard?.wallet?.availableCredits)} helper="créditos" />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <MetricCard label="Clientes" value={dashboard.totalCustomers || 0} />
+              <MetricCard icon={<SupervisorAccountIcon />} label="Cuentas creadas" value={dashboard?.totalCustomers || 0} />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <MetricCard label="Expiran esta semana" value={dashboard.expiringThisWeek || 0} />
+              <MetricCard icon={<RefreshIcon />} label="Expiran en 7 días" value={dashboard?.expiringThisWeek || 0} />
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <MetricCard label="En línea" value={dashboard.onlineSessions || 0} />
+              <MetricCard icon={<WifiTetheringIcon />} label="Sesiones online" value={dashboard?.onlineSessions || 0} />
+            </Grid>
+            <Grid item xs={12}>
+              <Panel title="Actividad reciente" helper="Últimas cuentas YouTube Premium gestionadas por tu portal.">
+                <Stack spacing={1.5}>
+                  {Array.isArray(dashboard?.recentCustomers) && dashboard.recentCustomers.length ? dashboard.recentCustomers.slice(0, 6).map((row) => (
+                    <AccountCard key={row.userId} row={row} onRenew={openRenew} onToggle={toggleAccount} onPassword={setPasswordDialog} />
+                  )) : <EmptyState text="Aún no hay cuentas premium creadas." />}
+                </Stack>
+              </Panel>
             </Grid>
           </Grid>
         ) : null}
 
-        {tab === 'customers' ? (
-          <TablePanel
-            columns={['Cliente', 'Licencia', 'Plan', 'Dispositivos', 'Expira', 'Estado', 'Acciones']}
-            rows={rowsOf(customers)}
-            renderRow={(row) => (
-              <TableRow key={row.userId}>
-                <TableCell>{row.name}<br /><Typography variant="caption">{row.email}</Typography></TableCell>
-                <TableCell>{row.serialCode}</TableCell>
-                <TableCell>{row.planCode || '-'} / {row.packageCode || '-'}</TableCell>
-                <TableCell>{row.deviceCount || 0}/{row.deviceLimit || 1}</TableCell>
-                <TableCell>{row.expiresAt ? String(row.expiresAt).slice(0, 10) : '-'}</TableCell>
-                <TableCell><StatusChip value={row.licenseStatus} /></TableCell>
-                <TableCell>
-                  <Stack direction="row" spacing={1}>
-                    <Button size="small" onClick={() => { setRenewDialog(row); setRenewForm({ ...emptyRenewal, deviceLimit: row.deviceLimit || 1 }); }}>Renovar</Button>
-                    <Button size="small" onClick={() => toggleCustomer(row)}>{row.active ? 'Suspender' : 'Activar'}</Button>
-                    <Button size="small" onClick={() => resetPassword(row)}>Password</Button>
-                  </Stack>
-                </TableCell>
-              </TableRow>
-            )}
-          />
+        {tab === 'accounts' ? (
+          <Panel title="Cuentas Premium" helper="Crea, renueva y administra cuentas YouTube/SmartTube Premium." action={<Button startIcon={<RefreshIcon />} onClick={load}>Actualizar</Button>}>
+            <Stack spacing={1.5}>
+              {rowsOf(accounts).length ? rowsOf(accounts).map((row) => (
+                <AccountCard key={row.userId} row={row} onRenew={openRenew} onToggle={toggleAccount} onPassword={setPasswordDialog} />
+              )) : <EmptyState text="No hay cuentas premium para mostrar." />}
+            </Stack>
+          </Panel>
         ) : null}
 
         {tab === 'sessions' ? (
-          <TablePanel
-            columns={['Cliente', 'Dispositivo', 'Último heartbeat', 'Estado', 'Acciones']}
-            rows={rowsOf(sessions)}
-            renderRow={(row) => (
-              <TableRow key={row.sessionId}>
-                <TableCell>{row.name}<br /><Typography variant="caption">{row.email}</Typography></TableCell>
-                <TableCell>{row.deviceName || row.deviceIdHash}</TableCell>
-                <TableCell>{row.lastSeenAt ? String(row.lastSeenAt).replace('T', ' ').slice(0, 16) : '-'}</TableCell>
-                <TableCell><StatusChip value={row.status} /></TableCell>
-                <TableCell><Button size="small" color="error" onClick={() => disconnectSession(row)}>Desconectar</Button></TableCell>
-              </TableRow>
-            )}
-          />
+          <Panel title="Sesiones online" helper="Desconecta una sesión activa sin desvincular el dispositivo completo." action={<Button startIcon={<RefreshIcon />} onClick={load}>Actualizar</Button>}>
+            <Grid container spacing={1.5}>
+              {rowsOf(sessions).length ? rowsOf(sessions).map((row) => (
+                <Grid item xs={12} md={6} key={row.sessionId}>
+                  <Paper sx={{ p: 2, bgcolor: '#121212', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2 }}>
+                    <Stack spacing={1}>
+                      <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 2 }}>
+                        <Box>
+                          <Typography variant="h4" sx={{ color: '#fff' }}>{row.name || 'Cuenta Premium'}</Typography>
+                          <Typography sx={{ color: 'rgba(255,255,255,0.56)' }}>{row.email}</Typography>
+                        </Box>
+                        <StatusChip value={row.status || 'ACTIVE'} />
+                      </Stack>
+                      <Typography sx={{ color: 'rgba(255,255,255,0.72)' }}>{row.deviceName || 'Dispositivo sin nombre'}</Typography>
+                      <Typography sx={{ color: 'rgba(255,255,255,0.48)', fontSize: 13 }}>Último heartbeat: {displayDate(row.lastSeenAt)}</Typography>
+                      <Button color="error" variant="outlined" startIcon={<PowerSettingsNewIcon />} onClick={() => disconnectSession(row)}>
+                        Desconectar sesión
+                      </Button>
+                    </Stack>
+                  </Paper>
+                </Grid>
+              )) : <Grid item xs={12}><EmptyState text="No hay sesiones online activas." /></Grid>}
+            </Grid>
+          </Panel>
         ) : null}
 
         {tab === 'credits' ? (
-          <TablePanel
-            columns={['Movimiento', 'Créditos', 'Saldo', 'Razón', 'Fecha']}
-            rows={rowsOf(ledger)}
-            renderRow={(row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.movementType}</TableCell>
-                <TableCell>{formatCredits(row.creditUnitsDelta ?? row.creditsDelta)}</TableCell>
-                <TableCell>{formatCredits(row.balanceUnitsAfter ?? row.balanceAfter)}</TableCell>
-                <TableCell>{row.reason}</TableCell>
-                <TableCell>{row.createdAt ? String(row.createdAt).replace('T', ' ').slice(0, 16) : '-'}</TableCell>
-              </TableRow>
-            )}
-          />
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={4}>
+              <MetricCard icon={<AccountBalanceWalletIcon />} label="Saldo actual" value={unitsToCredits(wallet?.availableCreditUnits ?? wallet?.availableCredits)} helper="créditos" />
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <Panel title="Historial de créditos" helper="Cada venta o renovación genera un movimiento de consumo.">
+                <Stack spacing={1.25}>
+                  {rowsOf(ledger).length ? rowsOf(ledger).map((row) => (
+                    <Paper key={row.id} sx={{ p: 1.5, bgcolor: '#121212', borderRadius: 2 }}>
+                      <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 2 }}>
+                        <Box>
+                          <Typography sx={{ color: '#fff', fontWeight: 700 }}>{row.movementType || 'Movimiento'}</Typography>
+                          <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>{row.reason || '-'} · {displayDate(row.createdAt)}</Typography>
+                        </Box>
+                        <Typography sx={{ color: Number(row.creditUnitsDelta ?? row.creditsDelta) < 0 ? '#ff8a80' : '#69f0ae', fontWeight: 800 }}>
+                          {unitsToCredits(row.creditUnitsDelta ?? row.creditsDelta)}
+                        </Typography>
+                      </Stack>
+                    </Paper>
+                  )) : <EmptyState text="No hay movimientos de créditos." />}
+                </Stack>
+              </Panel>
+            </Grid>
+          </Grid>
         ) : null}
 
         {tab === 'notifications' ? (
-          <Stack spacing={2}>
-            <Button sx={{ alignSelf: 'flex-start' }} variant="outlined" onClick={() => setNotificationDialog(true)}>
-              Enviar notificación
-            </Button>
-            {notifications.map((item) => (
-              <Paper key={item.id} sx={{ p: 2, bgcolor: '#111', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <Stack direction="row" sx={{ justifyContent: 'space-between', gap: 2 }}>
-                  <Box>
-                    <Typography variant="h4" sx={{ color: '#fff' }}>{item.title}</Typography>
-                    <Typography sx={{ color: 'rgba(255,255,255,0.66)' }}>{item.message}</Typography>
-                  </Box>
-                  <Chip size="small" label={Number(item.read_flag) === 1 ? 'Leída' : 'Nueva'} color={Number(item.read_flag) === 1 ? 'default' : 'primary'} />
-                </Stack>
-              </Paper>
-            ))}
-          </Stack>
+          <Panel title="Notificaciones" helper="Mensajes enviados por el administrador del servicio.">
+            <Stack spacing={1.5}>
+              {notifications.length ? notifications.map((item) => (
+                <Paper key={item.id} sx={{ p: 2, bgcolor: '#121212', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2 }}>
+                  <Stack direction="row" spacing={1.5}>
+                    <NotificationsIcon sx={{ color: '#fff' }} />
+                    <Box>
+                      <Typography variant="h4" sx={{ color: '#fff' }}>{item.title}</Typography>
+                      <Typography sx={{ color: 'rgba(255,255,255,0.66)' }}>{item.message}</Typography>
+                    </Box>
+                  </Stack>
+                </Paper>
+              )) : <EmptyState text="No tienes notificaciones." />}
+            </Stack>
+          </Panel>
         ) : null}
 
-        {tab === 'super' && canSuper ? (
-          <Stack spacing={2}>
-            <Button sx={{ alignSelf: 'flex-start' }} variant="contained" onClick={() => setResellerDialog(true)}>
-              Crear reseller
-            </Button>
-            <TablePanel
-              columns={['Reseller', 'Tipo', 'Parent', 'Saldo', 'Estado', 'Acciones']}
-              rows={rowsOf(resellers)}
-              renderRow={(row) => (
-                <TableRow key={row.username}>
-                  <TableCell>{row.display_name || row.username}<br /><Typography variant="caption">{row.username}</Typography></TableCell>
-                  <TableCell>{row.reseller_type}</TableCell>
-                  <TableCell>{row.parent_username || '-'}</TableCell>
-                  <TableCell>{formatCredits(row.available_credits)}</TableCell>
-                  <TableCell><StatusChip value={Number(row.active) === 1 ? 'ACTIVE' : 'SUSPENDED'} /></TableCell>
-                  <TableCell><Button size="small" onClick={() => transferCredits(row)}>Acreditar</Button></TableCell>
-                </TableRow>
-              )}
-            />
-          </Stack>
+        {tab === 'network' && canSuper ? (
+          <Panel title="Red de Resellers" helper="Crea resellers hijos y transfiere créditos desde tu saldo." action={<Button variant="contained" startIcon={<AddIcon />} onClick={() => setNetworkDialog(true)}>Nuevo reseller</Button>}>
+            <Stack spacing={1.5}>
+              {rowsOf(network).length ? rowsOf(network).map((row) => (
+                <Paper key={row.username} sx={{ p: 2, bgcolor: '#121212', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2 }}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} sx={{ justifyContent: 'space-between', gap: 1.5 }}>
+                    <Box>
+                      <Typography variant="h4" sx={{ color: '#fff' }}>{row.display_name || row.username}</Typography>
+                      <Typography sx={{ color: 'rgba(255,255,255,0.56)' }}>{row.username} · {row.reseller_type}</Typography>
+                    </Box>
+                    <Stack direction="row" spacing={1}>
+                      <Chip label={`${unitsToCredits(row.available_credits)} créditos`} />
+                      <Button onClick={() => setTransferDialog(row)}>Transferir</Button>
+                    </Stack>
+                  </Stack>
+                </Paper>
+              )) : <EmptyState text="Todavía no tienes resellers en tu red." />}
+            </Stack>
+          </Panel>
         ) : null}
       </Stack>
 
-      <CustomerDialog open={customerDialog} form={customerForm} setForm={setCustomerForm} onClose={() => setCustomerDialog(false)} onSubmit={submitCustomer} />
-      <PlanDialog open={Boolean(renewDialog)} title="Renovar cliente" form={renewForm} setForm={setRenewForm} onClose={() => setRenewDialog(null)} onSubmit={submitRenewal} />
+      <AccountDialog open={accountDialog} form={accountForm} setForm={setAccountForm} onClose={() => setAccountDialog(false)} onSubmit={submitAccount} showPassword={showPassword} setShowPassword={setShowPassword} />
+      <PlanDialog open={Boolean(renewDialog)} form={renewForm} setForm={setRenewForm} onClose={() => setRenewDialog(null)} onSubmit={submitRenewal} />
       <ValueDialog
         open={Boolean(passwordDialog)}
-        title="Cambiar contraseña"
+        title="Cambiar contraseña de cuenta premium"
         label="Nueva contraseña"
         value={passwordValue}
         type="password"
@@ -385,36 +467,26 @@ export default function ResellerPortal() {
         onClose={() => setPasswordDialog(null)}
         onSubmit={submitPasswordReset}
       />
+      <NetworkDialog open={networkDialog} form={networkForm} setForm={setNetworkForm} onClose={() => setNetworkDialog(false)} onSubmit={saveNetworkAccount} />
       <ValueDialog
         open={Boolean(transferDialog)}
-        title={`Acreditar a ${transferDialog?.username || ''}`}
+        title={`Transferir créditos a ${transferDialog?.username || ''}`}
         label="Créditos"
         value={transferValue}
         type="number"
         onChange={setTransferValue}
         onClose={() => setTransferDialog(null)}
-        onSubmit={submitTransferCredits}
+        onSubmit={submitTransfer}
       />
-      <ResellerDialog open={resellerDialog} form={resellerForm} setForm={setResellerForm} onClose={() => setResellerDialog(false)} onSubmit={saveReseller} />
-      <NotificationDialog open={notificationDialog} form={notificationForm} setForm={setNotificationForm} onClose={() => setNotificationDialog(false)} onSubmit={sendNotification} />
     </Box>
   );
 }
 
-function TablePanel({ columns, rows, renderRow }) {
+function EmptyState({ text }) {
   return (
-    <Paper sx={{ overflow: 'auto', bgcolor: '#0d0d0d', border: '1px solid rgba(255,255,255,0.08)' }}>
-      <Table>
-        <TableHead>
-          <TableRow>{columns.map((column) => <TableCell key={column}>{column}</TableCell>)}</TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.length ? rows.map(renderRow) : (
-            <TableRow><TableCell colSpan={columns.length}>Sin registros.</TableCell></TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </Paper>
+    <Box sx={{ p: 3, textAlign: 'center', color: 'rgba(255,255,255,0.56)', border: '1px dashed rgba(255,255,255,0.12)', borderRadius: 2 }}>
+      {text}
+    </Box>
   );
 }
 
@@ -423,8 +495,8 @@ function PlanFields({ form, setForm }) {
     <Grid container spacing={2}>
       <Grid item xs={12} sm={4}>
         <TextField select label="Plan" value={form.planCode} onChange={(e) => setForm((p) => ({ ...p, planCode: e.target.value }))} fullWidth>
-          <MenuItem value="INDIVIDUAL">Individual</MenuItem>
-          <MenuItem value="FAMILY">Family</MenuItem>
+          <MenuItem value="INDIVIDUAL">Plan Individual</MenuItem>
+          <MenuItem value="FAMILY">Plan Family</MenuItem>
         </TextField>
       </Grid>
       <Grid item xs={12} sm={4}>
@@ -436,35 +508,67 @@ function PlanFields({ form, setForm }) {
         </TextField>
       </Grid>
       <Grid item xs={12} sm={4}>
-        <TextField label="Dispositivos" type="number" value={form.deviceLimit} onChange={(e) => setForm((p) => ({ ...p, deviceLimit: Number(e.target.value) }))} fullWidth />
+        <TextField
+          label="Dispositivos"
+          type="number"
+          value={form.deviceLimit}
+          onChange={(e) => setForm((p) => ({ ...p, deviceLimit: Math.max(Number(e.target.value || 1), 1) }))}
+          fullWidth
+        />
       </Grid>
     </Grid>
   );
 }
 
-function CustomerDialog({ open, form, setForm, onClose, onSubmit }) {
+function AccountDialog({ open, form, setForm, onClose, onSubmit, showPassword, setShowPassword }) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Nuevo cliente</DialogTitle>
+      <DialogTitle>Nueva cuenta YouTube Premium</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
-          <TextField label="Nombre" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} fullWidth />
-          <TextField label="Correo" value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} fullWidth />
-          <TextField label="Contraseña" value={form.password} onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))} fullWidth />
+          <TextField label="Nombre de la cuenta" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} fullWidth />
+          <TextField label="Correo de acceso" value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} fullWidth />
+          <TextField
+            label="Contraseña temporal"
+            value={form.password}
+            type={showPassword ? 'text' : 'password'}
+            onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
+            fullWidth
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setShowPassword((prev) => !prev)} edge="end">
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
           <PlanFields form={form} setForm={setForm} />
+          <Typography sx={{ color: 'rgba(255,255,255,0.56)', fontSize: 13 }}>
+            Individual cuesta 1.00 crédito por mes. Family cuesta 1.25 créditos por mes. Cada dispositivo adicional suma 0.50 crédito por mes.
+          </Typography>
         </Stack>
       </DialogContent>
-      <DialogActions><Button onClick={onClose}>Cancelar</Button><Button variant="contained" onClick={onSubmit}>Crear</Button></DialogActions>
+      <DialogActions>
+        <Button onClick={onClose}>Cancelar</Button>
+        <Button variant="contained" onClick={onSubmit}>Crear cuenta</Button>
+      </DialogActions>
     </Dialog>
   );
 }
 
-function PlanDialog({ open, title, form, setForm, onClose, onSubmit }) {
+function PlanDialog({ open, form, setForm, onClose, onSubmit }) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent sx={{ pt: 2 }}><PlanFields form={form} setForm={setForm} /></DialogContent>
-      <DialogActions><Button onClick={onClose}>Cancelar</Button><Button variant="contained" onClick={onSubmit}>Confirmar</Button></DialogActions>
+      <DialogTitle>Renovar cuenta premium</DialogTitle>
+      <DialogContent sx={{ pt: 2 }}>
+        <PlanFields form={form} setForm={setForm} />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancelar</Button>
+        <Button variant="contained" onClick={onSubmit}>Renovar</Button>
+      </DialogActions>
     </Dialog>
   );
 }
@@ -476,50 +580,31 @@ function ValueDialog({ open, title, label, value, type = 'text', onChange, onClo
       <DialogContent sx={{ pt: 2 }}>
         <TextField label={label} value={value} type={type} onChange={(e) => onChange(e.target.value)} fullWidth autoFocus />
       </DialogContent>
-      <DialogActions><Button onClick={onClose}>Cancelar</Button><Button variant="contained" onClick={onSubmit}>Confirmar</Button></DialogActions>
+      <DialogActions>
+        <Button onClick={onClose}>Cancelar</Button>
+        <Button variant="contained" onClick={onSubmit}>Confirmar</Button>
+      </DialogActions>
     </Dialog>
   );
 }
 
-function ResellerDialog({ open, form, setForm, onClose, onSubmit }) {
+function NetworkDialog({ open, form, setForm, onClose, onSubmit }) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Reseller</DialogTitle>
+      <DialogTitle>Nuevo reseller de tu red</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           <TextField label="Username/email" value={form.username} onChange={(e) => setForm((p) => ({ ...p, username: e.target.value }))} fullWidth />
           <TextField label="Nombre comercial" value={form.displayName} onChange={(e) => setForm((p) => ({ ...p, displayName: e.target.value }))} fullWidth />
-          <TextField select label="Tipo" value={form.resellerType} onChange={(e) => setForm((p) => ({ ...p, resellerType: e.target.value }))} fullWidth>
-            <MenuItem value="RESELLER">Reseller</MenuItem>
-            <MenuItem value="SUPER_RESELLER">Superreseller</MenuItem>
-          </TextField>
-          <TextField label="Parent username" value={form.parentUsername} onChange={(e) => setForm((p) => ({ ...p, parentUsername: e.target.value }))} fullWidth />
+          <Typography sx={{ color: 'rgba(255,255,255,0.56)', fontSize: 13 }}>
+            Esta cuenta quedará vinculada automáticamente a tu red de superreseller.
+          </Typography>
         </Stack>
       </DialogContent>
-      <DialogActions><Button onClick={onClose}>Cancelar</Button><Button variant="contained" onClick={onSubmit}>Guardar</Button></DialogActions>
-    </Dialog>
-  );
-}
-
-function NotificationDialog({ open, form, setForm, onClose, onSubmit }) {
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Enviar notificación</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ pt: 1 }}>
-          <TextField label="Título" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} fullWidth />
-          <TextField label="Mensaje" value={form.message} onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))} fullWidth multiline rows={4} />
-          <TextField select label="Destino" value={form.targetType} onChange={(e) => setForm((p) => ({ ...p, targetType: e.target.value }))} fullWidth>
-            <MenuItem value="ALL">Todos</MenuItem>
-            <MenuItem value="RESELLER">Reseller específico</MenuItem>
-            <MenuItem value="SUPER_RESELLER_TREE">Árbol superreseller</MenuItem>
-          </TextField>
-          {form.targetType !== 'ALL' ? (
-            <TextField label="Username destino" value={form.targetUsername} onChange={(e) => setForm((p) => ({ ...p, targetUsername: e.target.value }))} fullWidth />
-          ) : null}
-        </Stack>
-      </DialogContent>
-      <DialogActions><Button onClick={onClose}>Cancelar</Button><Button variant="contained" onClick={onSubmit}>Enviar</Button></DialogActions>
+      <DialogActions>
+        <Button onClick={onClose}>Cancelar</Button>
+        <Button variant="contained" onClick={onSubmit}>Guardar</Button>
+      </DialogActions>
     </Dialog>
   );
 }

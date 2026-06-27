@@ -19,9 +19,7 @@ const security = {
       'USER_MANAGEMENT_EDIT_USER',
       'ROLE_USER_MANAGEMENT_EDIT_USER',
       'ROLE_ADMIN',
-      'ADMIN',
-      'ROLE_LIONTV_RESELLER_OWNER',
-      'LIONTV_RESELLER_OWNER'
+      'ADMIN'
     ]
   },
   children: [
@@ -65,7 +63,7 @@ const security = {
       icon: icons.IconKey,
       breadcrumbs: true,
       permission: {
-        any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN', 'ROLE_LIONTV_RESELLER_OWNER', 'LIONTV_RESELLER_OWNER']
+        any: ['USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW', 'ROLE_ADMIN', 'ADMIN']
       }
     },
     {

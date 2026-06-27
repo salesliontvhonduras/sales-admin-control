@@ -1,4 +1,4 @@
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
@@ -7,7 +7,6 @@ import useAuth from 'hooks/useAuth';
 
 export default function ResellerLayout() {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
 
   return (
     <Box sx={{ minHeight: '100dvh', bgcolor: '#050505', color: '#fff' }}>
@@ -28,16 +27,13 @@ export default function ResellerLayout() {
       >
         <Stack spacing={0}>
           <Typography variant="h3" sx={{ color: '#fff', lineHeight: 1 }}>
-            Reseller Portal
+            YouTube Premium Reseller
           </Typography>
           <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.56)' }}>
             {user?.email || user?.name || 'Reseller'}
           </Typography>
         </Stack>
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" color="inherit" onClick={() => navigate('/liontv/dashboard')}>
-            Sales Admin
-          </Button>
           <Button variant="contained" color="error" onClick={logout}>
             Salir
           </Button>
