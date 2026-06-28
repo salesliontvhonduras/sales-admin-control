@@ -31,6 +31,9 @@ import DialogTitleWithClose from 'ui-component/dialogs/DialogTitleWithClose';
 import {
   buildClientAliasDownloadUrl,
   buildClientAliasDeliveryUrl,
+  buildClientAliasPlayerApiUrl,
+  buildClientAliasXtreamCredentialsText,
+  buildClientAliasXtreamServerUrl,
   getClientAliasByLine,
   getLineSourceByLine,
   listLineOptions,
@@ -114,6 +117,23 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
   const downloadUrl = useMemo(
     () =>
       buildClientAliasDownloadUrl({
+        aliasUsername: form.aliasUsername,
+        aliasPasswordPlain: form.aliasPasswordPlain
+      }),
+    [form.aliasPasswordPlain, form.aliasUsername]
+  );
+  const xtreamServerUrl = useMemo(() => buildClientAliasXtreamServerUrl(), []);
+  const playerApiUrl = useMemo(
+    () =>
+      buildClientAliasPlayerApiUrl({
+        aliasUsername: form.aliasUsername,
+        aliasPasswordPlain: form.aliasPasswordPlain
+      }),
+    [form.aliasPasswordPlain, form.aliasUsername]
+  );
+  const xtreamCredentialsText = useMemo(
+    () =>
+      buildClientAliasXtreamCredentialsText({
         aliasUsername: form.aliasUsername,
         aliasPasswordPlain: form.aliasPasswordPlain
       }),
@@ -253,6 +273,24 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
     enqueueSnackbar(t('m3uBackup.messages.downloadLinkCopied', 'Download link copied.'), { variant: 'success' });
   };
 
+  const handleCopyXtreamCredentials = async () => {
+    if (!form.aliasUsername || !form.aliasPasswordPlain) {
+      enqueueSnackbar(t('m3uBackup.messages.missingPreview', 'Define alias username and password first.'), { variant: 'warning' });
+      return;
+    }
+    await navigator.clipboard.writeText(xtreamCredentialsText);
+    enqueueSnackbar(t('m3uBackup.messages.xtreamCredentialsCopied', 'Xtream credentials copied.'), { variant: 'success' });
+  };
+
+  const handleCopyPlayerApi = async () => {
+    if (!form.aliasUsername || !form.aliasPasswordPlain) {
+      enqueueSnackbar(t('m3uBackup.messages.missingPreview', 'Define alias username and password first.'), { variant: 'warning' });
+      return;
+    }
+    await navigator.clipboard.writeText(playerApiUrl);
+    enqueueSnackbar(t('m3uBackup.messages.playerApiCopied', 'player_api URL copied.'), { variant: 'success' });
+  };
+
   const handleSave = async () => {
     const lineId = String(form.lineId || '').trim();
     const sourceUsername = String(form.sourceUsername || '').trim();
@@ -326,10 +364,10 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
         <Stack spacing={0.5}>
           <Typography variant="h6">{t('m3uBackup.title', 'M3U Backup Link')}</Typography>
           <Typography variant="body2" color="text.secondary">
-            {t(
-              'm3uBackup.subtitle',
-              'Bind a simple alias to an active real line. The client receives the alias link, but the download uses the original line credentials.'
-            )}
+	            {t(
+	              'm3uBackup.subtitle',
+	              'Bind customer Xtream credentials to the original active line. The client uses the alias, but playback redirects with the original line credentials.'
+	            )}
           </Typography>
         </Stack>
       </DialogTitleWithClose>
@@ -346,7 +384,7 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
           <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2.5 }}>
             <Stack spacing={1.5}>
               <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                <Chip size="small" color="primary" icon={<LinkIcon fontSize="small" />} label={t('m3uBackup.badge', 'Xtream backup alias')} />
+	                <Chip size="small" color="primary" icon={<LinkIcon fontSize="small" />} label={t('m3uBackup.badge', 'Xtream customer alias')} />
                 {form.updatedAt ? <Chip size="small" variant="outlined" label={`${t('m3uBackup.updatedAt', 'Updated')}: ${formatDate(form.updatedAt)}`} /> : null}
                 {form.lastServedAt ? (
                   <Chip size="small" color="success" variant="outlined" label={`${t('m3uBackup.lastServedAt', 'Last served')}: ${formatDate(form.lastServedAt)}`} />
@@ -380,39 +418,39 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label={t('m3uBackup.line', 'Line')}
-                      placeholder={t('m3uBackup.linePlaceholder', 'Search line by name...')}
-                      helperText={
-                        lockLine
-                          ? t('m3uBackup.lineLocked', 'This backup link is bound to the selected line.')
-                          : t('m3uBackup.lineHelper', 'Search and select the active line that should back this alias.')
-                      }
+	                      label={t('m3uBackup.line', 'Original line')}
+	                      placeholder={t('m3uBackup.linePlaceholder', 'Search line by name...')}
+	                      helperText={
+	                        lockLine
+	                          ? t('m3uBackup.lineLocked', 'This alias is bound to the selected original line.')
+	                          : t('m3uBackup.lineHelper', 'Search and select the real active line that provides the original provider credentials.')
+	                      }
                     />
                   )}
                 />
 
                 <TextField
                   fullWidth
-                  label={t('m3uBackup.usernameEncode', 'Real visible username')}
-                  value={form.usernameEncode}
-                  InputProps={{ readOnly: true }}
-                  helperText={t('m3uBackup.usernameEncodeHelper', 'The client does not receive this value; it is only the real line reference.')}
+	                  label={t('m3uBackup.usernameEncode', 'Original line username')}
+	                  value={form.usernameEncode}
+	                  InputProps={{ readOnly: true }}
+	                  helperText={t('m3uBackup.usernameEncodeHelper', 'This is the real line reference used behind the alias. Do not give it to the client.')}
                 />
 
                 <TextField
                   fullWidth
-                  label={t('m3uBackup.aliasUsername', 'Alias username')}
-                  value={form.aliasUsername}
-                  onChange={(event) => setForm((previous) => ({ ...previous, aliasUsername: event.target.value }))}
-                  helperText={t('m3uBackup.aliasUsernameHelper', 'Simple username delivered to the client.')}
+	                  label={t('m3uBackup.aliasUsername', 'Customer username')}
+	                  value={form.aliasUsername}
+	                  onChange={(event) => setForm((previous) => ({ ...previous, aliasUsername: event.target.value }))}
+	                  helperText={t('m3uBackup.aliasUsernameHelper', 'Xtream username delivered to the client.')}
                 />
 
                 <TextField
                   fullWidth
-                  label={t('m3uBackup.aliasPassword', 'Alias password')}
-                  value={form.aliasPasswordPlain}
-                  onChange={(event) => setForm((previous) => ({ ...previous, aliasPasswordPlain: event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) }))}
-                  helperText={t('m3uBackup.aliasPasswordHelper', 'Exactly 6 alphanumeric characters. The backend stores it plain and signed.')}
+	                  label={t('m3uBackup.aliasPassword', 'Customer password')}
+	                  value={form.aliasPasswordPlain}
+	                  onChange={(event) => setForm((previous) => ({ ...previous, aliasPasswordPlain: event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) }))}
+	                  helperText={t('m3uBackup.aliasPasswordHelper', 'Xtream password delivered to the client. Exactly 6 alphanumeric characters.')}
                   InputProps={{
                     endAdornment: (
                       <Button size="small" onClick={handleGeneratePassword} startIcon={<AutoAwesomeIcon fontSize="small" />}>
@@ -428,10 +466,10 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
                   value={form.sourcePlaylistUrl}
                   onChange={(event) => setForm((previous) => ({ ...previous, sourcePlaylistUrl: event.target.value }))}
                   placeholder="https://provider.example.com/get.php?username={username_encode}&password={password_encode}&type=m3u_plus&output=ts"
-                  helperText={t(
-                    'm3uBackup.sourceUrlHelper',
-                    'Optional but recommended. Supports {username_encode} and {password_encode}. If empty, the provider template fallback is used.'
-                  )}
+	                  helperText={t(
+	                    'm3uBackup.sourceUrlHelper',
+	                    'Optional but recommended. Use the original provider template with {username_encode} and {password_encode}; never place the customer alias here.'
+	                  )}
                 />
 
                 <TextField
@@ -465,11 +503,59 @@ export default function M3uBackupAliasDialog({ open, onClose, line = null, lockL
                 </Box>
               </Box>
             </Stack>
-          </Paper>
-
-          <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2.5 }}>
-            <Stack spacing={1}>
-              <Typography variant="subtitle2">{t('m3uBackup.previewTitle', 'Client link preview')}</Typography>
+	          </Paper>
+	
+	          <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2.5 }}>
+	            <Stack spacing={1.25}>
+	              <Typography variant="subtitle2">{t('m3uBackup.xtreamCredentialsTitle', 'Customer Xtream credentials')}</Typography>
+	              <Alert severity="success">
+	                {t(
+	                  'm3uBackup.xtreamCredentialsHelper',
+	                  'Give these values to the client. Playback requests return a lightweight redirect to the original provider line.'
+	                )}
+	              </Alert>
+	              <Box
+	                sx={{
+	                  display: 'grid',
+	                  gap: 1.25,
+	                  gridTemplateColumns: { xs: '1fr', md: '1.4fr 1fr 1fr' }
+	                }}
+	              >
+	                <TextField fullWidth label={t('m3uBackup.xtreamServer', 'Xtream server')} value={xtreamServerUrl} InputProps={{ readOnly: true }} />
+	                <TextField fullWidth label={t('m3uBackup.xtreamUser', 'User')} value={form.aliasUsername} InputProps={{ readOnly: true }} />
+	                <TextField fullWidth label={t('m3uBackup.xtreamPassword', 'Password')} value={form.aliasPasswordPlain} InputProps={{ readOnly: true }} />
+	              </Box>
+	              <TextField
+	                fullWidth
+	                label={t('m3uBackup.playerApiUrl', 'player_api URL')}
+	                value={playerApiUrl}
+	                InputProps={{ readOnly: true }}
+	                helperText={t('m3uBackup.playerApiHelper', 'Use this URL to test the Xtream alias. It must show alias credentials, not original line credentials.')}
+	              />
+	              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+	                <Button
+	                  variant="outlined"
+	                  startIcon={<ContentCopyIcon />}
+	                  onClick={handleCopyXtreamCredentials}
+	                  disabled={!form.aliasUsername || !form.aliasPasswordPlain}
+	                >
+	                  {t('m3uBackup.copyXtreamCredentials', 'Copy Xtream data')}
+	                </Button>
+	                <Button
+	                  variant="outlined"
+	                  startIcon={<ContentCopyIcon />}
+	                  onClick={handleCopyPlayerApi}
+	                  disabled={!form.aliasUsername || !form.aliasPasswordPlain}
+	                >
+	                  {t('m3uBackup.copyPlayerApi', 'Copy player_api URL')}
+	                </Button>
+	              </Stack>
+	            </Stack>
+	          </Paper>
+	
+	          <Paper variant="outlined" sx={{ p: 1.5, borderRadius: 2.5 }}>
+	            <Stack spacing={1}>
+	              <Typography variant="subtitle2">{t('m3uBackup.previewTitle', 'Client link preview')}</Typography>
               <TextField
                 fullWidth
                 value={previewUrl}
