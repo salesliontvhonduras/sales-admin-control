@@ -396,6 +396,27 @@ function buildClientAliasUrl({ aliasUsername, aliasPasswordPlain, type = 'm3u_pl
   return buildAbsoluteUrl(baseUrl, relative);
 }
 
+export function buildClientAliasXtreamServerUrl() {
+  return String(m3uCatalogApi.defaults?.baseURL || '').replace(/\/+$/, '');
+}
+
+export function buildClientAliasPlayerApiUrl({ aliasUsername, aliasPasswordPlain } = {}) {
+  const baseUrl = buildClientAliasXtreamServerUrl();
+  const params = new URLSearchParams({
+    username: aliasUsername || '',
+    password: aliasPasswordPlain || ''
+  });
+  return buildAbsoluteUrl(baseUrl, `/player_api.php?${params.toString()}`);
+}
+
+export function buildClientAliasXtreamCredentialsText({ aliasUsername, aliasPasswordPlain } = {}) {
+  return [
+    `Servidor: ${buildClientAliasXtreamServerUrl()}`,
+    `Usuario: ${aliasUsername || ''}`,
+    `Password: ${aliasPasswordPlain || ''}`
+  ].join('\n');
+}
+
 export function buildClientAliasDeliveryUrl({ aliasUsername, aliasPasswordPlain, type = 'm3u_plus', output = 'ts' } = {}) {
   return buildClientAliasUrl({ aliasUsername, aliasPasswordPlain, type, output, download: false });
 }

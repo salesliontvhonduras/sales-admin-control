@@ -13,6 +13,7 @@ import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
+import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Switch from '@mui/material/Switch';
@@ -24,22 +25,30 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import LinkOutlinedIcon from '@mui/icons-material/LinkOutlined';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
+import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
 
 import MainCard from 'ui-component/cards/MainCard';
 import LionMetricCard from 'ui-component/cards/LionMetricCard';
 import {
+  buildClientAliasPlayerApiUrl,
+  buildClientAliasXtreamCredentialsText,
+  buildClientAliasXtreamServerUrl,
   downloadM3uByLineId,
+  getClientAliasByLine,
   getLineSourceByLine,
   getProviderTemplate,
   importCatalogByLineId,
   listLineOptions,
   listProviderTemplates,
+  upsertClientAlias,
   upsertLineSource,
   upsertProviderTemplate
 } from 'api/m3u-catalog';
@@ -68,6 +77,10 @@ function triggerBrowserDownload(blob, filename) {
   URL.revokeObjectURL(url);
 }
 
+async function copyToClipboard(value) {
+  await navigator.clipboard.writeText(value);
+}
+
 function extractErrorMessage(error, fallback) {
   return error?.response?.data?.message || error?.message || fallback;
 }
@@ -83,6 +96,25 @@ function buildTemplatePreview(template) {
 function buildLineOptionLabel(option) {
   if (!option) return '';
   return `${option.usernameEncode || option.username || option.lineId}${option.provider ? ` (${option.provider})` : ''} · ${option.lineId}`;
+}
+
+function buildSuggestedAliasUsername(option, lineId) {
+  const base = String(option?.usernameEncode || option?.username || lineId || 'cliente')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .toLowerCase();
+  const normalized = base || `line_${lineId || 'cliente'}`;
+  return normalized.slice(0, 40);
+}
+
+function generateAliasPassword() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const values = new Uint32Array(6);
+  window.crypto.getRandomValues(values);
+  return Array.from(values, (value) => alphabet[value % alphabet.length]).join('');
 }
 
 function StatusCard({ label, value, helper, tone = 'primary' }) {
@@ -170,6 +202,17 @@ const defaultProviderTemplateForm = {
   updatedAt: null
 };
 
+const defaultClientAliasForm = {
+  id: null,
+  aliasUsername: '',
+  aliasPasswordPlain: '',
+  active: true,
+  lastServedAt: null,
+  lastError: '',
+  createdAt: null,
+  updatedAt: null
+};
+
 export default function M3uLineSourcesLionTv() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -188,11 +231,14 @@ export default function M3uLineSourcesLionTv() {
 
   const [lineSourceForm, setLineSourceForm] = useState(defaultLineSourceForm);
   const [providerTemplateForm, setProviderTemplateForm] = useState(defaultProviderTemplateForm);
+  const [clientAliasForm, setClientAliasForm] = useState(defaultClientAliasForm);
 
   const [loadingLineSource, setLoadingLineSource] = useState(false);
   const [savingLineSource, setSavingLineSource] = useState(false);
   const [loadingProviderTemplate, setLoadingProviderTemplate] = useState(false);
   const [savingProviderTemplate, setSavingProviderTemplate] = useState(false);
+  const [loadingClientAlias, setLoadingClientAlias] = useState(false);
+  const [savingClientAlias, setSavingClientAlias] = useState(false);
 
   const [importing, setImporting] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -357,6 +403,47 @@ export default function M3uLineSourcesLionTv() {
     [accessToken, enqueueSnackbar, lineSourceForm.lineId, selectedLineOption?.provider, selectedLineOption?.usernameEncode, t]
   );
 
+  const loadClientAliasConfig = useCallback(
+    async (lineIdValue, sourceUsernameValue) => {
+      const lineId = String(lineIdValue || '').trim();
+      const sourceUsername = String(sourceUsernameValue || selectedLineOption?.username || '').trim();
+      if (!lineId) {
+        setClientAliasForm(defaultClientAliasForm);
+        return;
+      }
+
+      setLoadingClientAlias(true);
+      try {
+        const alias = await getClientAliasByLine({ accessToken, lineId, sourceUsername });
+        setClientAliasForm({
+          id: alias.id || null,
+          aliasUsername: alias.aliasUsername || '',
+          aliasPasswordPlain: alias.aliasPasswordPlain || '',
+          active: alias.active !== undefined ? Boolean(alias.active) : true,
+          lastServedAt: alias.lastServedAt || null,
+          lastError: alias.lastError || '',
+          createdAt: alias.createdAt || null,
+          updatedAt: alias.updatedAt || null
+        });
+      } catch (error) {
+        if (error?.response?.status === 404) {
+          setClientAliasForm({
+            ...defaultClientAliasForm,
+            aliasUsername: buildSuggestedAliasUsername(selectedLineOption, lineId),
+            aliasPasswordPlain: generateAliasPassword()
+          });
+        } else {
+          enqueueSnackbar(extractErrorMessage(error, t('catalog.messages.clientAliasLoadError', 'Could not load Xtream client credentials.')), {
+            variant: 'error'
+          });
+        }
+      } finally {
+        setLoadingClientAlias(false);
+      }
+    },
+    [accessToken, enqueueSnackbar, selectedLineOption, t]
+  );
+
   const saveLineSourceConfig = useCallback(async () => {
     const lineId = String(lineSourceForm.lineId || '').trim();
     const sourcePlaylistUrl = String(lineSourceForm.sourcePlaylistUrl || '').trim();
@@ -459,6 +546,82 @@ export default function M3uLineSourcesLionTv() {
     }
   }, [accessToken, enqueueSnackbar, providerTemplateForm.active, providerTemplateForm.baseUrl, providerTemplateForm.outputFormat, providerTemplateForm.playlistType, providerTemplateForm.providerCode, refreshProviderTemplates, t]);
 
+  const saveClientAliasConfig = useCallback(async () => {
+    const lineId = String(selectedLineId || lineSourceForm.lineId || '').trim();
+    const sourceUsername = String(selectedLineOption?.username || '').trim();
+    const aliasUsername = String(clientAliasForm.aliasUsername || '').trim();
+    const aliasPasswordPlain = String(clientAliasForm.aliasPasswordPlain || '').trim();
+
+    if (!lineId || !sourceUsername) {
+      enqueueSnackbar(t('catalog.messages.clientAliasLineRequired', 'Select a line with a valid source username before saving Xtream credentials.'), {
+        variant: 'warning'
+      });
+      return;
+    }
+    if (!aliasUsername || !aliasPasswordPlain) {
+      enqueueSnackbar(t('catalog.messages.clientAliasRequired', 'Client username and password are required.'), { variant: 'warning' });
+      return;
+    }
+
+    setSavingClientAlias(true);
+    try {
+      const saved = await upsertClientAlias({
+        accessToken,
+        payload: {
+          lineId,
+          sourceUsername,
+          aliasUsername,
+          aliasPasswordPlain,
+          active: Boolean(clientAliasForm.active)
+        }
+      });
+
+      setClientAliasForm({
+        id: saved.id || null,
+        aliasUsername: saved.aliasUsername || aliasUsername,
+        aliasPasswordPlain: saved.aliasPasswordPlain || aliasPasswordPlain,
+        active: saved.active !== undefined ? Boolean(saved.active) : true,
+        lastServedAt: saved.lastServedAt || null,
+        lastError: saved.lastError || '',
+        createdAt: saved.createdAt || null,
+        updatedAt: saved.updatedAt || null
+      });
+      enqueueSnackbar(t('catalog.messages.clientAliasSaved', 'Xtream client credentials saved successfully.'), { variant: 'success' });
+    } catch (error) {
+      enqueueSnackbar(extractErrorMessage(error, t('catalog.messages.clientAliasSaveError', 'Could not save Xtream client credentials.')), {
+        variant: 'error'
+      });
+    } finally {
+      setSavingClientAlias(false);
+    }
+  }, [
+    accessToken,
+    clientAliasForm.active,
+    clientAliasForm.aliasPasswordPlain,
+    clientAliasForm.aliasUsername,
+    enqueueSnackbar,
+    lineSourceForm.lineId,
+    selectedLineId,
+    selectedLineOption?.username,
+    t
+  ]);
+
+  const handleCopyText = useCallback(
+    async (value, successMessage) => {
+      if (!value) {
+        enqueueSnackbar(t('catalog.messages.copyMissing', 'Nothing to copy yet.'), { variant: 'warning' });
+        return;
+      }
+      try {
+        await copyToClipboard(value);
+        enqueueSnackbar(successMessage, { variant: 'success' });
+      } catch (error) {
+        enqueueSnackbar(t('catalog.messages.copyError', 'Could not copy to clipboard.'), { variant: 'error' });
+      }
+    },
+    [enqueueSnackbar, t]
+  );
+
   const handleImportCatalog = useCallback(async () => {
     const lineId = String(selectedLineId || lineSourceForm.lineId || '').trim();
     if (!lineId) {
@@ -553,7 +716,8 @@ export default function M3uLineSourcesLionTv() {
     }));
     setSelectedProviderCode(selectedLineOption.provider || '');
     loadLineSourceConfig(selectedLineOption.lineId);
-  }, [loadLineSourceConfig, selectedLineOption]);
+    loadClientAliasConfig(selectedLineOption.lineId, selectedLineOption.username);
+  }, [loadClientAliasConfig, loadLineSourceConfig, selectedLineOption]);
 
   useEffect(() => {
     if (!selectedProviderCode) {
@@ -569,6 +733,10 @@ export default function M3uLineSourcesLionTv() {
   const lineConfigured = Boolean(lineSourceForm.lineId && (lineSourceForm.sourceProviderName || lineSourceForm.sourcePlaylistUrl));
   const templateConfigured = Boolean(activeProviderCode && providerTemplateForm.baseUrl.trim());
   const flowReady = Boolean(lineSelected && lineConfigured && templateConfigured);
+  const clientAliasConfigured = Boolean(clientAliasForm.id && clientAliasForm.aliasUsername && clientAliasForm.aliasPasswordPlain);
+  const xtreamServerUrl = buildClientAliasXtreamServerUrl();
+  const xtreamPlayerApiUrl = buildClientAliasPlayerApiUrl(clientAliasForm);
+  const xtreamCredentialsText = buildClientAliasXtreamCredentialsText(clientAliasForm);
   const templatePreview = buildTemplatePreview(providerTemplateForm);
   const operationalChecklist = [
     { key: 'line', done: lineSelected, label: t('catalog.flow.linePickBody', 'Pick the line you want to operate.') },
@@ -962,6 +1130,155 @@ export default function M3uLineSourcesLionTv() {
               </Paper>
             </Grid>
           </Grid>
+
+          <Paper
+            variant="outlined"
+            sx={(theme) => ({
+              p: 2.25,
+              borderColor: alpha(theme.palette.success.main, 0.22),
+              backgroundColor: alpha(theme.palette.success.main, 0.045)
+            })}
+          >
+            <Stack spacing={2}>
+              <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1.5}>
+                <Stack spacing={0.5}>
+                  <Typography variant="overline" color="success.main" sx={{ fontWeight: 700, letterSpacing: 1 }}>
+                    {t('catalog.clientAlias.eyebrow', 'Xtream client access')}
+                  </Typography>
+                  <Typography variant="h5">{t('catalog.clientAlias.title', 'Credenciales Xtream Cliente')}</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 760 }}>
+                    {t(
+                      'catalog.clientAlias.body',
+                      'Give these Xtream Code credentials to the client. The backend validates the alias, resolves the original line and redirects playback to the provider without streaming video through this server.'
+                    )}
+                  </Typography>
+                </Stack>
+                <Chip
+                  color={clientAliasConfigured && clientAliasForm.active ? 'success' : 'warning'}
+                  variant={clientAliasConfigured && clientAliasForm.active ? 'filled' : 'outlined'}
+                  label={
+                    clientAliasConfigured
+                      ? clientAliasForm.active
+                        ? t('catalog.status.activeValue', 'Active')
+                        : t('catalog.status.inactiveValue', 'Inactive')
+                      : t('catalog.status.pendingValue', 'Pending')
+                  }
+                  sx={{ alignSelf: { xs: 'flex-start', md: 'center' } }}
+                />
+              </Stack>
+
+              <Grid container spacing={1.5}>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label={t('catalog.clientAlias.server', 'Servidor Xtream')}
+                    value={xtreamServerUrl}
+                    InputProps={{ readOnly: true }}
+                    helperText={t('catalog.clientAlias.serverHelper', 'Use this as the server URL in Xtream-compatible apps.')}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label={t('catalog.clientAlias.username', 'Usuario cliente')}
+                    value={clientAliasForm.aliasUsername}
+                    onChange={(event) => setClientAliasForm((previous) => ({ ...previous, aliasUsername: event.target.value }))}
+                    helperText={t('catalog.clientAlias.usernameHelper', 'Alias visible for the client; it is not the provider username.')}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label={t('catalog.clientAlias.password', 'Password cliente')}
+                    value={clientAliasForm.aliasPasswordPlain}
+                    onChange={(event) => setClientAliasForm((previous) => ({ ...previous, aliasPasswordPlain: event.target.value }))}
+                    helperText={t('catalog.clientAlias.passwordHelper', 'Exactly 6 alphanumeric characters.')}
+                  />
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label={t('catalog.clientAlias.playerApiUrl', 'URL player_api')}
+                    value={xtreamPlayerApiUrl}
+                    InputProps={{ readOnly: true }}
+                    helperText={t('catalog.clientAlias.playerApiHelper', 'Useful for quick validation or support.')}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Paper variant="outlined" sx={{ p: 1.25, height: '100%', display: 'flex', alignItems: 'center' }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={Boolean(clientAliasForm.active)}
+                          onChange={(event) => setClientAliasForm((previous) => ({ ...previous, active: event.target.checked }))}
+                        />
+                      }
+                      label={t('catalog.clientAlias.active', 'Alias active')}
+                    />
+                  </Paper>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="flex-end" sx={{ height: '100%' }}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<RefreshIcon />}
+                      onClick={() => loadClientAliasConfig(activeLineId, selectedLineOption?.username)}
+                      disabled={!activeLineId || loadingClientAlias}
+                      fullWidth={isMobile}
+                    >
+                      {loadingClientAlias ? t('catalog.actions.loading', 'Loading...') : t('catalog.clientAlias.load', 'Load alias')}
+                    </Button>
+                    <Button
+                      variant="contained"
+                      startIcon={<VpnKeyOutlinedIcon />}
+                      onClick={saveClientAliasConfig}
+                      disabled={savingClientAlias || !activeLineId}
+                      fullWidth={isMobile}
+                    >
+                      {savingClientAlias ? t('catalog.source.saving', 'Saving...') : t('catalog.clientAlias.save', 'Save alias')}
+                    </Button>
+                  </Stack>
+                </Grid>
+              </Grid>
+
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'stretch', md: 'center' }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<ContentCopyIcon />}
+                  onClick={() =>
+                    handleCopyText(
+                      xtreamCredentialsText,
+                      t('catalog.messages.clientAliasCredentialsCopied', 'Xtream credentials copied.')
+                    )
+                  }
+                  disabled={!clientAliasForm.aliasUsername || !clientAliasForm.aliasPasswordPlain}
+                  fullWidth={isMobile}
+                >
+                  {t('catalog.clientAlias.copyCredentials', 'Copiar datos Xtream')}
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<LinkOutlinedIcon />}
+                  onClick={() =>
+                    handleCopyText(xtreamPlayerApiUrl, t('catalog.messages.clientAliasPlayerApiCopied', 'Player API URL copied.'))
+                  }
+                  disabled={!clientAliasForm.aliasUsername || !clientAliasForm.aliasPasswordPlain}
+                  fullWidth={isMobile}
+                >
+                  {t('catalog.clientAlias.copyPlayerApi', 'Copiar URL player_api')}
+                </Button>
+                <Chip
+                  size="small"
+                  variant="outlined"
+                  label={`${t('catalog.clientAlias.lastServed', 'Last served')}: ${formatDate(clientAliasForm.lastServedAt)}`}
+                />
+                {clientAliasForm.lastError ? (
+                  <Chip size="small" color="warning" variant="outlined" label={`${t('catalog.clientAlias.lastError', 'Last error')}: ${clientAliasForm.lastError}`} />
+                ) : null}
+              </Stack>
+            </Stack>
+          </Paper>
 
           <Grid container spacing={2.5}>
             <Grid item xs={12} lg={7}>
