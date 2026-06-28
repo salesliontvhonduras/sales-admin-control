@@ -358,6 +358,8 @@ const liontv = {
             any: [
               'ROLE_ADMIN',
               'ADMIN',
+              'ROLE_SUPER_ADMIN',
+              'SUPER_ADMIN',
               'USER_MANAGEMENT_VIEW',
               'ROLE_USER_MANAGEMENT_VIEW',
               'USER_MANAGEMENT_CREATE_USER',

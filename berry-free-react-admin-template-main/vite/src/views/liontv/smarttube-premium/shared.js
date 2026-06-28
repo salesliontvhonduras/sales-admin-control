@@ -20,11 +20,13 @@ export const sessionStatusOptions = [
   { value: 'REVOKED', label: 'Desconectadas' }
 ];
 
-export const viewPermissions = ['ROLE_ADMIN', 'ADMIN', 'USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW'];
+export const viewPermissions = ['ROLE_ADMIN', 'ADMIN', 'ROLE_SUPER_ADMIN', 'SUPER_ADMIN', 'USER_MANAGEMENT_VIEW', 'ROLE_USER_MANAGEMENT_VIEW'];
 
 export const writePermissions = [
   'ROLE_ADMIN',
   'ADMIN',
+  'ROLE_SUPER_ADMIN',
+  'SUPER_ADMIN',
   'USER_MANAGEMENT_CREATE_USER',
   'ROLE_USER_MANAGEMENT_CREATE_USER',
   'USER_MANAGEMENT_EDIT_USER',
@@ -34,6 +36,8 @@ export const writePermissions = [
 export const operatePermissions = [
   'ROLE_ADMIN',
   'ADMIN',
+  'ROLE_SUPER_ADMIN',
+  'SUPER_ADMIN',
   'USER_MANAGEMENT_DISABLE_USER',
   'ROLE_USER_MANAGEMENT_DISABLE_USER',
   'USER_MANAGEMENT_EDIT_USER',

@@ -797,8 +797,10 @@ export const lionTvProfessionalTranslations = {
     },
     m3uBackup: {
       title: 'Xtream customer credentials',
-      subtitle: 'Create a controlled Xtream alias for the customer while the middleware uses the original line credentials behind the scenes.',
-      helper: 'Give the customer only the Xtream server, user and password shown here. Internally the system validates the alias and redirects playback with the real line.',
+      subtitle:
+        'Create a controlled Xtream alias for the customer while the middleware uses the original line credentials behind the scenes.',
+      helper:
+        'Give the customer only the Xtream server, user and password shown here. Internally the system validates the alias and redirects playback with the real line.',
       pageTitle: 'M3U backup aliases',
       pageHelper: 'Control player links, direct download links and fallback routing from one operational module.',
       badge: 'Xtream customer alias',
@@ -813,12 +815,14 @@ export const lionTvProfessionalTranslations = {
       aliasPassword: 'Customer password',
       aliasPasswordHelper: 'Xtream password delivered to the client. Exactly 6 alphanumeric characters.',
       sourceUrl: 'Source playlist URL',
-      sourceUrlHelper: 'Optional but recommended. Use the original provider template with {username_encode} and {password_encode}; never place the customer alias here.',
+      sourceUrlHelper:
+        'Optional but recommended. Use the original provider template with {username_encode} and {password_encode}; never place the customer alias here.',
       provider: 'Provider label',
       providerHelper: 'Optional label or provider template code for fallback resolution.',
       active: 'Alias active',
       xtreamCredentialsTitle: 'Customer Xtream credentials',
-      xtreamCredentialsHelper: 'Give these values to the client. Playback requests return a lightweight redirect to the original provider line.',
+      xtreamCredentialsHelper:
+        'Give these values to the client. Playback requests return a lightweight redirect to the original provider line.',
       xtreamServer: 'Xtream server',
       xtreamUser: 'User',
       xtreamPassword: 'Password',
@@ -2113,8 +2117,10 @@ export const lionTvProfessionalTranslations = {
     },
     m3uBackup: {
       title: 'Credenciales Xtream cliente',
-      subtitle: 'Crea un alias Xtream controlado para el cliente mientras el middleware usa las credenciales originales de la línea por debajo.',
-      helper: 'Entrégale al cliente solo el servidor Xtream, usuario y password que se muestran aquí. Internamente el sistema valida el alias y redirige la reproducción con la línea real.',
+      subtitle:
+        'Crea un alias Xtream controlado para el cliente mientras el middleware usa las credenciales originales de la línea por debajo.',
+      helper:
+        'Entrégale al cliente solo el servidor Xtream, usuario y password que se muestran aquí. Internamente el sistema valida el alias y redirige la reproducción con la línea real.',
       pageTitle: 'Aliases de respaldo M3U',
       pageHelper: 'Controla links para player, links de descarga directa y rutas de fallback desde un solo módulo operativo.',
       badge: 'Alias Xtream cliente',
@@ -2129,12 +2135,14 @@ export const lionTvProfessionalTranslations = {
       aliasPassword: 'Password cliente',
       aliasPasswordHelper: 'Password Xtream que se entrega al cliente. Exactamente 6 caracteres alfanuméricos.',
       sourceUrl: 'URL fuente del playlist',
-      sourceUrlHelper: 'Opcional pero recomendado. Usa la plantilla original del proveedor con {username_encode} y {password_encode}; nunca coloques aquí el alias del cliente.',
+      sourceUrlHelper:
+        'Opcional pero recomendado. Usa la plantilla original del proveedor con {username_encode} y {password_encode}; nunca coloques aquí el alias del cliente.',
       provider: 'Etiqueta del provider',
       providerHelper: 'Etiqueta opcional o código de plantilla del provider para resolver fallback.',
       active: 'Alias activo',
       xtreamCredentialsTitle: 'Credenciales Xtream cliente',
-      xtreamCredentialsHelper: 'Entrega estos valores al cliente. Las solicitudes de reproducción devuelven un redirect liviano hacia la línea original del proveedor.',
+      xtreamCredentialsHelper:
+        'Entrega estos valores al cliente. Las solicitudes de reproducción devuelven un redirect liviano hacia la línea original del proveedor.',
       xtreamServer: 'Servidor Xtream',
       xtreamUser: 'Usuario',
       xtreamPassword: 'Password',
