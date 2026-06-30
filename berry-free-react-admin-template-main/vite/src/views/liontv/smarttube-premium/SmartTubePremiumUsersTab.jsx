@@ -22,6 +22,7 @@ import { useTheme } from '@mui/material/styles';
 
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import DeleteIcon from '@mui/icons-material/Delete';
 import DevicesOtherIcon from '@mui/icons-material/DevicesOther';
 import KeyIcon from '@mui/icons-material/Key';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -33,7 +34,7 @@ import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 
 import { formatDateTime, statusColor, statusOptions, surfaceSx, tableContainerSx } from './shared';
 
-function UserActions({ row, canWrite, canOperate, onOpenDevices, onOpenRenew, onOpenPassword, onOpenLimit, onToggleStatus }) {
+function UserActions({ row, canWrite, canOperate, onOpenDevices, onOpenRenew, onOpenPassword, onOpenLimit, onToggleStatus, onDelete }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
@@ -77,12 +78,18 @@ function UserActions({ row, canWrite, canOperate, onOpenDevices, onOpenRenew, on
             {row.active ? 'Suspender' : 'Activar'}
           </MenuItem>
         ) : null}
+        {canOperate ? (
+          <MenuItem onClick={() => run(onDelete)} sx={{ color: 'error.main' }}>
+            <DeleteIcon fontSize="small" sx={{ mr: 1 }} />
+            Eliminar cuenta
+          </MenuItem>
+        ) : null}
       </Menu>
     </>
   );
 }
 
-function UserCard({ row, locale, canWrite, canOperate, onOpenDevices, onOpenRenew, onOpenPassword, onOpenLimit, onToggleStatus }) {
+function UserCard({ row, locale, canWrite, canOperate, onOpenDevices, onOpenRenew, onOpenPassword, onOpenLimit, onToggleStatus, onDelete }) {
   return (
     <Card variant="outlined" sx={(theme) => surfaceSx(theme)}>
       <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
@@ -134,6 +141,11 @@ function UserCard({ row, locale, canWrite, canOperate, onOpenDevices, onOpenRene
                 {row.active ? 'Suspender' : 'Activar'}
               </Button>
             ) : null}
+            {canOperate ? (
+              <Button size="small" color="error" variant="outlined" startIcon={<DeleteIcon />} onClick={() => onDelete(row)}>
+                Eliminar
+              </Button>
+            ) : null}
           </Stack>
         </Stack>
       </CardContent>
@@ -162,7 +174,8 @@ export default function SmartTubePremiumUsersTab({
   onOpenRenew,
   onOpenPassword,
   onOpenLimit,
-  onToggleStatus
+  onToggleStatus,
+  onDelete
 }) {
   const theme = useTheme();
 
@@ -245,6 +258,7 @@ export default function SmartTubePremiumUsersTab({
                       onOpenPassword={onOpenPassword}
                       onOpenLimit={onOpenLimit}
                       onToggleStatus={onToggleStatus}
+                      onDelete={onDelete}
                     />
                   </TableCell>
                 </TableRow>
@@ -276,6 +290,7 @@ export default function SmartTubePremiumUsersTab({
             onOpenPassword={onOpenPassword}
             onOpenLimit={onOpenLimit}
             onToggleStatus={onToggleStatus}
+            onDelete={onDelete}
           />
         ))}
         {!loading && rows.length === 0 ? (

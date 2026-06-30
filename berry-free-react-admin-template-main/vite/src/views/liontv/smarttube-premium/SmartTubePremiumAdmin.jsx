@@ -37,6 +37,7 @@ import AddIcon from '@mui/icons-material/Add';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DeleteIcon from '@mui/icons-material/Delete';
 import DevicesOtherIcon from '@mui/icons-material/DevicesOther';
 import KeyIcon from '@mui/icons-material/Key';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -57,6 +58,7 @@ import { hasPermissionExact } from 'utils/rbac';
 import {
   confirmSmartTubePremiumAccountRequest,
   createSmartTubePremiumUser,
+  deleteSmartTubePremiumUser,
   listSmartTubePremiumAccountRequests,
   listSmartTubePremiumDevices,
   listSmartTubePremiumSessions,
@@ -213,6 +215,7 @@ export default function SmartTubePremiumAdmin() {
   const [limitTarget, setLimitTarget] = useState(null);
   const [deviceLimitValue, setDeviceLimitValue] = useState(1);
   const [sessionRevokeTarget, setSessionRevokeTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const loadRows = useCallback(async () => {
     setLoading(true);
@@ -485,6 +488,34 @@ export default function SmartTubePremiumAdmin() {
     }
   };
 
+  const openDelete = (row) => {
+    if (!canOperate) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
+      return;
+    }
+    setDeleteTarget(row);
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deleteTarget?.userId) return;
+    if (!canOperate) {
+      enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await deleteSmartTubePremiumUser(deleteTarget.userId, { skipAuthRedirect: true });
+      enqueueSnackbar('Cuenta YouTube Premium eliminada.', { variant: 'success' });
+      setDeleteTarget(null);
+      refreshAll();
+    } catch (error) {
+      enqueueSnackbar(getSmartTubeAdminErrorMessage(error, 'No se pudo eliminar la cuenta YouTube Premium.'), { variant: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const openLimit = (row) => {
     if (!canWrite) {
       enqueueSnackbar(smartTubePermissionMessage, { variant: 'warning' });
@@ -694,6 +725,7 @@ export default function SmartTubePremiumAdmin() {
             onOpenPassword={openPassword}
             onOpenLimit={openLimit}
             onToggleStatus={toggleStatus}
+            onDelete={openDelete}
           />
         ) : null}
 
@@ -1075,6 +1107,32 @@ export default function SmartTubePremiumAdmin() {
           <Button onClick={() => setSessionRevokeTarget(null)}>Cancelar</Button>
           <Button color="warning" variant="contained" startIcon={<LogoutIcon />} onClick={handleRevokeSession} disabled={saving || sessionRevokeTarget?.status !== 'ACTIVE'}>
             Desconectar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} fullWidth maxWidth="xs" PaperProps={{ sx: modalPaperSx }}>
+        <DialogTitleWithClose onClose={() => setDeleteTarget(null)}>
+          <Typography variant="h4">Eliminar cuenta</Typography>
+        </DialogTitleWithClose>
+        <DialogContent sx={modalContentSx}>
+          <Stack spacing={2}>
+            <Alert severity="error" variant="outlined">
+              Esta acción eliminará definitivamente la cuenta, licencia, dispositivos y sesiones de YouTube Premium.
+            </Alert>
+            <CustomerSummary
+              row={deleteTarget}
+              helper={`Serial ${deleteTarget?.serialCode || '-'} · ${Number(deleteTarget?.deviceCount || 0)} dispositivo(s) vinculados.`}
+            />
+            <Typography variant="body2" color="text.secondary">
+              Si solo necesitas bloquear el acceso temporalmente, usa Suspender. Eliminar no se puede deshacer desde este módulo.
+            </Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={modalActionsSx}>
+          <Button onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+          <Button color="error" variant="contained" startIcon={<DeleteIcon />} onClick={handleDeleteUser} disabled={saving || !deleteTarget?.userId}>
+            Eliminar cuenta
           </Button>
         </DialogActions>
       </Dialog>

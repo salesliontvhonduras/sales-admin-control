@@ -22,6 +22,11 @@ export async function updateSmartTubePremiumUserStatus(userId, active, config = 
   return unwrap(response);
 }
 
+export async function deleteSmartTubePremiumUser(userId, config = {}) {
+  const response = await authApi.delete(`/auth/v1/admin/smarttube-premium/users/${userId}`, config);
+  return unwrap(response);
+}
+
 export async function resetSmartTubePremiumPassword(userId, password, config = {}) {
   const response = await authApi.post(`/auth/v1/admin/smarttube-premium/users/${userId}/password`, { password }, config);
   return unwrap(response);
