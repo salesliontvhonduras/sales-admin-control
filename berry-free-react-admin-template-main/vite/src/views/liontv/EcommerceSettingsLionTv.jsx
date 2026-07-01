@@ -1362,7 +1362,7 @@ export default function EcommerceSettingsLionTv() {
                 label="Activar Movies en APK"
               />
               <Typography variant="caption" color="text.secondary" display="block">
-                Usa una URL directa HLS, DASH o MP4. No uses una página web embebida.
+                Usa una URL directa HLS, DASH, MP4 o MKV. HTTPS es recomendado, pero algunos proveedores Xtream usan HTTP.
               </Typography>
             </Grid>
             <Grid item xs={12} md={6}>
@@ -1380,7 +1380,7 @@ export default function EcommerceSettingsLionTv() {
                 label="Poster URL"
                 value={form.lionTvPremiumApp.movies.posterUrl}
                 onChange={(event) => setPath(['lionTvPremiumApp', 'movies', 'posterUrl'], event.target.value)}
-                helperText="Opcional. Debe iniciar con https://"
+                helperText="Opcional. Puede iniciar con http:// o https://."
               />
             </Grid>
             <Grid item xs={12}>
@@ -1389,7 +1389,7 @@ export default function EcommerceSettingsLionTv() {
                 label="URL de película"
                 value={form.lionTvPremiumApp.movies.streamUrl}
                 onChange={(event) => setPath(['lionTvPremiumApp', 'movies', 'streamUrl'], event.target.value)}
-                helperText="Requerida si Movies está activo. Debe ser una URL directa https:// compatible con ExoPlayer."
+                helperText="Requerida si Movies está activo. Acepta http:// o https://, incluyendo URLs Xtream con puerto."
               />
             </Grid>
             <Grid item xs={12} md={8}>
