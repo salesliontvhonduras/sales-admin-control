@@ -335,6 +335,16 @@ const DEFAULT_CONFIG = {
     downloadUrl: '',
     message: 'Hay una nueva actualizacion disponible.'
   },
+  lionTvPremiumApp: {
+    movies: {
+      enabled: false,
+      title: 'Movies',
+      streamUrl: '',
+      posterUrl: '',
+      ctaText: 'Mira mucho más, contrata Lion TV Premium www.liontvpremium.com',
+      ctaUrl: 'https://www.liontvpremium.com'
+    }
+  },
   messages: {
     existingCustomerTitle: 'Tu cuenta Lion TV Premium',
     newCustomerTitle: 'Elige tu plan',
@@ -663,6 +673,14 @@ function normalizeConfig(payload) {
     points: { ...DEFAULT_CONFIG.points, ...(payload?.points || {}) },
     externalLinks: { ...DEFAULT_CONFIG.externalLinks, ...(payload?.externalLinks || {}) },
     appUpdate: { ...DEFAULT_CONFIG.appUpdate, ...(payload?.appUpdate || {}) },
+    lionTvPremiumApp: {
+      ...DEFAULT_CONFIG.lionTvPremiumApp,
+      ...(payload?.lionTvPremiumApp || {}),
+      movies: {
+        ...DEFAULT_CONFIG.lionTvPremiumApp.movies,
+        ...(payload?.lionTvPremiumApp?.movies || {})
+      }
+    },
     messages: { ...DEFAULT_CONFIG.messages, ...(payload?.messages || {}) },
     moreReasons: {
       ...DEFAULT_CONFIG.moreReasons,
@@ -1323,6 +1341,74 @@ export default function EcommerceSettingsLionTv() {
                 label="Mensaje de actualización"
                 value={form.appUpdate.message}
                 onChange={(event) => setPath(['appUpdate', 'message'], event.target.value)}
+              />
+            </Grid>
+          </Grid>
+        </SettingsSection>
+
+        <SettingsSection
+          title="Movies APK"
+          description="Configura la película promocional que aparece dentro de la APK Lion TV Premium."
+        >
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={Boolean(form.lionTvPremiumApp.movies.enabled)}
+                    onChange={(event) => setPath(['lionTvPremiumApp', 'movies', 'enabled'], event.target.checked)}
+                  />
+                }
+                label="Activar Movies en APK"
+              />
+              <Typography variant="caption" color="text.secondary" display="block">
+                Usa una URL directa HLS, DASH o MP4. No uses una página web embebida.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Título visible"
+                value={form.lionTvPremiumApp.movies.title}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'movies', 'title'], event.target.value)}
+                helperText="Texto que verá el cliente en el menú de la APK."
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Poster URL"
+                value={form.lionTvPremiumApp.movies.posterUrl}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'movies', 'posterUrl'], event.target.value)}
+                helperText="Opcional. Debe iniciar con https://"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="URL de película"
+                value={form.lionTvPremiumApp.movies.streamUrl}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'movies', 'streamUrl'], event.target.value)}
+                helperText="Requerida si Movies está activo. Debe ser una URL directa https:// compatible con ExoPlayer."
+              />
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                label="Texto debajo del video"
+                value={form.lionTvPremiumApp.movies.ctaText}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'movies', 'ctaText'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="URL CTA"
+                value={form.lionTvPremiumApp.movies.ctaUrl}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'movies', 'ctaUrl'], event.target.value)}
+                helperText="Se abre al tocar el texto promocional."
               />
             </Grid>
           </Grid>
