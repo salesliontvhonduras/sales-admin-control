@@ -650,6 +650,30 @@ function normalizePayPerViewEvent(event = {}, index = 0) {
   };
 }
 
+function isHttpUrl(value = '') {
+  const trimmed = `${value || ''}`.trim().toLowerCase();
+  return trimmed.startsWith('http://') || trimmed.startsWith('https://');
+}
+
+function validatePayPerViewConfig(config) {
+  const ppv = config?.lionTvPremiumApp?.payPerView || {};
+  if (!ppv.enabled) return '';
+  const events = Array.isArray(ppv.events) ? ppv.events : [];
+  const activeEvents = events.filter((event) => event?.active !== false);
+  if (!activeEvents.length) {
+    return 'Pay Per View está activo. Agrega al menos un evento visible.';
+  }
+  const invalidEvent = activeEvents.find((event) => !isHttpUrl(event.paymentUrl) && !isHttpUrl(event.paypalPaymentUrl) && !isHttpUrl(event.cardPaymentUrl));
+  if (invalidEvent) {
+    return `Configura al menos un link de pago válido para "${invalidEvent.title || invalidEvent.id || 'Evento Pay Per View'}".`;
+  }
+  const invalidStream = activeEvents.find((event) => !isHttpUrl(event.streamUrl));
+  if (invalidStream) {
+    return `Configura una URL stream válida para "${invalidStream.title || invalidStream.id || 'Evento Pay Per View'}".`;
+  }
+  return '';
+}
+
 function normalizePayPerViewConfig(payload = {}) {
   const legacyMovies = payload?.movies || {};
   const ppv = payload?.payPerView || {};
@@ -1115,6 +1139,12 @@ export default function EcommerceSettingsLionTv() {
   };
 
   const handleSave = async () => {
+    const validationError = validatePayPerViewConfig(form);
+    if (validationError) {
+      setError(validationError);
+      enqueueSnackbar(validationError, { variant: 'warning' });
+      return;
+    }
     setSaving(true);
     setError('');
     try {
@@ -1494,6 +1524,18 @@ export default function EcommerceSettingsLionTv() {
                       </Box>
                       <Stack direction="row" spacing={1} alignItems="center">
                         <Chip size="small" label={eventItem.active ? 'Activo' : 'Oculto'} color={eventItem.active ? 'success' : 'default'} />
+                        <Chip
+                          size="small"
+                          label="PayPal"
+                          color={isHttpUrl(eventItem.paypalPaymentUrl || eventItem.paymentUrl) ? 'success' : 'default'}
+                          variant={isHttpUrl(eventItem.paypalPaymentUrl || eventItem.paymentUrl) ? 'filled' : 'outlined'}
+                        />
+                        <Chip
+                          size="small"
+                          label="Tarjeta"
+                          color={isHttpUrl(eventItem.cardPaymentUrl) ? 'success' : 'default'}
+                          variant={isHttpUrl(eventItem.cardPaymentUrl) ? 'filled' : 'outlined'}
+                        />
                         <FormControlLabel
                           control={<Switch checked={Boolean(eventItem.active)} onChange={(e) => updatePayPerViewEvent(eventIndex, 'active', e.target.checked)} />}
                           label="Visible"
