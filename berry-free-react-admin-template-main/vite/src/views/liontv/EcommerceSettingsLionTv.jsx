@@ -27,10 +27,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
 import {
-  confirmAdminPayPerViewPurchase,
   getAdminEcommerceSiteConfig,
-  listAdminPayPerViewPurchases,
-  revokeAdminPayPerViewPurchase,
   updateAdminEcommerceSiteConfig,
   uploadAdminEcommerceStoryMedia
 } from 'api/liontv-ecommerce-site';
@@ -643,6 +640,8 @@ function normalizePayPerViewEvent(event = {}, index = 0) {
     posterUrl: event.posterUrl || '',
     streamUrl: event.streamUrl || '',
     paymentUrl: event.paymentUrl || '',
+    paypalPaymentUrl: event.paypalPaymentUrl || event.paymentUrl || '',
+    cardPaymentUrl: event.cardPaymentUrl || '',
     priceLabel: event.priceLabel || '',
     startsAt: event.startsAt || '',
     endsAt: event.endsAt || '',
@@ -664,6 +663,8 @@ function normalizePayPerViewConfig(payload = {}) {
         posterUrl: legacyMovies.posterUrl || '',
         streamUrl: legacyMovies.streamUrl || '',
         paymentUrl: legacyMovies.ctaUrl || '',
+        paypalPaymentUrl: legacyMovies.ctaUrl || '',
+        cardPaymentUrl: '',
         priceLabel: '',
         startsAt: '',
         endsAt: '',
@@ -789,10 +790,6 @@ export default function EcommerceSettingsLionTv() {
   const [uploadingStoryId, setUploadingStoryId] = useState('');
   const [error, setError] = useState('');
   const [form, setForm] = useState(normalizeConfig(DEFAULT_CONFIG));
-  const [ppvPurchases, setPpvPurchases] = useState({ data: [], total: 0, index: 0, size: 25, hasNext: false });
-  const [ppvPurchaseFilters, setPpvPurchaseFilters] = useState({ status: '', search: '', eventId: '' });
-  const [ppvPurchasesLoading, setPpvPurchasesLoading] = useState(false);
-  const [ppvPurchaseActionId, setPpvPurchaseActionId] = useState(null);
 
   const loadConfig = useCallback(async () => {
     if (!accessToken) return;
@@ -811,38 +808,6 @@ export default function EcommerceSettingsLionTv() {
   useEffect(() => {
     loadConfig();
   }, [loadConfig]);
-
-  const loadPpvPurchases = useCallback(
-    async (overrides = {}) => {
-      if (!accessToken) return;
-      setPpvPurchasesLoading(true);
-      try {
-        const params = {
-          ...ppvPurchaseFilters,
-          ...overrides,
-          index: overrides.index ?? ppvPurchases.index ?? 0,
-          size: overrides.size ?? ppvPurchases.size ?? 25
-        };
-        const payload = await listAdminPayPerViewPurchases(params, { skipAuthRedirect: true });
-        setPpvPurchases({
-          data: payload?.data || [],
-          total: Number(payload?.total || 0),
-          index: Number(payload?.index || 0),
-          size: Number(payload?.size || 25),
-          hasNext: Boolean(payload?.hasNext)
-        });
-      } catch (err) {
-        enqueueSnackbar(err?.response?.data?.message || 'No se pudieron cargar los pagos Pay Per View.', { variant: 'error' });
-      } finally {
-        setPpvPurchasesLoading(false);
-      }
-    },
-    [accessToken, enqueueSnackbar, ppvPurchaseFilters, ppvPurchases.index, ppvPurchases.size]
-  );
-
-  useEffect(() => {
-    loadPpvPurchases({ index: 0 });
-  }, [loadPpvPurchases]);
 
   const planCount = form.plans?.length || 0;
   const variantCount = useMemo(
@@ -915,24 +880,6 @@ export default function EcommerceSettingsLionTv() {
       next.lionTvPremiumApp.payPerView.events = (next.lionTvPremiumApp.payPerView.events || []).filter((_, index) => index !== eventIndex);
       return next;
     });
-  };
-
-  const handlePpvPurchaseAction = async (purchaseId, action) => {
-    setPpvPurchaseActionId(purchaseId);
-    try {
-      if (action === 'confirm') {
-        await confirmAdminPayPerViewPurchase(purchaseId, { skipAuthRedirect: true });
-        enqueueSnackbar('Pago Pay Per View confirmado.', { variant: 'success' });
-      } else {
-        await revokeAdminPayPerViewPurchase(purchaseId, { skipAuthRedirect: true });
-        enqueueSnackbar('Acceso Pay Per View revocado.', { variant: 'success' });
-      }
-      loadPpvPurchases();
-    } catch (err) {
-      enqueueSnackbar(err?.response?.data?.message || 'No se pudo actualizar el pago Pay Per View.', { variant: 'error' });
-    } finally {
-      setPpvPurchaseActionId(null);
-    }
   };
 
   const updatePlan = (planIndex, field, value) => {
@@ -1578,11 +1525,26 @@ export default function EcommerceSettingsLionTv() {
                           onChange={(e) => updatePayPerViewEvent(eventIndex, 'subtitle', e.target.value)}
                         />
                       </Grid>
-                      <Grid item xs={12} md={6}>
+                      <Grid item xs={12} md={4}>
                         <TextField fullWidth label="Poster URL" value={eventItem.posterUrl} onChange={(e) => updatePayPerViewEvent(eventIndex, 'posterUrl', e.target.value)} />
                       </Grid>
-                      <Grid item xs={12} md={6}>
-                        <TextField fullWidth label="Link de pago" value={eventItem.paymentUrl} onChange={(e) => updatePayPerViewEvent(eventIndex, 'paymentUrl', e.target.value)} />
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label="Link PayPal"
+                          value={eventItem.paypalPaymentUrl || ''}
+                          onChange={(e) => updatePayPerViewEvent(eventIndex, 'paypalPaymentUrl', e.target.value)}
+                          helperText="Se muestra como opción PayPal en la APK."
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label="Link tarjeta"
+                          value={eventItem.cardPaymentUrl || ''}
+                          onChange={(e) => updatePayPerViewEvent(eventIndex, 'cardPaymentUrl', e.target.value)}
+                          helperText="Se muestra como opción Tarjeta en la APK."
+                        />
                       </Grid>
                       <Grid item xs={12}>
                         <TextField
@@ -1613,94 +1575,6 @@ export default function EcommerceSettingsLionTv() {
                 </CardContent>
               </Card>
             ))}
-          </Stack>
-        </SettingsSection>
-
-        <SettingsSection title="Pagos Pay Per View" description="Confirma pagos manuales y revoca accesos de eventos. La APK desbloquea el stream al verificar.">
-          <Stack spacing={2}>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Estado"
-                  value={ppvPurchaseFilters.status}
-                  onChange={(event) => setPpvPurchaseFilters((prev) => ({ ...prev, status: event.target.value }))}
-                >
-                  <MenuItem value="">Todos</MenuItem>
-                  <MenuItem value="PENDING">Pendientes</MenuItem>
-                  <MenuItem value="PAID">Pagados</MenuItem>
-                  <MenuItem value="REVOKED">Revocados</MenuItem>
-                  <MenuItem value="EXPIRED">Expirados</MenuItem>
-                </TextField>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  label="Evento"
-                  value={ppvPurchaseFilters.eventId}
-                  onChange={(event) => setPpvPurchaseFilters((prev) => ({ ...prev, eventId: event.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  label="Buscar email/licencia"
-                  value={ppvPurchaseFilters.search}
-                  onChange={(event) => setPpvPurchaseFilters((prev) => ({ ...prev, search: event.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Button variant="outlined" onClick={() => loadPpvPurchases({ index: 0 })} disabled={ppvPurchasesLoading}>
-                  Actualizar pagos
-                </Button>
-              </Grid>
-            </Grid>
-
-            <Stack spacing={1.5}>
-              {(ppvPurchases.data || []).map((purchase) => (
-                <Card key={purchase.id} variant="outlined">
-                  <CardContent>
-                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ xs: 'stretch', md: 'center' }} justifyContent="space-between">
-                      <Box>
-                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
-                          <Typography variant="subtitle1" fontWeight={700}>
-                            {purchase.email || `Usuario ${purchase.userId}`}
-                          </Typography>
-                          <Chip size="small" label={purchase.status} color={purchase.status === 'PAID' ? 'success' : purchase.status === 'PENDING' ? 'warning' : 'default'} />
-                        </Stack>
-                        <Typography variant="body2" color="text.secondary">
-                          Evento: {purchase.eventId} · Licencia: {purchase.licenseId}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Actualizado: {purchase.updatedAt || '-'} · Expira: {purchase.accessExpiresAt || '-'}
-                        </Typography>
-                      </Box>
-                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                        <Button
-                          variant="contained"
-                          disabled={ppvPurchaseActionId === purchase.id || purchase.status === 'PAID'}
-                          onClick={() => handlePpvPurchaseAction(purchase.id, 'confirm')}
-                        >
-                          Confirmar pago
-                        </Button>
-                        <Button
-                          color="error"
-                          variant="outlined"
-                          disabled={ppvPurchaseActionId === purchase.id || purchase.status === 'REVOKED'}
-                          onClick={() => handlePpvPurchaseAction(purchase.id, 'revoke')}
-                        >
-                          Revocar
-                        </Button>
-                      </Stack>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              ))}
-              {!ppvPurchasesLoading && !(ppvPurchases.data || []).length && (
-                <Alert severity="info">No hay compras Pay Per View con los filtros actuales.</Alert>
-              )}
-            </Stack>
           </Stack>
         </SettingsSection>
 

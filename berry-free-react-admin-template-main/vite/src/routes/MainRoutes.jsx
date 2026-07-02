@@ -39,6 +39,7 @@ const ResellerSupportLionTv = Loadable(lazy(() => import('views/liontv/ResellerS
 const ResellerAdminLionTv = Loadable(lazy(() => import('views/liontv/ResellerAdminLionTv')));
 const EcommerceContactRoutingLionTv = Loadable(lazy(() => import('views/liontv/EcommerceContactRoutingLionTv')));
 const EcommerceSettingsLionTv = Loadable(lazy(() => import('views/liontv/EcommerceSettingsLionTv')));
+const PayPerViewPaymentsLionTv = Loadable(lazy(() => import('views/liontv/PayPerViewPaymentsLionTv')));
 const EcommerceDeviceSetupRequestsLionTv = Loadable(lazy(() => import('views/liontv/EcommerceDeviceSetupRequestsLionTv')));
 const SmartTubePremiumAdmin = Loadable(lazy(() => import('views/liontv/SmartTubePremiumAdmin')));
 const VipCustomersLionTv = Loadable(lazy(() => import('views/liontv/VipCustomersLionTv')));
@@ -336,6 +337,10 @@ const MainRoutes = {
         {
           path: '/liontv/ecommerce-settings',
           element: protectPage({ any: ['ROLE_ADMIN', 'ADMIN'] }, <EcommerceSettingsLionTv />, '/liontv/dashboard', true)
+        },
+        {
+          path: '/liontv/pay-per-view-payments',
+          element: protectPage({ any: ['ROLE_ADMIN', 'ADMIN'] }, <PayPerViewPaymentsLionTv />, '/liontv/dashboard', true)
         },
         {
           path: '/liontv/device-setup-requests',

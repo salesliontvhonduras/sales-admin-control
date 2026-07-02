@@ -11,6 +11,7 @@ export const lionTvProfessionalTranslations = {
     },
     menu: {
       ecommerceSettings: 'Ecommerce Settings',
+      payPerViewPayments: 'Pay Per View Payments',
       moviesSeriesPosts: 'Movies & Series Posts'
     },
     common: {
@@ -1331,6 +1332,7 @@ export const lionTvProfessionalTranslations = {
     },
     menu: {
       ecommerceSettings: 'Configuración ecommerce',
+      payPerViewPayments: 'Pagos Pay Per View',
       moviesSeriesPosts: 'Posts de Películas y Series'
     },
     common: {

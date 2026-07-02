@@ -11,7 +11,8 @@ import {
   IconUserSearch,
   IconKey,
   IconAlertTriangle,
-  IconSettings
+  IconSettings,
+  IconTicket
 } from '@tabler/icons-react';
 
 const icons = {
@@ -27,7 +28,8 @@ const icons = {
   IconMailCog,
   IconDashboard,
   IconAlertTriangle,
-  IconSettings
+  IconSettings,
+  IconTicket
 };
 
 const liontv = {
@@ -108,6 +110,16 @@ const liontv = {
           type: 'item',
           url: '/liontv/ecommerce-settings',
           icon: icons.IconSettings,
+          resellerVisible: false,
+          breadcrumbs: true,
+          permission: { any: ['ROLE_ADMIN', 'ADMIN'] }
+        },
+        {
+          id: 'liontv-pay-per-view-payments',
+          title: 'menu.payPerViewPayments',
+          type: 'item',
+          url: '/liontv/pay-per-view-payments',
+          icon: icons.IconTicket,
           resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['ROLE_ADMIN', 'ADMIN'] }
