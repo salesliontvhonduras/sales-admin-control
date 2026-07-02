@@ -30,3 +30,15 @@ export async function confirmAdminDeviceSetupPayment(requestId, config = {}) {
 export async function retryAdminDeviceSetupRequest(requestId, config = {}) {
   return unwrap(await lionTvApi.post(`/ecommerce-site/v1/admin/device-setup-requests/${requestId}/retry`, null, config));
 }
+
+export async function listAdminPayPerViewPurchases(params = {}, config = {}) {
+  return unwrap(await lionTvApi.get('/ecommerce-site/v1/admin/pay-per-view/purchases', { ...config, params }));
+}
+
+export async function confirmAdminPayPerViewPurchase(purchaseId, config = {}) {
+  return unwrap(await lionTvApi.post(`/ecommerce-site/v1/admin/pay-per-view/purchases/${purchaseId}/confirm`, null, config));
+}
+
+export async function revokeAdminPayPerViewPurchase(purchaseId, config = {}) {
+  return unwrap(await lionTvApi.post(`/ecommerce-site/v1/admin/pay-per-view/purchases/${purchaseId}/revoke`, null, config));
+}

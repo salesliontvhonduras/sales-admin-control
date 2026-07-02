@@ -26,7 +26,14 @@ import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
-import { getAdminEcommerceSiteConfig, updateAdminEcommerceSiteConfig, uploadAdminEcommerceStoryMedia } from 'api/liontv-ecommerce-site';
+import {
+  confirmAdminPayPerViewPurchase,
+  getAdminEcommerceSiteConfig,
+  listAdminPayPerViewPurchases,
+  revokeAdminPayPerViewPurchase,
+  updateAdminEcommerceSiteConfig,
+  uploadAdminEcommerceStoryMedia
+} from 'api/liontv-ecommerce-site';
 import MainCard from 'ui-component/cards/MainCard';
 import { PageErrorState, PageLoadingState } from 'ui-component/feedback/PageState';
 import { gridSpacing } from 'store/constant';
@@ -343,6 +350,11 @@ const DEFAULT_CONFIG = {
       posterUrl: '',
       ctaText: 'Mira mucho más, contrata Lion TV Premium www.liontvpremium.com',
       ctaUrl: 'https://www.liontvpremium.com'
+    },
+    payPerView: {
+      enabled: false,
+      title: 'Pay Per View',
+      events: []
     }
   },
   messages: {
@@ -623,6 +635,52 @@ function normalizeDemoApps(apps, demoConfig = {}) {
     .sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
 }
 
+function normalizePayPerViewEvent(event = {}, index = 0) {
+  return {
+    id: event.id || `event-${Date.now()}-${index + 1}`,
+    title: event.title || 'Evento Pay Per View',
+    subtitle: event.subtitle || '',
+    posterUrl: event.posterUrl || '',
+    streamUrl: event.streamUrl || '',
+    paymentUrl: event.paymentUrl || '',
+    priceLabel: event.priceLabel || '',
+    startsAt: event.startsAt || '',
+    endsAt: event.endsAt || '',
+    active: event.active !== false,
+    order: Number(event.order || index + 1)
+  };
+}
+
+function normalizePayPerViewConfig(payload = {}) {
+  const legacyMovies = payload?.movies || {};
+  const ppv = payload?.payPerView || {};
+  let events = Array.isArray(ppv.events) ? ppv.events : [];
+  if (!events.length && legacyMovies?.streamUrl) {
+    events = [
+      {
+        id: 'legacy-movies',
+        title: legacyMovies.title || 'Pay Per View',
+        subtitle: legacyMovies.ctaText || '',
+        posterUrl: legacyMovies.posterUrl || '',
+        streamUrl: legacyMovies.streamUrl || '',
+        paymentUrl: legacyMovies.ctaUrl || '',
+        priceLabel: '',
+        startsAt: '',
+        endsAt: '',
+        active: Boolean(legacyMovies.enabled),
+        order: 1
+      }
+    ];
+  }
+  return {
+    ...DEFAULT_CONFIG.lionTvPremiumApp.payPerView,
+    ...ppv,
+    title: ppv.title || 'Pay Per View',
+    enabled: Boolean(ppv.enabled ?? legacyMovies.enabled ?? false),
+    events: events.map((event, index) => normalizePayPerViewEvent(event, index)).sort((a, b) => Number(a.order || 0) - Number(b.order || 0))
+  };
+}
+
 function normalizeConfig(payload) {
   const next = {
     ...clone(DEFAULT_CONFIG),
@@ -679,7 +737,8 @@ function normalizeConfig(payload) {
       movies: {
         ...DEFAULT_CONFIG.lionTvPremiumApp.movies,
         ...(payload?.lionTvPremiumApp?.movies || {})
-      }
+      },
+      payPerView: normalizePayPerViewConfig(payload?.lionTvPremiumApp || {})
     },
     messages: { ...DEFAULT_CONFIG.messages, ...(payload?.messages || {}) },
     moreReasons: {
@@ -730,6 +789,10 @@ export default function EcommerceSettingsLionTv() {
   const [uploadingStoryId, setUploadingStoryId] = useState('');
   const [error, setError] = useState('');
   const [form, setForm] = useState(normalizeConfig(DEFAULT_CONFIG));
+  const [ppvPurchases, setPpvPurchases] = useState({ data: [], total: 0, index: 0, size: 25, hasNext: false });
+  const [ppvPurchaseFilters, setPpvPurchaseFilters] = useState({ status: '', search: '', eventId: '' });
+  const [ppvPurchasesLoading, setPpvPurchasesLoading] = useState(false);
+  const [ppvPurchaseActionId, setPpvPurchaseActionId] = useState(null);
 
   const loadConfig = useCallback(async () => {
     if (!accessToken) return;
@@ -748,6 +811,38 @@ export default function EcommerceSettingsLionTv() {
   useEffect(() => {
     loadConfig();
   }, [loadConfig]);
+
+  const loadPpvPurchases = useCallback(
+    async (overrides = {}) => {
+      if (!accessToken) return;
+      setPpvPurchasesLoading(true);
+      try {
+        const params = {
+          ...ppvPurchaseFilters,
+          ...overrides,
+          index: overrides.index ?? ppvPurchases.index ?? 0,
+          size: overrides.size ?? ppvPurchases.size ?? 25
+        };
+        const payload = await listAdminPayPerViewPurchases(params, { skipAuthRedirect: true });
+        setPpvPurchases({
+          data: payload?.data || [],
+          total: Number(payload?.total || 0),
+          index: Number(payload?.index || 0),
+          size: Number(payload?.size || 25),
+          hasNext: Boolean(payload?.hasNext)
+        });
+      } catch (err) {
+        enqueueSnackbar(err?.response?.data?.message || 'No se pudieron cargar los pagos Pay Per View.', { variant: 'error' });
+      } finally {
+        setPpvPurchasesLoading(false);
+      }
+    },
+    [accessToken, enqueueSnackbar, ppvPurchaseFilters, ppvPurchases.index, ppvPurchases.size]
+  );
+
+  useEffect(() => {
+    loadPpvPurchases({ index: 0 });
+  }, [loadPpvPurchases]);
 
   const planCount = form.plans?.length || 0;
   const variantCount = useMemo(
@@ -782,6 +877,62 @@ export default function EcommerceSettingsLionTv() {
       cursor[path[path.length - 1]] = value;
       return next;
     });
+  };
+
+  const updatePayPerViewEvent = (eventIndex, field, value) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      const events = [...(next.lionTvPremiumApp.payPerView.events || [])];
+      events[eventIndex] = normalizePayPerViewEvent({ ...events[eventIndex], [field]: value }, eventIndex);
+      next.lionTvPremiumApp.payPerView.events = events;
+      return next;
+    });
+  };
+
+  const addPayPerViewEvent = () => {
+    setForm((prev) => {
+      const next = clone(prev);
+      const events = next.lionTvPremiumApp.payPerView.events || [];
+      events.push(
+        normalizePayPerViewEvent(
+          {
+            id: `ppv-${Date.now()}`,
+            title: 'Nuevo evento',
+            active: true,
+            order: events.length + 1
+          },
+          events.length
+        )
+      );
+      next.lionTvPremiumApp.payPerView.events = events;
+      return next;
+    });
+  };
+
+  const removePayPerViewEvent = (eventIndex) => {
+    setForm((prev) => {
+      const next = clone(prev);
+      next.lionTvPremiumApp.payPerView.events = (next.lionTvPremiumApp.payPerView.events || []).filter((_, index) => index !== eventIndex);
+      return next;
+    });
+  };
+
+  const handlePpvPurchaseAction = async (purchaseId, action) => {
+    setPpvPurchaseActionId(purchaseId);
+    try {
+      if (action === 'confirm') {
+        await confirmAdminPayPerViewPurchase(purchaseId, { skipAuthRedirect: true });
+        enqueueSnackbar('Pago Pay Per View confirmado.', { variant: 'success' });
+      } else {
+        await revokeAdminPayPerViewPurchase(purchaseId, { skipAuthRedirect: true });
+        enqueueSnackbar('Acceso Pay Per View revocado.', { variant: 'success' });
+      }
+      loadPpvPurchases();
+    } catch (err) {
+      enqueueSnackbar(err?.response?.data?.message || 'No se pudo actualizar el pago Pay Per View.', { variant: 'error' });
+    } finally {
+      setPpvPurchaseActionId(null);
+    }
   };
 
   const updatePlan = (planIndex, field, value) => {
@@ -1347,71 +1498,210 @@ export default function EcommerceSettingsLionTv() {
         </SettingsSection>
 
         <SettingsSection
-          title="Movies APK"
-          description="Configura la película promocional que aparece dentro de la APK Lion TV Premium."
+          title="Pay Per View APK"
+          description="Configura eventos pagados dentro de la APK. El catálogo no expone el stream; la app lo recibe solo cuando el pago está confirmado."
         >
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={Boolean(form.lionTvPremiumApp.movies.enabled)}
-                    onChange={(event) => setPath(['lionTvPremiumApp', 'movies', 'enabled'], event.target.checked)}
-                  />
-                }
-                label="Activar Movies en APK"
-              />
-              <Typography variant="caption" color="text.secondary" display="block">
-                Usa una URL directa HLS, DASH, MP4 o MKV. HTTPS es recomendado, pero algunos proveedores Xtream usan HTTP.
-              </Typography>
+          <Stack spacing={2}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={Boolean(form.lionTvPremiumApp.payPerView.enabled)}
+                      onChange={(event) => setPath(['lionTvPremiumApp', 'payPerView', 'enabled'], event.target.checked)}
+                    />
+                  }
+                  label="Activar Pay Per View en APK"
+                />
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Cada evento requiere una URL de stream directa y un link fijo de pago. El pago se confirma manualmente abajo.
+                </Typography>
+              </Grid>
+              <Grid item xs={12} md={8}>
+                <TextField
+                  fullWidth
+                  label="Título visible"
+                  value={form.lionTvPremiumApp.payPerView.title}
+                  onChange={(event) => setPath(['lionTvPremiumApp', 'payPerView', 'title'], event.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <Button fullWidth variant="outlined" startIcon={<AddCircleOutlineOutlinedIcon />} onClick={addPayPerViewEvent} sx={{ height: '100%' }}>
+                  Agregar evento
+                </Button>
+              </Grid>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Título visible"
-                value={form.lionTvPremiumApp.movies.title}
-                onChange={(event) => setPath(['lionTvPremiumApp', 'movies', 'title'], event.target.value)}
-                helperText="Texto que verá el cliente en el menú de la APK."
-              />
+
+            {(form.lionTvPremiumApp.payPerView.events || []).map((eventItem, eventIndex) => (
+              <Card key={eventItem.id || eventIndex} variant="outlined" sx={{ bgcolor: 'background.default' }}>
+                <CardContent>
+                  <Stack spacing={2}>
+                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', md: 'center' }} justifyContent="space-between">
+                      <Box>
+                        <Typography variant="subtitle1" fontWeight={700}>
+                          {eventItem.title || 'Evento Pay Per View'}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {eventItem.id}
+                        </Typography>
+                      </Box>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Chip size="small" label={eventItem.active ? 'Activo' : 'Oculto'} color={eventItem.active ? 'success' : 'default'} />
+                        <FormControlLabel
+                          control={<Switch checked={Boolean(eventItem.active)} onChange={(e) => updatePayPerViewEvent(eventIndex, 'active', e.target.checked)} />}
+                          label="Visible"
+                        />
+                        <Tooltip title="Eliminar evento">
+                          <IconButton color="error" onClick={() => removePayPerViewEvent(eventIndex)}>
+                            <DeleteOutlineOutlinedIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </Stack>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={4}>
+                        <TextField fullWidth label="ID evento" value={eventItem.id} onChange={(e) => updatePayPerViewEvent(eventIndex, 'id', e.target.value)} />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField fullWidth label="Título" value={eventItem.title} onChange={(e) => updatePayPerViewEvent(eventIndex, 'title', e.target.value)} />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField fullWidth label="Precio visible" value={eventItem.priceLabel} onChange={(e) => updatePayPerViewEvent(eventIndex, 'priceLabel', e.target.value)} />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          multiline
+                          minRows={2}
+                          label="Subtítulo / descripción"
+                          value={eventItem.subtitle}
+                          onChange={(e) => updatePayPerViewEvent(eventIndex, 'subtitle', e.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField fullWidth label="Poster URL" value={eventItem.posterUrl} onChange={(e) => updatePayPerViewEvent(eventIndex, 'posterUrl', e.target.value)} />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField fullWidth label="Link de pago" value={eventItem.paymentUrl} onChange={(e) => updatePayPerViewEvent(eventIndex, 'paymentUrl', e.target.value)} />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          label="URL stream"
+                          value={eventItem.streamUrl}
+                          onChange={(e) => updatePayPerViewEvent(eventIndex, 'streamUrl', e.target.value)}
+                          helperText="Acepta HLS, DASH, MP4, MKV o URLs Xtream directas con http:// o https://."
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField fullWidth label="Inicio" value={eventItem.startsAt} onChange={(e) => updatePayPerViewEvent(eventIndex, 'startsAt', e.target.value)} helperText="Ej: 2026-07-01T20:00:00" />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField fullWidth label="Fin / expira acceso" value={eventItem.endsAt} onChange={(e) => updatePayPerViewEvent(eventIndex, 'endsAt', e.target.value)} helperText="El acceso pagado dura hasta esta fecha." />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="Orden"
+                          value={eventItem.order}
+                          onChange={(e) => updatePayPerViewEvent(eventIndex, 'order', Number(e.target.value || 0))}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Stack>
+                </CardContent>
+              </Card>
+            ))}
+          </Stack>
+        </SettingsSection>
+
+        <SettingsSection title="Pagos Pay Per View" description="Confirma pagos manuales y revoca accesos de eventos. La APK desbloquea el stream al verificar.">
+          <Stack spacing={2}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Estado"
+                  value={ppvPurchaseFilters.status}
+                  onChange={(event) => setPpvPurchaseFilters((prev) => ({ ...prev, status: event.target.value }))}
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  <MenuItem value="PENDING">Pendientes</MenuItem>
+                  <MenuItem value="PAID">Pagados</MenuItem>
+                  <MenuItem value="REVOKED">Revocados</MenuItem>
+                  <MenuItem value="EXPIRED">Expirados</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="Evento"
+                  value={ppvPurchaseFilters.eventId}
+                  onChange={(event) => setPpvPurchaseFilters((prev) => ({ ...prev, eventId: event.target.value }))}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="Buscar email/licencia"
+                  value={ppvPurchaseFilters.search}
+                  onChange={(event) => setPpvPurchaseFilters((prev) => ({ ...prev, search: event.target.value }))}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Button variant="outlined" onClick={() => loadPpvPurchases({ index: 0 })} disabled={ppvPurchasesLoading}>
+                  Actualizar pagos
+                </Button>
+              </Grid>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Poster URL"
-                value={form.lionTvPremiumApp.movies.posterUrl}
-                onChange={(event) => setPath(['lionTvPremiumApp', 'movies', 'posterUrl'], event.target.value)}
-                helperText="Opcional. Puede iniciar con http:// o https://."
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="URL de película"
-                value={form.lionTvPremiumApp.movies.streamUrl}
-                onChange={(event) => setPath(['lionTvPremiumApp', 'movies', 'streamUrl'], event.target.value)}
-                helperText="Requerida si Movies está activo. Acepta http:// o https://, incluyendo URLs Xtream con puerto."
-              />
-            </Grid>
-            <Grid item xs={12} md={8}>
-              <TextField
-                fullWidth
-                multiline
-                minRows={2}
-                label="Texto debajo del video"
-                value={form.lionTvPremiumApp.movies.ctaText}
-                onChange={(event) => setPath(['lionTvPremiumApp', 'movies', 'ctaText'], event.target.value)}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="URL CTA"
-                value={form.lionTvPremiumApp.movies.ctaUrl}
-                onChange={(event) => setPath(['lionTvPremiumApp', 'movies', 'ctaUrl'], event.target.value)}
-                helperText="Se abre al tocar el texto promocional."
-              />
-            </Grid>
-          </Grid>
+
+            <Stack spacing={1.5}>
+              {(ppvPurchases.data || []).map((purchase) => (
+                <Card key={purchase.id} variant="outlined">
+                  <CardContent>
+                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ xs: 'stretch', md: 'center' }} justifyContent="space-between">
+                      <Box>
+                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
+                          <Typography variant="subtitle1" fontWeight={700}>
+                            {purchase.email || `Usuario ${purchase.userId}`}
+                          </Typography>
+                          <Chip size="small" label={purchase.status} color={purchase.status === 'PAID' ? 'success' : purchase.status === 'PENDING' ? 'warning' : 'default'} />
+                        </Stack>
+                        <Typography variant="body2" color="text.secondary">
+                          Evento: {purchase.eventId} · Licencia: {purchase.licenseId}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Actualizado: {purchase.updatedAt || '-'} · Expira: {purchase.accessExpiresAt || '-'}
+                        </Typography>
+                      </Box>
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                        <Button
+                          variant="contained"
+                          disabled={ppvPurchaseActionId === purchase.id || purchase.status === 'PAID'}
+                          onClick={() => handlePpvPurchaseAction(purchase.id, 'confirm')}
+                        >
+                          Confirmar pago
+                        </Button>
+                        <Button
+                          color="error"
+                          variant="outlined"
+                          disabled={ppvPurchaseActionId === purchase.id || purchase.status === 'REVOKED'}
+                          onClick={() => handlePpvPurchaseAction(purchase.id, 'revoke')}
+                        >
+                          Revocar
+                        </Button>
+                      </Stack>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              ))}
+              {!ppvPurchasesLoading && !(ppvPurchases.data || []).length && (
+                <Alert severity="info">No hay compras Pay Per View con los filtros actuales.</Alert>
+              )}
+            </Stack>
+          </Stack>
         </SettingsSection>
 
         <SettingsSection title="Más motivos para unirte" description="Tarjetas visuales del storefront. Se muestran solo las activas y se ordenan por orden ascendente.">
