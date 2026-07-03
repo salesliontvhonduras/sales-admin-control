@@ -1440,7 +1440,7 @@ export default function EcommerceSettingsLionTv() {
                 value={form.appUpdate.latestVersionCode}
                 onChange={(event) => setPath(['appUpdate', 'latestVersionCode'], Number(event.target.value || 0))}
                 inputProps={{ min: 0, step: 1 }}
-                helperText="La notificación aparece cuando este versionCode es mayor que la versión instalada en la APK del cliente."
+                helperText="Este número controla cuándo la APK vuelve a mostrar la notificación. Súbelo solo cuando publiques una nueva actualización."
               />
             </Grid>
             <Grid item xs={12} md={6}>
