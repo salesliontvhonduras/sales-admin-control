@@ -351,6 +351,14 @@ const DEFAULT_CONFIG = {
       cardPaymentUrl: '',
       supportUrl: ''
     },
+    accountExpired: {
+      enabled: false,
+      title: 'Renueva tu acceso premium',
+      message: 'Tu cuenta venció. Renueva para seguir disfrutando LionTV Premium en este dispositivo.',
+      paypalPaymentUrl: '',
+      cardPaymentUrl: '',
+      supportUrl: ''
+    },
     movies: {
       enabled: false,
       title: 'Movies',
@@ -698,6 +706,15 @@ function validateDemoAppConfig(config) {
   return '';
 }
 
+function validateAccountExpiredAppConfig(config) {
+  const accountExpired = config?.lionTvPremiumApp?.accountExpired || {};
+  if (!accountExpired.enabled) return '';
+  if (!isHttpUrl(accountExpired.paypalPaymentUrl) && !isHttpUrl(accountExpired.cardPaymentUrl) && !isHttpUrl(accountExpired.supportUrl)) {
+    return 'Cuenta expirada APK está activo. Configura PayPal, Tarjeta o Soporte.';
+  }
+  return '';
+}
+
 function normalizeDemoAppPremiumConfig(payload = {}) {
   const demo = payload?.demo || {};
   return {
@@ -712,6 +729,20 @@ function normalizeDemoAppPremiumConfig(payload = {}) {
     paypalPaymentUrl: demo.paypalPaymentUrl || '',
     cardPaymentUrl: demo.cardPaymentUrl || '',
     supportUrl: demo.supportUrl || ''
+  };
+}
+
+function normalizeAccountExpiredAppPremiumConfig(payload = {}) {
+  const accountExpired = payload?.accountExpired || {};
+  return {
+    ...DEFAULT_CONFIG.lionTvPremiumApp.accountExpired,
+    ...accountExpired,
+    enabled: Boolean(accountExpired.enabled),
+    title: accountExpired.title || DEFAULT_CONFIG.lionTvPremiumApp.accountExpired.title,
+    message: accountExpired.message || DEFAULT_CONFIG.lionTvPremiumApp.accountExpired.message,
+    paypalPaymentUrl: accountExpired.paypalPaymentUrl || '',
+    cardPaymentUrl: accountExpired.cardPaymentUrl || '',
+    supportUrl: accountExpired.supportUrl || ''
   };
 }
 
@@ -801,6 +832,7 @@ function normalizeConfig(payload) {
       ...DEFAULT_CONFIG.lionTvPremiumApp,
       ...(payload?.lionTvPremiumApp || {}),
       demo: normalizeDemoAppPremiumConfig(payload?.lionTvPremiumApp || {}),
+      accountExpired: normalizeAccountExpiredAppPremiumConfig(payload?.lionTvPremiumApp || {}),
       movies: {
         ...DEFAULT_CONFIG.lionTvPremiumApp.movies,
         ...(payload?.lionTvPremiumApp?.movies || {})
@@ -1181,7 +1213,7 @@ export default function EcommerceSettingsLionTv() {
   };
 
   const handleSave = async () => {
-    const validationError = validateDemoAppConfig(form) || validatePayPerViewConfig(form);
+    const validationError = validateDemoAppConfig(form) || validateAccountExpiredAppConfig(form) || validatePayPerViewConfig(form);
     if (validationError) {
       setError(validationError);
       enqueueSnackbar(validationError, { variant: 'warning' });
@@ -1607,6 +1639,73 @@ export default function EcommerceSettingsLionTv() {
                 value={form.lionTvPremiumApp.demo.supportUrl}
                 onChange={(event) => setPath(['lionTvPremiumApp', 'demo', 'supportUrl'], event.target.value)}
                 helperText="Opcional para reseller/WhatsApp."
+              />
+            </Grid>
+          </Grid>
+        </SettingsSection>
+
+        <SettingsSection
+          title="Cuenta expirada APK"
+          description="Controla la pantalla que verá el cliente cuando su cuenta premium pagada venza dentro de la APK."
+        >
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={Boolean(form.lionTvPremiumApp.accountExpired.enabled)}
+                    onChange={(event) => setPath(['lionTvPremiumApp', 'accountExpired', 'enabled'], event.target.checked)}
+                  />
+                }
+                label="Activar pantalla de renovación cuando la cuenta expire"
+              />
+              <Typography variant="caption" color="text.secondary" display="block">
+                Este flujo aplica solo a licencias vencidas. Revocaciones, usuario suspendido o dispositivo desconectado siguen bloqueando el acceso.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Título"
+                value={form.lionTvPremiumApp.accountExpired.title}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'accountExpired', 'title'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                label="Mensaje"
+                value={form.lionTvPremiumApp.accountExpired.message}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'accountExpired', 'message'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Link PayPal renovación"
+                value={form.lionTvPremiumApp.accountExpired.paypalPaymentUrl}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'accountExpired', 'paypalPaymentUrl'], event.target.value)}
+                helperText="Debe iniciar con http:// o https://."
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Link Tarjeta renovación"
+                value={form.lionTvPremiumApp.accountExpired.cardPaymentUrl}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'accountExpired', 'cardPaymentUrl'], event.target.value)}
+                helperText="Debe iniciar con http:// o https://."
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Link soporte / reseller"
+                value={form.lionTvPremiumApp.accountExpired.supportUrl}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'accountExpired', 'supportUrl'], event.target.value)}
+                helperText="Recomendado para APK reseller o WhatsApp."
               />
             </Grid>
           </Grid>
