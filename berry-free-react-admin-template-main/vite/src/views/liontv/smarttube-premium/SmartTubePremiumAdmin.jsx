@@ -36,6 +36,7 @@ import { useTheme } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DevicesOtherIcon from '@mui/icons-material/DevicesOther';
@@ -72,24 +73,28 @@ import {
   updateSmartTubePremiumDeviceLimit,
   updateSmartTubePremiumUserStatus
 } from 'api/smarttube-premium-admin';
+import { getAdminEcommerceSiteConfig } from 'api/liontv-ecommerce-site';
 
 import SmartTubePremiumRequestsTab from './SmartTubePremiumRequestsTab';
 import SmartTubePremiumSessionsTab from './SmartTubePremiumSessionsTab';
 import SmartTubePremiumUsersTab from './SmartTubePremiumUsersTab';
 import {
   formatDateTime,
+  formatAppVersion,
   getSmartTubeAdminErrorMessage,
   maskDeviceHash,
   modalActionsSx,
   modalContentSx,
   modalPaperSx,
   operatePermissions,
+  resolveDeviceUpdateStatus,
   sessionStatusColor,
   statusColor,
   smartTubePermissionMessage,
   surfaceSx,
   tableContainerSx,
   tabsSx,
+  updateChannelLabel,
   writePermissions
 } from './shared';
 
@@ -212,6 +217,7 @@ export default function SmartTubePremiumAdmin() {
   const [deviceTarget, setDeviceTarget] = useState(null);
   const [devices, setDevices] = useState([]);
   const [devicesLoading, setDevicesLoading] = useState(false);
+  const [appUpdateConfig, setAppUpdateConfig] = useState({});
   const [limitTarget, setLimitTarget] = useState(null);
   const [deviceLimitValue, setDeviceLimitValue] = useState(1);
   const [sessionRevokeTarget, setSessionRevokeTarget] = useState(null);
@@ -276,6 +282,15 @@ export default function SmartTubePremiumAdmin() {
     }
   }, [enqueueSnackbar, sessionPage, sessionRowsPerPage, sessionSearch, sessionStatus, sessionUserId]);
 
+  const loadAppUpdateConfig = useCallback(async () => {
+    try {
+      const payload = await getAdminEcommerceSiteConfig({ skipAuthRedirect: true });
+      setAppUpdateConfig(payload?.appUpdate || {});
+    } catch (error) {
+      setAppUpdateConfig({});
+    }
+  }, []);
+
   useEffect(() => {
     loadRows();
   }, [loadRows, refreshKey]);
@@ -287,6 +302,10 @@ export default function SmartTubePremiumAdmin() {
   useEffect(() => {
     loadSessions();
   }, [loadSessions, sessionRefreshKey]);
+
+  useEffect(() => {
+    loadAppUpdateConfig();
+  }, [loadAppUpdateConfig]);
 
   const metrics = useMemo(() => {
     const counts = rows.reduce((acc, row) => {
@@ -306,6 +325,17 @@ export default function SmartTubePremiumAdmin() {
       { title: 'Sesiones', value: activeSessions, helper: 'Conexiones activas', color: 'secondary', icon: <LogoutIcon fontSize="small" /> }
     ];
   }, [requestRows, requestStatus, requestTotal, rows, sessionRows, sessionStatus, sessionTotal, total]);
+
+  const deviceVersionSummary = useMemo(() => {
+    return devices.reduce(
+      (acc, device) => {
+        const statusInfo = resolveDeviceUpdateStatus(device, appUpdateConfig);
+        acc[statusInfo.key] = (acc[statusInfo.key] || 0) + 1;
+        return acc;
+      },
+      { updated: 0, pending: 0, unreported: 0, reported: 0 }
+    );
+  }, [appUpdateConfig, devices]);
 
   const refreshAll = () => {
     setRefreshKey((value) => value + 1);
@@ -771,6 +801,7 @@ export default function SmartTubePremiumAdmin() {
             userId={sessionUserId}
             locale={locale}
             canRevokeSession={canOperate}
+            appUpdateConfig={appUpdateConfig}
             onSearchChange={(value) => {
               setSessionSearch(value);
               setSessionPage(0);
@@ -1014,7 +1045,7 @@ export default function SmartTubePremiumAdmin() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={Boolean(deviceTarget)} onClose={() => setDeviceTarget(null)} fullWidth maxWidth="md" PaperProps={{ sx: modalPaperSx }}>
+      <Dialog open={Boolean(deviceTarget)} onClose={() => setDeviceTarget(null)} fullWidth maxWidth="lg" PaperProps={{ sx: modalPaperSx }}>
         <DialogTitleWithClose onClose={() => setDeviceTarget(null)}>
           <Stack spacing={0.4}>
             <Typography variant="h4">Dispositivos vinculados</Typography>
@@ -1026,44 +1057,70 @@ export default function SmartTubePremiumAdmin() {
         <DialogContent sx={modalContentSx}>
           <Stack spacing={2}>
             <CustomerSummary row={deviceTarget} helper={`${Number(deviceTarget?.deviceCount || 0)} de ${Number(deviceTarget?.deviceLimit || 1)} dispositivos activos.`} />
+            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+              <Chip size="small" icon={<CloudDoneIcon />} color="success" label={`Actualizados ${deviceVersionSummary.updated || 0}`} />
+              <Chip size="small" color="warning" label={`Pendientes ${deviceVersionSummary.pending || 0}`} />
+              <Chip size="small" color="default" label={`Sin reportar ${deviceVersionSummary.unreported || 0}`} />
+              {deviceVersionSummary.reported ? <Chip size="small" color="info" label={`Reportados ${deviceVersionSummary.reported}`} /> : null}
+            </Stack>
             <TableContainer sx={tableContainerSx(theme)}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
                     <TableCell>Dispositivo</TableCell>
+                    <TableCell>Versión publicada</TableCell>
+                    <TableCell>APK interno</TableCell>
+                    <TableCell>Canal</TableCell>
+                    <TableCell>Actualización</TableCell>
                     <TableCell>ID</TableCell>
                     <TableCell>Estado</TableCell>
-                    <TableCell>Primer acceso</TableCell>
                     <TableCell>Último acceso</TableCell>
                     <TableCell align="right">Acciones</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {devices.map((device) => (
-                    <TableRow key={device.id} hover>
-                      <TableCell>{device.deviceName || 'Dispositivo Android'}</TableCell>
-                      <TableCell>
-                        <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
-                          {maskDeviceHash(device.deviceIdHash)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip size="small" color={device.status === 'ACTIVE' ? 'success' : 'default'} label={device.status || '-'} />
-                      </TableCell>
-                      <TableCell>{formatDateTime(device.firstSeenAt, locale)}</TableCell>
-                      <TableCell>{formatDateTime(device.lastSeenAt, locale)}</TableCell>
-                      <TableCell align="right">
-                        {canOperate ? (
-                          <Button size="small" color="warning" variant="outlined" disabled={saving || device.status !== 'ACTIVE'} onClick={() => handleRevokeDevice(device)}>
-                            Desvincular
-                          </Button>
-                        ) : null}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {devices.map((device) => {
+                    const updateStatus = resolveDeviceUpdateStatus(device, appUpdateConfig);
+                    return (
+                      <TableRow key={device.id} hover>
+                        <TableCell>
+                          <Stack spacing={0.2}>
+                            <Typography variant="body2">{device.deviceName || 'Dispositivo Android'}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Reporte: {formatDateTime(device.appVersionReportedAt, locale)}
+                            </Typography>
+                          </Stack>
+                        </TableCell>
+                        <TableCell>{formatAppVersion(device.acceptedUpdateVersionName, device.acceptedUpdateVersionCode)}</TableCell>
+                        <TableCell>{formatAppVersion(device.installedVersionName, device.installedVersionCode)}</TableCell>
+                        <TableCell>
+                          <Chip size="small" label={updateChannelLabel(device.updateChannel)} />
+                        </TableCell>
+                        <TableCell>
+                          <Chip size="small" color={updateStatus.color} label={updateStatus.label} />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
+                            {maskDeviceHash(device.deviceIdHash)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip size="small" color={device.status === 'ACTIVE' ? 'success' : 'default'} label={device.status || '-'} />
+                        </TableCell>
+                        <TableCell>{formatDateTime(device.lastSeenAt, locale)}</TableCell>
+                        <TableCell align="right">
+                          {canOperate ? (
+                            <Button size="small" color="warning" variant="outlined" disabled={saving || device.status !== 'ACTIVE'} onClick={() => handleRevokeDevice(device)}>
+                              Desvincular
+                            </Button>
+                          ) : null}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                   {!devicesLoading && devices.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6}>
+                      <TableCell colSpan={9}>
                         <Box sx={{ py: 4, textAlign: 'center' }}>
                           <Typography color="text.secondary">Este usuario aún no tiene dispositivos vinculados.</Typography>
                         </Box>

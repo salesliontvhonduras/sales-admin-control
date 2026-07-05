@@ -86,6 +86,49 @@ export function maskDeviceHash(value) {
   return `...${text.slice(-8).toUpperCase()}`;
 }
 
+export function formatAppVersion(versionName, versionCode) {
+  const code = Number(versionCode || 0);
+  const name = String(versionName || '').trim();
+  if (!name && !code) return 'Sin reportar';
+  if (name && code) return `${name} (${code})`;
+  return name || String(code);
+}
+
+export function normalizeUpdateChannel(value) {
+  const channel = String(value || '').trim().toLowerCase();
+  if (channel === 'owner') return 'owner';
+  if (channel === 'reseller') return 'reseller';
+  if (channel === 'premium') return 'owner';
+  return channel || 'owner';
+}
+
+export function updateChannelLabel(value) {
+  const channel = normalizeUpdateChannel(value);
+  if (channel === 'owner') return 'Owner';
+  if (channel === 'reseller') return 'Reseller';
+  return channel.toUpperCase();
+}
+
+export function resolveDeviceUpdateStatus(row, appUpdateConfig = {}) {
+  const channel = normalizeUpdateChannel(row?.updateChannel);
+  const channelConfig = appUpdateConfig?.[channel] || {};
+  const latestCode = Number(channelConfig?.latestVersionCode || 0);
+  const acceptedCode = Number(row?.acceptedUpdateVersionCode || 0);
+  const installedCode = Number(row?.installedVersionCode || 0);
+  const comparisonCode = acceptedCode || installedCode;
+
+  if (!comparisonCode) {
+    return { key: 'unreported', label: 'Sin reportar', color: 'default', channel, latestCode };
+  }
+  if (!latestCode) {
+    return { key: 'reported', label: 'Reportado', color: 'info', channel, latestCode };
+  }
+  if (comparisonCode >= latestCode) {
+    return { key: 'updated', label: 'Actualizado', color: 'success', channel, latestCode };
+  }
+  return { key: 'pending', label: 'Pendiente', color: 'warning', channel, latestCode };
+}
+
 export function getErrorMessage(error, fallback) {
   return error?.response?.data?.message || error?.message || fallback;
 }

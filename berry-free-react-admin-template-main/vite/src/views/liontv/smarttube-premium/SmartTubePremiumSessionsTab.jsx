@@ -21,7 +21,18 @@ import SearchIcon from '@mui/icons-material/Search';
 
 import ResponsiveFilters from 'ui-component/responsive/ResponsiveFilters';
 
-import { formatDateTime, maskDeviceHash, sessionStatusColor, sessionStatusOptions, statusColor, surfaceSx, tableContainerSx } from './shared';
+import {
+  formatAppVersion,
+  formatDateTime,
+  maskDeviceHash,
+  resolveDeviceUpdateStatus,
+  sessionStatusColor,
+  sessionStatusOptions,
+  statusColor,
+  surfaceSx,
+  tableContainerSx,
+  updateChannelLabel
+} from './shared';
 
 function SessionActions({ row, canRevokeSession, onRevoke }) {
   const active = String(row.status || '').toUpperCase() === 'ACTIVE';
@@ -39,7 +50,8 @@ function SessionActions({ row, canRevokeSession, onRevoke }) {
   );
 }
 
-function SessionCard({ row, locale, canRevokeSession, onRevoke }) {
+function SessionCard({ row, locale, canRevokeSession, onRevoke, appUpdateConfig }) {
+  const updateStatus = resolveDeviceUpdateStatus(row, appUpdateConfig);
   return (
     <Card variant="outlined" sx={(theme) => surfaceSx(theme)}>
       <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
@@ -58,8 +70,14 @@ function SessionCard({ row, locale, canRevokeSession, onRevoke }) {
           <Stack direction="row" spacing={0.75} useFlexGap flexWrap="wrap">
             <Chip size="small" label={row.deviceName || 'Dispositivo Android'} />
             <Chip size="small" label={maskDeviceHash(row.deviceIdHash)} />
+            <Chip size="small" color={updateStatus.color} label={updateStatus.label} />
+            <Chip size="small" label={updateChannelLabel(row.updateChannel)} />
             <Chip size="small" color={statusColor(row.licenseStatus)} label={`Licencia ${row.licenseStatus || '-'}`} />
           </Stack>
+          <Typography variant="caption" color="text.secondary">
+            Versión publicada: {formatAppVersion(row.acceptedUpdateVersionName, row.acceptedUpdateVersionCode)} · APK interno:{' '}
+            {formatAppVersion(row.installedVersionName, row.installedVersionCode)}
+          </Typography>
           <Typography variant="caption" color="text.secondary">
             Primer acceso: {formatDateTime(row.firstSeenAt, locale)} · Último heartbeat: {formatDateTime(row.lastSeenAt, locale)}
           </Typography>
@@ -86,6 +104,7 @@ export default function SmartTubePremiumSessionsTab({
   userId,
   locale,
   canRevokeSession,
+  appUpdateConfig = {},
   onSearchChange,
   onStatusChange,
   onUserIdChange,
@@ -146,11 +165,15 @@ export default function SmartTubePremiumSessionsTab({
                       <Typography variant="caption" sx={{ fontFamily: 'monospace' }} color="text.secondary">
                         {maskDeviceHash(row.deviceIdHash)}
                       </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {formatAppVersion(row.acceptedUpdateVersionName, row.acceptedUpdateVersionCode)} · {updateChannelLabel(row.updateChannel)}
+                      </Typography>
                     </Stack>
                   </TableCell>
                   <TableCell>
                     <Stack spacing={0.5}>
                       <Chip size="small" color={sessionStatusColor(row.status)} label={row.status || '-'} />
+                      <Chip size="small" color={resolveDeviceUpdateStatus(row, appUpdateConfig).color} label={resolveDeviceUpdateStatus(row, appUpdateConfig).label} />
                       <Typography variant="caption" color="text.secondary">
                         #{row.sessionId}
                       </Typography>
@@ -200,7 +223,7 @@ export default function SmartTubePremiumSessionsTab({
 
       <Stack spacing={1.25} sx={{ display: { xs: 'flex', md: 'none' } }}>
         {rows.map((row) => (
-          <SessionCard key={row.sessionId} row={row} locale={locale} canRevokeSession={canRevokeSession} onRevoke={onRevoke} />
+          <SessionCard key={row.sessionId} row={row} locale={locale} canRevokeSession={canRevokeSession} onRevoke={onRevoke} appUpdateConfig={appUpdateConfig} />
         ))}
         {!loading && rows.length === 0 ? (
           <Card variant="outlined" sx={(themeValue) => surfaceSx(themeValue)}>

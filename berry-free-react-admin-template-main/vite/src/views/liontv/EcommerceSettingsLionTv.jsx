@@ -233,6 +233,14 @@ const DEFAULT_GUIDED_TOUR_STEPS = [
   }
 ];
 
+const DEFAULT_APP_UPDATE_CHANNEL = {
+  enabled: false,
+  latestVersionCode: 0,
+  latestVersionName: '',
+  downloadUrl: '',
+  message: 'Hay una nueva actualizacion disponible.'
+};
+
 const DEFAULT_CONFIG = {
   language: { default: 'es', supported: ['es', 'en'] },
   brand: {
@@ -333,11 +341,8 @@ const DEFAULT_CONFIG = {
     apkDownloadUrl: ''
   },
   appUpdate: {
-    enabled: false,
-    latestVersionCode: 0,
-    latestVersionName: '',
-    downloadUrl: '',
-    message: 'Hay una nueva actualizacion disponible.'
+    owner: { ...DEFAULT_APP_UPDATE_CHANNEL },
+    reseller: { ...DEFAULT_APP_UPDATE_CHANNEL }
   },
   lionTvPremiumApp: {
     demo: {
@@ -674,6 +679,45 @@ function isHttpUrl(value = '') {
   return trimmed.startsWith('http://') || trimmed.startsWith('https://');
 }
 
+function normalizeAppUpdateChannel(channel = {}) {
+  return {
+    ...DEFAULT_APP_UPDATE_CHANNEL,
+    ...(channel || {}),
+    enabled: Boolean(channel?.enabled),
+    latestVersionCode: Math.max(Number(channel?.latestVersionCode || 0), 0),
+    latestVersionName: channel?.latestVersionName || '',
+    downloadUrl: channel?.downloadUrl || '',
+    message: channel?.message || DEFAULT_APP_UPDATE_CHANNEL.message
+  };
+}
+
+function normalizeAppUpdateConfig(payload = {}) {
+  const appUpdate = payload || {};
+  const hasChannels = appUpdate.owner || appUpdate.reseller;
+  return {
+    owner: normalizeAppUpdateChannel(hasChannels ? appUpdate.owner : appUpdate),
+    reseller: normalizeAppUpdateChannel(hasChannels ? appUpdate.reseller : {})
+  };
+}
+
+function validateAppUpdateConfig(config) {
+  const channels = [
+    ['owner', 'APK Owner'],
+    ['reseller', 'APK Reseller']
+  ];
+  for (const [channel, label] of channels) {
+    const appUpdate = config?.appUpdate?.[channel] || {};
+    if (!appUpdate.enabled) continue;
+    if (!Number(appUpdate.latestVersionCode || 0)) {
+      return `${label}: configura un Version code mayor que 0.`;
+    }
+    if (!isHttpUrl(appUpdate.downloadUrl)) {
+      return `${label}: configura una URL directa APK válida http:// o https://.`;
+    }
+  }
+  return '';
+}
+
 function validatePayPerViewConfig(config) {
   const ppv = config?.lionTvPremiumApp?.payPerView || {};
   if (!ppv.enabled) return '';
@@ -827,7 +871,7 @@ function normalizeConfig(payload) {
     payment: { ...DEFAULT_CONFIG.payment, ...(payload?.payment || {}) },
     points: { ...DEFAULT_CONFIG.points, ...(payload?.points || {}) },
     externalLinks: { ...DEFAULT_CONFIG.externalLinks, ...(payload?.externalLinks || {}) },
-    appUpdate: { ...DEFAULT_CONFIG.appUpdate, ...(payload?.appUpdate || {}) },
+    appUpdate: normalizeAppUpdateConfig(payload?.appUpdate),
     lionTvPremiumApp: {
       ...DEFAULT_CONFIG.lionTvPremiumApp,
       ...(payload?.lionTvPremiumApp || {}),
@@ -1213,7 +1257,8 @@ export default function EcommerceSettingsLionTv() {
   };
 
   const handleSave = async () => {
-    const validationError = validateDemoAppConfig(form) || validateAccountExpiredAppConfig(form) || validatePayPerViewConfig(form);
+    const validationError =
+      validateAppUpdateConfig(form) || validateDemoAppConfig(form) || validateAccountExpiredAppConfig(form) || validatePayPerViewConfig(form);
     if (validationError) {
       setError(validationError);
       enqueueSnackbar(validationError, { variant: 'warning' });
@@ -1492,58 +1537,143 @@ export default function EcommerceSettingsLionTv() {
 
         <SettingsSection
           title="Actualización APK"
-          description="Aviso opcional para que la APK Lion TV Premium descargue e instale una versión nueva."
+          description="Configura canales separados para que Owner y Reseller no mezclen versiones ni URLs de descarga."
         >
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Owner y Reseller usan manifests separados. No subas el APK owner en el canal reseller ni el APK reseller en el canal owner.
+          </Alert>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={Boolean(form.appUpdate.enabled)}
-                    onChange={(event) => setPath(['appUpdate', 'enabled'], event.target.checked)}
-                  />
-                }
-                label="Aviso de actualización activo"
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Version code nueva"
-                value={form.appUpdate.latestVersionCode}
-                onChange={(event) => setPath(['appUpdate', 'latestVersionCode'], Number(event.target.value || 0))}
-                inputProps={{ min: 0, step: 1 }}
-                helperText="Este número controla cuándo la APK vuelve a mostrar la notificación. Súbelo solo cuando publiques una nueva actualización."
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Versión visible"
-                value={form.appUpdate.latestVersionName}
-                onChange={(event) => setPath(['appUpdate', 'latestVersionName'], event.target.value)}
-                helperText="Ejemplo: 31.98. Si queda vacío, se usará el versionCode."
-              />
+              <Card variant="outlined">
+                <CardContent>
+                  <Stack spacing={2}>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+                      <Box>
+                        <Typography variant="h4">APK Owner</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Canal para la APK owner con pagos directos, demo y renovación.
+                        </Typography>
+                      </Box>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={Boolean(form.appUpdate.owner.enabled)}
+                            onChange={(event) => setPath(['appUpdate', 'owner', 'enabled'], event.target.checked)}
+                          />
+                        }
+                        label="Activo"
+                      />
+                    </Stack>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="Version code nueva"
+                          value={form.appUpdate.owner.latestVersionCode}
+                          onChange={(event) => setPath(['appUpdate', 'owner', 'latestVersionCode'], Number(event.target.value || 0))}
+                          inputProps={{ min: 0, step: 1 }}
+                          helperText="Súbelo solo cuando publiques una nueva actualización owner."
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Versión visible"
+                          value={form.appUpdate.owner.latestVersionName}
+                          onChange={(event) => setPath(['appUpdate', 'owner', 'latestVersionName'], event.target.value)}
+                          helperText="Ejemplo: 31.98. Si queda vacío, se usará el versionCode."
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          label="URL directa APK owner"
+                          value={form.appUpdate.owner.downloadUrl}
+                          onChange={(event) => setPath(['appUpdate', 'owner', 'downloadUrl'], event.target.value)}
+                          helperText="Debe apuntar directamente al APK owner."
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          multiline
+                          minRows={2}
+                          label="Mensaje de actualización"
+                          value={form.appUpdate.owner.message}
+                          onChange={(event) => setPath(['appUpdate', 'owner', 'message'], event.target.value)}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Stack>
+                </CardContent>
+              </Card>
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="URL directa APK"
-                value={form.appUpdate.downloadUrl}
-                onChange={(event) => setPath(['appUpdate', 'downloadUrl'], event.target.value)}
-                helperText="Debe apuntar directamente a un archivo .apk compatible para que Android pueda instalarlo."
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                multiline
-                minRows={2}
-                label="Mensaje de actualización"
-                value={form.appUpdate.message}
-                onChange={(event) => setPath(['appUpdate', 'message'], event.target.value)}
-              />
+              <Card variant="outlined">
+                <CardContent>
+                  <Stack spacing={2}>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+                      <Box>
+                        <Typography variant="h4">APK Reseller</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Canal para la APK reseller sin pagos directos ni paywall owner.
+                        </Typography>
+                      </Box>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={Boolean(form.appUpdate.reseller.enabled)}
+                            onChange={(event) => setPath(['appUpdate', 'reseller', 'enabled'], event.target.checked)}
+                          />
+                        }
+                        label="Activo"
+                      />
+                    </Stack>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="Version code nueva"
+                          value={form.appUpdate.reseller.latestVersionCode}
+                          onChange={(event) => setPath(['appUpdate', 'reseller', 'latestVersionCode'], Number(event.target.value || 0))}
+                          inputProps={{ min: 0, step: 1 }}
+                          helperText="Súbelo solo cuando publiques una nueva actualización reseller."
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Versión visible"
+                          value={form.appUpdate.reseller.latestVersionName}
+                          onChange={(event) => setPath(['appUpdate', 'reseller', 'latestVersionName'], event.target.value)}
+                          helperText="Ejemplo: 31.98. Si queda vacío, se usará el versionCode."
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          label="URL directa APK reseller"
+                          value={form.appUpdate.reseller.downloadUrl}
+                          onChange={(event) => setPath(['appUpdate', 'reseller', 'downloadUrl'], event.target.value)}
+                          helperText="Debe apuntar directamente al APK reseller."
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          multiline
+                          minRows={2}
+                          label="Mensaje de actualización"
+                          value={form.appUpdate.reseller.message}
+                          onChange={(event) => setPath(['appUpdate', 'reseller', 'message'], event.target.value)}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Stack>
+                </CardContent>
+              </Card>
             </Grid>
           </Grid>
         </SettingsSection>
@@ -1564,7 +1694,7 @@ export default function EcommerceSettingsLionTv() {
                 label="Activar modo demo en primera instalación"
               />
               <Typography variant="caption" color="text.secondary" display="block">
-                Un dispositivo solo recibe una demo. Reinstalar o borrar datos no reinicia el tiempo porque el control queda en backend.
+                Aplica solo a la APK owner. La APK reseller usa login por usuario y contraseña. Un dispositivo solo recibe una demo.
               </Typography>
             </Grid>
             <Grid item xs={12} md={4}>
@@ -1660,7 +1790,7 @@ export default function EcommerceSettingsLionTv() {
                 label="Activar pantalla de renovación cuando la cuenta expire"
               />
               <Typography variant="caption" color="text.secondary" display="block">
-                Este flujo aplica solo a licencias vencidas. Revocaciones, usuario suspendido o dispositivo desconectado siguen bloqueando el acceso.
+                Aplica solo a la APK owner. La APK reseller usa login por usuario y contraseña. Revocaciones, usuario suspendido o dispositivo desconectado siguen bloqueando el acceso.
               </Typography>
             </Grid>
             <Grid item xs={12} md={6}>
