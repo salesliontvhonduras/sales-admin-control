@@ -340,6 +340,17 @@ const DEFAULT_CONFIG = {
     message: 'Hay una nueva actualizacion disponible.'
   },
   lionTvPremiumApp: {
+    demo: {
+      enabled: false,
+      durationHours: 24,
+      title: 'Modo Demo Premium',
+      subtitle: 'Disfruta LionTV Premium por 24 horas.',
+      expiredTitle: 'Tu demo finalizó',
+      expiredMessage: 'Para seguir disfrutando LionTV Premium, elige tu método de pago o ingresa con una cuenta activa.',
+      paypalPaymentUrl: '',
+      cardPaymentUrl: '',
+      supportUrl: ''
+    },
     movies: {
       enabled: false,
       title: 'Movies',
@@ -674,6 +685,36 @@ function validatePayPerViewConfig(config) {
   return '';
 }
 
+function validateDemoAppConfig(config) {
+  const demo = config?.lionTvPremiumApp?.demo || {};
+  if (!demo.enabled) return '';
+  if (!isHttpUrl(demo.paypalPaymentUrl) && !isHttpUrl(demo.cardPaymentUrl)) {
+    return 'Demo APK está activo. Configura al menos un link válido de PayPal o Tarjeta.';
+  }
+  const duration = Number(demo.durationHours || 0);
+  if (!duration || duration < 1 || duration > 168) {
+    return 'La duración del Demo APK debe estar entre 1 y 168 horas.';
+  }
+  return '';
+}
+
+function normalizeDemoAppPremiumConfig(payload = {}) {
+  const demo = payload?.demo || {};
+  return {
+    ...DEFAULT_CONFIG.lionTvPremiumApp.demo,
+    ...demo,
+    enabled: Boolean(demo.enabled),
+    durationHours: Math.min(Math.max(Number(demo.durationHours || DEFAULT_CONFIG.lionTvPremiumApp.demo.durationHours), 1), 168),
+    title: demo.title || DEFAULT_CONFIG.lionTvPremiumApp.demo.title,
+    subtitle: demo.subtitle || DEFAULT_CONFIG.lionTvPremiumApp.demo.subtitle,
+    expiredTitle: demo.expiredTitle || DEFAULT_CONFIG.lionTvPremiumApp.demo.expiredTitle,
+    expiredMessage: demo.expiredMessage || DEFAULT_CONFIG.lionTvPremiumApp.demo.expiredMessage,
+    paypalPaymentUrl: demo.paypalPaymentUrl || '',
+    cardPaymentUrl: demo.cardPaymentUrl || '',
+    supportUrl: demo.supportUrl || ''
+  };
+}
+
 function normalizePayPerViewConfig(payload = {}) {
   const legacyMovies = payload?.movies || {};
   const ppv = payload?.payPerView || {};
@@ -759,6 +800,7 @@ function normalizeConfig(payload) {
     lionTvPremiumApp: {
       ...DEFAULT_CONFIG.lionTvPremiumApp,
       ...(payload?.lionTvPremiumApp || {}),
+      demo: normalizeDemoAppPremiumConfig(payload?.lionTvPremiumApp || {}),
       movies: {
         ...DEFAULT_CONFIG.lionTvPremiumApp.movies,
         ...(payload?.lionTvPremiumApp?.movies || {})
@@ -1139,7 +1181,7 @@ export default function EcommerceSettingsLionTv() {
   };
 
   const handleSave = async () => {
-    const validationError = validatePayPerViewConfig(form);
+    const validationError = validateDemoAppConfig(form) || validatePayPerViewConfig(form);
     if (validationError) {
       setError(validationError);
       enqueueSnackbar(validationError, { variant: 'warning' });
@@ -1469,6 +1511,102 @@ export default function EcommerceSettingsLionTv() {
                 label="Mensaje de actualización"
                 value={form.appUpdate.message}
                 onChange={(event) => setPath(['appUpdate', 'message'], event.target.value)}
+              />
+            </Grid>
+          </Grid>
+        </SettingsSection>
+
+        <SettingsSection
+          title="Demo APK"
+          description="Controla la experiencia de primera instalación de LionTV Premium. La expiración real se valida contra el backend por dispositivo."
+        >
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={Boolean(form.lionTvPremiumApp.demo.enabled)}
+                    onChange={(event) => setPath(['lionTvPremiumApp', 'demo', 'enabled'], event.target.checked)}
+                  />
+                }
+                label="Activar modo demo en primera instalación"
+              />
+              <Typography variant="caption" color="text.secondary" display="block">
+                Un dispositivo solo recibe una demo. Reinstalar o borrar datos no reinicia el tiempo porque el control queda en backend.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Duración demo (horas)"
+                value={form.lionTvPremiumApp.demo.durationHours}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'demo', 'durationHours'], Number(event.target.value || 24))}
+                inputProps={{ min: 1, max: 168, step: 1 }}
+                helperText="Default recomendado: 24 horas."
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Título demo"
+                value={form.lionTvPremiumApp.demo.title}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'demo', 'title'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Título demo expirada"
+                value={form.lionTvPremiumApp.demo.expiredTitle}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'demo', 'expiredTitle'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                label="Texto bienvenida demo"
+                value={form.lionTvPremiumApp.demo.subtitle}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'demo', 'subtitle'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                label="Texto demo expirada"
+                value={form.lionTvPremiumApp.demo.expiredMessage}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'demo', 'expiredMessage'], event.target.value)}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Link PayPal"
+                value={form.lionTvPremiumApp.demo.paypalPaymentUrl}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'demo', 'paypalPaymentUrl'], event.target.value)}
+                helperText="Debe iniciar con http:// o https://."
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Link Tarjeta"
+                value={form.lionTvPremiumApp.demo.cardPaymentUrl}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'demo', 'cardPaymentUrl'], event.target.value)}
+                helperText="Debe iniciar con http:// o https://."
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Link soporte opcional"
+                value={form.lionTvPremiumApp.demo.supportUrl}
+                onChange={(event) => setPath(['lionTvPremiumApp', 'demo', 'supportUrl'], event.target.value)}
+                helperText="Opcional para reseller/WhatsApp."
               />
             </Grid>
           </Grid>
