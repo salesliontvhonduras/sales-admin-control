@@ -42,6 +42,7 @@ const EcommerceSettingsLionTv = Loadable(lazy(() => import('views/liontv/Ecommer
 const PayPerViewPaymentsLionTv = Loadable(lazy(() => import('views/liontv/PayPerViewPaymentsLionTv')));
 const EcommerceDeviceSetupRequestsLionTv = Loadable(lazy(() => import('views/liontv/EcommerceDeviceSetupRequestsLionTv')));
 const SmartTubePremiumAdmin = Loadable(lazy(() => import('views/liontv/SmartTubePremiumAdmin')));
+const YoutubePremiumAppDemosLionTv = Loadable(lazy(() => import('views/liontv/YoutubePremiumAppDemosLionTv')));
 const VipCustomersLionTv = Loadable(lazy(() => import('views/liontv/VipCustomersLionTv')));
 const LoyaltyLionTv = Loadable(lazy(() => import('views/liontv/LoyaltyLionTv')));
 const RafflesLionTv = Loadable(lazy(() => import('views/liontv/RafflesLionTv')));
@@ -391,6 +392,24 @@ const MainRoutes = {
               ]
             },
             <SmartTubePremiumAdmin />,
+            '/liontv/dashboard',
+            true
+          )
+        },
+        {
+          path: '/liontv/youtube-premium-demos',
+          element: protectPage(
+            {
+              any: [
+                'ROLE_ADMIN',
+                'ADMIN',
+                'ROLE_SUPER_ADMIN',
+                'SUPER_ADMIN',
+                'LIONTV_DEMOS_VIEW',
+                'ROLE_LIONTV_DEMOS_VIEW'
+              ]
+            },
+            <YoutubePremiumAppDemosLionTv />,
             '/liontv/dashboard',
             true
           )

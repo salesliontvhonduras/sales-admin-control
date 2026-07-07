@@ -36,7 +36,7 @@ const liontv = {
   id: 'liontv',
   title: 'menu.liontv',
   type: 'group',
-  permission: { any: ['LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+  permission: { any: ['LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'LIONTV_DEMOS_VIEW', 'ROLE_LIONTV_DEMOS_VIEW'] },
   children: [
     {
       id: 'liontv-overview',
@@ -324,7 +324,7 @@ const liontv = {
       caption: 'menu.liontvOperationsCaption',
       type: 'collapse',
       icon: icons.IconRouter,
-      permission: { any: ['LIONTV_TECH_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW'] },
+      permission: { any: ['LIONTV_TECH_VIEW', 'LIONTV_VIEW', 'ROLE_LIONTV_VIEW', 'LIONTV_DEMOS_VIEW', 'ROLE_LIONTV_DEMOS_VIEW'] },
       children: [
         {
           id: 'liontv-lines',
@@ -380,6 +380,25 @@ const liontv = {
               'ROLE_USER_MANAGEMENT_EDIT_USER',
               'USER_MANAGEMENT_DISABLE_USER',
               'ROLE_USER_MANAGEMENT_DISABLE_USER'
+            ]
+          }
+        },
+        {
+          id: 'liontv-youtube-premium-demos',
+          title: 'menu.youtubePremiumDemos',
+          type: 'item',
+          url: '/liontv/youtube-premium-demos',
+          icon: icons.IconGift,
+          resellerVisible: false,
+          breadcrumbs: true,
+          permission: {
+            any: [
+              'ROLE_ADMIN',
+              'ADMIN',
+              'ROLE_SUPER_ADMIN',
+              'SUPER_ADMIN',
+              'LIONTV_DEMOS_VIEW',
+              'ROLE_LIONTV_DEMOS_VIEW'
             ]
           }
         },

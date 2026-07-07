@@ -65,6 +65,14 @@ export async function listSmartTubePremiumSessions(params = {}, config = {}) {
   return unwrap(response);
 }
 
+export async function listYoutubePremiumAppDemos(params = {}, config = {}) {
+  const response = await authApi.get('/auth/v1/admin/liontv-premium-app/demos', {
+    ...config,
+    params
+  });
+  return unwrap(response);
+}
+
 export async function revokeSmartTubePremiumSession(sessionId, config = {}) {
   const response = await authApi.post(`/auth/v1/admin/smarttube-premium/sessions/${sessionId}/revoke`, {}, config);
   return unwrap(response);
