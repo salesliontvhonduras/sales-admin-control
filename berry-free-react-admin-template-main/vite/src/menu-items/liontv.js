@@ -1,7 +1,6 @@
 import {
   IconDeviceTv,
   IconCrown,
-  IconGift,
   IconUsers,
   IconReceipt2,
   IconFileInvoice,
@@ -10,15 +9,12 @@ import {
   IconDashboard,
   IconUserSearch,
   IconKey,
-  IconAlertTriangle,
-  IconSettings,
-  IconTicket
+  IconAlertTriangle
 } from '@tabler/icons-react';
 
 const icons = {
   IconCrown,
   IconDeviceTv,
-  IconGift,
   IconUsers,
   IconReceipt2,
   IconFileInvoice,
@@ -27,9 +23,7 @@ const icons = {
   IconUserSearch,
   IconMailCog,
   IconDashboard,
-  IconAlertTriangle,
-  IconSettings,
-  IconTicket
+  IconAlertTriangle
 };
 
 const liontv = {
@@ -109,7 +103,6 @@ const liontv = {
           title: 'menu.ecommerceSettings',
           type: 'item',
           url: '/liontv/ecommerce-settings',
-          icon: icons.IconSettings,
           resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['ROLE_ADMIN', 'ADMIN'] }
@@ -119,7 +112,6 @@ const liontv = {
           title: 'menu.payPerViewPayments',
           type: 'item',
           url: '/liontv/pay-per-view-payments',
-          icon: icons.IconTicket,
           resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['ROLE_ADMIN', 'ADMIN'] }
@@ -388,7 +380,6 @@ const liontv = {
           title: 'menu.youtubePremiumDemos',
           type: 'item',
           url: '/liontv/youtube-premium-demos',
-          icon: icons.IconGift,
           resellerVisible: false,
           breadcrumbs: true,
           permission: {
