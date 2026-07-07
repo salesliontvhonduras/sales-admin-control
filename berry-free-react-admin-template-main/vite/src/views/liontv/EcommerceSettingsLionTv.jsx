@@ -2898,11 +2898,23 @@ export default function EcommerceSettingsLionTv() {
                     </Stack>
 
                     <Grid container spacing={2}>
-                      <Grid item xs={12} md={3}>
+                      <Grid item xs={12} md={2}>
                         <TextField fullWidth label="Código" value={plan.code} onChange={(event) => updatePlan(planIndex, 'code', event.target.value)} />
                       </Grid>
-                      <Grid item xs={12} md={3}>
+                      <Grid item xs={12} md={2}>
                         <TextField fullWidth label="Nombre" value={plan.name} onChange={(event) => updatePlan(planIndex, 'name', event.target.value)} />
+                      </Grid>
+                      <Grid item xs={12} md={2}>
+                        <TextField
+                          select
+                          fullWidth
+                          label="Tipo de acción"
+                          value={plan.actionType || 'PAYMENT'}
+                          onChange={(event) => updatePlan(planIndex, 'actionType', event.target.value)}
+                        >
+                          <MenuItem value="PAYMENT">Pago normal</MenuItem>
+                          <MenuItem value="DOWNLOAD_APK">Descargar APK</MenuItem>
+                        </TextField>
                       </Grid>
                       <Grid item xs={12} md={6}>
                         <TextField
@@ -2913,6 +2925,10 @@ export default function EcommerceSettingsLionTv() {
                         />
                       </Grid>
 	                    </Grid>
+
+                    {(plan.actionType || 'PAYMENT') === 'DOWNLOAD_APK' ? (
+                      <Alert severity="info">Usa el link configurado en Enlaces externos &gt; URL descarga APK.</Alert>
+                    ) : null}
 
 	                    <Divider />
 
