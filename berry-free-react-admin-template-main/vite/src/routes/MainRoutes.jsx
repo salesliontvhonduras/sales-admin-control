@@ -41,6 +41,7 @@ const EcommerceContactRoutingLionTv = Loadable(lazy(() => import('views/liontv/E
 const EcommerceSettingsLionTv = Loadable(lazy(() => import('views/liontv/EcommerceSettingsLionTv')));
 const PayPerViewPaymentsLionTv = Loadable(lazy(() => import('views/liontv/PayPerViewPaymentsLionTv')));
 const EcommerceDeviceSetupRequestsLionTv = Loadable(lazy(() => import('views/liontv/EcommerceDeviceSetupRequestsLionTv')));
+const PayPalCheckoutAdmin = Loadable(lazy(() => import('views/liontv/PayPalCheckoutAdmin')));
 const SmartTubePremiumAdmin = Loadable(lazy(() => import('views/liontv/SmartTubePremiumAdmin')));
 const YoutubePremiumAppDemosLionTv = Loadable(lazy(() => import('views/liontv/YoutubePremiumAppDemosLionTv')));
 const VipCustomersLionTv = Loadable(lazy(() => import('views/liontv/VipCustomersLionTv')));
@@ -346,6 +347,10 @@ const MainRoutes = {
         {
           path: '/liontv/device-setup-requests',
           element: protectPage({ any: ['ROLE_ADMIN', 'ADMIN'] }, <EcommerceDeviceSetupRequestsLionTv />, '/liontv/dashboard', true)
+        },
+        {
+          path: '/liontv/paypal-checkout',
+          element: protectPage({ any: ['ROLE_ADMIN', 'ADMIN'] }, <PayPalCheckoutAdmin />, '/liontv/dashboard', true)
         },
         {
           path: '/liontv/business-purchases',

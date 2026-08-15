@@ -115,6 +115,15 @@ const liontv = {
           resellerVisible: false,
           breadcrumbs: true,
           permission: { any: ['ROLE_ADMIN', 'ADMIN'] }
+        },
+        {
+          id: 'liontv-paypal-checkout',
+          title: 'PayPal Checkout',
+          type: 'item',
+          url: '/liontv/paypal-checkout',
+          resellerVisible: false,
+          breadcrumbs: true,
+          permission: { any: ['ROLE_ADMIN', 'ADMIN'] }
         }
       ]
     },
