@@ -60,8 +60,8 @@ import MobileFieldGrid from 'ui-component/responsive/MobileFieldGrid';
 import MobileSummaryCard from 'ui-component/responsive/MobileSummaryCard';
 
 const SITE_OPTIONS = [
-  { value: 'VIVAPLAYER_VIP', label: 'Viva Player VIP' },
-  { value: 'LIONTV_PREMIUM', label: 'LionTV Premium' }
+  { value: 'LIONTV_PREMIUM', label: 'LionTV Premium' },
+  { value: 'VIVAPLAYER_VIP', label: 'Viva Player VIP' }
 ];
 
 const SESSION_STATUS_OPTIONS = [
@@ -126,7 +126,7 @@ export default function PayPalCheckoutAdmin() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const [siteCode, setSiteCode] = useState('VIVAPLAYER_VIP');
+  const [siteCode, setSiteCode] = useState('LIONTV_PREMIUM');
   const [tab, setTab] = useState(0);
   const [overview, setOverview] = useState({});
   const [products, setProducts] = useState([]);
