@@ -118,7 +118,7 @@ const liontv = {
         },
         {
           id: 'liontv-paypal-checkout',
-          title: 'PayPal Checkout',
+          title: 'Checkout Online',
           type: 'item',
           url: '/liontv/paypal-checkout',
           resellerVisible: false,

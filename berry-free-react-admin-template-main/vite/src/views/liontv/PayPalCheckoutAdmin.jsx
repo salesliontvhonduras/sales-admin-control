@@ -33,6 +33,7 @@ import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import EventRepeatOutlinedIcon from '@mui/icons-material/EventRepeatOutlined';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PaidOutlinedIcon from '@mui/icons-material/PaidOutlined';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ReplayIcon from '@mui/icons-material/Replay';
@@ -64,12 +65,21 @@ const SITE_OPTIONS = [
   { value: 'VIVAPLAYER_VIP', label: 'Viva Player VIP' }
 ];
 
+const GATEWAY_OPTIONS = [
+  { value: '', label: 'Todas' },
+  { value: 'PAYPAL', label: 'PayPal' },
+  { value: 'PIXELPAY', label: 'PixelPay' }
+];
+
 const SESSION_STATUS_OPTIONS = [
   { value: '', label: 'Todos' },
   { value: 'CREATED', label: 'Creado' },
   { value: 'PAYPAL_CREATED', label: 'Pendiente PayPal' },
+  { value: 'REDIRECT_CREATED', label: 'Redireccion creado' },
+  { value: 'APPROVED_REDIRECT', label: 'Aprobado por redireccion' },
   { value: 'APPROVED', label: 'Aprobado' },
   { value: 'ACTIVE', label: 'Activo' },
+  { value: 'ON_HOLD', label: 'En espera' },
   { value: 'FAILED', label: 'Fallido' },
   { value: 'CANCELLED', label: 'Cancelado' }
 ];
@@ -98,12 +108,19 @@ function valueOrDash(value) {
   return value === null || value === undefined || value === '' ? '-' : String(value);
 }
 
+function gatewayLabel(value) {
+  const gateway = String(value || 'PAYPAL').toUpperCase();
+  if (gateway === 'PIXELPAY') return 'PixelPay';
+  if (gateway === 'PAYPAL') return 'PayPal';
+  return valueOrDash(value);
+}
+
 function statusColor(status) {
   const value = String(status || '').toUpperCase();
   if (value === 'ACTIVE' || value === 'PROCESSED') return 'success';
-  if (value === 'PAYPAL_CREATED' || value === 'CREATED' || value === 'RECEIVED' || value === 'APPROVED') return 'warning';
+  if (value === 'PAYPAL_CREATED' || value === 'REDIRECT_CREATED' || value === 'APPROVED_REDIRECT' || value === 'CREATED' || value === 'RECEIVED' || value === 'APPROVED') return 'warning';
   if (value === 'FAILED') return 'error';
-  if (value === 'CANCELLED' || value === 'IGNORED') return 'default';
+  if (value === 'CANCELLED' || value === 'IGNORED' || value === 'ON_HOLD') return 'default';
   return 'info';
 }
 
@@ -142,6 +159,7 @@ export default function PayPalCheckoutAdmin() {
   const [error, setError] = useState('');
   const [preview, setPreview] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [gatewayCode, setGatewayCode] = useState('');
 
   const loadOverviewAndCatalog = useCallback(async () => {
     if (!accessToken) return;
@@ -149,7 +167,7 @@ export default function PayPalCheckoutAdmin() {
     setError('');
     try {
       const [overviewPayload, productsPayload, plansPayload] = await Promise.all([
-        getPayPalCheckoutOverview({ siteCode }),
+        getPayPalCheckoutOverview({ siteCode, gatewayCode: gatewayCode || undefined }),
         listPayPalProducts({ siteCode }),
         listPayPalPlans({ siteCode })
       ]);
@@ -157,13 +175,13 @@ export default function PayPalCheckoutAdmin() {
       setProducts(productsPayload);
       setPlans(plansPayload);
     } catch (err) {
-      const message = errorMessage(err, 'No se pudo cargar PayPal Checkout.');
+      const message = errorMessage(err, 'No se pudo cargar Checkout Online.');
       setError(message);
       enqueueSnackbar(message, { variant: 'error' });
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar, siteCode]);
+  }, [accessToken, enqueueSnackbar, gatewayCode, siteCode]);
 
   const loadSessions = useCallback(async () => {
     if (!accessToken) return;
@@ -172,6 +190,7 @@ export default function PayPalCheckoutAdmin() {
     try {
       const payload = await listPayPalSessions({
         siteCode,
+        gatewayCode: gatewayCode || undefined,
         status: sessionStatus || undefined,
         search: sessionSearch || undefined,
         page: sessions.page,
@@ -179,13 +198,13 @@ export default function PayPalCheckoutAdmin() {
       });
       setSessions(payload);
     } catch (err) {
-      const message = errorMessage(err, 'No se pudieron cargar las sesiones PayPal.');
+      const message = errorMessage(err, 'No se pudieron cargar las sesiones.');
       setError(message);
       enqueueSnackbar(message, { variant: 'error' });
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar, sessionSearch, sessionStatus, sessions.page, sessions.size, siteCode]);
+  }, [accessToken, enqueueSnackbar, gatewayCode, sessionSearch, sessionStatus, sessions.page, sessions.size, siteCode]);
 
   const loadWebhooks = useCallback(async () => {
     if (!accessToken) return;
@@ -194,6 +213,7 @@ export default function PayPalCheckoutAdmin() {
     try {
       const payload = await listPayPalWebhooks({
         siteCode,
+        gatewayCode: gatewayCode || undefined,
         processingStatus: webhookStatus || undefined,
         search: webhookSearch || undefined,
         page: webhooks.page,
@@ -201,13 +221,13 @@ export default function PayPalCheckoutAdmin() {
       });
       setWebhooks(payload);
     } catch (err) {
-      const message = errorMessage(err, 'No se pudieron cargar los webhooks PayPal.');
+      const message = errorMessage(err, 'No se pudieron cargar los eventos.');
       setError(message);
       enqueueSnackbar(message, { variant: 'error' });
     } finally {
       setLoading(false);
     }
-  }, [accessToken, enqueueSnackbar, siteCode, webhookSearch, webhookStatus, webhooks.page, webhooks.size]);
+  }, [accessToken, enqueueSnackbar, gatewayCode, siteCode, webhookSearch, webhookStatus, webhooks.page, webhooks.size]);
 
   useEffect(() => {
     if (tab <= 2) {
@@ -238,7 +258,7 @@ export default function PayPalCheckoutAdmin() {
       {
         title: 'Pendientes',
         value: overview.pendingSessions ?? 0,
-        helper: 'Esperando confirmacion PayPal',
+        helper: 'Esperando confirmacion de pasarela',
         color: 'warning',
         icon: <EventRepeatOutlinedIcon fontSize="small" />
       },
@@ -272,7 +292,7 @@ export default function PayPalCheckoutAdmin() {
     setWorkingId(`refresh-${row.checkoutId}`);
     try {
       await refreshPayPalSession(row.checkoutId);
-      enqueueSnackbar('Sesion actualizada desde PayPal.', { variant: 'success' });
+      enqueueSnackbar('Sesion actualizada.', { variant: 'success' });
       refreshCurrent();
     } catch (err) {
       enqueueSnackbar(errorMessage(err, 'No se pudo refrescar la sesion.'), { variant: 'error' });
@@ -436,10 +456,11 @@ export default function PayPalCheckoutAdmin() {
                 <TableCell>Checkout</TableCell>
                 <TableCell>Cliente</TableCell>
                 <TableCell>Plan</TableCell>
+                <TableCell>Pasarela</TableCell>
                 <TableCell>Estado</TableCell>
-                <TableCell>Suscripcion PayPal</TableCell>
+                <TableCell>ID externo</TableCell>
                 <TableCell>Creado</TableCell>
-                <TableCell align="right">Accion</TableCell>
+                <TableCell align="right">Acciones</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -453,14 +474,31 @@ export default function PayPalCheckoutAdmin() {
                     </Typography>
                   </TableCell>
                   <TableCell>{row.planName}</TableCell>
+                  <TableCell>{gatewayLabel(row.gatewayCode)}</TableCell>
                   <TableCell>{renderStatus(row.status)}</TableCell>
-                  <TableCell>{valueOrDash(row.paypalSubscriptionId)}</TableCell>
+                  <TableCell>
+                    <Typography variant="caption">{valueOrDash(row.externalPaymentId || row.paypalSubscriptionId)}</Typography>
+                    <Typography display="block" variant="caption" color="text.secondary">
+                      {valueOrDash(row.externalStatus || row.paypalStatus)}
+                    </Typography>
+                  </TableCell>
                   <TableCell>{formatDate(row.createdAt)}</TableCell>
                   <TableCell align="right">
+                    <Tooltip title="Abrir URL de checkout">
+                      <span>
+                        <IconButton
+                          disabled={!row.approvalUrl}
+                          onClick={() => window.open(row.approvalUrl, '_blank', 'noopener,noreferrer')}
+                          size="small"
+                        >
+                          <OpenInNewIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                     <Tooltip title="Refrescar desde PayPal">
                       <span>
                         <IconButton
-                          disabled={!row.paypalSubscriptionId || Boolean(workingId)}
+                          disabled={row.gatewayCode === 'PIXELPAY' || !row.paypalSubscriptionId || Boolean(workingId)}
                           onClick={() => runRefreshSession(row)}
                           size="small"
                         >
@@ -486,7 +524,7 @@ export default function PayPalCheckoutAdmin() {
               actions={
                 <ResponsiveActionBar justifyContent="flex-start">
                   <Button
-                    disabled={!row.paypalSubscriptionId || Boolean(workingId)}
+                    disabled={row.gatewayCode === 'PIXELPAY' || !row.paypalSubscriptionId || Boolean(workingId)}
                     onClick={() => runRefreshSession(row)}
                     size="small"
                     startIcon={<RefreshIcon />}
@@ -500,7 +538,9 @@ export default function PayPalCheckoutAdmin() {
                 fields={[
                   { label: 'Email', value: row.email },
                   { label: 'Telefono', value: row.phone },
-                  { label: 'Suscripcion PayPal', value: row.paypalSubscriptionId },
+                  { label: 'Pasarela', value: gatewayLabel(row.gatewayCode) },
+                  { label: 'Estado externo', value: row.externalStatus || row.paypalStatus },
+                  { label: 'ID externo', value: row.externalPaymentId || row.paypalSubscriptionId },
                   { label: 'Creado', value: formatDate(row.createdAt) }
                 ]}
               />
@@ -532,9 +572,10 @@ export default function PayPalCheckoutAdmin() {
               <TableRow>
                 <TableCell>Evento</TableCell>
                 <TableCell>Tipo</TableCell>
+                <TableCell>Pasarela</TableCell>
                 <TableCell>Estado</TableCell>
                 <TableCell>Checkout</TableCell>
-                <TableCell>Suscripcion PayPal</TableCell>
+                <TableCell>ID externo</TableCell>
                 <TableCell>Recibido</TableCell>
                 <TableCell align="right">Acciones</TableCell>
               </TableRow>
@@ -544,9 +585,10 @@ export default function PayPalCheckoutAdmin() {
                 <TableRow hover key={row.eventId}>
                   <TableCell>{row.eventId}</TableCell>
                   <TableCell>{row.eventType}</TableCell>
+                  <TableCell>{gatewayLabel(row.gatewayCode)}</TableCell>
                   <TableCell>{renderStatus(row.processingStatus)}</TableCell>
                   <TableCell>{valueOrDash(row.checkoutId)}</TableCell>
-                  <TableCell>{valueOrDash(row.paypalSubscriptionId)}</TableCell>
+                  <TableCell>{valueOrDash(row.externalPaymentId || row.externalOrderId || row.paypalSubscriptionId)}</TableCell>
                   <TableCell>{formatDate(row.receivedAt)}</TableCell>
                   <TableCell align="right">
                     <Tooltip title="Ver payload">
@@ -590,7 +632,8 @@ export default function PayPalCheckoutAdmin() {
               <MobileFieldGrid
                 fields={[
                   { label: 'Checkout', value: row.checkoutId },
-                  { label: 'Suscripcion PayPal', value: row.paypalSubscriptionId },
+                  { label: 'Pasarela', value: gatewayLabel(row.gatewayCode) },
+                  { label: 'ID externo', value: row.externalPaymentId || row.externalOrderId || row.paypalSubscriptionId },
                   { label: 'Recibido', value: formatDate(row.receivedAt) },
                   { label: 'Error', value: row.errorMessage }
                 ]}
@@ -622,7 +665,7 @@ export default function PayPalCheckoutAdmin() {
   return (
     <Stack spacing={2.5}>
       <MainCard
-        title="PayPal Checkout"
+        title="Checkout Online"
         secondary={
           <Button disabled={loading} onClick={refreshCurrent} startIcon={<RefreshIcon />} variant="outlined">
             Actualizar
@@ -631,12 +674,19 @@ export default function PayPalCheckoutAdmin() {
       >
         <Stack spacing={2}>
           <Typography color="text.secondary">
-            Catalogo multi-sitio para monitorear productos, planes, sesiones y webhooks de PayPal.
+            Catalogo multi-sitio para monitorear productos, planes, sesiones y callbacks de pasarelas online.
           </Typography>
           <ResponsiveFilters>
             <TextField label="Sitio" select value={siteCode} onChange={(event) => setSiteCode(event.target.value)}>
               {SITE_OPTIONS.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField label="Pasarela" select value={gatewayCode} onChange={(event) => setGatewayCode(event.target.value)}>
+              {GATEWAY_OPTIONS.map((option) => (
+                <MenuItem key={option.value || 'all'} value={option.value}>
                   {option.label}
                 </MenuItem>
               ))}
@@ -704,13 +754,13 @@ export default function PayPalCheckoutAdmin() {
           </Tabs>
         </Box>
         <Box sx={{ p: { xs: 1.25, sm: 2 } }}>
-          {loading ? <Alert severity="info">Cargando informacion de PayPal Checkout...</Alert> : null}
+          {loading ? <Alert severity="info">Cargando informacion de Checkout Online...</Alert> : null}
           {!loading && emptyVisible ? <Alert severity="info">No hay registros para los filtros actuales.</Alert> : null}
           {tab === 0 ? (
             <Stack spacing={1.5}>
               <Typography variant="h4">Resumen operativo</Typography>
               <Typography color="text.secondary">
-                Viva Player VIP esta activo para checkout publico. LionTV Premium queda preparado para sincronizar cuando se definan sus planes.
+                Viva Player VIP y LionTV Premium pueden operar checkout publico con PayPal y PixelPay segun configuracion.
               </Typography>
             </Stack>
           ) : null}
