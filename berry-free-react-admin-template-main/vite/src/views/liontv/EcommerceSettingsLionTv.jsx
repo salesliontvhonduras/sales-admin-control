@@ -241,6 +241,17 @@ const DEFAULT_APP_UPDATE_CHANNEL = {
   message: 'Hay una nueva actualizacion disponible.'
 };
 
+const DEFAULT_SELF_SERVICE_DEMO = {
+  appName: 'Viva Player',
+  installInstruction: 'Instala Viva Player desde la tienda de aplicaciones de tu dispositivo.',
+  username: 'demoliontv@liontvplus.com',
+  password: '1234',
+  profileInstruction: 'Selecciona cualquier perfil.',
+  demoDurationMinutes: 60,
+  durationLabel: 'La demo tiene una duracion de 1 hora',
+  cooldownDays: 30
+};
+
 const DEFAULT_CONFIG = {
   language: { default: 'es', supported: ['es', 'en'] },
   brand: {
@@ -344,6 +355,7 @@ const DEFAULT_CONFIG = {
     owner: { ...DEFAULT_APP_UPDATE_CHANNEL },
     reseller: { ...DEFAULT_APP_UPDATE_CHANNEL }
   },
+  selfServiceDemo: { ...DEFAULT_SELF_SERVICE_DEMO },
   lionTvPremiumApp: {
     demo: {
       enabled: false,
@@ -700,6 +712,22 @@ function normalizeAppUpdateConfig(payload = {}) {
   };
 }
 
+function normalizeSelfServiceDemoConfig(payload = {}) {
+  const demo = payload || {};
+  return {
+    ...DEFAULT_SELF_SERVICE_DEMO,
+    ...demo,
+    appName: demo.appName || DEFAULT_SELF_SERVICE_DEMO.appName,
+    installInstruction: demo.installInstruction || DEFAULT_SELF_SERVICE_DEMO.installInstruction,
+    username: demo.username || DEFAULT_SELF_SERVICE_DEMO.username,
+    password: demo.password || DEFAULT_SELF_SERVICE_DEMO.password,
+    profileInstruction: demo.profileInstruction || DEFAULT_SELF_SERVICE_DEMO.profileInstruction,
+    demoDurationMinutes: Math.min(Math.max(Number(demo.demoDurationMinutes || DEFAULT_SELF_SERVICE_DEMO.demoDurationMinutes), 1), 1440),
+    durationLabel: demo.durationLabel || DEFAULT_SELF_SERVICE_DEMO.durationLabel,
+    cooldownDays: Math.min(Math.max(Number(demo.cooldownDays || DEFAULT_SELF_SERVICE_DEMO.cooldownDays), 1), 365)
+  };
+}
+
 function validateAppUpdateConfig(config) {
   const channels = [
     ['owner', 'APK Owner'],
@@ -714,6 +742,26 @@ function validateAppUpdateConfig(config) {
     if (!isHttpUrl(appUpdate.downloadUrl)) {
       return `${label}: configura una URL directa APK válida http:// o https://.`;
     }
+  }
+  return '';
+}
+
+function validateSelfServiceDemoConfig(config) {
+  if (!config?.features?.demoOnlineEnabled) return '';
+  const demo = config?.selfServiceDemo || {};
+  if (!String(demo.username || '').trim()) {
+    return 'Configura el usuario de la demo autoservicio.';
+  }
+  if (!String(demo.password || '').trim()) {
+    return 'Configura el password de la demo autoservicio.';
+  }
+  const duration = Number(demo.demoDurationMinutes || 0);
+  if (!duration || duration < 1 || duration > 1440) {
+    return 'La duración de la demo autoservicio debe estar entre 1 y 1440 minutos.';
+  }
+  const cooldown = Number(demo.cooldownDays || 0);
+  if (!cooldown || cooldown < 1 || cooldown > 365) {
+    return 'El bloqueo de demo autoservicio debe estar entre 1 y 365 días.';
   }
   return '';
 }
@@ -872,6 +920,7 @@ function normalizeConfig(payload) {
     points: { ...DEFAULT_CONFIG.points, ...(payload?.points || {}) },
     externalLinks: { ...DEFAULT_CONFIG.externalLinks, ...(payload?.externalLinks || {}) },
     appUpdate: normalizeAppUpdateConfig(payload?.appUpdate),
+    selfServiceDemo: normalizeSelfServiceDemoConfig(payload?.selfServiceDemo),
     lionTvPremiumApp: {
       ...DEFAULT_CONFIG.lionTvPremiumApp,
       ...(payload?.lionTvPremiumApp || {}),
@@ -1258,7 +1307,11 @@ export default function EcommerceSettingsLionTv() {
 
   const handleSave = async () => {
     const validationError =
-      validateAppUpdateConfig(form) || validateDemoAppConfig(form) || validateAccountExpiredAppConfig(form) || validatePayPerViewConfig(form);
+      validateAppUpdateConfig(form) ||
+      validateSelfServiceDemoConfig(form) ||
+      validateDemoAppConfig(form) ||
+      validateAccountExpiredAppConfig(form) ||
+      validatePayPerViewConfig(form);
     if (validationError) {
       setError(validationError);
       enqueueSnackbar(validationError, { variant: 'warning' });
@@ -2558,6 +2611,107 @@ export default function EcommerceSettingsLionTv() {
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField fullWidth label="App code demo" value={form.demo.appCode} onChange={(event) => setPath(['demo', 'appCode'], event.target.value)} />
+            </Grid>
+            <Grid item xs={12}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Stack spacing={2}>
+                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', md: 'center' }} justifyContent="space-between">
+                      <Box>
+                        <Typography variant="h4">Credenciales demo autoservicio</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Estos datos se entregan en liontvplus.com solo después de validar el OTP por correo.
+                        </Typography>
+                      </Box>
+                      <Chip
+                        size="small"
+                        label={form.features.demoOnlineEnabled ? 'Entrega activa' : 'Entrega pausada'}
+                        color={form.features.demoOnlineEnabled ? 'success' : 'default'}
+                        variant={form.features.demoOnlineEnabled ? 'filled' : 'outlined'}
+                      />
+                    </Stack>
+                    <Alert severity="warning">
+                      Cambiar usuario o password aquí afecta inmediatamente las próximas demos validadas; no requiere deploy del ecommerce.
+                    </Alert>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Usuario demo"
+                          value={form.selfServiceDemo.username}
+                          onChange={(event) => setPath(['selfServiceDemo', 'username'], event.target.value)}
+                          helperText="Ejemplo: demoliontv@liontvplus.com"
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Password demo"
+                          value={form.selfServiceDemo.password}
+                          onChange={(event) => setPath(['selfServiceDemo', 'password'], event.target.value)}
+                          helperText="Password que verá el cliente al validar el OTP."
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label="App a instalar"
+                          value={form.selfServiceDemo.appName}
+                          onChange={(event) => setPath(['selfServiceDemo', 'appName'], event.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="Duración demo (minutos)"
+                          value={form.selfServiceDemo.demoDurationMinutes}
+                          onChange={(event) => setPath(['selfServiceDemo', 'demoDurationMinutes'], Number(event.target.value || 60))}
+                          inputProps={{ min: 1, max: 1440, step: 1 }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="Bloqueo por correo (días)"
+                          value={form.selfServiceDemo.cooldownDays}
+                          onChange={(event) => setPath(['selfServiceDemo', 'cooldownDays'], Number(event.target.value || 30))}
+                          inputProps={{ min: 1, max: 365, step: 1 }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          multiline
+                          minRows={2}
+                          label="Instrucción instalación"
+                          value={form.selfServiceDemo.installInstruction}
+                          onChange={(event) => setPath(['selfServiceDemo', 'installInstruction'], event.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          multiline
+                          minRows={2}
+                          label="Instrucción perfil"
+                          value={form.selfServiceDemo.profileInstruction}
+                          onChange={(event) => setPath(['selfServiceDemo', 'profileInstruction'], event.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          label="Aviso grande de duración"
+                          value={form.selfServiceDemo.durationLabel}
+                          onChange={(event) => setPath(['selfServiceDemo', 'durationLabel'], event.target.value)}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Stack>
+                </CardContent>
+              </Card>
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
