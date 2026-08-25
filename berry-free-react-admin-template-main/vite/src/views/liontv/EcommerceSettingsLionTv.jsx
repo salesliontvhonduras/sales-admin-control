@@ -244,8 +244,8 @@ const DEFAULT_APP_UPDATE_CHANNEL = {
 const DEFAULT_SELF_SERVICE_DEMO = {
   appName: 'Viva Player',
   installInstruction: 'Instala Viva Player desde la tienda de aplicaciones de tu dispositivo.',
-  username: 'demoliontv@liontvplus.com',
-  password: '1234',
+  username: '',
+  password: '',
   profileInstruction: 'Selecciona cualquier perfil.',
   demoDurationMinutes: 60,
   durationLabel: 'La demo tiene una duracion de 1 hora',
@@ -2640,7 +2640,7 @@ export default function EcommerceSettingsLionTv() {
                           label="Usuario demo"
                           value={form.selfServiceDemo.username}
                           onChange={(event) => setPath(['selfServiceDemo', 'username'], event.target.value)}
-                          helperText="Ejemplo: demoliontv@liontvplus.com"
+                          helperText="Usuario o correo que verá el cliente al validar el OTP."
                         />
                       </Grid>
                       <Grid item xs={12} md={6}>
