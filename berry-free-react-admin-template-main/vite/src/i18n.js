@@ -2336,9 +2336,12 @@ const resources = {
           reason: 'Reason',
           ledgerEmpty: 'No movements yet.',
           adjustTitle: 'Adjust points',
+          currentBalance: 'Current balance',
+          resultingBalance: 'Resulting balance',
           adjustPoints: 'Points',
-          adjustHelper: 'Use positive values to add and negative values to subtract.',
-          adjustReason: 'Reason'
+          adjustHelper: 'Use whole positive values to add and whole negative values to subtract.',
+          adjustReason: 'Reason',
+          adjustReasonHelper: 'Required for the customer ledger.'
         },
         messages: {
           loadConfigError: 'Could not load the loyalty configuration.',
@@ -2347,6 +2350,10 @@ const resources = {
           configUpdated: 'Loyalty configuration updated.',
           saveConfigError: 'Could not save the configuration.',
           adjustmentApplied: 'Points adjustment applied.',
+          invalidAdjustmentDelta: 'Enter a whole adjustment different from zero.',
+          adjustmentReasonRequired: 'Enter the adjustment reason.',
+          adjustmentWouldBeNegative: 'The resulting balance cannot be negative.',
+          adjustmentForbidden: 'You do not have permission to adjust loyalty points.',
           adjustmentError: 'Could not apply the adjustment.'
         }
       },
@@ -6590,9 +6597,12 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           reason: 'Motivo',
           ledgerEmpty: 'No hay movimientos todavía.',
           adjustTitle: 'Ajustar puntos',
+          currentBalance: 'Saldo actual',
+          resultingBalance: 'Saldo resultante',
           adjustPoints: 'Puntos',
-          adjustHelper: 'Usa positivos para sumar y negativos para restar.',
-          adjustReason: 'Motivo'
+          adjustHelper: 'Usa enteros positivos para sumar y enteros negativos para restar.',
+          adjustReason: 'Motivo',
+          adjustReasonHelper: 'Obligatorio para el historial del cliente.'
         },
         messages: {
           loadConfigError: 'No se pudo cargar la configuración de lealtad.',
@@ -6601,6 +6611,10 @@ Si gustas, te comparto una demo sin compromiso para que veas cómo se mira en tu
           configUpdated: 'Configuración de lealtad actualizada.',
           saveConfigError: 'No se pudo guardar la configuración.',
           adjustmentApplied: 'Ajuste de puntos aplicado.',
+          invalidAdjustmentDelta: 'Ingresa un ajuste entero distinto de cero.',
+          adjustmentReasonRequired: 'Ingresa el motivo del ajuste.',
+          adjustmentWouldBeNegative: 'El saldo resultante no puede ser negativo.',
+          adjustmentForbidden: 'No tienes permiso para ajustar puntos de lealtad.',
           adjustmentError: 'No se pudo aplicar el ajuste.'
         }
       },

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSnackbar } from 'notistack';
+import useAuth from 'hooks/useAuth';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -45,6 +46,7 @@ import {
   listLoyaltyLedger,
   updateLoyaltyConfig
 } from 'api/liontv-engagement';
+import { hasPermissionExact } from 'utils/rbac';
 
 const fieldSx = {
   '& .MuiInputBase-root': { borderRadius: 2, minHeight: 46 }
@@ -73,9 +75,22 @@ function formatLoyaltyMovementType(value, t) {
   return t(`loyalty.movementTypes.${normalized}`, { defaultValue: normalized.replaceAll('_', ' ') });
 }
 
+function getAvailablePoints(row) {
+  const points = Number(row?.availablePoints ?? 0);
+  return Number.isFinite(points) ? points : 0;
+}
+
+function isIntegerInput(value) {
+  return /^-?\d+$/.test(String(value ?? '').trim());
+}
+
 export default function LoyaltyLionTv() {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const canAdjust = hasPermissionExact(user, {
+    any: ['LIONTV_LOYALTY_ADJUST', 'ROLE_LIONTV_LOYALTY_ADJUST', 'ADMIN', 'ROLE_ADMIN']
+  });
 
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
@@ -152,6 +167,29 @@ export default function LoyaltyLionTv() {
     return { customersWithPoints, totalPoints };
   }, [rows]);
 
+  const adjustmentRaw = String(adjustDialog.pointsDelta ?? '').trim();
+  const adjustmentDelta = Number(adjustmentRaw);
+  const hasAdjustmentDelta = adjustmentRaw !== '';
+  const adjustmentDeltaIsInteger =
+    hasAdjustmentDelta && isIntegerInput(adjustmentRaw) && Number.isFinite(adjustmentDelta) && Number.isSafeInteger(adjustmentDelta);
+  const currentAdjustmentBalance = getAvailablePoints(adjustDialog.row);
+  const resultingAdjustmentBalance = adjustmentDeltaIsInteger ? currentAdjustmentBalance + adjustmentDelta : currentAdjustmentBalance;
+  const adjustmentWouldBeNegative = adjustmentDeltaIsInteger && resultingAdjustmentBalance < 0;
+  const adjustmentReason = String(adjustDialog.reason ?? '').trim();
+  const adjustmentCanSubmit =
+    canAdjust &&
+    !saving &&
+    adjustmentDeltaIsInteger &&
+    adjustmentDelta !== 0 &&
+    !adjustmentWouldBeNegative &&
+    Boolean(adjustmentReason);
+  const adjustmentPointsHelperText =
+    hasAdjustmentDelta && (!adjustmentDeltaIsInteger || adjustmentDelta === 0)
+      ? t('loyalty.messages.invalidAdjustmentDelta')
+      : adjustmentWouldBeNegative
+        ? t('loyalty.messages.adjustmentWouldBeNegative')
+        : t('loyalty.dialogs.adjustHelper');
+
   const handleOpenLedger = async (row) => {
     try {
       const response = await listLoyaltyLedger(row.customerId, { index: 0, size: 20 });
@@ -180,11 +218,31 @@ export default function LoyaltyLionTv() {
 
   const handleAdjustPoints = async () => {
     if (!adjustDialog.row?.customerId) return;
+    if (!canAdjust) {
+      enqueueSnackbar(t('loyalty.messages.adjustmentForbidden'), { variant: 'error' });
+      return;
+    }
+
+    const pointsDelta = Number(String(adjustDialog.pointsDelta ?? '').trim());
+    const reason = String(adjustDialog.reason ?? '').trim();
+    if (!isIntegerInput(adjustDialog.pointsDelta) || !Number.isFinite(pointsDelta) || !Number.isSafeInteger(pointsDelta) || pointsDelta === 0) {
+      enqueueSnackbar(t('loyalty.messages.invalidAdjustmentDelta'), { variant: 'warning' });
+      return;
+    }
+    if (!reason) {
+      enqueueSnackbar(t('loyalty.messages.adjustmentReasonRequired'), { variant: 'warning' });
+      return;
+    }
+    if (getAvailablePoints(adjustDialog.row) + pointsDelta < 0) {
+      enqueueSnackbar(t('loyalty.messages.adjustmentWouldBeNegative'), { variant: 'warning' });
+      return;
+    }
+
     setSaving(true);
     try {
       await adjustLoyaltyPoints(adjustDialog.row.customerId, {
-        pointsDelta: Number(adjustDialog.pointsDelta),
-        reason: adjustDialog.reason
+        pointsDelta,
+        reason
       });
       enqueueSnackbar(t('loyalty.messages.adjustmentApplied'), { variant: 'success' });
       setAdjustDialog({ open: false, row: null, pointsDelta: '', reason: '' });
@@ -331,13 +389,15 @@ export default function LoyaltyLionTv() {
                         <Button size="small" variant="outlined" onClick={() => handleOpenLedger(row)}>
                           {t('loyalty.actions.ledger')}
                         </Button>
-                        <Button
-                          size="small"
-                          variant="contained"
-                          onClick={() => setAdjustDialog({ open: true, row, pointsDelta: '', reason: '' })}
-                        >
-                          {t('loyalty.actions.adjust')}
-                        </Button>
+                        {canAdjust ? (
+                          <Button
+                            size="small"
+                            variant="contained"
+                            onClick={() => setAdjustDialog({ open: true, row, pointsDelta: '', reason: '' })}
+                          >
+                            {t('loyalty.actions.adjust')}
+                          </Button>
+                        ) : null}
                       </Stack>
                     </TableCell>
                   </TableRow>
@@ -493,14 +553,34 @@ export default function LoyaltyLionTv() {
             <Typography variant="body2" color="text.secondary">
               {adjustDialog.row?.customerFullname || '-'}
             </Typography>
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    {t('loyalty.dialogs.currentBalance')}
+                  </Typography>
+                  <Typography variant="h5">{currentAdjustmentBalance}</Typography>
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    {t('loyalty.dialogs.resultingBalance')}
+                  </Typography>
+                  <Typography variant="h5" color={adjustmentWouldBeNegative ? 'error.main' : 'text.primary'}>
+                    {resultingAdjustmentBalance}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Paper>
             <TextField
               type="number"
               label={t('loyalty.dialogs.adjustPoints')}
               value={adjustDialog.pointsDelta}
               onChange={(event) => setAdjustDialog((prev) => ({ ...prev, pointsDelta: event.target.value }))}
               fullWidth
+              error={hasAdjustmentDelta && (!adjustmentDeltaIsInteger || adjustmentDelta === 0 || adjustmentWouldBeNegative)}
               sx={fieldSx}
-              helperText={t('loyalty.dialogs.adjustHelper')}
+              inputProps={{ step: 1 }}
+              helperText={adjustmentPointsHelperText}
             />
             <TextField
               label={t('loyalty.dialogs.adjustReason')}
@@ -509,12 +589,16 @@ export default function LoyaltyLionTv() {
               fullWidth
               multiline
               minRows={3}
+              required
+              helperText={t('loyalty.dialogs.adjustReasonHelper')}
             />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAdjustDialog({ open: false, row: null, pointsDelta: '', reason: '' })}>{t('actions.cancel')}</Button>
-          <Button variant="contained" onClick={handleAdjustPoints} disabled={saving}>
+          <Button onClick={() => setAdjustDialog({ open: false, row: null, pointsDelta: '', reason: '' })} disabled={saving}>
+            {t('actions.cancel')}
+          </Button>
+          <Button variant="contained" onClick={handleAdjustPoints} disabled={!adjustmentCanSubmit}>
             {t('loyalty.actions.apply')}
           </Button>
         </DialogActions>
